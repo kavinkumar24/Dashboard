@@ -11,43 +11,66 @@ function Dashboard() {
     fetch('http://localhost:8081/production_data')
       .then((res) => res.json())
       .then((data) => {
-        setProductionData(data);
+        console.log('Production Data:', data);
+        if (Array.isArray(data)) {
+          setProductionData(data);
 
-        const groupedData = data.reduce((acc, curr) => {
-          const dept = curr.fromdept1;
-          if (!acc[dept]) {
-            acc[dept] = 0;
-          }
-          acc[dept] += curr.pdscwqty1;
-          return acc;
-        }, {});
+          const groupedData = data.reduce((acc, curr) => {
+            const dept = curr.fromdept1;
+            if (!acc[dept]) {
+              acc[dept] = 0;
+            }
+            acc[dept] += curr.pdscwqty1;
+            return acc;
+          }, {});
 
-        setDepartmentData(groupedData);
+          setDepartmentData(groupedData);
+        }
       })
-      .catch((err) => console.log(err));
+      .catch((err) => console.log('Error fetching production data:', err));
+  }, []);
 
+  useEffect(() => {
     fetch('http://localhost:8081/pending_data')
       .then((res) => res.json())
       .then((data) => {
-        setPendingData(data);
-        
-        const groupedPendingData = data.reduce((acc, curr) => {
-          const dept = curr.todept1;
-          if (!acc[dept]) {
-            acc[dept] = 0;
-          }
-          acc[dept] += curr.pdscwqty1;
-          return acc;
-        }, {});
-
-        setPendingDepartmentData(groupedPendingData);
+        console.log('Pending Data:', data);
+  
+        if (Array.isArray(data) && data.length > 0) {
+          let totalQuantity = 0;
+          const groupedPendingData = data.reduce((acc, curr) => {
+            console.log('Processing item:', curr);  
+  
+            const dept = curr.todept || 'Unknown Department';  
+            const quantity = parseFloat(curr.jcpdscwqty1) || 0;  
+  
+            totalQuantity += quantity;
+  
+            if (!acc[dept]) {
+              acc[dept] = 0;
+            }
+            acc[dept] += quantity;
+  
+            return acc;
+          }, {});
+  
+          setPendingDepartmentData(groupedPendingData);
+          console.log('Grouped Pending Data:', groupedPendingData);
+          console.log('Total Quantity:', totalQuantity); 
+        } else {
+          console.log('Pending Data is not in expected format or is empty:', data);
+        }
       })
-      .catch((err) => console.log(err));
+      .catch((err) => console.log('Error fetching pending data:', err));
   }, []);
-
+  
   const renderCards = (data) => {
     return Object.keys(data).map((dept) => (
-      <div key={dept} className="bg-white p-4 rounded-lg shadow-md flex flex-col justify-between" style={{ minWidth: '150px', minHeight: '100px' }}>
+      <div
+        key={dept}
+        className="bg-white p-4 rounded-lg shadow-md flex flex-col justify-between"
+        style={{ minWidth: '150px', minHeight: '100px' }}
+      >
         <h2 className="text-lg font-bold">{dept}</h2>
         <p className="text-2xl font-bold">{data[dept]}</p>
       </div>
@@ -108,9 +131,8 @@ function Dashboard() {
 
           {/* Department Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-  {activeTab === 'Production Data' ? renderCards(departmentData) : renderCards(pendingDepartmentData)}
-</div>
-
+            {activeTab === 'Production Data' ? renderCards(departmentData) : renderCards(pendingDepartmentData)}
+          </div>
         </main>
       </div>
     </div>
