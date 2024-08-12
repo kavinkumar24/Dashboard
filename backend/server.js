@@ -30,8 +30,12 @@ const app =express()
     })
     })
 
-app.get('/', (re, res)=> {
-return res.json("From Backend Side"); })
-app.listen(8081, ()=> {
-console.log("listening");
-})
+    const PORT = process.env.PORT || 8081;
+
+    app.get('/', (req, res) => {
+        return res.json("From Backend Side");
+    });
+    
+    app.listen(PORT, () => {
+        console.log(`Server is listening on port ${PORT}`);
+    });
