@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { ImTable2 } from 'react-icons/im';
+import { IoCardOutline } from "react-icons/io5";
+import { BsSearch, BsMoon, BsGear } from "react-icons/bs";
 
 function Dashboard() {
   const [productionData, setProductionData] = useState([]);
   const [pendingData, setPendingData] = useState([]);
-  const [activeTab, setActiveTab] = useState("Production Data");
   const [departmentData, setDepartmentData] = useState({});
   const [pendingDepartmentData, setPendingDepartmentData] = useState({});
-  // const [tableViewDepartmentData, settableViewDepartmentData] = useState({});
-  // const [tableViewPendingDepartmentData, settableViewPendingDepartmentData] = useState({});
-  // const [tableViewData, settableViewData] = useState({});
   const [viewData, setviewData] = useState(false);
   const [search, setSearch] = useState('');
-
 
   useEffect(() => {
     fetch("http://localhost:8081/production_data")
@@ -20,105 +19,101 @@ function Dashboard() {
         console.log("Production Data:", data);
         if (Array.isArray(data)) {
           setProductionData(data);
-
-          const groupedData = data.reduce((acc, curr) => {
-            const dept = curr.fromdept1;
-            if (!acc[dept]) {
-              acc[dept] = 0;
-            }
-            acc[dept] += curr.pdscwqty1;
+  
+          const departmentsList = [
+            'CAD', 'CAM', 'MFD', 'MP', 'DIE', 'WAX', 'CASTING', 'SEPERATION', 
+            'ASSY', 'BP', 'CORR', 'SETTING', 'BUFFING', 'TEXTURING', 
+            'QC', 'FI BOM', 'PHOTO'
+          ];
+  
+          const groupedData = departmentsList.reduce((acc, dept) => {
+            acc[dept] = 0;
             return acc;
           }, {});
-
+  
+          const departmentsRegex = /(?:CAD|CAM|MFD|MP|DIE|WAX|CASTING|SEP(?:ERATION|)|ASSY|BP|COR(?:R|)|SETTING|BUFFING|TEXTURING|QC|FI\s?BOM|PHOTO)/i;
+  
+          data.forEach(curr => {
+            const deptMatch = curr.fromdept1.match(departmentsRegex);
+            if (deptMatch) {
+              const dept = deptMatch[0].toUpperCase();
+              groupedData[dept] += curr.pdscwqty1;
+            }
+          });
+  
           setDepartmentData(groupedData);
         }
       })
       .catch((err) => console.log("Error fetching production data:", err));
   }, []);
-
+  
   useEffect(() => {
     fetch("http://localhost:8081/pending_data")
       .then((res) => res.json())
       .then((data) => {
         console.log("Pending Data:", data);
-
+  
         if (Array.isArray(data) && data.length > 0) {
-          let totalQuantity = 0;
-          const groupedPendingData = data.reduce((acc, curr) => {
-            console.log("Processing item:", curr);
-
-            const dept = curr.todept || "Unknown Department";
-            const quantity = parseFloat(curr.jcpdscwqty1) || 0;
-
-            totalQuantity += quantity;
-
-            if (!acc[dept]) {
-              acc[dept] = 0;
-            }
-            acc[dept] += quantity;
-
+          const departmentsList = [
+            'CAD', 'CAM', 'MFD', 'MP', 'DIE', 'WAX', 'CASTING', 'SEPERATION', 
+            'ASSY', 'BP', 'CORR', 'SETTING', 'BUFFING', 'TEXTURING', 
+            'QC', 'FI BOM', 'PHOTO'
+          ];
+  
+          const groupedPendingData = departmentsList.reduce((acc, dept) => {
+            acc[dept] = 0;
             return acc;
           }, {});
-
+  
+          const departmentsRegex = /(?:CAD|CAM|MFD|MP|DIE|WAX|CASTING|SEP(?:ERATION|)|ASSY|BP|COR(?:R|)|SETTING|BUFFING|TEXTURING|QC|FI\s?BOM|PHOTO)/i;
+  
+          data.forEach(curr => {
+            const deptMatch = curr.todept && curr.todept.match(departmentsRegex);
+            if (deptMatch) {
+              const dept = deptMatch[0].toUpperCase();
+              const quantity = parseFloat(curr.jcpdscwqty1) || 0;
+  
+              groupedPendingData[dept] += quantity;
+            }
+          });
+  
           setPendingDepartmentData(groupedPendingData);
           console.log("Grouped Pending Data:", groupedPendingData);
-          console.log("Total Quantity:", totalQuantity);
         } else {
-          console.log(
-            "Pending Data is not in expected format or is empty:",
-            data
-          );
+          console.log("Pending Data is not in expected format or is empty:", data);
         }
       })
       .catch((err) => console.log("Error fetching pending data:", err));
   }, []);
-
-  // useEffect(()=>{
-  //   if(activeTab==='Production Data')
-  //     settableViewData(departmentData);
-  //   else if(activeTab === 'Pending Data')
-  //     settableViewData(pendingDepartmentData);
-  // },[activeTab,departmentData,pendingDepartmentData]);
-
-  const renderCards = (data) => {
-    return Object.keys(data).filter((data)=>{
-      return search.toLowerCase() === ''?data : data.toLowerCase().includes(search);
-    }).map((dept) => (
-      <div
-        key={dept}
-        className="bg-white p-4 rounded-lg shadow-md flex flex-col justify-between"
-        style={{ minWidth: "150px", minHeight: "100px" }}
-      >
-        <h2 className="font-bold text-lg text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">{dept}</h2>
-        <p className="font-bold bg-white border-b dark:bg-gray-800 dark:border-gray-700 text-base">{data[dept]}</p>
-      </div>
-    ));
-  };
-
-  const renderTable = (data) => {
+  
+  const renderTable = (productionData, pendingData) => {
     return (
       <div className="bg-white p-4 rounded-lg shadow-md flex flex-col justify-between">
-        <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-          <thead className="text-base text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <table className="w-full text-sm text-left text-gray-700">
+          <thead className="text-base text-gray-700 uppercase bg-gray-100">
             <tr>
               <th scope="col" className="px-6 py-3">
                 Warehouse
               </th>
               <th scope="col" className="px-6 py-3">
-                {activeTab} Qty
+                Production Qty
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Pending Qty
               </th>
             </tr>
           </thead>
           <tbody>
-            {Object.keys(data).filter((data)=>{
-              return search.toLowerCase() === ''?data : data.toLowerCase().includes(search.toLowerCase());
+            {Object.keys(productionData).filter((dept) => {
+              return search.toLowerCase() === '' ? dept : dept.toLowerCase().includes(search.toLowerCase());
             }).map((dept) => (
               <tr
                 key={dept}
-                className="font-bold bg-white border-b dark:bg-gray-800 dark:border-gray-700 text-sm"
+                className="bg-white border-b text-gray-700"
               >
                 <td className="px-6 py-3">{dept}</td>
-                <td className="px-6 py-3">{data[dept]}</td>
+                <td className="px-6 py-3">{productionData[dept]}</td>
+                <td className="px-6 py-3">{pendingData[dept] || 0}</td>
               </tr>
             ))}
           </tbody>
@@ -127,11 +122,44 @@ function Dashboard() {
     );
   };
   
+  const renderCards = (productionData, pendingData) => {
+    const allowedDepartments = [
+      'CAD', 'CAM', 'MFD', 'MP', 'DIE', 'WAX', 'CASTING', 'SEPERATION',
+      'ASSY', 'BP', 'CORR', 'SETTING', 'BUFFING', 'TEXTURING', 'QC', 'FI BOM', 'PHOTO'
+    ];
+  
+    const regex = new RegExp(`(${allowedDepartments.join('|')})$`, 'i');
+  
+    return Object.keys(productionData).filter((dept) => {
+      return regex.test(dept) && (search.toLowerCase() === '' ? dept : dept.toLowerCase().includes(search.toLowerCase()));
+    }).map((dept) => (
+      <Link to={`/department/${dept}`} key={dept}>
+        <div
+          className="bg-white p-4 rounded-lg shadow-md flex flex-col justify-between"
+          style={{ minWidth: "150px", minHeight: "100px" }}
+        >
+          <h2 className="font-bold text-lg text-gray-700 uppercase bg-gray-50 dark:bg-slate-200 dark:text-gray-700 text-center rounded-md shadow-md">{dept}</h2>
+          <div className="flex justify-between mt-3">
+            <div className="bg-[#C1FBCE] rounded-lg shadow-md border border-[#00ff379e]">
+              <p className="font-normal text-sm text-center text-[#1C6C00] p-2">
+                Production: <span className="font-bold text-gray-600">{productionData[dept]}</span>
+              </p>
+            </div>
+            <div className="bg-[#fbf9c19d] rounded-lg shadow-md border border-[#F1EA1C]">
+              <p className="font-normal text-sm text-center text-[#9F9F00] p-2">
+                Pending: <span className="font-bold text-gray-600">{pendingData[dept]}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </Link>
+    ));
+  };
   
   return (
     <div className="min-h-screen flex bg-gray-100">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r hidden md:block">
+      <aside className="w-40 bg-white border-r hidden md:block">
         <div className="p-4">
           <h1 className="text-xl font-bold">Dashboard</h1>
         </div>
@@ -165,57 +193,59 @@ function Dashboard() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-        {/* Navbar */}
-        <nav className="bg-white p-4 shadow flex items-center justify-start">
-          <button
-            onClick={() => setActiveTab("Production Data")}
-            className={`px-4 py-2 rounded-md mr-2 ${
-              activeTab === "Production Data" ? "bg-gray-300" : "bg-white"
-            }`}
-          >
-            Production Data
-          </button>
-          <button
-            onClick={() => setActiveTab("Pending Data")}
-            className={`px-4 py-2 rounded-md ${
-              activeTab === "Pending Data" ? "bg-gray-300" : "bg-white"
-            }`}
-          >
-            Pending Data
-          </button>
-        </nav>
-
-        {/* Content */}
         <main className="flex-1 p-6 overflow-y-auto">
-          <header className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold">{activeTab} Dashboard</h1>
-            <div className="flex items-center gap-5">
-              <button
-                className="bg-gray-300 px-4 py-2 rounded-md"
-                onClick={() => setviewData((prev)=>!prev)}
-              >
-                {viewData ? 'View Cards':'View in Table'}
-              </button>
+          <header className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10">
+            <div>
+              <h1 className="text-lg font-bold">
+                Production <span className="text-blue-500">Performance</span> Dashboard
+              </h1>
+              <p className="text-sm text-gray-500">Welcome to Automated Dash View</p>
+            </div>
+            <div className="flex items-center gap-4 m-0">
               <input
                 type="search"
-                placeholder={viewData ? 'Search in Table':'Search Card'}
+                placeholder="Search"
                 className="p-2 border rounded-md"
-                onChange={(e)=>setSearch(e.target.value)}
+                onChange={(e) => setSearch(e.target.value)}
               />
+              <BsMoon className="text-gray-600 cursor-pointer" size={20} />
+              <BsGear className="text-gray-600 cursor-pointer" size={20} />
             </div>
+            <div className="transform -translate-x-1/2 z-10 mb-4">
+        <button
+          onClick={() => setviewData(!viewData)}
+          className="p-3 bg-gray-700 rounded-full text-white shadow-lg"
+        >
+          {viewData ? <ImTable2 size={24} /> : <IoCardOutline size={24} />}
+        </button>
+        <h1></h1>
+      </div>
           </header>
+{/* 
+          <div
+            className={`${
+              viewData ? "grid-cols-1" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+            } grid gap-4`}
+          >
+            {renderCards(departmentData, pendingDepartmentData)}
+          </div> */}
 
+          
           {/* Department Cards */}
-            <div className={`${viewData ? 'relative overflow-x-auto':'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4'}`}>
-              {viewData
-                ? renderTable(activeTab === "Production Data" ? departmentData : pendingDepartmentData)
-                : renderCards(activeTab === "Production Data" ? departmentData : pendingDepartmentData)}
-            </div>
+          <div className={`${viewData ? 'relative overflow-x-auto':'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4'}`}>
+  {viewData
+    ? renderTable(departmentData, pendingDepartmentData)
+    : renderCards(departmentData, pendingDepartmentData)}
+</div>
 
         </main>
       </div>
+
+      {/* View Switcher */}
+      
     </div>
   );
 }
 
 export default Dashboard;
+
