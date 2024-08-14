@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ImTable2 } from 'react-icons/im';
-import { IoCardOutline } from "react-icons/io5";
-import { BsSearch, BsMoon, BsGear } from "react-icons/bs";
-
+import Header from "./Header";
+import Sidebar from "./Sidebar";
 function Dashboard() {
   const [productionData, setProductionData] = useState([]);
   const [pendingData, setPendingData] = useState([]);
@@ -88,17 +86,17 @@ function Dashboard() {
   
   const renderTable = (productionData, pendingData) => {
     return (
-      <div className="bg-white p-4 rounded-lg shadow-md flex flex-col justify-between">
+      <div className="bg-white p-2 rounded-lg shadow-md flex flex-col justify-between m-0">
         <table className="w-full text-sm text-left text-gray-700">
           <thead className="text-base text-gray-700 uppercase bg-gray-100">
             <tr>
-              <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-2 py-3">
                 Warehouse
               </th>
-              <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-2 py-3">
                 Production Qty
               </th>
-              <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-2 py-3">
                 Pending Qty
               </th>
             </tr>
@@ -157,44 +155,16 @@ function Dashboard() {
   };
   
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex bg-gray-100 w-[100%]">
       {/* Sidebar */}
-      <aside className="w-40 bg-white border-r hidden md:block">
-        <div className="p-4">
-          <h1 className="text-xl font-bold">Dashboard</h1>
-        </div>
-        <nav className="mt-10">
-          <a
-            href="#"
-            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-100 hover:text-blue-500"
-          >
-            Home
-          </a>
-          <a
-            href="#"
-            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-100 hover:text-blue-500"
-          >
-            Projects
-          </a>
-          <a
-            href="#"
-            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-100 hover:text-blue-500"
-          >
-            Task Board
-          </a>
-          <a
-            href="#"
-            className="block py-2.5 px-4 rounded transition duration-200 hover:bg-blue-100 hover:text-blue-500"
-          >
-            Settings
-          </a>
-        </nav>
-      </aside>
-
+     
+    <Sidebar />
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         <main className="flex-1 p-6 overflow-y-auto">
-          <header className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10">
+        <Header onSearch = {setSearch} onView = {setviewData} view = {viewData}/>
+
+          {/* <header className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10">
             <div>
               <h1 className="text-lg font-bold">
                 Production <span className="text-blue-500">Performance</span> Dashboard
@@ -220,7 +190,7 @@ function Dashboard() {
         </button>
         <h1></h1>
       </div>
-          </header>
+          </header> */}
 {/* 
           <div
             className={`${
