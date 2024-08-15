@@ -7,7 +7,7 @@ function Projects() {
   const [pendingData, setPendingData] = useState([]);
   const [departmentCounts, setDepartmentCounts] = useState({});
   const [activeTab, setActiveTab] = useState("");
-
+    const [spin, setSpin] = useState(false);
   const departmentsToShow = [
     "CASTING", "CHAIN", "CHAIN MIX", "DIAMOND", "DIRECT CASTING", "EKTARA",
     "ELECTRO FORMING", "EMERALD GEMSTONE JEW", "FUSION", "HAND MADE", "ILA BANGLES",
@@ -52,6 +52,10 @@ function Projects() {
   };
 
   const handleTabClick = (dept) => {
+    setSpin(true);
+    setTimeout(()=>{
+      setSpin(false);
+    },700)
     setActiveTab(dept);
   };
 
@@ -61,7 +65,7 @@ function Projects() {
       .map((item, index) => (
         <div key={index} className="bg-white shadow-md rounded-lg p-4 m-2 w-full">
           <h3 className="text-md font-semibold">Department: {isPending ? item.todept : item.fromdept1}</h3>
-          <p className="text-sm">Description: {isPending ? item.designspec1 : item.description1}</p>
+          <p className="text-sm text-slate-500">Description: {isPending ? item.designspec1 : item.description1}</p>
         </div>
       ));
   };
@@ -70,11 +74,21 @@ function Projects() {
 
   return (
     <div className="min-h-screen flex bg-gray-100">
+        {spin&&
+      <div className={`max-w-full bg-opacity-35 max-h-full fixed px-96 2xl:pr-px inset-0 z-50 bg-gray-500 `}>
+      <div className="flex gap-2 max-h-20 w-20 items-center justify-center relative top-72 -left-52 md:top-64 md:left-36 animate-bounce rounded-lg 2xl:left-[35%] lg:left-[45%] 2xl:top-80
+          3xl:left-96">
+      <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
+      <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
+      <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
+      </div>
+  </div>
+      }
       <Sidebar />
       <main className="flex-1 p-6 overflow-y-auto">
         <Header />
         <div className="flex flex-col flex-grow p-4">
-          <div className="flex flex-wrap justify-around space-x-4">
+          <div className="flex flex-wrap justify-around space-x-2">
             {departmentsToShow.map(dept => (
               departmentCounts[dept] && (
                 <button
@@ -91,7 +105,7 @@ function Projects() {
           <div className="mt-6">
             <h2 className="text-xl font-bold mb-4">Production Data for {activeTab}</h2>
             {hasData(productionData.filter(item => item.pltcode.toUpperCase() === activeTab)) ? (
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {renderCards(productionData)}
               </div>
             ) : (
@@ -103,7 +117,7 @@ function Projects() {
 
             <h2 className="text-xl font-bold mt-8 mb-4">Pending Data for {activeTab}</h2>
             {hasData(pendingData.filter(item => item.pltcoded1.toUpperCase() === activeTab)) ? (
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {renderCards(pendingData, true)}
               </div>
             ) : (
