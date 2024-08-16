@@ -19,10 +19,11 @@ function Sidebar() {
   const navigate_projects = ()=>{
     setSpin(true);
     setTimeout(()=>{
-      navigate('/projects');
       setSpin(false);
     },700)
     
+    navigate('/projects');
+
   }
   return (
     <div>

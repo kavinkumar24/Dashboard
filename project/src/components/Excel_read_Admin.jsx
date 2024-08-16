@@ -125,33 +125,64 @@ function Dashboard() {
       'CAD', 'CAM', 'MFD', 'MP', 'DIE', 'WAX', 'CASTING', 'SEPERATION',
       'ASSY', 'BP', 'CORR', 'SETTING', 'BUFFING', 'TEXTURING', 'QC', 'FI BOM', 'PHOTO'
     ];
+    
   
     const regex = new RegExp(`(${allowedDepartments.join('|')})$`, 'i');
-  
-    return Object.keys(productionData).filter((dept) => {
-      return regex.test(dept) && (search.toLowerCase() === '' ? dept : dept.toLowerCase().includes(search.toLowerCase()));
-    }).map((dept) => (
-      <Link to={`/department/${dept}`} key={dept}>
-        <div
-          className="bg-white p-4 rounded-lg shadow-md flex flex-col justify-between"
-          style={{ minWidth: "150px", minHeight: "100px" }}
-        >
-          <h2 className="font-bold text-lg text-gray-700 uppercase bg-gray-50 dark:bg-slate-200 dark:text-gray-700 text-center rounded-md shadow-md">{dept}</h2>
-          <div className="flex justify-between mt-3">
-            <div className="bg-[#C1FBCE] rounded-lg shadow-md border border-[#00ff379e]">
-              <p className="font-normal text-sm text-center text-[#1C6C00] p-2">
-                Production: <span className="font-bold text-gray-600">{productionData[dept]}</span>
-              </p>
-            </div>
-            <div className="bg-[#fbf9c19d] rounded-lg shadow-md border border-[#F1EA1C]">
-              <p className="font-normal text-sm text-center text-[#9F9F00] p-2">
-                Pending: <span className="font-bold text-gray-600">{pendingData[dept]}</span>
-              </p>
-            </div>
-          </div>
+
+return Object.keys(productionData).filter((dept) => {
+  return regex.test(dept) && (search.toLowerCase() === '' ? dept : dept.toLowerCase().includes(search.toLowerCase()));
+}).map((dept) => {
+  const productionQty = productionData[dept];
+  const pendingQty = pendingData[dept] || 0;
+  const efficiency = ((productionQty / (productionQty + pendingQty)) * 100).toFixed(2);
+
+  return(
+  <Link to={`/department/${dept}`} key={dept}>
+    <div
+      className="bg-white p-4 rounded-lg shadow-md flex flex-col justify-between"
+      style={{ minWidth: "150px", minHeight: "180px" }}
+    >
+      <h2 className="font-bold text-lg text-gray-700 uppercase bg-gray-50 dark:bg-slate-200 dark:text-gray-700 text-center rounded-md shadow-md">
+        {dept}
+      </h2>
+      
+      <div className="flex justify-between mt-3">
+        <div className="bg-[#c1fbce92] rounded-lg shadow-md border border-[#00ff379e] w-full mr-1">
+          <p className="font-normal text-sm text-center text-[#1C6C00] p-2">
+            Production: <span className="font-bold text-gray-600">{productionData[dept]}</span>
+          </p>
         </div>
-      </Link>
-    ));
+        <div className="bg-[#fbf9c19d] rounded-lg shadow-md border border-[#F1EA1C] w-full ml-1"> 
+          <p className="font-normal text-sm text-center text-[#9F9F00] p-2">
+            Pending: <span className="font-bold text-gray-600">{pendingData[dept]}</span>
+          </p>
+        </div>
+      </div>
+
+      <div className="flex justify-between mt-3">
+        <div className="bg-[#fbc6c191] rounded-lg shadow-md border border-[#ff00009e] w-[80%] mr-1 h-8"> 
+          <p className="font-normal text-sm text-center text-[#6c0000] p-1">
+            Target: <span className="font-bold text-gray-600">100</span>
+          </p>
+        </div>
+        <div className="bg-cyan-50 rounded-lg shadow-md border border-cyan-500 w-[80%] ml-1 h-8"> 
+          <p className="font-normal text-sm text-center text-cyan p-1">
+            Avg Prod: <span className="font-bold text-gray-600">{pendingData[dept]}</span>
+          </p>
+        </div>
+      </div>
+
+      <div className="flex mt-3 justify-center">
+        <div className="bg-fuchsia-100 rounded-lg shadow-md border border-fuchsia-500 w-full"> 
+          <p className="font-normal text-sm text-center text-fuchsia-950 p-2">
+            Efficiency: <span className="font-bold text-gray-600">{efficiency}</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </Link>
+)});
+
   };
   
   return (
