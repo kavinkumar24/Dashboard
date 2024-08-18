@@ -3,13 +3,18 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { useRef } from 'react';
 function Projects() {
+  
   const [productionData, setProductionData] = useState([]);
   const [pendingData, setPendingData] = useState([]);
   const [departmentCounts, setDepartmentCounts] = useState({});
   const [activeTab, setActiveTab] = useState("");
   const [spin, setSpin] = useState(false);
   const [skeleton, setSkeleton] = useState(true);
+  const [search, setSearch] = useState('');
   
+  const[theme, setTheme] = useState(()=>{
+    return localStorage.getItem('theme') || 'light';
+  });
   const departmentsToShow = [
     "CASTING", "CHAIN", "CHAIN MIX", "DIAMOND", "DIRECT CASTING", "EKTARA",
     "ELECTRO FORMING", "EMERALD GEMSTONE JEW", "FUSION", "HAND MADE", "ILA BANGLES",
@@ -18,10 +23,24 @@ function Projects() {
   ];
 
   useEffect(() => {
+    if(search!==''){
+      setTimeout(() => {
+        if (sectionRef.current) {
+          sectionRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 750)
+    }
     const fetchData = async () => {
       try {
         const productionResponse = await fetch("http://localhost:8081/production_data");
         const productionData = await productionResponse.json();
+
+        // const filteredProductionData = productionData.filter(item => {
+        //   return search.toLowerCase()=== '' ? departmentsToShow.includes(item.pltcode.toUpperCase()) :
+        //   departmentsToShow.includes(item.pltcode.toUpperCase().includes(search.toLowerCase()));
+        // });
+        
+
         const filteredProductionData = productionData.filter(item => departmentsToShow.includes(item.pltcode.toUpperCase()));
         setProductionData(filteredProductionData);
         const productionCounts = countDepartments(filteredProductionData);
@@ -55,7 +74,7 @@ function Projects() {
     }, 2000);
     fetchData();
 
-  }, []);
+  }, [search]);
 
   const countDepartments = (data, isPending = false) => {
     const departmentCounts = {};
@@ -132,9 +151,9 @@ function Projects() {
           </div>
         </div>
       }
-      <Sidebar />
+      <Sidebar theme={theme}/>
       <main className="flex-1 p-6 overflow-y-auto">
-        <Header />
+        <Header onSearch = {setSearch} theme = {theme} dark = {setTheme} />
         <div className="flex flex-col flex-grow p-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
             {departmentsToShow.map((dept) => (
