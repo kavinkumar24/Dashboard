@@ -38,6 +38,7 @@ function DepartmentDetail() {
         const filtersearch = filteredData.filter(dept => 
           search.toLowerCase() === '' ? dept : dept.todept.toLowerCase().includes(search.toLowerCase())
         );
+        
         setPendingData(filtersearch);
       } catch (err) {
         console.log("Error fetching pending data:", err);
@@ -75,17 +76,17 @@ function DepartmentDetail() {
       {Object.entries(groupedData).map(([dept, { quantity, pltcodes }], index) => (
         <div
           key={index}
-          className="bg-white p-4 rounded-lg shadow-md border-t-4 border-indigo-300 relative"
+          className={`p-4 rounded-lg shadow-md border-t-4 border-indigo-300 relative ${theme==='light'?'text-gray-800 bg-white':'text-gray-300 bg-slate-600'}`}
           style={{ minWidth: "150px", minHeight: "100px" }}
         >
-          <div className='bg-slate-100 p-2 mt-4 rounded-lg'>
+          <div className={` p-2 mt-4 rounded-lg ${theme==='light'?'bg-slate-100':'bg-slate-500'}`}>
           <h3 className="font-bold text-lg text-gray-700">{dept}</h3>
           <p className="text-gray-600">Total Quantity: {quantity}</p>
           </div>
           <div className="grid grid-cols-2 gap-2 mt-2">
             {Object.entries(pltcodes).map(([pltcode, count]) => (
-              <div key={pltcode} className="flex items-center justify-between bg-slate-200 shadow-lg 
-              shadow-slate-50 p-1 rounded-md border border-slate-300">
+              <div key={pltcode} className={`flex items-center justify-between bg-slate-200 shadow-lg 
+              shadow-slate-50 p-1 rounded-md border borderx-slate-300`}>
                 <span className="text-gray-800 font-medium">{toTitleCase(pltcode)}</span>
                 <span className="text-gray-600">{count}</span>
               </div>
@@ -105,12 +106,12 @@ function DepartmentDetail() {
   
 
   return (
-    <div className="min-h-screen flex bg-gray-100 w-[100%]">
+    <div className={`min-h-screen flex w-[100%] ${theme==='light'?'bg-gray-100':'bg-gray-800'}`}>
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <main className="flex-1 p-6 overflow-y-auto">
           <Header onSearch={setSearch}theme = {theme} dark = {setTheme} />
-          <h2 className="font-bold text-xl mb-4">Related Departments for {deptId}</h2>
+          <h2 className={`font-bold text-xl mb-4 ${theme==='light'?'text-gray-900':'text-gray-400'}`}>Related Departments for {deptId}</h2>
 
           {type === 'production' && (
             <div className="mb-8">

@@ -27,7 +27,7 @@ function Header({ onSearch, onView, view ,theme,dark}) {
             <input
               type="search"
               placeholder="Search"
-              className={`p-2 border rounded-md shadow-md focus:outline-none focus:ring-1 focus:ring-zinc-300  ${theme==='light'? 'bg-white text-black':'bg-slate-800 text-gray-300  border-indigo-950'} `}
+              className={`p-2 border rounded-md shadow-md focus:outline-none focus:ring-1 focus:ring-zinc-300  ${theme==='light'? 'bg-white text-black':'bg-gray-900 text-gray-300  border-indigo-950'} `} 
               onChange={(e) => onSearch(e.target.value)}
             />
             <div className='flex text-gray-300 mt-4'>
@@ -35,7 +35,7 @@ function Header({ onSearch, onView, view ,theme,dark}) {
             </div>
           </div>
           <button onClick={handle_theme}>
-          {theme==='light'?<BsMoon className="text-gray-600 cursor-pointer" size={20}  />:<BsSun className="text-gray-400 cursor-pointer" size={20}  />}
+          {theme==='light'?<BsMoon title="dark" className="text-gray-600 cursor-pointer" size={20}   />:<BsSun title="light" className="text-gray-400 cursor-pointer" size={20}  />}
           </button>
           <button
             onClick={() => onView(!view)}

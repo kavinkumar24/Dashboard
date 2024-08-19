@@ -165,8 +165,9 @@ function Dashboard() {
 
       style={{ minWidth: "150px", minHeight: "180px" }}
     >
-      <h2 className={`font-bold text-lg text-gray-700 uppercase dark:text-gray-700 text-center rounded-md shadow-md ${theme==='light'?'bg-gray-200':
-      'bg-slate-900 dark:text-gray-500'
+      <h2 className={`font-bold text-lg  uppercase text-center rounded-md shadow-md 
+      ${theme==='light'?'bg-gray-200 text-gray-700':
+      'bg-slate-900 text-gray-100'
       } `}>
         {dept}
       </h2>
@@ -176,7 +177,7 @@ function Dashboard() {
     <div className={`rounded-lg shadow-md border w-[100%] mr-1
       ${theme === 'light'
         ? 'bg-[#c1fbce92] border-[#00ff379e]'
-        : 'bg-gray-800 border-[#00ff379e] text-green-300'}
+        : 'bg-gray-800 border-[#00ff379e] text-green-300  shadow-xl shadow-gray-700 hover:shadow-none'}
       `}>
       <p className="font-normal text-sm text-center p-2">
         Production: <span className="font-bold">{productionData[dept]}</span>
@@ -187,7 +188,7 @@ function Dashboard() {
     <div className={`rounded-lg shadow-md border w-[100%] ml-1
       ${theme === 'light'
         ? 'bg-[#fbf9c19d] border-[#F1EA1C]'
-        : 'bg-gray-800 border-yellow-600 text-yellow-300'}
+        : 'bg-gray-800 border-yellow-600 text-yellow-300 shadow-xl shadow-gray-700 hover:shadow-none'}
       `}>
       <p className="font-normal text-sm text-center p-2">
         Pending: <span className="font-bold">{pendingData[dept]}</span>
@@ -238,7 +239,7 @@ function Dashboard() {
   
   return (
     <div className={` w-[100%] min-h-screen flex ${theme==='light'?'bg-gray-100':
-    'bg-slate-900'} `}>
+    'bg-gray-800'} `}>
       {/* Sidebar */}
      
     <Sidebar theme={theme} />
