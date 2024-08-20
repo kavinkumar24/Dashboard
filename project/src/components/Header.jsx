@@ -27,10 +27,10 @@ function Header({ onSearch, onView, view ,theme,dark}) {
             <input
               type="search"
               placeholder="Search"
-              className={`p-2 border rounded-md shadow-md focus:outline-none focus:ring-1 focus:ring-zinc-300  ${theme==='light'? 'bg-white text-black':'bg-gray-900 text-gray-300  border-indigo-950'} `} 
+              className={`p-2 border rounded-md shadow-md focus:outline-none focus:ring-1   ${theme==='light'? 'bg-white text-black focus:ring-zinc-300':'bg-gray-900 text-gray-300  border-indigo-950 focus:ring-zinc-700'} `} 
               onChange={(e) => onSearch(e.target.value)}
             />
-            <div className='flex text-gray-300 mt-4'>
+            <div className={`flex mt-4 ${theme==='light'? 'text-gray-300':'text-gray-500'}`}>
               <ImSearch className='right-6 relative' />
             </div>
           </div>
