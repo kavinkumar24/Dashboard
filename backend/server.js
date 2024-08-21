@@ -136,6 +136,10 @@ const departmentMappings = {
       from:['U1DLE'],
       to:['U1PDD2-TXT','U1SAM-TEX']
    },
+   'BUF':{
+      from:['U1FUL1-BUF','U1FU-TEXT','U1FUL1-ASY','U1FUL1-COR'],
+      to:['U1GS','U1PDD2-BUF','U1SAM-BUF','U1PDD2-TXT','U1SAM-TEX']
+   }
    
 };
 app.get('/departmentMappings', (req, res) => {

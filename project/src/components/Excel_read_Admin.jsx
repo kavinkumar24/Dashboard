@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from "react";
-import { Link,useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 function Dashboard() {
   const [productionData, setProductionData] = useState([]);
-  const [pendingData, setPendingData] = useState([]);
+  // const [pendingData, setPendingData] = useState([]);
   const [departmentData, setDepartmentData] = useState({});
-  const[avg_prod,setAvg_prod] = useState(0);
+  // const[avg_prod,setAvg_prod] = useState(0);
   const [pendingDepartmentData, setPendingDepartmentData] = useState({});
   const [viewData, setviewData] = useState(false);
   const [search, setSearch] = useState('');
-  const navigate = useNavigate(); 
+  // const navigate = useNavigate(); 
   const[theme, setTheme] = useState(()=>{
     return localStorage.getItem('theme') || 'light';
   });
@@ -129,7 +129,7 @@ function Dashboard() {
           
           <div className="flex mt-3 space-x-2 justify-between">
             <Link to={`/department/${dept}/production`} className="w-1/2">
-              <div className={`rounded-lg shadow-md border w-[100%] mr-1
+              <div className={`rounded-lg shadow-md border w-[100%] mr-1 hover:scale-95
                 ${theme === 'light'
                   ? 'bg-[#c1fbce92] border-[#00ff379e]'
                   : 'bg-gray-800 border-[#0e902a] text-green-300 shadow-xl shadow-gray-700 hover:shadow-none'}`}>
@@ -139,7 +139,7 @@ function Dashboard() {
               </div>
             </Link>
             <Link to={`/department/${dept}/pending`} className="w-1/2">
-              <div className={`rounded-lg shadow-md border w-[100%] ml-1
+              <div className={`rounded-lg shadow-md border w-[100%] ml-1 hover:scale-95
                 ${theme === 'light'
                   ? 'bg-[#feffd1] border-[#e5ff00]'
                   : 'bg-gray-800 border-[#7d8808] text-amber-300 shadow-xl shadow-gray-700 hover:shadow-none'}`}>

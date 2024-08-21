@@ -12,10 +12,13 @@ function DepartmentDetail() {
   const [selectedDept, setSelectedDept] = useState(deptId || '');
   const [departmentMappings, setDepartmentMappings] = useState({});
   const [dataView, setDataView] = useState([]);
-
+  const[load,setLoad] = useState(true);
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
+    setTimeout(()=>{
+      setLoad(false);
+    },2000)
   }, [theme]);
   useEffect(() => {
     fetchDepartmentMappings();
@@ -30,35 +33,47 @@ function DepartmentDetail() {
   }, [deptId, type, search, selectedDept]);
 
   useEffect(() => {
-  if (selectedDept && departmentMappings[selectedDept]) {
-    const fromDepartments = departmentMappings[selectedDept].from || [];
-    const dataToRender = type === 'production' ? productionData : pendingData;
-
-    if (Array.isArray(dataToRender)) {
-      let filteredData;
-
-      if (type === 'production') {
-        filteredData = dataToRender.filter(item => 
-          item.fromdept1 && fromDepartments.includes(item.fromdept1.toUpperCase()) &&
-          (search.toLowerCase() === '' || item.fromdept1.toLowerCase().includes(search.toLowerCase()))
-        );
-      } else if (type === 'pending') {
-        filteredData = dataToRender.filter(item => 
-          item.todept && fromDepartments.includes(item.todept.toUpperCase()) &&
-          (search.toLowerCase() === '' || item.todept.toLowerCase().includes(search.toLowerCase()))
-        );
+    let groupedData;
+  
+    if (selectedDept && departmentMappings[selectedDept]) {
+      const { from = [], to = [] } = departmentMappings[selectedDept];
+      const dataToRender = type === 'production' ? productionData : pendingData;
+  
+      if (Array.isArray(dataToRender)) {
+        let filteredData;
+  
+        if (type === 'production') {
+          filteredData = dataToRender
+            .filter(item => 
+              from.includes(item.fromdept1?.toUpperCase()) && 
+              to.includes(item.todept1?.toUpperCase()) &&
+              (search.toLowerCase() === '' || 
+               item.fromdept1.toLowerCase().includes(search.toLowerCase()) || 
+               item.todept1.toLowerCase().includes(search.toLowerCase()))
+            );
+  
+          console.log("Filtered Production Data:", filteredData);
+          groupedData = groupDataByDept_production(filteredData);
+  
+        } else if (type === 'pending') {
+            
+          filteredData = dataToRender.filter(item => 
+            item.todept && from.includes(item.todept.toUpperCase()) &&
+            (search.toLowerCase() === '' || item.todept.toLowerCase().includes(search.toLowerCase()))
+          );
+  
+          console.log("Filtered Pending Data:", filteredData);
+          groupedData = groupDataByDept(filteredData);
+        }
+  
+        setDataView(groupedData);
+      } else {
+        console.error('Data to render is not an array:', dataToRender);
+        setDataView({});
       }
-
-      const groupedData = groupDataByDept(filteredData);
-      console.log(groupedData);
-      setDataView(groupedData);
-    } else {
-      console.error('Data to render is not an array:', dataToRender);
-      setDataView({});
     }
-  }
-}, [selectedDept, departmentMappings, productionData, pendingData, type, search]);
-
+  }, [selectedDept, departmentMappings, productionData, pendingData, type, search]);
+  
 
   const fetchDepartmentMappings = async () => {
     try {
@@ -88,6 +103,31 @@ function DepartmentDetail() {
       }
     } catch (err) {
       console.error(`Error fetching ${dataType} data:`, err);
+    }
+  };
+
+  const groupDataByDept_production = (data) => {
+    if (Array.isArray(data)) {
+      return data.reduce((acc, item) => {
+        const dept = (item.fromdept1 || item.todept || 'Unknown').toUpperCase();
+        const pltcode = item.pltcode ||item.pltcoded1|| 'Unknown';
+  
+        if (!acc[dept]) {
+          acc[dept] = { quantity: 0, pltcodes: {} };
+        }
+  
+        acc[dept].quantity += Number(item.pdscwqty1 || item.jcpdscwqty1) || 0;
+  
+        if (!acc[dept].pltcodes[pltcode]) {
+          acc[dept].pltcodes[pltcode] = 0;
+        }
+        acc[dept].pltcodes[pltcode] += 1;
+  
+        return acc;
+      }, {});
+    } else {
+      console.error('Invalid data format for grouping:', data);
+      return {};
     }
   };
 
@@ -166,7 +206,26 @@ function DepartmentDetail() {
   
   
   return (
-    <div className={`min-h-screen flex w-full ${theme === 'light' ? 'bg-gray-100' : 'bg-gray-800'}`}>
+    <div className={`min-h-screen overflow-hidden flex w-[100%] ${theme === 'light' ? 'bg-gray-100' : 'bg-gray-800'}`}>
+          
+   {load&& <div className={`border fixed shadow rounded-md p-4 max-w-full inset-0 z-50 w-full md:w-[86%]  ml-0 md:ml-44 mx-auto ${theme === 'dark' ? 'bg-gray-800 border-blue-300 ' : 'bg-white border-gray-200'} sm:ml-0`} >
+    <div className="animate-pulse flex space-x-4 mt-16">
+  <div className={`rounded-full ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'} h-10 w-10`}></div>
+  <div className="flex-1 space-y-6 py-1">
+    <div className={`h-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'} rounded`}></div>
+    <div className="space-y-3">
+      <div className="grid grid-cols-3 gap-4">
+        <div className={`h-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'} rounded col-span-2`}></div>
+        <div className={`h-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'} rounded col-span-1`}></div>
+      </div>
+      <div className={`h-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'} rounded`}></div>
+    </div>
+    
+  </div>
+</div>
+
+    </div>
+}
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <main className="flex-1 p-6 overflow-y-auto">
