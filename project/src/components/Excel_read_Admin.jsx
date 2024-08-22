@@ -129,9 +129,9 @@ function Dashboard() {
           
           <div className="flex mt-3 space-x-2 justify-between">
             <Link to={`/department/${dept}/production`} className="w-1/2">
-              <div className={`rounded-lg shadow-md border w-[100%] mr-1 hover:scale-95
+              <div className={`rounded-lg shadow-md  border-solid border  w-[100%] mr-1 hover:scale-95
                 ${theme === 'light'
-                  ? 'bg-[#c1fbce92] border-[#00ff379e]'
+                  ? 'bg-[#c1fbce92] border-[rgba(0,255,55,0.62)]'
                   : 'bg-gray-800 border-[#0e902a] text-green-300 shadow-xl shadow-gray-700 hover:shadow-none'}`}>
                 <p className="font-normal text-sm text-center p-2">
                   Production: <span className="font-bold">{productionQty}</span>
@@ -139,7 +139,7 @@ function Dashboard() {
               </div>
             </Link>
             <Link to={`/department/${dept}/pending`} className="w-1/2">
-              <div className={`rounded-lg shadow-md border w-[100%] ml-1 hover:scale-95
+              <div className={`rounded-lg shadow-md border-solid border  w-[100%] ml-1 hover:scale-95
                 ${theme === 'light'
                   ? 'bg-[#feffd1] border-[#e5ff00]'
                   : 'bg-gray-800 border-[#7d8808] text-amber-300 shadow-xl shadow-gray-700 hover:shadow-none'}`}>
@@ -151,16 +151,16 @@ function Dashboard() {
           </div>
   
           <div className="flex justify-between mt-3">
-            <div className={`rounded-lg shadow-md border w-[80%] mr-1 h-8
+            <div className={`rounded-lg shadow-md  border-solid border  w-[80%] mr-1 h-7
               ${theme === 'light'
                 ? 'bg-[#fbc6c191] border-[#ff00009e]'
                 : 'bg-gray-800 border-[#7a0e0e] text-red-300'}
               `}>
-              <p className="font-normal text-sm text-center p-1">
+              <p className="font-normal text-sm text-center py-1">
                 Target: <span className="font-bold">100</span>
               </p>
             </div>
-            <div className={`rounded-lg shadow-md border w-[80%] ml-1 h-8
+            <div className={`rounded-lg shadow-md  border-solid border  w-[80%] ml-1 h-7
               ${theme === 'light'
                 ? 'bg-cyan-50 border-cyan-500'
                 : 'bg-gray-800 border-cyan-700 text-cyan-300'}
@@ -172,7 +172,7 @@ function Dashboard() {
           </div>
   
           <div className="flex mt-3 justify-center">
-            <div className={`rounded-lg shadow-md border w-full
+            <div className={`rounded-lg shadow-md  border-solid border  w-full
               ${theme === 'light'
                 ? 'bg-fuchsia-100 border-fuchsia-500'
                 : 'bg-gray-800 border-fuchsia-700 text-fuchsia-300'}
@@ -190,58 +190,19 @@ function Dashboard() {
 
  
   return (
-    <div className={` w-[100%] min-h-screen flex ${theme==='light'?'bg-gray-100':
+    <div className={` w-[100%] min-h-screen flex overflow-auto ${theme==='light'?'bg-gray-100':
     'bg-gray-800'} `}>
       {/* Sidebar */}
-     
     <Sidebar theme={theme} />
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         <main className="flex-1 p-6 overflow-y-auto">
         <Header onSearch = {setSearch} onView = {setviewData} view = {viewData} theme = {theme} dark = {setTheme}/>
-
-          {/* <header className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10">
-            <div>
-              <h1 className="text-lg font-bold">
-                Production <span className="text-blue-500">Performance</span> Dashboard
-              </h1>
-              <p className="text-sm text-gray-500">Welcome to Automated Dash View</p>
-            </div>
-            <div className="flex items-center gap-4 m-0">
-              <input
-                type="search"
-                placeholder="Search"
-                className="p-2 border rounded-md"
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <BsMoon className="text-gray-600 cursor-pointer" size={20} />
-              <BsGear className="text-gray-600 cursor-pointer" size={20} />
-            </div>
-            <div className="transform -translate-x-1/2 z-10 mb-4">
-        <button
-          onClick={() => setviewData(!viewData)}
-          className="p-3 bg-gray-700 rounded-full text-white shadow-lg"
-        >
-          {viewData ? <ImTable2 size={24} /> : <IoCardOutline size={24} />}
-        </button>
-        <h1></h1>
-      </div>
-          </header> */}
-{/* 
-          <div
-            className={`${
-              viewData ? "grid-cols-1" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-            } grid gap-4`}
-          >
-            {renderCards(departmentData, pendingDepartmentData)}
-          </div> */}
-
-          
           {/* Department Cards */}
-          <div className={`${viewData ? 'relative overflow-x-auto':'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4'}`}>
-  {viewData
-    ? renderTable(departmentData, pendingDepartmentData)
-    : renderCards(departmentData, pendingDepartmentData)}
+          <div className={`${viewData ? 'relative overflow-x-auto':'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-3'}`}>
+        {viewData
+          ? renderTable(departmentData, pendingDepartmentData)
+          : renderCards(departmentData, pendingDepartmentData)}
 </div>
 
         </main>

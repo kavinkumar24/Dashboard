@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import { useRef } from 'react';
+
 function Projects() {
-  
   const [productionData, setProductionData] = useState([]);
   const [pendingData, setPendingData] = useState([]);
   const [departmentCounts, setDepartmentCounts] = useState({});
@@ -11,10 +10,12 @@ function Projects() {
   const [spin, setSpin] = useState(false);
   const [skeleton, setSkeleton] = useState(true);
   const [search, setSearch] = useState('');
-  
-  const[theme, setTheme] = useState(()=>{
-    return localStorage.getItem('theme') || 'light';
-  });
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
   const departmentsToShow = [
     "CASTING", "CHAIN", "CHAIN MIX", "DIAMOND", "DIRECT CASTING", "EKTARA",
     "ELECTRO FORMING", "EMERALD GEMSTONE JEW", "FUSION", "HAND MADE", "ILA BANGLES",
@@ -22,25 +23,47 @@ function Projects() {
     "PLATINUM", "RUMI", "STAMPING", "THIN CASTING", "TURKISH", "UNIKRAFT", "KALAKRITI"
   ];
 
+  const sectionRef = useRef(null);
+
   useEffect(() => {
-    if(search!==''){
+    if (search !== '') {
       setTimeout(() => {
         if (sectionRef.current) {
           sectionRef.current.scrollIntoView({ behavior: 'smooth' });
         }
-      }, 750)
+      }, 750);
     }
+
+    // const groupProductionDataByDepartment = (data) => {
+    //   // Grouping data by 'fromdept1' and summing up 'qty1'
+    //   return data.reduce((acc, item) => {
+    //     const department = item.fromdept1;
+    //     if (!acc[department]) {
+    //       acc[department] = 0;
+    //     }
+    //     acc[department] += item.qty1;
+    //     return acc;
+    //   }, {});
+    // };
+    
+    const renderGroupedProductionData = (groupedData) => {
+      return (
+        <div className="flex flex-col space-y-2">
+          {Object.entries(groupedData).map(([department, qty]) => (
+            <div key={department} className="flex justify-between">
+              <span className={`${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>{department}</span>
+              <span className="font-bold">{qty}</span>
+            </div>
+          ))}
+        </div>
+      );
+    };
+    
+
     const fetchData = async () => {
       try {
         const productionResponse = await fetch("http://localhost:8081/production_data");
         const productionData = await productionResponse.json();
-
-        // const filteredProductionData = productionData.filter(item => {
-        //   return search.toLowerCase()=== '' ? departmentsToShow.includes(item.pltcode.toUpperCase()) :
-        //   departmentsToShow.includes(item.pltcode.toUpperCase().includes(search.toLowerCase()));
-        // });
-        
-
         const filteredProductionData = productionData.filter(item => departmentsToShow.includes(item.pltcode.toUpperCase()));
         setProductionData(filteredProductionData);
         const productionCounts = countDepartments(filteredProductionData);
@@ -73,7 +96,6 @@ function Projects() {
       setSkeleton(false);
     }, 2000);
     fetchData();
-
   }, [search]);
 
   const countDepartments = (data, isPending = false) => {
@@ -84,7 +106,6 @@ function Projects() {
     });
     return departmentCounts;
   };
-  const sectionRef = useRef(null);
 
   const handleTabClick = (dept) => {
     setSpin(true);
@@ -96,64 +117,180 @@ function Projects() {
       if (sectionRef.current) {
         sectionRef.current.scrollIntoView({ behavior: 'smooth' });
       }
-    }, 750)
+    }, 750);
+  };
+  const groupDataByPltcodeAndDepartment = (data, department) => {
+    return data.reduce((acc, item) => {
+      const pltcode = item.pltcode ? item.pltcode.toUpperCase() : "";
+      const pltcoded1 = item.pltcoded1 ? item.pltcoded1.toUpperCase() : "";
+      
+      if (pltcoded1 === department) {
+        const { todept, jcpdscwqty1 } = item;
+  
+        const normalizedqty = parseInt(jcpdscwqty1,10)
+        if (!todept) {
+          console.warn("Missing fromdept1 in item:", item);
+          return acc;
+        }
+  
+        const normalizedDept = todept.toLowerCase();
+        if (!acc[pltcoded1]) {
+          acc[pltcoded1] = {};
+        }
+  
+        if (!acc[pltcoded1][normalizedDept]) {
+          acc[pltcoded1][normalizedDept] = 0;
+        }
+  
+        acc[pltcoded1][normalizedDept] += normalizedqty;
+      }
+
+      else if (pltcode === department) {
+        const { fromdept1, pdscwqty1 } = item;
+  
+        if (!fromdept1) {
+          console.warn("Missing fromdept1 in item:", item);
+          return acc;
+        }
+  
+        const normalizedDept = fromdept1.toLowerCase();
+  
+        if (!acc[pltcode]) {
+          acc[pltcode] = {};
+        }
+  
+        if (!acc[pltcode][normalizedDept]) {
+          acc[pltcode][normalizedDept] = 0;
+        }
+  
+        acc[pltcode][normalizedDept] += pdscwqty1;
+      }
+      return acc;
+    }, {});
+  };
+  
+const renderGroupedDataByPltcodeAndDepartment = (groupedData, isPending = false) => {
+  console.log(isPending)
+  const noDataMessage = isPending ? 'No data available.' : 'No data available.';
+
+ 
+  const filterDepartments = (departments) => {
+      if (!search) return Object.entries(departments);
+      return Object.entries(departments).filter(([department]) =>
+          department.toLowerCase().includes(search.toLowerCase())
+      );
   };
 
-  const renderCards = (data, isPending = false) => {
-    return data
-      .filter(item => (isPending ? item.pltcoded1.toUpperCase() : item.pltcode.toUpperCase()) === activeTab)
-      .map((item, index) => (
-        <div
-          key={index}
-          className={`bg-white shadow-md rounded-lg p-4 m-2 w-full ${
-            isPending ? "border-l-4 border-yellow-500" : "border-r-4 border-green-500"
-          }`}
-        >
-          <h3 className="text-md font-semibold">Department: {isPending ? item.todept : item.fromdept1}</h3>
-          <p className="text-sm text-slate-500">Description: {isPending ? item.designspec1 : item.description1}</p>
-        </div>
-      ));
+  return (
+      <div className="space-y-8">
+          
+
+          {Object.entries(groupedData).length === 0 ? (
+              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+                  <span className="block sm:inline">{noDataMessage}</span>
+                  <span className="absolute top-0 bottom-0 right-0 px-4 py-3 cursor-pointer">
+                      <svg className="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                          <title>Close</title>
+                          <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+                      </svg>
+                  </span>
+              </div>
+          ) : (
+              Object.entries(groupedData).map(([pltcode, departments]) => (
+                  <div key={pltcode}>
+                      {/* Heading for pltcode */}
+                      <h3 className={`text-lg font-semibold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>
+                          {pltcode}
+                      </h3>
+                      {/* Cards for departments */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                          {filterDepartments(departments).map(([department, qty]) => (
+                              <div 
+                                  key={`${pltcode}-${department}`} 
+                                  className={`p-4 shadow-md rounded-lg border-solid border-2 ${ isPending ? "border-[#eab20894]" : "border-[#22c55e93]"} ${theme === 'light' ? 'bg-white text-gray-900' : 'bg-gray-700 text-gray-300'}`}
+                              >
+                                  <div className={`flex justify-between p-2  rounded-md border-solid border mb-2 ${theme==='light'?'bg-slate-100 border-slate-200':'bg-slate-800 border-slate-500'}`}>
+                                      <span className={`${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>{department.toUpperCase()}</span>
+                                      
+                                  </div>
+                                  <span className="font-normal px-2 py-9">Total : <span className='font-bold'>{qty}</span></span>
+                              </div>
+                          ))}
+                      </div>
+                  </div>
+              ))
+          )}
+      </div>
+  );
+};
+  
+
+  
+
+  const renderCardCounts = (data, isPending = false) => {
+    const groupedData = data.reduce((acc, item) => {
+      const department = isPending ? item.pltcoded1.toUpperCase() : item.pltcode.toUpperCase();
+      acc[department] = (acc[department] || 0) + 1;
+      return acc;
+    }, {});
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {departmentsToShow.map((dept) => (
+        groupedData[dept] ? (
+          <div
+            key={dept}
+            className={`p-4 rounded-lg ${theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-white text-gray-900'} shadow-md ${isPending ? 'border-yellow-500' : 'border-green-500'} border`}
+          >
+            <h3 className="text-md font-semibold mb-2">{dept}</h3>
+            <p className="text-sm">
+              {isPending ? 'Pending Data' : 'Production Data'}: <span className="font-bold">{groupedData[dept]}</span>
+            </p>
+          </div>
+        ) : null
+      ))}
+    </div>
+    );
+    
   };
 
   const hasData = (data) => data.length > 0;
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className={`min-h-screen flex ${theme === 'light' ? 'bg-gray-100' : 'bg-gray-800'}`}>
       {skeleton && (
-        <div className={`max-w-[100%] bg-opacity-100 max-h-full fixed inset-0 z-50 bg-gray-100 ml-0 px-4 sm:px-8 sm:ml-40 md:px-24 md:ml-40 md:mt-24 lg:px-48 xl:px-64 2xl:px-96`}>
-          <div role="status" className="animate-pulse mt-32 w-full relative">
-            <div className="h-2.5 bg-gray-200 rounded-full dark:bg-slate-300 mb-4 w-[50%] sm:w-[40%] md:w-[35%] lg:w-[30%] xl:w-[25%]"></div>
-            <div className="h-2 bg-gray-200 rounded-full dark:bg-slate-300 mb-2.5 w-[60%] sm:w-[50%] md:w-[45%] lg:w-[40%] xl:w-[35%]"></div>
-            <div className="h-2 bg-gray-200 rounded-full dark:bg-slate-300 mb-2.5 w-[70%] sm:w-[60%] md:w-[55%] lg:w-[50%] xl:w-[45%]"></div>
-            <div className="h-2 bg-gray-200 rounded-full dark:bg-slate-300 mb-2.5 w-[80%] sm:w-[70%] md:w-[65%] lg:w-[60%] xl:w-[55%]"></div>
-            <div className="h-2 bg-gray-200 rounded-full dark:bg-slate-300 mb-2.5 w-[90%] sm:w-[80%] md:w-[75%] lg:w-[70%] xl:w-[65%]"></div>
-            <div className="h-2 bg-gray-200 rounded-full dark:bg-slate-300 mb-2.5 w-full sm:w-[90%] md:w-[85%] lg:w-[80%] xl:w-[75%]"></div>
-            <div className="h-2 bg-gray-200 rounded-full dark:bg-slate-300 mb-2.5 w-full sm:w-[91%] md:w-[85%] lg:w-[80%] xl:w-[77%]"></div>
-            <div className="h-2 bg-gray-200 rounded-full dark:bg-slate-300 mb-2.5 w-full sm:w-[92%] md:w-[85%] lg:w-[80%] xl:w-[79%]"></div>
-            <div className="h-2 bg-gray-200 rounded-full dark:bg-slate-300 mb-2.5 w-full sm:w-[93%] md:w-[85%] lg:w-[80%] xl:w-[81%]"></div>
+        <div className={`border fixed shadow rounded-md p-4 max-w-full inset-0 z-50 w-full md:w-[86%]  ml-0 md:ml-48 mx-auto ${theme === 'dark' ? 'bg-gray-800 border-blue-300 ' : 'bg-white border-gray-200'} sm:ml-0`} >
+        <div className="animate-pulse flex space-x-4 mt-16">
+      <div className={`rounded-full ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'} h-10 w-10`}></div>
+      <div className="flex-1 space-y-6 py-1">
+        <div className={`h-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'} rounded`}></div>
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-4">
+            <div className={`h-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'} rounded col-span-2`}></div>
+            <div className={`h-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'} rounded col-span-1`}></div>
+          </div>
+          <div className={`h-2 ${theme === 'dark' ? 'bg-slate-700' : 'bg-slate-300'} rounded`}></div>
+        </div>
+        
+      </div>
+    </div>
+    
+        </div>
+      )}
 
-            <div className="h-2 bg-gray-200 rounded-full dark:bg-slate-300 mb-2.5 w-full sm:w-[94%] md:w-[85%] lg:w-[80%] xl:w-[83%]"></div>
-            <div className="h-2 bg-gray-200 rounded-full dark:bg-slate-300 mb-2.5 w-full sm:w-[95%] md:w-[85%] lg:w-[80%] xl:w-[85%]"></div>
-            <div className="h-2 bg-gray-200 rounded-full dark:bg-slate-300 mb-2.5 w-full sm:w-[96%] md:w-[85%] lg:w-[80%] xl:w-[87%]"></div>
-            <div className="h-2 bg-gray-200 rounded-full dark:bg-slate-300 mb-2.5 w-full sm:w-[97%] md:w-[85%] lg:w-[80%] xl:w-[89%]"></div>
-            <div className="h-2 bg-gray-200 rounded-full dark:bg-slate-300 mb-2.5 w-full sm:w-[98%] md:w-[85%] lg:w-[80%] xl:w-[91%]"></div>
-            <span className="sr-only">Loading...</span>
+      {spin && (
+        <div className={`fixed inset-0 z-50 flex items-center justify-center ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'} bg-opacity-50`}>
+          <div className="flex gap-2 animate-bounce">
+            <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
+            <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
+            <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
           </div>
         </div>
       )}
 
-      {spin &&
-        <div className={`max-w-full bg-opacity-35 max-h-full fixed px-96 2xl:pr-px inset-0 z-50 bg-gray-500 `}>
-          <div className="flex gap-2 max-h-20 w-20 items-center justify-center relative top-72 -left-52 md:top-64 md:left-36 animate-bounce rounded-lg 2xl:left-[35%] lg:left-[45%] 2xl:top-80 3xl:left-96">
-            <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
-            <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
-            <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
-          </div>
-        </div>
-      }
-      <Sidebar theme={theme}/>
+      <Sidebar theme={theme} />
       <main className="flex-1 p-6 overflow-y-auto">
-        <Header onSearch = {setSearch} theme = {theme} dark = {setTheme} />
+        <Header onSearch={setSearch} theme={theme} dark={setTheme} />
         <div className="flex flex-col flex-grow p-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
             {departmentsToShow.map((dept) => (
@@ -161,75 +298,58 @@ function Projects() {
                 <button
                   key={dept}
                   onClick={() => handleTabClick(dept)}
-                  className={`px-4 py-2 rounded-md ${activeTab === dept ? "bg-[#CAD4E0] text-black shadow-lg" : "bg-[#FFFFFF] text-gray-700 shadow-md"}`}
+                  className={`px-4 py-2 rounded-md ${activeTab === dept ?
+                    (theme === 'dark' ? "bg-slate-500 text-white shadow-lg" : "bg-[#CAD4E0] text-black shadow-lg") :
+                    (theme === 'dark' ? "bg-slate-700 text-gray-300 shadow-md" : "bg-[#FFFFFF] text-gray-700 shadow-md")}`}
                 >
-                  {/* {dept} */}
                   <b>
-                    {/* <div>
-                   <div> Total: {departmentCounts[dept].total} </div>
-                    <div>Prod: {departmentCounts[dept].production} </div>
-                    <div>Pending: {departmentCounts[dept].pending}</div>
-                    </div> */}
-
-
-
-
                     <div className="flex flex-col space-y-3">
-  <h2 className="font-bold text-lg text-gray-700 uppercase bg-gray-50 dark:bg-slate-100 dark:text-gray-700 text-center rounded-md shadow-md">
-    {dept} <span className='font-normal text-sm'>({departmentCounts[dept].total})</span>
-  </h2>
-  
-  <div className="flex justify-between">
-    <div className="bg-[#c1fbce92] rounded-lg shadow-md border border-[#00ff379e] w-[50%] mr-1 h-7">
-      <p className="font-normal text-sm text-center text-[#1C6C00] p-1">
-        Production: <span className="font-bold text-gray-600">{departmentCounts[dept].production}</span>
-      </p>
-    </div>
-    <div className="bg-[#fbf9c19d] rounded-lg shadow-md border border-[#F1EA1C] w-[50%] ml-1 h-7">
-      <p className="font-normal text-sm text-center text-[#9F9F00] p-1">
-        Pending: <span className="font-bold text-gray-600">{departmentCounts[dept].pending}</span>
-      </p>
-    </div>
-  </div>
-
-  {/* <div className="bg-[#fbc6c191] rounded-lg shadow-md border border-[#ff00009e] w-full h-7">
-    <p className="font-normal text-sm text-center text-[#9F0000] p-1">
-      Total: <span className="font-bold text-gray-600"> {departmentCounts[dept].total}</span>
-    </p>
-  </div> */}
-</div>
-
+                      <h2 className={`font-bold text-lg text-gray-700 uppercase text-center rounded-md shadow-md ${theme === 'light' ? 'dark:bg-slate-100 dark:text-gray-700' : 'dark:bg-slate-600 dark:text-gray-300'}`}>
+                        {dept} <span className='font-normal text-sm'>({departmentCounts[dept].total})</span>
+                      </h2>
+                      <div className="flex justify-between">
+                        <div className={`rounded-lg shadow-md  border-solid border  w-[50%] mr-1 h-7 ${theme === 'light' ? 'bg-[#c1fbce92] border-[#00ff379e] text-[#1C6C00]' : 'bg-gray-800 border-[#0e902a] text-green-300'}`}>
+                          <p className="font-normal text-sm text-center p-1">
+                            Production: <span className={`font-bold ${theme === 'light' ? 'text-gray-600' : 'text-gray-200'}`}>{departmentCounts[dept].production}</span>
+                          </p>
+                        </div>
+                        <div className={`rounded-lg shadow-md  border-solid border  w-[50%] ml-1 h-7 ${theme === 'light' ? 'bg-[#feffd1] border-[#e5ff00] text-[#879300] ' : 'bg-gray-800 border-[#7d8808] text-amber-300 shadow-md'}`}>
+                          <p className="font-normal text-sm text-center p-1">
+                            Pending: <span className={`font-bold ${theme === 'light' ? 'text-gray-600' : 'text-gray-200'}`}>{departmentCounts[dept].pending}</span>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </b>
                 </button>
               )
             ))}
           </div>
 
-          <div className="mt-6" ref={sectionRef} >
-            <h2 className="text-xl font-bold mb-4">Production Data for {activeTab}</h2>
-            {hasData(productionData.filter(item => item.pltcode.toUpperCase() === activeTab)) ? (
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 ">
-                {renderCards(productionData)}
-              </div>
-            ) : (
-              <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 rounded">
-                <p className="font-bold">No Production Data Available</p>
-                <p>Please check back later or try a different department.</p>
+          <section ref={sectionRef} className="flex flex-col items-center justify-center">
+            {hasData(productionData) && (
+              <div className="mt-4 w-full">
+                <h3 className={`text-lg font-semibold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>
+                  Production Data
+                </h3>
+                <div className='w-full'>
+                  {renderGroupedDataByPltcodeAndDepartment(groupDataByPltcodeAndDepartment(productionData, activeTab))}
+                </div>
               </div>
             )}
 
-            <h2 className="text-xl font-bold mt-8 mb-4">Pending Data for {activeTab}</h2>
-            {hasData(pendingData.filter(item => item.pltcoded1.toUpperCase() === activeTab)) ? (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {renderCards(pendingData, true)}
-              </div>
-            ) : (
-              <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-4 rounded">
-                <p className="font-bold">No Pending Data Available</p>
-                <p>Check back later or adjust your filter settings.</p>
+            {hasData(pendingData) && (
+              <div className="mt-4 w-full">
+                <h3 className={`text-lg font-semibold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>
+                  Pending Data
+                </h3>
+                <div>
+                  {renderGroupedDataByPltcodeAndDepartment(groupDataByPltcodeAndDepartment(pendingData, activeTab),true)}
+                </div>
               </div>
             )}
-          </div>
+          </section>
+
         </div>
       </main>
     </div>

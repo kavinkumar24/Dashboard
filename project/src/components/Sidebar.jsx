@@ -1,7 +1,8 @@
 import React from 'react'
 import {GrProjects} from "react-icons/gr";
 import { ImHome } from 'react-icons/im';
-import { BsGear } from 'react-icons/bs';
+import { BsGear,BsListTask} from 'react-icons/bs';
+import { IoDocumentTextOutline } from 'react-icons/io5';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -37,7 +38,7 @@ function Sidebar({theme}) {
       </div>
   </div>
       }
-       <aside className={`w-40 border-r hidden md:block h-full ${theme==='light'?'bg-white border-slate-200':'bg-gray-700 border-slate-400 '}`}>
+       <aside className={`w-44 border-r hidden md:block h-full ${theme==='light'?'bg-white border-slate-200':'bg-gray-700 border-slate-400 '}`}>
         <div className="p-4">
           <h1 className={`text-xl font-bold ${theme==='light'?'text-slate-800':'text-slate-400'}`}>Dashboard</h1>
         </div>
@@ -77,6 +78,34 @@ function Sidebar({theme}) {
                 <BsGear />
               </div>
               Settings 
+              
+            </div>
+          </a>
+         
+          <a
+            href="#"
+            className={`block py-2 px-4 rounded transition duration-200  ${theme==='light'?'text-black hover:bg-indigo-100 hover:text-gray-600':' text-slate-300 hover:bg-gray-900'}`} 
+          >
+            
+            <div className='flex flez-row p-2'>
+            <div className='mt-1 px-2'>
+                <IoDocumentTextOutline />
+              </div>
+              Daily report 
+              
+            </div>
+          </a>
+
+          <a
+            href="#"
+            className={`block py-2 px-4 rounded transition duration-200  ${theme==='light'?'text-black hover:bg-indigo-100 hover:text-gray-600':' text-slate-300 hover:bg-gray-900'}`} 
+          >
+            
+            <div className='flex flez-row p-2'>
+            <div className='mt-1 px-2'>
+                <BsListTask />
+              </div>
+              Task 
               
             </div>
           </a>
