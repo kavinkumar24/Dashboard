@@ -15,7 +15,7 @@ function Header({ onSearch, onView, view ,theme,dark}) {
   }
   return (
     <div>
-      <header className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10">
+      <header className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-10 p-4">
         <div>
           <h1 className={`text-xl font-bold ${theme==='light'?'text-black':'text-gray-400'}`}>
             Production <span className="text-[#879FFF]">Performance</span> Dashboard

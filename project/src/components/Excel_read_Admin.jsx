@@ -11,6 +11,8 @@ function Dashboard() {
   const [viewData, setviewData] = useState(false);
   const [search, setSearch] = useState('');
   // const navigate = useNavigate(); 
+  const [skeleton, setSkeleton] = useState(true);
+
   const[theme, setTheme] = useState(()=>{
     return localStorage.getItem('theme') || 'light';
   });
@@ -55,6 +57,7 @@ function Dashboard() {
   }, [theme]);
   useEffect(() => {
     fetch("http://localhost:8081/filtered_pending_data")
+      .then(setSkeleton(true))
       .then((res) => res.json())
       .then((data) => {
         console.log("Pending Data:", data);
@@ -70,6 +73,8 @@ function Dashboard() {
         } else {
           console.log("Pending Data is not in expected format or is empty:", data);
         }
+      setSkeleton(false)
+
       })
       .catch((err) => console.log("Error fetching pending data:", err));
   }, []);
@@ -92,8 +97,8 @@ function Dashboard() {
           {Object.keys(productionData).filter((dept) =>
             search.toLowerCase() === '' ? dept : dept.toLowerCase().includes(search.toLowerCase())
           ).map((dept) => (
-            <tr key={dept} className={`border-b 
-              ${theme === 'light' ? 'bg-white text-gray-700' : 'bg-gray-800 text-gray-300'}`}>
+            <tr key={dept} className={`border-b border-solid 
+              ${theme === 'light' ? 'bg-white text-gray-700 border-slate-200' : 'bg-gray-800 text-gray-300 border-slate-700'}`}>
               <td className="px-6 py-3">{dept}</td>
               <td className="px-6 py-3">{productionData[dept]}</td>
               <td className="px-6 py-3">{pendingDepartmentData[dept] || 0}</td>

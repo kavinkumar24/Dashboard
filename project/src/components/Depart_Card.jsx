@@ -208,7 +208,7 @@ function DepartmentDetail() {
   return (
     <div className={`min-h-screen lg:min-h-screen min-w-screen  w-[110%] md:w-[100%] lg:w-[100%] flex  ${theme === 'light' ? 'bg-gray-100' : 'bg-gray-800'}`}>
           
-   {load&& <div className={`border fixed shadow rounded-md p-4 max-w-full min-h-full inset-0 z-50 w-full md:w-[86%]  ml-0 md:ml-48 mx-auto ${theme === 'dark' ? 'bg-gray-800 border-blue-300 ' : 'bg-white border-gray-200'} sm:ml-0`} >
+   {load&& <div className={`border fixed shadow rounded-md p-4 max-w-full min-h-full inset-0 z-50 w-full md:w-[86%]  ml-0 md:ml-52 mx-auto ${theme === 'dark' ? 'bg-gray-800 border-blue-300 ' : 'bg-white border-gray-200'} sm:ml-0`} >
     <div className="animate-pulse flex space-x-4 mt-16">
   <div className={`rounded-fullh-10 w-10`}></div>
   <div className="flex-1 space-y-6 py-10 md:py-1">
@@ -256,8 +256,7 @@ function DepartmentDetail() {
     
   </div>
 </div>
-
-    </div>
+</div>
 }
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">

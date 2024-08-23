@@ -1,118 +1,158 @@
-import React from 'react'
-import {GrProjects} from "react-icons/gr";
+import  { useState, useEffect } from 'react';
+import { GrProjects } from "react-icons/gr";
 import { ImHome } from 'react-icons/im';
-import { BsGear,BsListTask} from 'react-icons/bs';
+import { BsGear, BsListTask,BsEye,BsPlusCircleDotted } from 'react-icons/bs';
 import { IoDocumentTextOutline } from 'react-icons/io5';
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
-function Sidebar({theme}) {
+function Sidebar({ theme }) {
   const navigate = useNavigate();
+  const location = useLocation(); 
   const [spin, setSpin] = useState(false);
-  const navigate_home = ()=>{
-    setSpin(true);
-    setTimeout(()=>{
-      navigate('/');
-      setSpin(false);
-    },700)
-  }
+  const [active, setActive] = useState('home');
+  const [taskExpanded, setTaskExpanded] = useState(false); 
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/') {
+      setActive('home');
+    } else if (path === '/projects') {
+      setActive('projects');
+    } else if (path === '/settings') {
+      setActive('settings');
+    } else if (path === '/daily-report') {
+      setActive('daily-report');
+    } else if (path === '/task' || path === '/task/create' || path === '/task/view') {
+      setActive('task');
+    }
+  }, [location.pathname]);
 
-  const navigate_projects = ()=>{
+  const handleNavigation = (path) => {
     setSpin(true);
-    setTimeout(()=>{
-      setSpin(false);
-    },700)
-    
-    navigate('/projects');
+    navigate(path);
+    setSpin(false);
+  };
 
-  }
+  const handleTaskClick = () => {
+    setTaskExpanded(!taskExpanded);
+  };
+
+  const getActiveClass = (name) => {
+    if (active === name) {
+      return theme === 'light' ? 'bg-slate-200' : 'bg-gray-800';
+    }
+    return '';
+  };
+
   return (
     <div>
-       {spin&&
-      <div className={`max-w-full bg-opacity-35 max-h-full fixed px-96 2xl:pr-px inset-0 z-50 bg-gray-500`}>
-      <div className="flex gap-2 max-h-20 w-20 items-center justify-center relative top-72 -left-52 md:top-64 md:left-36 animate-bounce rounded-lg 2xl:left-[35%] lg:left-[45%] 2xl:top-80
-          3xl:left-96">
-      <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
-      <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
-      <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
-      </div>
-  </div>
+      {spin &&
+        <div className={`max-w-full bg-opacity-35 max-h-full fixed px-96 2xl:pr-px inset-0 z-50 bg-gray-500`}>
+          <div className="flex gap-2 max-h-20 w-20 items-center justify-center relative top-72 -left-52 md:top-64 md:left-36 animate-bounce rounded-lg 2xl:left-[35%] lg:left-[45%] 2xl:top-80 3xl:left-96">
+            <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
+            <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
+            <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
+          </div>
+        </div>
       }
-       <aside className={`w-44 border-r hidden md:block h-full ${theme==='light'?'bg-white border-slate-200':'bg-gray-700 border-slate-400 '}`}>
+      <aside className={`w-48 border-r hidden md:block h-full ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-gray-700 border-slate-400 '}`}>
         <div className="p-4">
-          <h1 className={`text-xl font-bold ${theme==='light'?'text-slate-800':'text-slate-400'}`}>Dashboard</h1>
+          <h1 className={`text-xl font-bold ${theme === 'light' ? 'text-slate-800' : 'text-slate-400'}`}>Dashboard</h1>
         </div>
         <nav className="mt-10">
           <a
             href="#"
-            className={`block py-2 px-4 rounded transition duration-200  ${theme==='light'?'text-black hover:bg-indigo-100 hover:text-gray-600':' text-slate-300 hover:bg-gray-900'}`} onClick={navigate_home}
+            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('home')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+            onClick={() => handleNavigation('/', 'home')}
           >
-            <div className='flex flez-row p-2' >
-            <div className='mt-1 px-2' >
+            <div className='flex flex-row p-2'>
+              <div className='mt-1 px-2'>
                 <ImHome />
               </div>
-              Home 
-             
+              Home
             </div>
           </a>
           <a
             href="#"
-            className={`block py-2 px-4 rounded transition duration-200  ${theme==='light'?'text-black hover:bg-indigo-100 hover:text-gray-600':' text-slate-300 hover:bg-gray-900'}`}  
-            onClick={navigate_projects}
+            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('projects')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+            onClick={() => handleNavigation('/projects', 'projects')}
           >
-            <div className='flex flez-row p-2' >
-            <div className='mt-1 px-2'>
+            <div className='flex flex-row p-2'>
+              <div className='mt-1 px-2'>
                 <GrProjects />
               </div>
-              Projects 
-              
-            </div>
-          </a>  
-          <a
-            href="#"
-            className={`block py-2 px-4 rounded transition duration-200  ${theme==='light'?'text-black hover:bg-indigo-100 hover:text-gray-600':' text-slate-300 hover:bg-gray-900'}`} 
-          >
-            
-            <div className='flex flez-row p-2'>
-            <div className='mt-1 px-2'>
-                <BsGear />
-              </div>
-              Settings 
-              
+              Projects
             </div>
           </a>
-         
           <a
             href="#"
-            className={`block py-2 px-4 rounded transition duration-200  ${theme==='light'?'text-black hover:bg-indigo-100 hover:text-gray-600':' text-slate-300 hover:bg-gray-900'}`} 
+            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('daily-report')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+            onClick={() => handleNavigation('/daily-report', 'daily-report')}
           >
-            
-            <div className='flex flez-row p-2'>
-            <div className='mt-1 px-2'>
+            <div className='flex flex-row p-2'>
+              <div className='mt-1 px-2'>
                 <IoDocumentTextOutline />
               </div>
-              Daily report 
-              
+              Pending Range
             </div>
           </a>
-
           <a
             href="#"
-            className={`block py-2 px-4 rounded transition duration-200  ${theme==='light'?'text-black hover:bg-indigo-100 hover:text-gray-600':' text-slate-300 hover:bg-gray-900'}`} 
+            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('task')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+            onClick={handleTaskClick} 
           >
-            
-            <div className='flex flez-row p-2'>
-            <div className='mt-1 px-2'>
+            <div className='flex flex-row p-2'>
+              <div className='mt-1 px-2'>
                 <BsListTask />
               </div>
-              Task 
-              
+              Task
+            </div>
+          </a>
+          {/* Subcategories for Task */}
+          {taskExpanded && (
+            <div className="ml-8">
+              <a
+                href="#"
+                className={`block py-2 px-6 rounded transition duration-200 ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
+                onClick={() => handleNavigation('/task/create', 'task')}
+              >
+              <div className='flex flex-row p-0'>
+              <div className='mt-1 px-2'>
+                <BsPlusCircleDotted />
+              </div>
+              Create
+            </div>
+              </a>
+              <a
+                href="#"
+                className={`block py-2 px-6 rounded transition duration-200 ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
+                onClick={() => handleNavigation('/task/view', 'task')}
+              >
+                
+                <div className='flex flex-row p-0'>
+              <div className='mt-1 px-2'>
+                <BsEye />
+              </div>
+              View
+            </div>
+              </a>
+            </div>
+          )}
+          <a
+            href="#"
+            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('settings')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+            onClick={() => handleNavigation('/settings', 'settings')}
+          >
+            <div className='flex flex-row p-2'>
+              <div className='mt-1 px-2'>
+                <BsGear />
+              </div>
+              Settings
             </div>
           </a>
         </nav>
       </aside>
     </div>
-  )
+  );
 }
 
-export default Sidebar
+export default Sidebar;
