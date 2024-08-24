@@ -6,6 +6,7 @@ import DepartmentDetail from './components/Depart_Card';
 import Projects from './components/Projects';
 import Daily_Report from './components/Daily_Report';
 import CreateTask from './components/Create_Task';
+import ViewTasks from './components/View_Task';
 function App() {
 
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/projects" element={<Projects />} />
         <Route path='/daily-report' element={<Daily_Report />} />
         <Route path='/task/create' element={<CreateTask />} />
+        <Route path='/task/view' element={<ViewTasks />} />
       </Routes>
       </div>
       

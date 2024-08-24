@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import { useEffect } from 'react';
 function CreateTask() {
   const [taskName, setTaskName] = useState('');
   const [description, setDescription] = useState('');
@@ -8,8 +9,13 @@ function CreateTask() {
   const [priority, setPriority] = useState('medium');
   const [isUrgent, setIsUrgent] = useState(false);
   const [search, setSearch] = useState('');
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
+
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+  
   const handleSubmit = (e) => {
     e.preventDefault();
     const taskData = {
@@ -29,7 +35,7 @@ function CreateTask() {
          <div className="flex-1 flex flex-col">
          <main className="flex-1 overflow-y-auto">
          <Header onSearch={setSearch} theme={theme} dark={setTheme} />
-         <div className={`p-5 relative left-28 w-full md:w-[80%] ${theme==='light'?'bg-white':'bg-gray-900'}`}>
+         <div className={`p-5 relative shadow-xl rounded-lg left-28 w-full md:w-[80%] ${theme==='light'?'bg-white':'bg-gray-900'}`}>
          <h2 className={`text-2xl font-semibold mb-6 ${theme === 'light' ? 'text-gray-800' : 'text-gray-100'}`}>Create a New Task</h2>
       <form onSubmit={handleSubmit}>
         <div className="mb-4">

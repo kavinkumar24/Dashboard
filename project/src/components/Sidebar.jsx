@@ -1,32 +1,48 @@
-import  { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { GrProjects } from "react-icons/gr";
 import { ImHome } from 'react-icons/im';
-import { BsGear, BsListTask,BsEye,BsPlusCircleDotted } from 'react-icons/bs';
+import { BsGear, BsListTask, BsEye, BsPlusCircleDotted } from 'react-icons/bs';
 import { IoDocumentTextOutline } from 'react-icons/io5';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 function Sidebar({ theme }) {
   const navigate = useNavigate();
-  const location = useLocation(); 
+  const location = useLocation();
   const [spin, setSpin] = useState(false);
   const [active, setActive] = useState('home');
-  const [taskExpanded, setTaskExpanded] = useState(false); 
+  const [taskExpanded, setTaskExpanded] = useState(false);
+  const [activeSubTask, setActiveSubTask] = useState('');
+
   useEffect(() => {
     const path = location.pathname;
     if (path === '/') {
       setActive('home');
+      setActiveSubTask('');
     } else if (path === '/projects') {
       setActive('projects');
+      setActiveSubTask('');
     } else if (path === '/settings') {
       setActive('settings');
+      setActiveSubTask('');
     } else if (path === '/daily-report') {
       setActive('daily-report');
-    } else if (path === '/task' || path === '/task/create' || path === '/task/view') {
+      setActiveSubTask('');
+    } else if (path.startsWith('/task')) {
       setActive('task');
+      setTaskExpanded(true);
+      if (path === '/task/create') {
+        setActiveSubTask('create');
+      } else if (path === '/task/view') {
+        setActiveSubTask('view');
+      }
     }
   }, [location.pathname]);
 
-  const handleNavigation = (path) => {
+  const handleNavigation = (path, name) => {
+    if (name !== 'task') {
+      setTaskExpanded(false);
+      setActiveSubTask('');
+    }
     setSpin(true);
     navigate(path);
     setSpin(false);
@@ -43,6 +59,13 @@ function Sidebar({ theme }) {
     return '';
   };
 
+  const getSubTaskActiveClass = (subTask) => {
+    if (activeSubTask === subTask) {
+      return theme === 'light' ? 'bg-gray-100' : 'bg-gray-600';
+    }
+    return '';
+  };
+
   return (
     <div>
       {spin &&
@@ -55,8 +78,8 @@ function Sidebar({ theme }) {
         </div>
       }
       <aside className={`w-48 border-r hidden md:block h-full ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-gray-700 border-slate-400 '}`}>
-        <div className="p-4">
-          <h1 className={`text-xl font-bold ${theme === 'light' ? 'text-slate-800' : 'text-slate-400'}`}>Dashboard</h1>
+        <div className="p-4 px-6">
+          <h1 className={`text-xl font-thin ${theme === 'light' ? 'text-slate-800' : 'text-slate-400'}`}><span className={`eb-garamond-normal  font-bold ${theme==='light'?'text-indigo-600':'text-indigo-300'}text-2xl`}>Ej</span> <span className='text-lg'>Dashboard</span></h1>
         </div>
         <nav className="mt-10">
           <a
@@ -112,28 +135,27 @@ function Sidebar({ theme }) {
             <div className="ml-8">
               <a
                 href="#"
-                className={`block py-2 px-6 rounded transition duration-200 ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
+                className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('create')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
                 onClick={() => handleNavigation('/task/create', 'task')}
               >
-              <div className='flex flex-row p-0'>
-              <div className='mt-1 px-2'>
-                <BsPlusCircleDotted />
-              </div>
-              Create
-            </div>
+                <div className='flex flex-row p-0'>
+                  <div className='mt-1 px-2'>
+                    <BsPlusCircleDotted />
+                  </div>
+                  Create
+                </div>
               </a>
               <a
                 href="#"
-                className={`block py-2 px-6 rounded transition duration-200 ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
+                className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('view')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
                 onClick={() => handleNavigation('/task/view', 'task')}
               >
-                
                 <div className='flex flex-row p-0'>
-              <div className='mt-1 px-2'>
-                <BsEye />
-              </div>
-              View
-            </div>
+                  <div className='mt-1 px-2'>
+                    <BsEye />
+                  </div>
+                  View
+                </div>
               </a>
             </div>
           )}
