@@ -38,29 +38,31 @@ const app =express()
 
 const departmentMappings = {
    'CAD': {
-       from: ['WBKOL-CAD', 'U4PD-CAD'],
-       to: ['U4PD-PRBOM', 'U1MMD', 'U1TOOL', 'U1CAM', 'U4PD-CAM']
+       from: ['WBKOL-CAD', 'U4PD-CAD','U1CAD','U1CAD-NMP'],
+       to: ['U4PD-PRBOM', 'U1MMD', 'U1TOOL', 'U1CAM', 'U4PD-CAM','U1ST-SISMA','U1PRE-BOM'],
    },
-   'PRBOM': {
-       from: ['U4PD-PRBOM'],
+   'PRE-BOM': {
+       from: ['U4PD-PRBOM','U1PRE-BOM'],
        to: ['U4PD-CAM','U4PD-WAX','U4PD-DIE','U1CAM','U4DIE','U4PD3-SISM','U1ST-SISMA','U1PDD3-BUF']
    },
    'CAM':{
-      from:['U1CAM','U4PD-CAM'],
+      from:['U1CAM','U4PD-CAM','U1INWARD'],
       to:['U4PD-MFD','U1MP','U1WAX-PL','U1WAX-SORT','U1NMP-SFD','U1EXP-SFD','U1SFD','U4MFD','U1MP','U4-EFMFD']
    },
    'MFD':{
-      from:['U4PD-MFD'],
-      to:['U4PD-DIE','U4PD-WAX','U4PD-PRBOM']
+      from:['U4PD-MFD','U1NMP-SFD','U1SFD'],
+      to:['U4PD-DIE','U4PD-WAX','U4PD-PRBOM','U1SAM-WAX','U1DIE']
    },
    'SFD':{
       from:['U1NMP-SFD'],
       to:['U4PD-WAX','U1SAM-WAX','U1DIE']
    },
+
    'DIE':{
       from:['U4PD-DIE','U1DIE'],
       to:['U4PD-WAX','U1SAM-WAX']
    },
+
    'MP':{
       from:['U1MP'],
       to:['U4PD-DIE','U1DIE','U4PD-WAX','U4PD-PRBOM','U1SAM-WAX']
@@ -74,11 +76,11 @@ const departmentMappings = {
       to:['U1SAMP','U1PDD2-SEP','U1SEP-SPR1','U1SEP-SST',
          'U1SEP','U4PD1-SEP']
    },
-   'SEP':{
+   'SEPRATION':{
       from:['U1PDD2-SEP','U1SAMP'],
       to:['U1PDD2-ASY','U1PDD2-BUF','U1C5L1-ASY','U1C5L1-ASS','U1PDD3-BUF','U1PDD3-ASY','U1PDD3-CLR','U1PDD3-COR','U1PDD3-BP','U1PDD2-CLR','U1FUSION','U1PDD','U1PDD2-COR','U1PDD3-SEP','U1C5L1-ASY','U1C6L2-ASY','U1PDD','U1C6L1-COR','U1FUL2-ASY','U1C22-ASY','U1C22-COR','U1C5L1-ASY','U1CELL-6','U1CNC-ASY','U1C22-PLT','U1MGS-L&F','U1MGS-ASY','U1IND','U1MARIYA']
    },
-   'ASY':{
+   'PD-ASSY':{
       from:['U1PDD2-ASY','U1SAM-ASY'],
       to:['U1PDD2-BUF','U1BP']
    },
@@ -86,61 +88,81 @@ const departmentMappings = {
       from:['U1BP'],
       to:['U1SAM-COR']
    },
-   'COR':{
+   'PD-CORR':{
       from:['U1SAM-COR'],
       to:['U1SAM-QC','U1SAM-SST','U1SAM-BUF']
    },
-   'SST':{
+   'PD-SETTING':{
       from:['U1SAM-SST','U1PDD2-SST'],
       to:['U1SAM-BUF','U1PDD2-TXT']
    },
-   'BUF':{
+   'PD-BUFF':{
       from:['U1PDD2-BUF','U1SAM-BUF'],
       to:['U1PDD2-SST','U1PDD2-TXT','U1SAM-TEX','U1CH-18K',
          'U1CH-22K','U1MGS-L&F']
    },
-   'TXT':{
+   'PD-TEXTURING':{
       from:['U1PDD2-TXT','U1SAM-TEX'],
       to:['U1PDD2-CORR','U1GS','U1C5L1-ASY','U1C5L1-ASS','U1C5L1-BUF','U1PDD3-SST','U1PDD2-CORR']
    },
-   'SST':{
-      from:['U1PDD3-SST'],
-      to:['U1PDD2-CORR']
+   'PD-BOM':{
+      from:['U1PDD3-SST','U4PD3-BOM','U1PDD-CORR'],
+      to:['U1PDD2-CORR','U4FI-BOM','U1PHOTO','U1PACK','U1PACK-SI']
    },
-   'CORR':{
-      from:['U1PDD-CORR','U1PHOTO'],
-      to:['U1PHOTO','U1PACK','U1PACK-SI']
+   'PHOTO':{
+      from:['U1PHOTO'],
+      to:['U1PACK','U1PACK-SI']
    },
-   'SISM':{
+   // 'CORR':{
+   //    from:['U1PDD-CORR','U1PHOTO'],
+   //    to:['U1PHOTO','U1PACK','U1PACK-SI']
+   // },
+   'SISMA':{
       from:['U4PD3-SISM','U1PDD3-BUF'],
       to:['U4PD3-1','U4PD3-2','U4PD3-3','U4PD3-4','U4PD3-5'
          ,'U4PD3-6','U4PD3-7','U4PD1-SEP','U1PDD3-ASY','U1PDD3-BP','U1PDD3-CLR','U1PDD3-SEP','U1PDD3-BUF','U1PDD','U1PDD3-COR','U1PDD2-SEP','U1PDD2-ASY']
    },
-   'IND':{
+   'INDIANIA CELL':{
       from:['U1IND'],
       to:['U1SAM-TEX','U1PDD2-TXT']
    },
-   'MMD1':{
-      from:['U1MMD','U1MMD1'],
+   'MMD CELL':{
+      from:['U1MMD','U1MMD1','U1MMD2'],
       to:['U1GS','U1SAM-BUF','U1SAM-TEX','U1PDD2-TXT','U1PDD2-BUF']
    },
-   'MMD2':{
-      from:['U1MMD2'],
-      to:['U1GS','U1SAM-BUF','U1SAM-TEX','U1PDD2-TXT','U1PDD2-BUF']
-   },
-   'PRESS':{
+
+   'STAMPING CELL':{
       from:['U1ST-PRESS'],
       to:['U1GS','U1SAMP','U1PDD2-SEP']
    },
-   'DLE':{
-      from:['U1DLE'],
-      to:['U1PDD2-TXT','U1SAM-TEX']
+   'ENAMEL CELL':{
+      from:['U1DLE','U1PDD2-QC','U1SAM-QC'],
+      to:['U1PDD2-TXT','U1SAM-TEX','U1SAM-BUF','U1SAM-SST']
    },
-   'BUF':{
+   'Imprez cell':{
+      from:['U1IM-PRESS'],
+      to:['U1GS','U1SAMP','U1PDD2-SEP']
+   },
+   'Fusion Cell':{
       from:['U1FUL1-BUF','U1FU-TEXT','U1FUL1-ASY','U1FUL1-COR'],
       to:['U1GS','U1PDD2-BUF','U1SAM-BUF','U1PDD2-TXT','U1SAM-TEX']
-   }
-   
+   },
+   'Gemstone cell':{
+      from:['U1C5L1-SST','U1C5L1-ASY','U1C5L1-ASS','U1C5L1-BUF','U1C5L1-TXT'],
+      to:['U1GS','U1QA','U1SAM-TEX','U1PDD2-TXT']
+   },
+   'Cnc cell':{
+      from:['U1CNC -TXT'],
+      to:['U1QA']
+   },
+   'UNIT-4 EFCELL':{
+      from:['U4PD-3DSCA','U4FOUN','U4MFD','U4SCUL','U4DIE','U4CAST','U4EF'],
+      to:['U4PD-CAD','U4FOUN','U4CAST','U4DIE','U4PD-PRBOM','U4EF','U4SEP','U4PD1-SEP']
+   },
+   'PD3 CELL':{
+      from:['U4PD3-1','U4PD3-2','U4PD3-3','U4PD3-4','U4PD3-5','U4PD3-6','U4PD3-7','U1PDD3-ASY','U1PDD3-BP','U1PDD3-CLR','U1PDD3-SEP','U1PDD','U1PDD3-COR'],
+      to:['U4PD1-BUF','U4PD1-SST','U1PDD2-BUF','U1PDD2-SST']
+   },
 };
 app.get('/departmentMappings', (req, res) => {
    res.json(departmentMappings);

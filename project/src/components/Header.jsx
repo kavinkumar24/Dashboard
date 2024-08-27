@@ -4,6 +4,8 @@ import { ImTable2, ImSearch, ImUser } from 'react-icons/im';
 import { IoCardOutline } from "react-icons/io5";
 
 function Header({ onSearch, onView, view ,theme,dark}) {
+  // const date = new Date();
+
   const handle_theme = ()=>{
     if(theme=='dark'){
       dark('light')
@@ -21,6 +23,7 @@ function Header({ onSearch, onView, view ,theme,dark}) {
             Production <span className="text-[#879FFF]">Performance</span> Dashboard
           </h1>
           <p className="text-sm text-gray-500">Welcome to Automated Dash View</p>
+          <p className={`${theme==='light'?'text-black':'text-gray-400'}`}>{new Date().toLocaleString()}</p>
         </div>
         <div className="flex items-center gap-5 m-0">
           <div className='flex flex-row'>
