@@ -3,8 +3,20 @@ import { BsSun, BsMoon } from "react-icons/bs";
 import { ImTable2, ImSearch, ImUser } from 'react-icons/im';
 import { IoCardOutline } from "react-icons/io5";
 
+import { useState, useEffect } from 'react';
+
 function Header({ onSearch, onView, view ,theme,dark}) {
   // const date = new Date();
+
+  const [currentTime, setCurrentTime] = useState(new Date().toLocaleString());
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setCurrentTime(new Date().toLocaleString());
+    }, 1000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
+  }, []);
 
   const handle_theme = ()=>{
     if(theme=='dark'){
@@ -23,10 +35,12 @@ function Header({ onSearch, onView, view ,theme,dark}) {
             Production <span className="text-[#879FFF]">Performance</span> Dashboard
           </h1>
           <p className="text-sm text-gray-500">Welcome to Automated Dash View</p>
-          <p className={`${theme==='light'?'text-black':'text-gray-400'}`}>{new Date().toLocaleString()}</p>
         </div>
         <div className="flex items-center gap-5 m-0">
+        <p className={`${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}> {currentTime}</p>
+
           <div className='flex flex-row'>
+            
             <input
               type="search"
               placeholder="Search"

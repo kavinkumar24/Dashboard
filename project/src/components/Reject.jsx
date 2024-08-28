@@ -16,9 +16,12 @@ function Reject() {
          <div className="flex-1 flex flex-col">
         <Header onSearch={setSearch} theme={theme} dark={setTheme} />
         
-          <h1 className='ml-4 font-bold text-lg'>
+        <div className='flex justify-between mx-4'>
+          <h1 className='font-bold text-xl'>
             Rejections
           </h1>
+          <button className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${theme === 'light' ? 'bg-blue-500 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-800'}`}>View Uploaded History</button>
+        </div>
           <div className="upload-container pt-10">
         <label
           htmlFor="uploadFile1"
@@ -32,7 +35,7 @@ function Reject() {
             <path d="M23.75 11.044a7.99 7.99 0 0 0-15.5-.009A8 8 0 0 0 9 27h3a1 1 0 0 0 0-2H9a6 6 0 0 1-.035-12 1.038 1.038 0 0 0 1.1-.854 5.991 5.991 0 0 1 11.862 0A1.08 1.08 0 0 0 23 13a6 6 0 0 1 0 12h-3a1 1 0 0 0 0 2h3a8 8 0 0 0 .75-15.956z" />
             <path d="M20.293 19.707a1 1 0 0 0 1.414-1.414l-5-5a1 1 0 0 0-1.414 0l-5 5a1 1 0 0 0 1.414 1.414L15 16.414V29a1 1 0 0 0 2 0V16.414z" />
           </svg>
-          Import Rejection file
+          Import New Rejection file
           <input
             type="file"
             id="uploadFile1"
