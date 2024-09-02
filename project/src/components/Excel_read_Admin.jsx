@@ -202,7 +202,7 @@ function Dashboard() {
       {/* Main content */}
       <div className="flex-1 flex flex-col">
       <Header onSearch = {setSearch} onView = {setviewData} view = {viewData} theme = {theme} dark = {setTheme}/>
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 px-6 overflow-y-auto">
         
           {/* Department Cards */}
           <div className={`${viewData ? 'relative overflow-x-auto':'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2'}`}>

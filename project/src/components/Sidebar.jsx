@@ -35,6 +35,9 @@ function Sidebar({ theme }) {
       } else if (path === '/task/view') {
         setActiveSubTask('view');
       }
+    }else if(path==='/rejections'){
+      setActive('rejections');
+      setActiveSubTask('');
     }
   }, [location.pathname]);
 
@@ -81,7 +84,7 @@ function Sidebar({ theme }) {
         <div className="p-4 px-6">
           <h1 className={`text-xl font-thin ${theme === 'light' ? 'text-slate-800' : 'text-slate-400'}`}><span className={`eb-garamond-normal  font-bold ${theme==='light'?'text-indigo-600':'text-indigo-300'}text-2xl`}>Ej</span> <span className='text-lg'>Dashboard</span></h1>
         </div>
-        <nav className="mt-10">
+        <nav className="mt-5">
           <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('home')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
