@@ -22,7 +22,7 @@ function CreateTask() {
   const [collectionName, setCollectionName] = useState('');
   const [project, setProject] = useState('');
   const [isAutoFilled, setIsAutoFilled] = useState(false);
-
+  const [error, setError] = useState('');
   const [taskName, setTaskName] = useState('');
   const [description, setDescription] = useState('');
   const [taskId, setTaskId] = useState('');
@@ -45,15 +45,26 @@ function CreateTask() {
       setCollectionName(axBriefMapping[value].collectionName);
       setProject(axBriefMapping[value].project);
       setIsAutoFilled(true); 
+      setError('');
     } else {
       setCollectionName('');
       setProject('');
       setIsAutoFilled(false);
     }
   };
+  const handleAxBriefIdBlur = () => {
+    if (!axBriefMapping[axBriefId]) {
+      setError('Please enter a correct AX Brief ID');
+    }
+  };
+
   
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!isAutoFilled) {
+      setError('Please enter a correct AX Brief ID');
+      return;
+    }
     const taskData = {
       taskName,
       description,
@@ -89,10 +100,14 @@ function CreateTask() {
                     id="axBriefId"
                     value={axBriefId}
                     onChange={handleAxBriefIdChange}
+                    onBlur={handleAxBriefIdBlur}
                     className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     placeholder="Enter AX Brief ID" 
                     required
                   />
+                   {error && (
+                    <p className="text-red-500 text-xs italic">{error}</p>
+                  )}
                 </div>
 
                 <div className="mb-4">
@@ -103,7 +118,7 @@ function CreateTask() {
                     type="text"
                     id="collectionName"
                     value={collectionName}
-                    readOnly={isAutoFilled}
+                    readOnly={true}
                     onChange={(e) => setCollectionName(e.target.value)}
                     className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     placeholder="Enter Collection Name"
@@ -119,7 +134,7 @@ function CreateTask() {
                     type="text"
                     id="project"
                     value={project}
-                    readOnly={isAutoFilled}
+                    readOnly={true}
                     onChange={(e) => setProject(e.target.value)}
                     className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     placeholder="Enter Project Name"

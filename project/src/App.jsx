@@ -7,6 +7,7 @@ import Projects from './components/Projects';
 import Daily_Report from './components/Daily_Report';
 import CreateTask from './components/Create_Task';
 import ViewTasks from './components/View_Task';
+import Rejections from './components/Rejections';
 function App() {
 
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path='/daily-report' element={<Daily_Report />} />
         <Route path='/task/create' element={<CreateTask />} />
         <Route path='/task/view' element={<ViewTasks />} />
+        <Route path = '/rejections' element={<Rejections />} />
       </Routes>
       </div>
       
