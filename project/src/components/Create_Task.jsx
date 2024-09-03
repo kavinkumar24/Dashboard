@@ -59,12 +59,13 @@ function CreateTask() {
   };
 
   
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isAutoFilled) {
       setError('Please enter a correct AX Brief ID');
       return;
     }
+  
     const taskData = {
       taskName,
       description,
@@ -76,9 +77,29 @@ function CreateTask() {
       assignDate,
       targetDate,
     };
-    console.log(taskData);
+  
+    try {
+      const response = await fetch('http://localhost:5000/create-task', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(taskData),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to create task');
+      }
+  
+      const result = await response.json();
+      console.log(result);
+      alert('Task created successfully');
+    } catch (error) {
+      console.error(error);
+      setError('An error occurred while creating the task');
+    }
   };
-
+  
   return (
     <div className={`min-h-screen lg:min-h-screen min-w-screen w-[110%] md:w-[100%] lg:w-[100%] flex ${theme === 'light' ? 'bg-gray-100' : 'bg-gray-800'}`}>
       <Sidebar theme={theme} />

@@ -11,7 +11,7 @@ function Projects() {
   const [skeleton, setSkeleton] = useState(true);
   const [search, setSearch] = useState('');
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
-
+  const [viewData, setviewData] = useState(false);
   useEffect(() => {
     localStorage.setItem('theme', theme);
   }, [theme]);
@@ -24,7 +24,7 @@ function Projects() {
   ];
 
   const sectionRef = useRef(null);
-
+  
    
   useEffect(()=>{
     setTimeout(() => {
@@ -230,6 +230,38 @@ const renderGroupedDataByPltcodeAndDepartment = (groupedData, isPending = false)
 
   
 
+const renderPendingData = () => {
+  if (!pendingData.length) {
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="h-6 bg-gray-300 rounded mb-2"></div>
+        <div className="h-6 bg-gray-300 rounded mb-2"></div>
+        <div className="h-6 bg-gray-300 rounded"></div>
+      </div>
+    );
+  }
+
+  const filteredDepartments = Object.entries(departmentCounts)
+    .filter(([department]) => !search || department.toLowerCase().includes(search.toLowerCase()));
+
+  return (
+    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      {filteredDepartments.map(([department, count]) => (
+        <div
+          key={department}
+          className="p-4 shadow-lg rounded-lg border-2 border-yellow-300 bg-white hover:bg-yellow-50 transition-colors duration-300"
+        >
+          <div className="flex justify-between items-center p-2 rounded-md mb-2">
+            <span className="font-semibold text-gray-700">{department.toUpperCase()}</span>
+            <span className="text-gray-600">Total: <strong>{count}</strong></span>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+
   const renderCardCounts = (data, isPending = false) => {
     const groupedData = data.reduce((acc, item) => {
       const department = isPending ? item.pltcoded1.toUpperCase() : item.pltcode.toUpperCase();
@@ -327,55 +359,71 @@ const renderGroupedDataByPltcodeAndDepartment = (groupedData, isPending = false)
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
 
-      <Header onSearch={setSearch} theme={theme} dark={setTheme} />
+      <Header onSearch={setSearch} theme={theme} dark={setTheme} onView = {setviewData} view = {viewData} />
       <main className="flex-1 p-6 overflow-y-auto">
-        <div className="flex flex-col flex-grow p-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4">
-            {departmentsToShow.map((dept) => (
-              departmentCounts[dept] && (
-                <button
-                  key={dept}
-                  onClick={() => handleTabClick(dept)}
-                  className={`px-4 py-2 rounded-md ${activeTab === dept ?
-                    (theme === 'dark' ? "bg-slate-500 text-white shadow-lg" : "bg-[#CAD4E0] text-black shadow-lg") :
-                    (theme === 'dark' ? "bg-slate-700 text-gray-300 shadow-md" : "bg-[#FFFFFF] text-gray-700 shadow-md")}`}
-                >
-                  <b>
-                    <div className="flex flex-col space-y-3">
-                      <h2 className={`font-bold text-lg text-gray-700 uppercase text-center rounded-md shadow-md ${theme === 'light' ? 'dark:bg-slate-100 dark:text-gray-700' : 'dark:bg-slate-600 dark:text-gray-300'}`}>
-                        {dept} <span className='font-normal text-sm'>({departmentCounts[dept].total})</span>
-                      </h2>
-                      <div className="flex justify-between">
-                        <div className={`rounded-lg shadow-md  border-solid border  w-[50%] mr-1 h-7 ${theme === 'light' ? 'bg-[#c1fbce92] border-[#00ff379e] text-[#1C6C00]' : 'bg-gray-800 border-[#0e902a] text-green-300'}`}>
-                          <p className="font-normal text-sm text-center p-1">
-                            Production: <span className={`font-bold ${theme === 'light' ? 'text-gray-600' : 'text-gray-200'}`}>{departmentCounts[dept].production}</span>
-                          </p>
-                        </div>
-                        <div className={`rounded-lg shadow-md  border-solid border  w-[50%] ml-1 h-7 ${theme === 'light' ? 'bg-[#feffd1] border-[#e5ff00] text-[#879300] ' : 'bg-gray-800 border-[#7d8808] text-amber-300 shadow-md'}`}>
-                          <p className="font-normal text-sm text-center p-1">
-                            Pending: <span className={`font-bold ${theme === 'light' ? 'text-gray-600' : 'text-gray-200'}`}>{departmentCounts[dept].pending}</span>
-                          </p>
-                        </div>
+      <div className="flex flex-col flex-grow p-4">
+      {viewData ? (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className={`${theme === 'light' ? 'bg-gray-50' : 'bg-gray-800'}`}>
+              <tr className={`${theme==='light'?'bg-slate-700 text-white':'bg-slate-900 text-white '}`}>
+                <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">Department</th>
+                <th className="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">Pending</th>
+              </tr>
+            </thead>
+            <tbody className={`${theme === 'light' ? 'bg-white divide-y divide-gray-200' : 'bg-gray-900 divide-y divide-gray-700'}`}>
+              {departmentsToShow.map((dept) => (
+                departmentCounts[dept] && (
+                  <tr key={dept} onClick={() => handleTabClick(dept)} className={`cursor-pointer ${activeTab === dept ?
+                    (theme === 'dark' ? "bg-slate-500 text-white" : "bg-[#CAD4E0] text-black") :
+                    (theme === 'dark' ? "bg-slate-700 text-gray-300" : "bg-[#FFFFFF] text-gray-700")}`}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className={`text-sm font-medium ${theme === 'light' ? 'text-gray-900' : 'text-gray-100'}`}>
+                        {dept}
                       </div>
-                    </div>
-                  </b>
-                </button>
-              )
-            ))}
-          </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className={`rounded-lg shadow-md border-solid border w-full h-7 ${theme === 'light' ? 'bg-[#feffd1] border-[#e5ff00] text-[#879300]' : 'bg-gray-800 border-[#7d8808] text-amber-300 shadow-md'}`}>
+                        <p className="font-normal text-sm text-center p-1">
+                          Pending: <span className={`font-bold ${theme === 'light' ? 'text-gray-600' : 'text-gray-200'}`}>{departmentCounts[dept].pending}</span>
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-5">
+          {departmentsToShow.map((dept) => (
+            departmentCounts[dept] && (
+              <button
+                key={dept}
+                onClick={() => handleTabClick(dept)}
+                className={`px-4 py-2 rounded-md ${activeTab === dept ?
+                  (theme === 'dark' ? "bg-slate-500 text-white shadow-lg" : "bg-[#CAD4E0] text-black shadow-lg") :
+                  (theme === 'dark' ? "bg-slate-700 text-gray-300 shadow-md" : "bg-[#FFFFFF] text-gray-700 shadow-md")}`}
+              >
+                <div className="flex flex-col space-y-3">
+                  <h2 className={`font-bold text-lg  text-center rounded-md ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+                    {dept}
+                  </h2>
+                  <div className={`rounded-lg shadow-md border-solid border w-full ml-1 h-7 ${theme === 'light' ? 'bg-[#feffd1] border-[#e5ff00] text-[#879300]' : 'bg-gray-800 border-[#7d8808] text-amber-300 shadow-md'}`}>
+                    <p className="font-normal text-sm text-center p-1">
+                      Pending: <span className={`font-bold ${theme === 'light' ? 'text-gray-600' : 'text-gray-200'}`}>{departmentCounts[dept].pending}</span>
+                    </p>
+                  </div>
+                </div>
+              </button>
+            )
+          ))}
+        </div>
+      )}
 
           <section ref={sectionRef} className="flex flex-col items-center justify-center">
-            {hasData(productionData) && (
-              <div className="mt-4 w-full">
-                <h3 className={`text-lg font-semibold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>
-                  Production Data
-                </h3>
-                <div className='w-full'>
-                  {renderGroupedDataByPltcodeAndDepartment(groupDataByPltcodeAndDepartment(productionData, activeTab))}
-                </div>
-              </div>
-            )}
-
+            
             {hasData(pendingData) && (
               <div className="mt-4 w-full">
                 <h3 className={`text-lg font-semibold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>

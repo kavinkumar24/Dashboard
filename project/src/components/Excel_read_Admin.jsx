@@ -120,8 +120,8 @@ function Dashboard() {
       const avgProduction = productionQty > 0
       ? (((productionQty + pendingQty) / productionQty) * 1).toFixed(1)
       : 'N/A'; 
-      const efficiency = ((productionQty / (productionQty + pendingQty)) * 100).toFixed(2);
-  
+      const Target = 100;
+      const efficiency = ((productionQty / Target)).toFixed(2);  
       return (
         <div key={dept} className={`p-4 rounded-lg shadow-md flex flex-col justify-between 
           ${theme === 'light' ? 'bg-white' : 'bg-slate-600'}`} 

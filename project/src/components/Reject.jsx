@@ -22,6 +22,8 @@ function UploadExcel() {
     cam: [],
     allRaisedDepts: [],
   });
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -69,12 +71,15 @@ function UploadExcel() {
       allRaisedDepts,
     });
   };
-
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+  }, [theme]);
   const CustomBarChart = ({ data, title, color }) => (
-    <div className="p-4 bg-white shadow-md rounded-md border border-gray-200 w-[80%] sm:w-full h-[70%]">
-      <h2 className="text-lg font-semibold mb-4 text-center">{title}</h2>
-      <div className="min-w-max">
-        <BarChart width={350} height={300} data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
+    <div className={`p-4  shadow-md rounded-md border border-gray-200 overflow-x-hidden w-[100%]  
+    h-[70%] sm:w-[90%] ${theme==='light'?'bg-white':'bg-slate-700'}`}>
+    <h2 className={`text-lg font-semibold mb-4 text-center ${theme === 'light' ? 'text-slate-800' : 'text-slate-400'}`}>{title}</h2>
+    <div className="min-w-max">
+        <BarChart width={450} height={300} data={data} margin={{ top: 20, right: 30, left: 0, bottom: 5 }}
         >
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis
@@ -92,9 +97,9 @@ function UploadExcel() {
   );
 
   const CustomPieChart = ({ data, title, colors }) => (
-    <div className="p-4 bg-white shadow-md rounded-md border border-gray-200 overflow-x-hidden w-[80%] sm:w-full">
-      <h2 className="text-lg font-semibold mb-4 text-center">{title}</h2>
-      <div className="min-w-max">
+    <div className={`p-4  shadow-md rounded-md border border-gray-200 overflow-x-hidden w-[100%] sm:w-[90%] ${theme==='light'?'bg-white':'bg-slate-700'}`}>
+    <h2 className={`text-lg font-semibold mb-4 text-center ${theme === 'light' ? 'text-slate-800' : 'text-slate-400'}`}>{title}</h2>
+    <div className="min-w-max">
         <PieChart width={350} height={300}>
           <Pie
             data={data}
@@ -124,7 +129,7 @@ function UploadExcel() {
                 className="w-4 h-4 rounded-full"
                 style={{ backgroundColor: colors[index % colors.length] }}
               />
-              <span className="ml-2">{entry.raisedDept}</span>
+              <span className={`ml-2 ${theme==='light'?'text-slate-950':'text-slate-400'}`}>{entry.raisedDept}</span>
             </div>
           ))}
         </div>
@@ -136,9 +141,13 @@ function UploadExcel() {
 }
 
 function Reject() {
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem("theme") || "light"
-  );
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+
+  
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
   const [search, setSearch] = useState("");
 
   const { chartData, handleFileUpload, CustomBarChart, CustomPieChart } =
@@ -155,7 +164,7 @@ function Reject() {
         <Header onSearch={setSearch} theme={theme} dark={setTheme} />
 
         <div className="flex justify-between mx-4">
-          <h1 className="font-bold text-xl">Rejections</h1>
+          <h1 className={`font-bold text-xl ${theme==='light'?'text-slate-800':'text-slate-400'}`}>Rejections</h1>
           {/* <button
             className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
               theme === "light"
@@ -170,7 +179,7 @@ function Reject() {
         <div className="upload-container pt-10 w-[80%] sm:w-full">
           <label
             htmlFor="uploadFile1"
-            className="bg-white text-gray-500 font-semibold text-base rounded max-w-md h-32 flex flex-col items-center justify-center cursor-pointer border-2 border-gray-300 border-dashed mx-auto"
+            className={` text-gray-500 font-semibold text-base rounded max-w-md h-32 flex flex-col items-center justify-center cursor-pointer border-2  border-dashed mx-auto ${theme==='light'?'bg-white border-gray-300':'bg-slate-900 border-gray-600'}`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -196,7 +205,7 @@ function Reject() {
 
         {chartData.allRaisedDepts && chartData.allRaisedDepts.length > 0 && (
           <div className="px-4 py-6 md:py-8">
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 gap-4">
               <CustomBarChart
                 data={chartData.cam}
                 title="CAM Rejections"
