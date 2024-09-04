@@ -18,18 +18,18 @@ function CreateTask() {
     }
   };
 
-  const [axBriefId, setAxBriefId] = useState('');
-  const [collectionName, setCollectionName] = useState('');
+  const [ax_brief, setAx_brief] = useState('');
+  const [collection_name, setCollection_name] = useState('');
   const [project, setProject] = useState('');
   const [isAutoFilled, setIsAutoFilled] = useState(false);
   const [error, setError] = useState('');
   const [taskName, setTaskName] = useState('');
   const [description, setDescription] = useState('');
-  const [taskId, setTaskId] = useState('');
+  const [no_of_qty, setNo_of_qty] = useState('');
   const [priority, setPriority] = useState('medium');
   const [isUrgent, setIsUrgent] = useState(false);
-  const [assignDate, setAssignDate] = useState('');
-  const [targetDate, setTargetDate] = useState('');
+  const [assign_date, setAssign_date] = useState('');
+  const [target_date, setTarget_date] = useState('');
   const [search, setSearch] = useState('');
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
@@ -39,21 +39,21 @@ function CreateTask() {
 
   const handleAxBriefIdChange = (e) => {
     const value = e.target.value;
-    setAxBriefId(value);
+    setAx_brief(value);
   
     if (axBriefMapping[value]) {
-      setCollectionName(axBriefMapping[value].collectionName);
+      setCollection_name(axBriefMapping[value].collectionName);
       setProject(axBriefMapping[value].project);
       setIsAutoFilled(true); 
       setError('');
     } else {
-      setCollectionName('');
+      setCollection_name('');
       setProject('');
       setIsAutoFilled(false);
     }
   };
   const handleAxBriefIdBlur = () => {
-    if (!axBriefMapping[axBriefId]) {
+    if (!axBriefMapping[ax_brief]) {
       setError('Please enter a correct AX Brief ID');
     }
   };
@@ -67,19 +67,17 @@ function CreateTask() {
     }
   
     const taskData = {
-      taskName,
-      description,
-      taskId,
-      collectionName,
+      ax_brief,
+      collection_name,
       project,
+      no_of_qty,
+      assign_date,
+      target_date,
       priority,
-      isUrgent,
-      assignDate,
-      targetDate,
     };
   
     try {
-      const response = await fetch('http://localhost:5000/create-task', {
+      const response = await fetch('http://localhost:8081/create-task', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +117,7 @@ function CreateTask() {
                   <input
                     type="text"
                     id="axBriefId"
-                    value={axBriefId}
+                    value={ax_brief}
                     onChange={handleAxBriefIdChange}
                     onBlur={handleAxBriefIdBlur}
                     className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
@@ -138,9 +136,9 @@ function CreateTask() {
                   <input
                     type="text"
                     id="collectionName"
-                    value={collectionName}
+                    value={collection_name}
                     readOnly={true}
-                    onChange={(e) => setCollectionName(e.target.value)}
+                    onChange={(e) => setCollection_name(e.target.value)}
                     className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     placeholder="Enter Collection Name"
                     required
@@ -170,8 +168,8 @@ function CreateTask() {
                   <input
                     type="text"
                     id="qty"
-                    value={taskId}
-                    onChange={(e) => setTaskId(e.target.value)}
+                    value={no_of_qty}
+                    onChange={(e) => setNo_of_qty(e.target.value)}
                     className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     placeholder="Enter Quantity"
                     required
@@ -185,8 +183,8 @@ function CreateTask() {
                   <input
                     type="date"
                     id="assignDate"
-                    value={assignDate}
-                    onChange={(e) => setAssignDate(e.target.value)}
+                    value={assign_date}
+                    onChange={(e) => setAssign_date(e.target.value)}
                     className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     required
                   />
@@ -199,8 +197,8 @@ function CreateTask() {
                   <input
                     type="date"
                     id="targetDate"
-                    value={targetDate}
-                    onChange={(e) => setTargetDate(e.target.value)}
+                    value={target_date}
+                    onChange={(e) => setTarget_date(e.target.value)}
                     className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     required
                   />

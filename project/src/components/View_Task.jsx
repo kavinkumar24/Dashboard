@@ -12,6 +12,7 @@ function ViewTasks() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
+  
   useEffect(() => {
     const initialTasks = [
       { id: 1, axBrief: 'Brief 1', collectionName: 'Collection A', project: 'Project X', quantity: '100', assignDate: '2024-09-01', targetDate: '2024-09-10', priority: 'High' },
