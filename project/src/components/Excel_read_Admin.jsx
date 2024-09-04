@@ -12,10 +12,12 @@ function Dashboard() {
   const [search, setSearch] = useState('');
   // const navigate = useNavigate(); 
   const [skeleton, setSkeleton] = useState(true);
-
+  const[filter_on,setFilter_on] = useState(false);
   const[theme, setTheme] = useState(()=>{
     return localStorage.getItem('theme') || 'light';
   });
+  const [sortConfig, setSortConfig] = useState({ key: 'Production Qty', direction: 'ascending' });
+
   useEffect(() => {
     fetch('http://localhost:8081/filtered_production_data')
       .then(response => response.json())
@@ -79,33 +81,79 @@ function Dashboard() {
       .catch((err) => console.log("Error fetching pending data:", err));
   }, []);
     
+  const sortedData = () => {
+    const sortableItems = Object.keys(productionData).map((dept) => ({
+      dept,
+      productionQty: productionData[dept],
+      pendingQty: pendingDepartmentData[dept] || 0,
+    }));
+  
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) {
+          return sortConfig.direction === 'ascending' ? -1 : 1;
+        }
+        if (a[sortConfig.key] > b[sortConfig.key]) {
+          return sortConfig.direction === 'ascending' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  };
+  
+  const handleSort = (key) => {
+    let direction = 'ascending';
+    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+      direction = 'descending';
+    }
+    setSortConfig({ key, direction });
+  };
   const renderTable = () => (
-    <div className={`p-2 rounded-lg shadow-md flex flex-col justify-between m-0 
-      ${theme === 'light' ? 'bg-white text-gray-700' : 'bg-gray-800 text-gray-300'}`}
-    >
-      <table className={`w-full text-sm text-left 
-        ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>
-        <thead className={`text-base uppercase 
-          ${theme === 'light' ? 'bg-gray-100 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>
-          <tr>
-            <th scope="col" className="px-2 py-3">Warehouse</th>
-            <th scope="col" className="px-2 py-3">Production Qty</th>
-            <th scope="col" className="px-2 py-3">Pending Qty</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Object.keys(productionData).filter((dept) =>
-            search.toLowerCase() === '' ? dept : dept.toLowerCase().includes(search.toLowerCase())
-          ).map((dept) => (
-            <tr key={dept} className={`border-b border-solid 
-              ${theme === 'light' ? 'bg-white text-gray-700 border-slate-200' : 'bg-gray-800 text-gray-300 border-slate-700'}`}>
-              <td className="px-6 py-3">{dept}</td>
-              <td className="px-6 py-3">{productionData[dept]}</td>
-              <td className="px-6 py-3">{pendingDepartmentData[dept] || 0}</td>
+    <div className="flex justify-center items-center h-full">
+      <div
+        className={`p-2 rounded-lg shadow-md flex flex-col justify-center items-center m-0 w-[50%] 
+          ${theme === 'light' ? 'bg-white text-gray-700' :' bg-gray-900 text-gray-300'}`}
+      >
+        <table
+          className={`w-[100%] text-sm text-left 
+            ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}
+        >
+          <thead
+            className={`text-base uppercase 
+              ${theme === 'light' ? 'bg-gray-100 text-gray-700' : 'bg-gray-700 text-gray-300'}`}
+          >
+            <tr>
+              <th scope="col" className="px-2 py-3">Warehouse</th>
+              <th scope="col" className="px-2 py-3 cursor-pointer" onClick={() => handleSort('productionQty')}>
+                Production Qty
+              </th>
+              <th scope="col" className="px-2 py-3 cursor-pointer" onClick={() => handleSort('pendingQty')}>
+                Pending Qty
+              </th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+  {sortedData()
+    .filter((item) =>
+      search.toLowerCase() === '' ? item.dept : item.dept.toLowerCase().includes(search.toLowerCase())
+    )
+    .map((item, index) => (
+      <tr
+        key={item.dept}
+        className={`border-b border-solid 
+          ${theme === 'light' ? (index % 2 === 0 ? 'bg-gray-200 text-gray-700 border-slate-200' : 'bg-white text-gray-700 border-slate-100') : 
+          (index % 2 === 0 ? 'bg-gray-800 text-gray-300 border-slate-900' : 'bg-gray-900 text-gray-300 border-gray-500')}`}
+      >
+        <td className="px-6 py-3">{item.dept}</td>
+        <td className="px-6 py-3">{item.productionQty}</td>
+        <td className="px-6 py-3">{item.pendingQty}</td>
+      </tr>
+    ))}
+</tbody>
+
+        </table>
+      </div>
     </div>
   );
   const renderCards = () => {
@@ -195,14 +243,14 @@ function Dashboard() {
 
  
   return (
-    <div className={` w-[100%] min-h-screen flex overflow-auto ${theme==='light'?'bg-gray-100':
-    'bg-gray-800'} `}>
+    <div className={` w-[100%] min-h-screen flex overflow-auto ${theme==='light'?'bg-gray-100 ':
+    'bg-gray-800 '} `}>
       {/* Sidebar */}
     <Sidebar theme={theme} />
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-      <Header onSearch = {setSearch} onView = {setviewData} view = {viewData} theme = {theme} dark = {setTheme}/>
-        <main className="flex-1 px-6 overflow-y-auto">
+      <Header onSearch = {setSearch} onView = {setviewData} view = {viewData} theme = {theme} dark = {setTheme} on_filter = {setFilter_on} filter={filter_on}/>
+        <main className={`flex-1 px-6 overflow-y-auto ${filter_on===true?'opacity-10':'opacity-100'}`}>
         
           {/* Department Cards */}
           <div className={`${viewData ? 'relative overflow-x-auto':'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2'}`}>

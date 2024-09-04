@@ -72,21 +72,21 @@ function ViewTasks() {
             Task List
           </h1>
 
-  <div className='max-w-full'>
-  <div className="overflow-x-scroll max-h-screen-md shadow-lg rounded-lg border border-gray-300 max-w-screen-lg">
+  <div className='max-w-full '>
+  <div className="overflow-x-scroll max-h-screen-md shadow-lg rounded-lg border border-gray-300 max-w-screen-lg no-scrollbar">
   <div className=" max-h-[400px] w-96">
     <table className={`min-w-full border rounded-lg ${theme === 'light' ? 'border-gray-300 bg-white' : 'border-gray-600 bg-slate-500'}`}>
       <thead>
-        <tr className='bg-red-300'>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-900 text-gray-300'}`}>ID</th>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-900 text-gray-300'}`}>Ax Brief</th>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-900 text-gray-300'}`}>Collection Name</th>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-900 text-gray-300'}`}>Project</th>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-900 text-gray-300'}`}>Quantity</th>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-900 text-gray-300'}`}>Assign Date</th>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-900 text-gray-300'}`}>Target Date</th>
+        <tr>
+          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>ID</th>
+          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Ax Brief</th>
+          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Collection Name</th>
+          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Project</th>
+          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Quantity</th>
+          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Assign Date</th>
+          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Target Date</th>
           <th
-            className={`px-4 py-2 text-left cursor-pointer ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-900 text-gray-300'}`} 
+            className={`px-4 py-2 text-left cursor-pointer ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`} 
             onClick={handleSort}
           >
             Priority
@@ -97,13 +97,21 @@ function ViewTasks() {
         {tasks.map((task, index) => (
           <tr
             key={task.ax_brief}
-            className={`border-solid border-t ${theme === 'light' ? 'border-zinc-100' : 'border-zinc-700'} ${index % 2 === 0 ? (theme === 'light' ? 'bg-slate-100' : 'bg-slate-600') : ''}`}
+            className={`border-solid border-t text-sm   ${
+                       theme === "light"
+                         ? index % 2 === 0
+                           ? "bg-gray-200 text-gray-700 border-slate-200"
+                           : "bg-white text-gray-700 border-slate-100"
+                         : index % 2 === 0
+                         ? "bg-gray-800 text-gray-300 border-slate-900"
+                         : "bg-gray-900 text-gray-300 border-gray-800"
+                     }`}
           >
-            <td className="px-6 py-4">{index + 1}</td>
+            <td className="px-6 py-4">{task.id}</td>
 
             <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.ax_brief}</td>
 
-            <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.collection_name}</td>
+            <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{(task.collection_name)}</td>
 
             <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.project}</td>
 
@@ -121,9 +129,12 @@ function ViewTasks() {
           </tr>
         ))}
       </tbody>
+      
     </table>
   </div>
+  
 </div>
+
 </div>
 
         </main>
