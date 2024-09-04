@@ -459,6 +459,17 @@ app.get("/raw_filtered_pending_data", (req, res) => {
   });
 });
 
+app.get("/create-task", (req, res) => {
+   const sql = "SELECT * FROM task";
+   db.query(sql, (err, data) => {
+      if (err) {
+         console.error(err);
+         return res.status(500).json({ message: "Failed to fetch tasks", error: err });
+      }
+      res.json(data);
+   });
+});
+
 app.post("/create-task", (req, res) => {
    console.log("Request Body:", req.body);
    const { ax_brief, collection_name, project, no_of_qty, assign_date, target_date, priority } = req.body;

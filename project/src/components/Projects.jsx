@@ -89,7 +89,6 @@ function Projects() {
         });
 
         setDepartmentCounts(combinedCounts);
-
         const initialTab = departmentsToShow.find(dept => combinedCounts[dept]?.total > 0) || "";
         setActiveTab(initialTab);
       } catch (error) {
