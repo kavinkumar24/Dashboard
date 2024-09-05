@@ -34,6 +34,7 @@ function UploadExcel() {
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const jsonData = XLSX.utils.sheet_to_json(sheet);
+        console.log(jsonData)
         processData(jsonData);
       };
       reader.readAsBinaryString(file);
@@ -100,7 +101,7 @@ function UploadExcel() {
     <div className={`p-4  shadow-md rounded-md border border-gray-200 overflow-x-hidden w-[100%] sm:w-[90%] ${theme==='light'?'bg-white':'bg-slate-700'}`}>
     <h2 className={`text-lg font-semibold mb-4 text-center ${theme === 'light' ? 'text-slate-800' : 'text-slate-400'}`}>{title}</h2>
     <div className="min-w-max">
-        <PieChart width={350} height={300}>
+        <PieChart width={450} height={300}>
           <Pie
             data={data}
             dataKey="count"

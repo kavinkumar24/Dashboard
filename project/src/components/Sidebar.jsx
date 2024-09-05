@@ -4,6 +4,9 @@ import { ImHome } from 'react-icons/im';
 import { BsGear, BsListTask, BsEye, BsPlusCircleDotted } from 'react-icons/bs';
 import { IoDocumentTextOutline } from 'react-icons/io5';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { GoStop } from "react-icons/go";
+import { RiFolderReceivedLine } from "react-icons/ri";
+
 
 function Sidebar({ theme }) {
   const navigate = useNavigate();
@@ -38,6 +41,9 @@ function Sidebar({ theme }) {
     }else if(path==='/rejections'){
       setActive('rejections');
       setActiveSubTask('');
+    }
+    else if(path==='/order_receiving&new_design'){
+      setActive('order_new_design')
     }
   }, [location.pathname]);
 
@@ -133,7 +139,7 @@ function Sidebar({ theme }) {
               Task
             </div>
           </a>
-          {/* Subcategories for Task */}
+          
           {taskExpanded && (
             <div className="ml-8">
               <a
@@ -165,14 +171,27 @@ function Sidebar({ theme }) {
 
           <a
             href="#"
-            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('settings')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('rejections')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
             onClick={() => handleNavigation('/rejections', 'rejections')}
           >
             <div className='flex flex-row p-2'>
               <div className='mt-1 px-2'>
-                <BsGear />
+                <GoStop />
               </div>
               Rejections
+            </div>
+          </a>
+
+          <a
+            href="#"
+            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('order_new_design')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+            onClick={() => handleNavigation('/order_receiving&new_design', '/order_receiving&new_design')}
+          >
+            <div className='flex flex-row p-2'>
+              <div className='mt-1 px-2'>
+                <RiFolderReceivedLine />
+              </div>
+              Order Receive
             </div>
           </a>
 

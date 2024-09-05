@@ -547,8 +547,22 @@ const PORT = process.env.PORT || 8081;
 
 app.get("/", (req, res) => {
   return res.json("From Backend Side");
+  
 });
 
+
+
+app.get("/order_receive&new_design",(req,res)=>{
+  const sql = "SELECT TRANSDATE,SEGMENTID,KNOWNAS,PLTCODE,HALLMARKINGCODE,COMPLEXITY_CODE,Itemqty from Order_new_design_log"
+  db.query(sql, (err, data) => {
+    if (err) {
+       console.error(err);
+       return res.status(500).json({ message: "Failed to fetch tasks", error: err });
+    }
+    res.json(data);
+ });
+
+})
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });

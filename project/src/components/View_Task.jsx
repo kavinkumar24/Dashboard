@@ -12,24 +12,20 @@ function ViewTasks() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-
   const fetch_task_data = async () => {
-    try{
-    const response = await fetch('http://localhost:8081/create-task');
-    const data = await response.json();
-    console.log(data);
-    setTasks(data);
-
-    }
-    catch(error){
+    try {
+      const response = await fetch('http://localhost:8081/create-task');
+      const data = await response.json();
+      setTasks(data);
+    } catch (error) {
       console.error("Error fetching task data:", error);
     }
-  }
+  };
+
   useEffect(() => {
     fetch_task_data();
   }, []);
   
-
   const handleSort = () => {
     const priorityOrders = [
       { High: 1, Medium: 2, Low: 3 }, 
@@ -37,12 +33,8 @@ function ViewTasks() {
       { High: 3, Medium: 2, Low: 1 }, 
     ];
 
-
-
-
-    
-
     const currentOrder = priorityOrders[sortOrder % 3];
+
     const sortedTasks = [...tasks].sort((a, b) => currentOrder[a.priority] - currentOrder[b.priority]);
 
     setTasks(sortedTasks);
@@ -71,80 +63,64 @@ function ViewTasks() {
           <h1 className={`text-xl font-bold mb-6 ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
             Task List
           </h1>
-
-  <div className='max-w-full '>
-  <div className="overflow-x-scroll max-h-screen-md shadow-lg rounded-lg border border-gray-300 max-w-screen-lg no-scrollbar">
-  <div className=" max-h-[400px] w-96">
-    <table className={`min-w-full border rounded-lg ${theme === 'light' ? 'border-gray-300 bg-white' : 'border-gray-600 bg-slate-500'}`}>
-      <thead>
-        <tr>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>ID</th>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Ax Brief</th>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Collection Name</th>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Project</th>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Quantity</th>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Assign Date</th>
-          <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Target Date</th>
-          <th
-            className={`px-4 py-2 text-left cursor-pointer ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`} 
-            onClick={handleSort}
-          >
-            Priority
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {tasks.map((task, index) => (
-          <tr
-            key={task.ax_brief}
-            className={`border-solid border-t text-sm   ${
-                       theme === "light"
-                         ? index % 2 === 0
-                           ? "bg-gray-200 text-gray-700 border-slate-200"
-                           : "bg-white text-gray-700 border-slate-100"
-                         : index % 2 === 0
-                         ? "bg-gray-800 text-gray-300 border-slate-900"
-                         : "bg-gray-900 text-gray-300 border-gray-800"
-                     }`}
-          >
-            <td className="px-6 py-4">{task.id}</td>
-
-            <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.ax_brief}</td>
-
-            <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{(task.collection_name)}</td>
-
-            <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.project}</td>
-
-            <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.no_of_qty}</td>
-
-            <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.assign_date}</td>
-
-            <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.target_date}</td>
-
-            <td className="px-4 py-2">
-              <span className={getPriorityClass(task.priority)}>
-                {task.priority}
-              </span>
-            </td>
-          </tr>
-        ))}
-      </tbody>
-      
-    </table>
-  </div>
-  
-</div>
-
-</div>
-
+          <div className='max-w-full '>
+            <div className="overflow-x-scroll max-h-screen-md shadow-lg rounded-lg border border-gray-300 max-w-screen-lg no-scrollbar">
+              <div className="max-h-[400px] w-96">
+                <table className={`min-w-full border rounded-lg ${theme === 'light' ? 'border-gray-300 bg-white' : 'border-gray-600 bg-slate-500'}`}>
+                  <thead>
+                    <tr>
+                      <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>ID</th>
+                      <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Ax Brief</th>
+                      <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Collection Name</th>
+                      <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Project</th>
+                      <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Quantity</th>
+                      <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Assign Date</th>
+                      <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Target Date</th>
+                      <th
+                        className={`px-4 py-2 text-left cursor-pointer ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`} 
+                        onClick={handleSort}
+                      >
+                        Priority
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {tasks.map((task, index) => (
+                      <tr
+                        key={`${task.id}-${index}`} // Ensure unique keys by combining id and index
+                        className={`border-solid border-t text-sm ${
+                          theme === "light"
+                            ? index % 2 === 0
+                              ? "bg-gray-200 text-gray-700 border-slate-200"
+                              : "bg-white text-gray-700 border-slate-100"
+                            : index % 2 === 0
+                            ? "bg-gray-800 text-gray-300 border-slate-900"
+                            : "bg-gray-900 text-gray-300 border-gray-800"
+                        }`}
+                      >
+                        <td className="px-6 py-4">{task.id}</td>
+                        <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.ax_brief}</td>
+                        <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.collection_name}</td>
+                        <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.project}</td>
+                        <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.no_of_qty}</td>
+                        <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.assign_date}</td>
+                        <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.target_date}</td>
+                        <td className="px-4 py-2">
+                          <span className={getPriorityClass(task.priority)}>
+                            {task.priority}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </main>
       </div>
     </div>
   );
 }
-
-
-
-
 
 export default ViewTasks;

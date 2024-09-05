@@ -8,6 +8,7 @@ import Daily_Report from './components/Daily_Report';
 import CreateTask from './components/Create_Task';
 import ViewTasks from './components/View_Task';
 import Reject from './components/Reject';
+import Order_rev from './components/Order_rev';
 function App() {
 
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path='/task/create' element={<CreateTask />} />
         <Route path='/task/view' element={<ViewTasks />} />
         <Route path = '/rejections' element={<Reject />} />
+        <Route path = '/order_receiving&new_design' element={<Order_rev />} />
       </Routes>
       </div>
       
