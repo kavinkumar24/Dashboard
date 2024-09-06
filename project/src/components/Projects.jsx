@@ -586,7 +586,7 @@ function Projects() {
                       </th>
                     </tr>
                   </thead>
-                  <tbody className={`divide-y divide-gray-700`}>
+                  <tbody className={`divide-y divide-gray-300`}>
                     {departmentsToShow.map(
                       (dept, index) =>
                         departmentCounts[dept] && (
@@ -598,7 +598,7 @@ function Projects() {
             activeTab === dept
               ? theme === "dark"
                 ? "bg-gray-500 text-white"
-                : "bg-gray-500 text-black"
+                : "bg-slate-300 text-black"
               : index % 2 === 0
               ? theme === "dark"
                 ? "bg-slate-700 text-gray-300"

@@ -31,11 +31,12 @@
 .slider-progress {
   position: absolute;
   height: 10px;
+  top: 0px;
   background-color: #007bff; 
   border-radius: 1px;
 }
 
-.slider-thumb {
+/* .slider-thumb {
   position: absolute;
   width: 20px;
   height: 20px;
@@ -68,4 +69,63 @@
   border-right: 5px solid transparent;
   border-bottom: 5px solid #000;
   transform: translateX(-50%);
+} */
+
+
+/* Custom style for range input thumb */
+.slider-month::-webkit-slider-thumb,
+.slider-year::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  position: relative;
+  top: -6px;
+  background-color: #007bff; /* Thumb color */
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.slider-month::-moz-range-thumb,
+.slider-year::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  background-color: #007bff; /* Thumb color */
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.slider-month::-ms-thumb,
+.slider-year::-ms-thumb {
+  width: 20px;
+  height: 20px;
+  background-color: #007bff; /* Thumb color */
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+/* Optional: Styling for the range input track */
+.slider-month,
+.slider-year {
+  accent-color: #007bff; /* Track color */
+}
+
+.slider-month::-webkit-slider-runnable-track,
+.slider-year::-webkit-slider-runnable-track {
+  height: 4px;
+  background: #ddd; /* Track color */
+  border-radius: 2px;
+}
+
+.slider-month::-moz-range-track,
+.slider-year::-moz-range-track {
+  height: 4px;
+  background: #ddd; /* Track color */
+  border-radius: 2px;
+}
+
+.slider-month::-ms-track,
+.slider-year::-ms-track {
+  height: 4px;
+  background: #ddd; /* Track color */
+  border-radius: 2px;
 }

@@ -122,7 +122,7 @@ function Daily_Report() {
                 } sm:ml-0`}
               >
                 <div className="animate-pulse flex space-x-4 mt-16">
-                  <div className={`rounded-fullh-10 w-10`}></div>
+                  <div className={`rounded-full h-10 w-10`}></div>
                   <div className="flex-1 space-y-6 py-10 md:py-1">
                     <div
                       className={`h-2 w-[90%] ${

@@ -553,7 +553,7 @@ app.get("/", (req, res) => {
 
 
 app.get("/order_receive&new_design",(req,res)=>{
-  const sql = "SELECT TRANSDATE,SEGMENTID,KNOWNAS,PLTCODE,HALLMARKINGCODE,COMPLEXITY_CODE,Itemqty from Order_new_design_log"
+  const sql = "SELECT TRANSDATE,SEGMENTID,KNOWNAS,PLTCODE,HALLMARKINGCODE,COMPLEXITY_CODE,JOBCARDTYPE1,Itemqty from Order_new_design_log"
   db.query(sql, (err, data) => {
     if (err) {
        console.error(err);

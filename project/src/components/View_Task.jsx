@@ -87,7 +87,7 @@ function ViewTasks() {
                   <tbody>
                     {tasks.map((task, index) => (
                       <tr
-                        key={`${task.id}-${index}`} // Ensure unique keys by combining id and index
+                        key={`${task.id}-${index}`}
                         className={`border-solid border-t text-sm ${
                           theme === "light"
                             ? index % 2 === 0

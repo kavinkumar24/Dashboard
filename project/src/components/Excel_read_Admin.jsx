@@ -250,7 +250,7 @@ function Dashboard() {
       {/* Main content */}
       <div className="flex-1 flex flex-col">
       <Header onSearch = {setSearch} onView = {setviewData} view = {viewData} theme = {theme} dark = {setTheme} on_filter = {setFilter_on} filter={filter_on}/>
-        <main className={`flex-1 px-6 overflow-y-auto ${filter_on===true?'opacity-10':'opacity-100'}`}>
+        <main className={`flex-1 px-4 overflow-y-auto ${filter_on===true?'opacity-10':'opacity-100'}`}>
         
           {/* Department Cards */}
           <div className={`${viewData ? 'relative overflow-x-auto':'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2'}`}>
