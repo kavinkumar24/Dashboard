@@ -1,9 +1,9 @@
 const express = require("express");
 const mysql = require("mysql");
 const cors = require("cors");
+
 const app = express();
 app.use(cors());
-
 app.use(express.json());
 
 const db = mysql.createConnection({
@@ -12,6 +12,77 @@ const db = mysql.createConnection({
   password: "emerald",
   database: "emerald",
 });
+
+// const bodyParser = require('body-parser');
+
+// // Increase the limit to 50MB
+// app.use(bodyParser.json({ limit: '50mb' }));
+// app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
+
+// // For Express 4.16+ you can use the built-in middleware
+// app.use(express.json({ limit: '50mb' }));
+// app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.post("/upload", (req, res) => {
+  const data = req.body;
+
+  db.query("SHOW TABLES LIKE 'Order_receiving_details'", (err, result) => {
+    if (err) {
+      console.error("Error checking table existence:", err);
+      return res.status(500).json({ message: "Error checking table existence" });
+    }
+
+    if (result.length === 0) {
+      const createTableQuery = `CREATE TABLE Order_receiving_log (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        NAME1 VARCHAR(255), SUB_PARTY VARCHAR(255), Group_party VARCHAR(255), JCID VARCHAR(255), 
+        TRANSDATE DATE, ORDERNO VARCHAR(255), OrderType VARCHAR(255), ZONE VARCHAR(255), 
+        OGPG VARCHAR(255), Purity VARCHAR(255), Color VARCHAR(255), PHOTO_NO VARCHAR(255), 
+        PHOTO_NO_2 VARCHAR(255), PROJECT VARCHAR(255), TYPE VARCHAR(255), ITEM VARCHAR(255), 
+        PRODUCT VARCHAR(255), SUB_PRODUCT VARCHAR(255), QTY INT, WT FLOAT, Avg FLOAT, 
+        Wt_range VARCHAR(255), PL_ST VARCHAR(255), DD VARCHAR(255), SKCHNI VARCHAR(255), 
+        EMP VARCHAR(255), Name VARCHAR(255), CODE VARCHAR(255), GENDER VARCHAR(255), 
+        Set_Photo VARCHAR(255), Po_new VARCHAR(255), DD_month VARCHAR(255), Dyr INT, 
+        Brief VARCHAR(255), Maketype VARCHAR(255), collection VARCHAR(255), 
+        Collection_1 VARCHAR(255), Collection_2 VARCHAR(255)
+      )`;
+
+      db.query(createTableQuery, (err, result) => {
+        if (err) {
+          console.error("Error creating table:", err);
+          return res.status(500).json({ message: "Error creating table" });
+        }
+
+        console.log("Order_receiving_log table created successfully");
+
+        insertData("Order_receiving_log", data, res);
+      });
+    } else {
+      insertData("Order_receiving_details", data, res);
+    }
+  });
+});
+
+function insertData(tableName, data, res) {
+  const query = `INSERT INTO ${tableName} 
+  (NAME1, SUB_PARTY, Group_party, JCID, TRANSDATE, ORDERNO, OrderType, ZONE, OGPG, Purity, Color, PHOTO_NO, PHOTO_NO_2, PROJECT, TYPE, ITEM, PRODUCT, SUB_PRODUCT, QTY, WT, Avg, Wt_range, PL_ST, DD, SKCHNI, EMP, Name, CODE, GENDER, Set_Photo, Po_new, DD_month, Dyr, Brief, Maketype, collection, Collection_1, Collection_2) VALUES ?`;
+
+  const values = data.map(item => [
+    item["NAME1"], item["SUB PARTY"], item["Group party"], item["JCID"], item["TRANSDATE"], item["ORDERNO"], item["OrderType"], item["ZONE"], item["OGPG"], item["Purity"], item["Color"], item["PHOTO NO"], item["PHOTO NO 2"], item["PROJECT"], item["TYPE"], item["ITEM"], item["PRODUCT"], item["SUB PRODUCT"], item["QTY"], item["WT"], item["Avg"], item["Wt range"], item["PL-ST"], item["DD"], item["SKCHNI"], item["EMP"], item["Name"], item["CODE"], item["GENDER"], item["2024 Set Photo"], item["Po-new"], item["DD&month"], item["Dyr"], item["Brief"], item["Maketype"], item["collection"], item["Collection-1"], item["Collection-2"]
+  ]);
+
+  db.query(query, [values], (err, result) => {
+    if (err) {
+      console.error(`Error inserting data into ${tableName}:`, err);
+      return res.status(500).json({ message: `Error storing data in ${tableName}` });
+    }
+
+    res.json({ message: `Data stored successfully in ${tableName}` });
+  });
+}
+
+
+
+
 
 //  app.get('/filtered_production_data', (req, res) => {
 //    const deptFilter = ['WBKOL-CAD', 'U4PD-CAD'];
@@ -552,17 +623,21 @@ app.get("/", (req, res) => {
 
 
 
-app.get("/order_receive&new_design",(req,res)=>{
-  const sql = "SELECT TRANSDATE,SEGMENTID,KNOWNAS,PLTCODE,HALLMARKINGCODE,COMPLEXITY_CODE,JOBCARDTYPE1,Itemqty from Order_new_design_log"
-  db.query(sql, (err, data) => {
-    if (err) {
-       console.error(err);
-       return res.status(500).json({ message: "Failed to fetch tasks", error: err });
-    }
-    res.json(data);
- });
+app.get("/order_receive&new_design", (req, res) => {
+  const sql = `SELECT NAME1, TRANSDATE, ORDERNO, ZONE, Purity, Color, \`PHOTO NO 2\`, PRODUCT, QTY, WT, \`DD&month\`, Dyr 
+               FROM Order_receiving_log`;
 
-})
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Error executing query:", err);
+      return res.status(500).json({ message: "Error executing query" });
+    }
+
+    console.log("Query results:", results); // Debug log to inspect results
+    res.json(results);
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });

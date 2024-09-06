@@ -6,7 +6,7 @@ import { IoDocumentTextOutline } from 'react-icons/io5';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GoStop } from "react-icons/go";
 import { RiFolderReceivedLine } from "react-icons/ri";
-
+import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai'; // Icons for hamburger and close
 
 function Sidebar({ theme }) {
   const navigate = useNavigate();
@@ -15,6 +15,7 @@ function Sidebar({ theme }) {
   const [active, setActive] = useState('home');
   const [taskExpanded, setTaskExpanded] = useState(false);
   const [activeSubTask, setActiveSubTask] = useState('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State for mobile menu
 
   useEffect(() => {
     const path = location.pathname;
@@ -38,12 +39,11 @@ function Sidebar({ theme }) {
       } else if (path === '/task/view') {
         setActiveSubTask('view');
       }
-    }else if(path==='/rejections'){
+    } else if (path === '/rejections') {
       setActive('rejections');
       setActiveSubTask('');
-    }
-    else if(path==='/order_receiving&new_design'){
-      setActive('order_new_design')
+    } else if (path === '/order_receiving&new_design') {
+      setActive('order_new_design');
     }
   }, [location.pathname]);
 
@@ -55,6 +55,7 @@ function Sidebar({ theme }) {
     setSpin(true);
     navigate(path);
     setSpin(false);
+    setIsMobileMenuOpen(false); // Close mobile menu on navigation
   };
 
   const handleTaskClick = () => {
@@ -75,21 +76,52 @@ function Sidebar({ theme }) {
     return '';
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
   return (
     <div>
-      {spin &&
-        <div className={`max-w-full bg-opacity-35 max-h-full fixed px-96 2xl:pr-px inset-0 z-50 bg-gray-500`}>
-          <div className="flex gap-2 max-h-20 w-20 items-center justify-center relative top-72 -left-52 md:top-64 md:left-36 animate-bounce rounded-lg 2xl:left-[35%] lg:left-[45%] 2xl:top-80 3xl:left-96">
-            <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
-            <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
-            <div className="w-5 h-5 rounded-full animate-pulse bg-indigo-600"></div>
+      {/* Mobile Menu Button */}
+      <div className="md:hidden fixed top-0 left-0 z-50 p-4">
+        <button onClick={toggleMobileMenu}>
+          {isMobileMenuOpen ? <AiOutlineClose size={24} /> : <AiOutlineMenu size={24} />}
+        </button>
+      </div>
+
+      {/* Mobile Sidebar */}
+      {isMobileMenuOpen && (
+        <div className={`fixed inset-0 bg-gray-900 bg-opacity-75 z-40`}>
+          <div className={`fixed top-0 left-0 w-64 h-full p-4 bg-white dark:bg-gray-800 z-50`}>
+            <nav className="mt-5">
+              {/* Repeat the navigation links here similar to the desktop version */}
+              <a
+                href="#"
+                className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('home')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+                onClick={() => handleNavigation('/', 'home')}
+              >
+                <div className='flex flex-row p-2'>
+                  <div className='mt-1 px-2'>
+                    <ImHome />
+                  </div>
+                  Home
+                </div>
+              </a>
+              {/* Add the rest of the sidebar links here */}
+            </nav>
           </div>
         </div>
-      }
-      <aside className={`w-48 border-r hidden md:block h-full ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-gray-700 border-slate-400 '}`}>
+      )}
+
+      {/* Desktop Sidebar */}
+      <aside className={`hidden md:block w-48 border-r h-full ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-gray-700 border-slate-400 '}`}>
         <div className="p-4 px-6">
-          <h1 className={`text-xl font-thin ${theme === 'light' ? 'text-slate-800' : 'text-slate-400'}`}><span className={`eb-garamond-normal  font-bold ${theme==='light'?'text-indigo-600':'text-indigo-300'}text-2xl`}>Ej</span> <span className='text-lg'>Dashboard</span></h1>
+          <h1 className={`text-xl font-thin ${theme === 'light' ? 'text-slate-800' : 'text-slate-400'}`}>
+            <span className={`eb-garamond-normal font-bold ${theme === 'light' ? 'text-indigo-600' : 'text-indigo-300'} text-2xl`}>Ej</span>
+            <span className='text-lg'>Dashboard</span>
+          </h1>
         </div>
+        <nav className="mt-5">
         <nav className="mt-5">
           <a
             href="#"
@@ -207,6 +239,8 @@ function Sidebar({ theme }) {
               Settings
             </div>
           </a>
+        </nav>
+
         </nav>
       </aside>
     </div>
