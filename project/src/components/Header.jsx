@@ -29,7 +29,7 @@ function Header({ onSearch, onView, view, theme, dark,on_filter,filter }) {
           <p className="text-sm text-gray-500">Welcome to Automated Dash View</p>
         </div>
         <div className="flex items-center gap-5 m-0">
-          <p className={`${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}> {currentTime}</p>
+          <p className={`hidden sm:block md:block lg:block sl:block ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}> {currentTime}</p>
 
           <div className='flex flex-row'>
             <input
@@ -79,10 +79,10 @@ function Header({ onSearch, onView, view, theme, dark,on_filter,filter }) {
           <button onClick={() => onView(!view)} className={`p-2 rounded-md ${theme === 'light' ? 'bg-white' : 'bg-gray-700'}`}>
             {view ? <ImTable2 size={20} className={`${theme === 'light' ? 'text-gray-700' : 'text-gray-400'}`} /> : <IoCardOutline size={20} className={`${theme === 'light' ? 'text-gray-700' : 'text-gray-400'}`} />}
           </button>
-
+{/* 
           <div className={`rounded-full shadow-md p-3 ${theme === 'light' ? 'bg-white text-slate-600' : 'bg-gray-400 text-slate-900'}`}>
             <ImUser size={20} />
-          </div>
+          </div> */}
         </div>
       </header>
     </div>
