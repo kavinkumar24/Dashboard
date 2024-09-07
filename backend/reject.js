@@ -12,19 +12,19 @@ app.use(cors());
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '', 
-  database: 'excel_data', 
-});
-
 // const connection = mysql.createConnection({
-//   host: "172.16.5.233",
-//   user: "emerald",
-//   password: "emerald",
-//   database: "emerald",
+//   host: 'localhost',
+//   user: 'root',
+//   password: '', 
+//   database: 'excel_data', 
 // });
+
+const connection = mysql.createConnection({
+  host: "172.16.5.233",
+  user: "emerald",
+  password: "emerald",
+  database: "emerald",
+});
 
 connection.connect((err) => {
   if (err) {
