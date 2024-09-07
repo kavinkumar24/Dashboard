@@ -42,8 +42,14 @@ function Sidebar({ theme }) {
     } else if (path === '/rejections') {
       setActive('rejections');
       setActiveSubTask('');
+
     } else if (path === '/order_receiving&new_design') {
       setActive('order_new_design');
+    }
+    else if(path==='/dep_rejections'){
+      setActive('rejections')
+    }else if(path==='/sketch_rejections'){
+      setActive('rejections')
     }
   }, [location.pathname]);
 
