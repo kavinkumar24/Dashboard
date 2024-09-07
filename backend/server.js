@@ -624,8 +624,7 @@ app.get("/", (req, res) => {
 
 
 app.get("/order_receive&new_design", (req, res) => {
-  const sql = `SELECT NAME1, TRANSDATE, ORDERNO, ZONE, Purity, Color, \`PHOTO NO 2\`, PRODUCT, QTY, WT, \`DD&month\`, Dyr 
-               FROM Order_receiving_log`;
+  const sql = `SELECT NAME1, TRANSDATE, ORDERNO, ZONE, Purity, Color, \`PHOTO NO 2\`, PRODUCT, QTY, WT, \`DD&month\`, Dyr,TYPE,PROJECT,\`SUB PRODUCT\` FROM Order_receving_log`;
 
   db.query(sql, (err, results) => {
     if (err) {
