@@ -42,8 +42,18 @@ function Sidebar({ theme }) {
     } else if (path === '/rejections') {
       setActive('rejections');
       setActiveSubTask('');
+<<<<<<< Updated upstream
     } else if (path === '/order_receiving&new_design') {
       setActive('order_new_design');
+=======
+    }
+    else if(path==='/order_receiving&new_design'){
+      setActive('order_new_design')
+    }else if(path==='/dep_rejections'){
+      setActive('rejections')
+    }else if(path==='/sketch_rejections'){
+      setActive('rejections')
+>>>>>>> Stashed changes
     }
   }, [location.pathname]);
 

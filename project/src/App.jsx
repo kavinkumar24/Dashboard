@@ -9,6 +9,8 @@ import CreateTask from './components/Create_Task';
 import ViewTasks from './components/View_Task';
 import Reject from './components/Reject';
 import Order_rev from './components/Order_rev';
+import Skch_reject from './components/Skch_reject';
+import Department_reject from './components/Department_reject';
 function App() {
 
   return (
@@ -23,6 +25,8 @@ function App() {
         <Route path='/task/view' element={<ViewTasks />} />
         <Route path = '/rejections' element={<Reject />} />
         <Route path = '/order_receiving&new_design' element={<Order_rev />} />
+        <Route path = '/sketch_rejections' element={<Skch_reject />} />
+        <Route path = '/dep_rejections' element={<Department_reject />} />
       </Routes>
       </div>
       
