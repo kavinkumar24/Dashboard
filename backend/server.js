@@ -632,7 +632,7 @@ app.get("/order_receive&new_design", (req, res) => {
       return res.status(500).json({ message: "Error executing query" });
     }
 
-    console.log("Query results:", results); // Debug log to inspect results
+    console.log("Query results:", results); 
     res.json(results);
   });
 });
