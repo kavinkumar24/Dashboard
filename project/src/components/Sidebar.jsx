@@ -6,7 +6,7 @@ import { IoDocumentTextOutline } from 'react-icons/io5';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GoStop } from "react-icons/go";
 import { RiFolderReceivedLine } from "react-icons/ri";
-import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai'; // Icons for hamburger and close
+import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai'; 
 
 function Sidebar({ theme }) {
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ function Sidebar({ theme }) {
   const [active, setActive] = useState('home');
   const [taskExpanded, setTaskExpanded] = useState(false);
   const [activeSubTask, setActiveSubTask] = useState('');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State for mobile menu
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
 
   useEffect(() => {
     const path = location.pathname;
@@ -61,7 +61,7 @@ function Sidebar({ theme }) {
     setSpin(true);
     navigate(path);
     setSpin(false);
-    setIsMobileMenuOpen(false); // Close mobile menu on navigation
+    setIsMobileMenuOpen(false); 
   };
 
   const handleTaskClick = () => {
@@ -100,7 +100,6 @@ function Sidebar({ theme }) {
         <div className={`fixed inset-0 bg-gray-900 bg-opacity-75 z-40`}>
           <div className={`fixed top-0 left-0 w-64 h-full p-4 bg-white dark:bg-gray-800 z-50`}>
             <nav className="mt-5">
-              {/* Repeat the navigation links here similar to the desktop version */}
               <a
                 href="#"
                 className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('home')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
@@ -113,13 +112,11 @@ function Sidebar({ theme }) {
                   Home
                 </div>
               </a>
-              {/* Add the rest of the sidebar links here */}
             </nav>
           </div>
         </div>
       )}
 
-      {/* Desktop Sidebar */}
       <aside className={`hidden md:block w-48 border-r h-full ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-gray-700 border-slate-400 '}`}>
         <div className="p-4 px-6">
           <h1 className={`text-xl font-thin ${theme === 'light' ? 'text-slate-800' : 'text-slate-400'}`}>

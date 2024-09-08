@@ -4,6 +4,9 @@ import Sidebar from "./Sidebar";
 import * as XLSX from "xlsx";
 import { Bar } from "react-chartjs-2";
 import Chart from "chart.js/auto";
+import { IoIosAddCircleOutline } from "react-icons/io";
+import { FiMinusCircle } from "react-icons/fi";
+
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
 function Order_rev() {
@@ -16,7 +19,7 @@ function Order_rev() {
   const [months, setMonths] = useState([]);
   const [dates, setDates] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const [allCharts, setAllCharts] = useState([]);
   const [selectedYear, setSelectedYear] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
@@ -27,9 +30,8 @@ function Order_rev() {
     setActiveIndex(activeIndex === index ? null : index);
   };
 
-
   useEffect(() => {
-    localStorage.setItem('theme', theme);
+    localStorage.setItem("theme", theme);
   }, [theme]);
   const [chartData, setChartData] = useState({
     labels: [],
@@ -182,6 +184,12 @@ function Order_rev() {
       }));
   };
 
+  const [filter, setfilter] = useState(false);
+  const handleFilter = () => {
+    setIsLoading(true);
+    setfilter(!filter);
+  };
+
   const getProject = (data) => {
     const project_data = data.reduce((acc, item) => {
       const zone = item.PROJECT || "Unknown";
@@ -331,14 +339,15 @@ function Order_rev() {
 
         const filteredData = data.filter((item) => {
           const itemDate = new Date(item.TRANSDATE);
-          const year = itemDate.getFullYear().toString();
-          const month = itemDate.getMonth() + 1;
-          const date = itemDate.getDate();
+
+          const itemYear = itemDate.getFullYear();
+          const itemMonth = itemDate.getMonth() + 1;
+          const itemDateOnly = itemDate.getDate();
 
           return (
-            (!selectedYear || year === selectedYear) &&
-            (!selectedMonth || month === selectedMonth) &&
-            (!selectedDate || date === parseInt(selectedDate))
+            (!selectedYear || itemYear === parseInt(selectedYear)) &&
+            (!selectedMonth || itemMonth === parseInt(selectedMonth)) &&
+            (!selectedDate || itemDateOnly === parseInt(selectedDate))
           );
         });
 
@@ -346,24 +355,26 @@ function Order_rev() {
           filteredData.reduce((total, item) => total + (item.WT || 0), 0) /
           1000;
         setTotalWeight(totalWeightFromAPI);
+
         const yearData = filteredData.reduce((acc, item) => {
           const year = new Date(item.TRANSDATE).getFullYear();
           if (!acc[year]) acc[year] = 0;
-          acc[year] += (item.WT || 0);
+          acc[year] += item.WT || 0;
           return acc;
         }, {});
-    
+
         const monthData = filteredData.reduce((acc, item) => {
           const date = new Date(item.TRANSDATE);
-          const yearMonth = `${date.getFullYear()}-${date.getMonth() + 1}`; 
+          const year = date.getFullYear();
+          const monthIndex = date.getMonth();
+          const yearMonth = `${year}, ${getMonthName(monthIndex)}`;
           if (!acc[yearMonth]) acc[yearMonth] = 0;
-          acc[yearMonth] += (item.WT || 0);
+          acc[yearMonth] += item.WT || 0;
           return acc;
         }, {});
-    
+
         setYearlyData(yearData);
         setMonthlyData(monthData);
-    
 
         setChartData({
           labels: getYearlyData(filteredData).map((entry) => entry.year),
@@ -447,6 +458,18 @@ function Order_rev() {
           ],
         });
 
+        const colorData = prepareColorData(filteredData);
+
+        setColorChartData({
+          labels: colorData.map((entry) => entry.color),
+          datasets: [
+            {
+              label: "KG Count by Color",
+
+              data: colorData.map((entry) => entry.kg),
+            },
+          ],
+        });
         setSubproduct({
           labels: getsubproduct(filteredData).map((entry) => entry.sub_product),
           datasets: [
@@ -488,31 +511,25 @@ function Order_rev() {
           ],
         });
 
-        const colorData = prepareColorData(data);
-
-        setColorChartData({
-          labels: colorData.map((entry) => entry.color),
-          datasets: [
-            {
-              label: "KG Count by Color",
-
-              data: colorData.map((entry) => entry.kg),
-            },
-          ],
-        });
         setAllCharts([
           chartData,
           purityChartData,
           typeChartData,
           zoneChartData,
         ]);
+        console.log(selectedDate, selectedMonth, selectedYear);
+        console.log("Filtered Data:", filteredData);
       })
       .catch((error) => console.error("Error fetching data:", error));
-  }, [theme, selectedYear, selectedMonth, selectedDate]);
+  }, [theme, filter]);
 
   const chartComponents = [
     <div className="" key="total-weight">
-      <div className={`order-2 col-span-1 ${theme==='light'?'bg-white':'bg-slate-900'}  p-4 rounded shadow-md overflow-x-auto h-[400px]`}>
+      <div
+        className={`order-2 col-span-1 ${
+          theme === "light" ? "bg-white" : "bg-slate-900"
+        }  p-4 rounded shadow-md overflow-x-auto h-[400px]`}
+      >
         {!isLoading && (
           <Bar
             data={chartData}
@@ -521,12 +538,12 @@ function Order_rev() {
               maintainAspectRatio: false,
               plugins: {
                 legend: {
-                   display: true,
+                  display: true,
 
                   labels: {
                     color: theme === "light" ? "black" : "white",
                   },
-                 },
+                },
                 tooltip: {
                   callbacks: {
                     label: function (context) {
@@ -547,12 +564,13 @@ function Order_rev() {
                 },
               },
               scales: {
-                x: { title:
-                   { display: true, 
+                x: {
+                  title: {
+                    display: true,
                     text: "Year",
                     color: theme === "light" ? "black" : "#94a3b8",
-                   },
-                   grid: {
+                  },
+                  grid: {
                     display: true,
                     color: theme === "light" ? "#e5e7eb" : "#374151",
                   },
@@ -562,11 +580,12 @@ function Order_rev() {
                   border: {
                     color: theme === "light" ? "#e5e7eb" : "#94a3b8",
                   },
-                  },
+                },
                 y: {
-                  title: { display: true, text: "KG Count" ,
-                  color: theme === "light" ? "black" : "#94a3b8",
-
+                  title: {
+                    display: true,
+                    text: "KG Count",
+                    color: theme === "light" ? "black" : "#94a3b8",
                   },
                   beginAtZero: true,
                   color: theme === "light" ? "black" : "red",
@@ -581,7 +600,6 @@ function Order_rev() {
                     color: theme === "light" ? "#e5e7eb" : "#94a3b8",
                   },
                 },
-                
               },
             }}
             plugins={[ChartDataLabels]}
@@ -590,7 +608,11 @@ function Order_rev() {
       </div>
     </div>,
     <div className="" key="kg-per-year-chart">
-      <div className={`order-3 col-span-1 ${theme==='light'?'bg-white':'bg-slate-900'}  p-4 rounded shadow-md overflow-x-auto h-[400px]`}>
+      <div
+        className={`order-3 col-span-1 ${
+          theme === "light" ? "bg-white" : "bg-slate-900"
+        }  p-4 rounded shadow-md overflow-x-auto h-[400px]`}
+      >
         {!isLoading && (
           <Bar
             data={purityChartData}
@@ -599,10 +621,10 @@ function Order_rev() {
               maintainAspectRatio: false,
               plugins: {
                 legend: {
-                   display: true,
+                  display: true,
                   labels: {
                     color: theme === "light" ? "black" : "white",
-                  }
+                  },
                 },
                 tooltip: {
                   callbacks: {
@@ -624,22 +646,27 @@ function Order_rev() {
                 },
               },
               scales: {
-                x: { title: { display: true, text: "Purity",
-                  color: theme === "light" ? "black" : "#94a3b8",
+                x: {
+                  title: {
+                    display: true,
+                    text: "Purity",
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
                 },
-                grid: {
-                  display: true,
-                  color: theme === "light" ? "#e5e7eb" : "#374151",
-                },
-                ticks: {
-                  color: theme === "light" ? "black" : "#94a3b8",
-                },
-                border: {
-                  color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                },
-              },
                 y: {
-                  title: { display: true, text: "KG Count",
+                  title: {
+                    display: true,
+                    text: "KG Count",
                     color: theme === "light" ? "black" : "#94a3b8",
                   },
                   beginAtZero: true,
@@ -662,8 +689,18 @@ function Order_rev() {
       </div>
     </div>,
     <div className="" key="purity-wise-chart">
-      <div className={`order-2 col-span-1 ${theme==='light'?'bg-white':'bg-slate-900'}  p-4 rounded shadow-md  h-[450px]`}>
-        <h2 className={`text-xl font-bold mb-4 mt-8 ${theme==='light'?'text-slate-800':'text-slate-400'}`}>Order Weight by Zone</h2>
+      <div
+        className={`order-2 col-span-1 ${
+          theme === "light" ? "bg-white" : "bg-slate-900"
+        }  p-4 rounded shadow-md  h-[450px]`}
+      >
+        <h2
+          className={`text-xl font-bold mb-4 mt-8 ${
+            theme === "light" ? "text-slate-800" : "text-slate-400"
+          }`}
+        >
+          Order Weight by Zone
+        </h2>
         <div className="w-full h-full">
           <Bar
             data={zoneChartData}
@@ -739,86 +776,105 @@ function Order_rev() {
       </div>
     </div>,
     <div className="" key="zone-wise-chart">
-      <div className={`order-2 col-span-1 ${theme==='light'?'bg-white':'bg-slate-900'}  p-4 rounded shadow-md  h-[450px]`}>
-        <h2 className={`text-xl font-bold mb-4 mt-8 ${theme==='light'?'text-slate-800':'text-slate-400'}`}>Color Distribution</h2>
+      <div
+        className={`order-2 col-span-1 ${
+          theme === "light" ? "bg-white" : "bg-slate-900"
+        }  p-4 rounded shadow-md  h-[450px]`}
+      >
+        <h2
+          className={`text-xl font-bold mb-4 mt-8 ${
+            theme === "light" ? "text-slate-800" : "text-slate-400"
+          }`}
+        >
+          Color Distribution
+        </h2>
         <div className="w-full h-full">
-        <Bar
-          data={colorChartData}
-          options={{
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-              datalabels: {
-                display: true,
-                align: "end",
-                anchor: "end",
-                formatter: (value) => `${value.toFixed(2)}`,
-                color: theme === "light" ? "black" : "white",
-                font: {
-                  weight: "normal",
-                },
-              },
-              legend: {
-                display: true,
-                labels: {
+          <Bar
+            data={colorChartData}
+            options={{
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                datalabels: {
+                  display: true,
+                  align: "end",
+                  anchor: "end",
+                  formatter: (value) => `${value.toFixed(2)}`,
                   color: theme === "light" ? "black" : "white",
+                  font: {
+                    weight: "normal",
+                  },
                 },
-              },
-              tooltip: {
-                callbacks: {
-                  label: function (context) {
-                    return `KG: ${context.raw.toFixed(2)}`;
+                legend: {
+                  display: true,
+                  labels: {
+                    color: theme === "light" ? "black" : "white",
+                  },
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      return `KG: ${context.raw.toFixed(2)}`;
+                    },
                   },
                 },
               },
-            },
-            scales: {
-              x: {
-                title: {
-                  display: true,
-                  text: "Color",
-                  color: theme === "light" ? "black" : "#94a3b8",
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "Color",
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
                 },
-                grid: {
-                  display: true,
-                  color: theme === "light" ? "#e5e7eb" : "#374151",
-                },
-                ticks: {
-                  color: theme === "light" ? "black" : "#94a3b8",
-                },
-                border: {
-                  color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                y: {
+                  title: {
+                    display: true,
+                    text: "KG Count",
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  beginAtZero: true,
+                  grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
                 },
               },
-              y: {
-                title: {
-                  display: true,
-                  text: "KG Count",
-                  color: theme === "light" ? "black" : "#94a3b8", 
-                },
-                beginAtZero: true,
-                grid: {
-                  display: true,
-                  color: theme === "light" ? "#e5e7eb" : "#374151",
-                },
-                ticks: {
-                  color: theme === "light" ? "black" : "#94a3b8",
-                },
-                border: {
-                  color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                },
-              },
-            },
-          }}
-          plugins={[ChartDataLabels]}
-        />
+            }}
+            plugins={[ChartDataLabels]}
+          />
         </div>
       </div>
     </div>,
     <div className="" key="color-wise-chart">
-      <div className={`order-3 col-span-1 ${theme==='light'?'bg-white ':'bg-slate-900'} p-4 rounded shadow-md overflow-auto h-[700px]`}>
-     
-        <h2 className={`text-xl font-bold mb-4 mt-8 ${theme==='light'?'text-slate-800':'text-slate-400'}`}>Project Data</h2>
+      <div
+        className={`order-3 col-span-1 ${
+          theme === "light" ? "bg-white " : "bg-slate-900"
+        } p-4 rounded shadow-md overflow-auto h-[700px]`}
+      >
+        <h2
+          className={`text-xl font-bold mb-4 mt-8 ${
+            theme === "light" ? "text-slate-800" : "text-slate-400"
+          }`}
+        >
+          Project Data
+        </h2>
 
         <Bar
           data={projectData}
@@ -900,7 +956,13 @@ function Order_rev() {
           theme === "light" ? "bg-white" : "bg-slate-900"
         }`}
       >
-        <h2 className={`text-xl font-bold mb-4 mt-8 ${theme==='light'?'text-slate-800':'text-slate-400'}`}>Product Data</h2>
+        <h2
+          className={`text-xl font-bold mb-4 mt-8 ${
+            theme === "light" ? "text-slate-800" : "text-slate-400"
+          }`}
+        >
+          Product Data
+        </h2>
 
         <Bar
           data={product}
@@ -978,8 +1040,18 @@ function Order_rev() {
       </div>
     </div>,
     <div className="" key="product-wise-chart">
-      <div className={`order-3 col-span-1 ${theme==='light'? 'bg-white':'bg-slate-900'} p-4 rounded shadow-md overflow-auto h-[790px]`}>
-        <h2 className={`text-xl font-bold mb-4 mt-8 ${theme==='light'?'text-slate-800':'text-slate-400'}`}>Sub Product Distribution</h2>
+      <div
+        className={`order-3 col-span-1 ${
+          theme === "light" ? "bg-white" : "bg-slate-900"
+        } p-4 rounded shadow-md overflow-auto h-[790px]`}
+      >
+        <h2
+          className={`text-xl font-bold mb-4 mt-8 ${
+            theme === "light" ? "text-slate-800" : "text-slate-400"
+          }`}
+        >
+          Sub Product Distribution
+        </h2>
 
         <Bar
           data={subproduct}
@@ -1123,6 +1195,23 @@ function Order_rev() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const getMonthName = (monthIndex) => monthNames[monthIndex];
+
   return (
     <div
       className={`min-h-screen w-[180%] md:w-[100%] flex ${
@@ -1133,11 +1222,19 @@ function Order_rev() {
       <div className="flex-1 flex flex-col">
         <Header theme={theme} dark={setTheme} />
         {/* Filtering bar */}
-        <div className={`p-4 ${theme=='light'?'bg-white':'bg-slate-900'} shadow-md flex justify-center items-center space-x-4 m-4`}>
+        <div
+          className={`p-4 ${
+            theme == "light" ? "bg-white" : "bg-slate-900"
+          } shadow-md flex justify-center items-center space-x-4 m-4`}
+        >
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
-            className={`p-2 border rounded ${theme=='light'?'bg-white text-black border border-gray-200':'bg-slate-900 text-gray-400 border-gray-600'} `}
+            className={`p-2 border rounded ${
+              theme == "light"
+                ? "bg-white text-black border border-gray-200"
+                : "bg-slate-900 text-gray-400 border-gray-600"
+            } `}
           >
             <option value="">Select Year</option>
             {years.map((year) => (
@@ -1150,7 +1247,11 @@ function Order_rev() {
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className={`p-2 border rounded ${theme=='light'?'bg-white text-black border border-gray-200':'bg-slate-900 text-gray-400 border-gray-600'} `}
+            className={`p-2 border rounded ${
+              theme == "light"
+                ? "bg-white text-black border border-gray-200"
+                : "bg-slate-900 text-gray-400 border-gray-600"
+            } `}
           >
             <option value="">Select Month</option>
             {months.map((month) => (
@@ -1163,7 +1264,11 @@ function Order_rev() {
           <select
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className={`p-2 border rounded ${theme=='light'?'bg-white text-black border border-gray-200':'bg-slate-900 text-gray-400 border-gray-600'} `}
+            className={`p-2 border rounded ${
+              theme == "light"
+                ? "bg-white text-black border border-gray-200"
+                : "bg-slate-900 text-gray-400 border-gray-600"
+            } `}
           >
             <option value="">Select Date</option>
             {dates.map((date) => (
@@ -1174,85 +1279,223 @@ function Order_rev() {
           </select>
 
           <button
-            onClick={() => setIsLoading(true)}
+            onClick={handleFilter}
             className="p-2 bg-blue-500 text-white rounded"
           >
             Filter
           </button>
         </div>
-        <div className="p-4">
-        <div className="col-span-1 lg:col-span-2 order-1">
+        <div className="p-2">
+          {/* <div className="col-span-1 lg:col-span-2 order-1">
           <div className={`${theme === 'light' ? 'bg-white' : 'bg-slate-900 text-slate-300'} p-6 rounded shadow-md text-center font-semibold`}>
             Total Weight: {totalWeight.toFixed(2)} KG
           </div>
+        </div> */}
         </div>
-      </div>
-      <div className="m-6 px-10 border rounded-lg border-gray-300 bg-white shadow-lg">
-        <h1 className="text-xl font-semibold p-2 pl-0 py-5">Total Weight: <span className="text-red-500">{totalWeight.toFixed(2)} KG</span></h1>
-        <div className="border-b border-slate-200">
-          <button
-            onClick={() => toggleAccordion(1)}
-            className="w-full flex justify-between items-center py-5 text-slate-800"
+        <div
+          className={`m-6 px-10 border rounded-lg  ${
+            theme === "light"
+              ? "bg-white border-gray-300"
+              : "bg-slate-900 border-zinc-800"
+          }  shadow-lg`}
+        >
+          <h1
+            className={`text-xl font-semibold p-2 pl-0 py-5 ${
+              theme === "light" ? "text-slate-800" : "text-slate-300"
+            }`}
           >
-            <span className="text-lg font-semibold">Details</span>
-            <span className="text-slate-800 transition-transform duration-300">
-              {activeIndex === 1 ? (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
-                  <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
-                  <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
-                </svg>
-              )}
-            </span>
-          </button>
+            Total Weight:{" "}
+            <span className="text-red-500">{totalWeight.toFixed(2)} KG</span>
+          </h1>
           <div
-            className={`${activeIndex === 1 ? "max-h-screen" : "max-h-0"} overflow-hidden transition-all duration-300 ease-in-out`}
+            className={`border-b ${
+              theme === "light" ? "border-slate-300" : "border-slate-600"
+            }`}
           >
-            <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
-              <h1 className="text-xl font-semibold p-2 pl-10 py-5">Based on year and month</h1>
-              <h2 className="text-lg font-semibold p-2">Yearly Data</h2>
-              <table className="w-full table-auto text-sm">
-                <thead>
-                  <tr className="bg-gray-300 text-gray-700">
-                    <th className="px-6 py-3 text-center font-semibold text-base">Year</th>
-                    <th className="px-6 py-3 text-center font-semibold text-base">Total Weight (KG)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(yearlyData).map(([year, weight], index) => (
-                    <tr key={index} className="bg-white even:bg-gray-50 hover:bg-gray-200 transition-colors duration-200">
-                      <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{year}</td>
-                      <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{(weight / 1000).toFixed(2)}</td>
+            <button
+              onClick={() => toggleAccordion(1)}
+              className="w-full flex justify-between items-center py-5 text-slate-800"
+            >
+              <span
+                className={`text-lg font-semibold ${
+                  theme === "light" ? "text-slate-800" : "text-slate-300"
+                }`}
+              >
+                Details
+              </span>
+              <span className="text-slate-800 transition-transform duration-300">
+                {activeIndex === 1 ? (
+                  <div>
+                    <FiMinusCircle
+                      className={` text-2xl ${
+                        theme === "light" ? "text-gray-800" : "text-gray-300"
+                      }`}
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <IoIosAddCircleOutline
+                      className={` text-2xl ${
+                        theme === "light" ? "text-gray-800" : "text-gray-300"
+                      }`}
+                    />
+                  </div>
+                )}
+              </span>
+            </button>
+            <div
+              className={`${
+                activeIndex === 1 ? "max-h-screen" : "max-h-0"
+              } overflow-hidden transition-all duration-300 ease-in-out`}
+            >
+              <div
+                className={`m-6 border rounded-lg ${
+                  theme === "light"
+                    ? "border-gray-300 bg-white"
+                    : "border-slate-700 bg-slate-800"
+                } shadow-lg`}
+              >
+                <h1
+                  className={`text-xl font-semibold p-2 pl-10 py-5 ${
+                    theme === "light" ? "text-slate-800" : "text-slate-300"
+                  }`}
+                >
+                  Based on year and month
+                </h1>
+
+                {/* Yearly Data Section */}
+                <h2
+                  className={`text-lg font-semibold p-2 ${
+                    theme === "light" ? "text-slate-800" : "text-slate-300"
+                  }`}
+                >
+                  Yearly Data
+                </h2>
+                <table className="w-full table-auto text-sm">
+                  <thead>
+                    <tr
+                      className={`${
+                        theme === "light"
+                          ? "bg-gray-300 text-gray-700"
+                          : "bg-slate-700 text-slate-300"
+                      }`}
+                    >
+                      <th className="px-12 py-3 text-center font-semibold text-base">
+                        Year
+                      </th>
+                      <th className="px-6 py-3 text-center font-semibold text-base">
+                        Total Weight (KG)
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              <h2 className="text-lg font-semibold p-2">Monthly Data</h2>
-              <table className="w-full table-auto text-sm">
-                <thead>
-                  <tr className="bg-gray-300 text-gray-700">
-                    <th className="px-6 py-3 text-center font-semibold text-base">Year-Month</th>
-                    <th className="px-6 py-3 text-center font-semibold text-base">Total Weight (KG)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(monthlyData).map(([yearMonth, weight], index) => (
-                    <tr key={index} className="bg-white even:bg-gray-50 hover:bg-gray-200 transition-colors duration-200">
-                      <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{yearMonth}</td>
-                      <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{(weight / 1000).toFixed(2)}</td>
+                  </thead>
+                  <tbody>
+                    {Object.entries(yearlyData).map(([year, weight], index) => (
+                      <tr
+                        key={index}
+                        className={`${
+                          theme === "light"
+                            ? "bg-white even:bg-gray-50 hover:bg-gray-200"
+                            : "bg-slate-800 even:bg-slate-700 hover:bg-slate-600"
+                        } transition-colors duration-200`}
+                      >
+                        <td
+                          className={`px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base ${
+                            theme === "light"
+                              ? "text-slate-800"
+                              : "text-slate-300"
+                          }`}
+                        >
+                          {year}
+                        </td>
+                        <td
+                          className={`px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base ${
+                            theme === "light"
+                              ? "text-slate-800"
+                              : "text-slate-300"
+                          }`}
+                        >
+                          {(weight / 1000).toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                {/* Monthly Data Section */}
+                <h2
+                  className={`text-lg font-semibold p-2 ${
+                    theme === "light" ? "text-slate-800" : "text-slate-300"
+                  }`}
+                >
+                  Monthly Data
+                </h2>
+                <table className="w-full table-auto text-sm">
+                  <thead>
+                    <tr
+                      className={`${
+                        theme === "light"
+                          ? "bg-gray-300 text-gray-700"
+                          : "bg-slate-700 text-slate-300"
+                      }`}
+                    >
+                      <th className="px-0 py-3 text-center font-semibold text-base">
+                        Year-Month
+                      </th>
+                      <th className="px-6 py-3 text-center font-semibold text-base">
+                        Total Weight (KG)
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {Object.entries(monthlyData).map(
+                      ([yearMonth, weight], index) => (
+                        <tr
+                          key={index}
+                          className={`${
+                            theme === "light"
+                              ? "bg-white even:bg-gray-50 hover:bg-gray-200"
+                              : "bg-slate-800 even:bg-slate-700 hover:bg-slate-600"
+                          } transition-colors duration-200`}
+                        >
+                          <td
+                            className={`px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base ${
+                              theme === "light"
+                                ? "text-slate-800"
+                                : "text-slate-300"
+                            }`}
+                          >
+                            {yearMonth}
+                          </td>
+                          <td
+                            className={`px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base ${
+                              theme === "light"
+                                ? "text-slate-800"
+                                : "text-slate-300"
+                            }`}
+                          >
+                            {(weight / 1000).toFixed(2)}
+                          </td>
+                        </tr>
+                      )
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
         <main className="flex-1 p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          
+          {isLoading && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
+              <div className="flex gap-2 ml-40">
+                <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+                <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+                <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+              </div>
+            </div>
+          )}
+
           {currentPageCharts}
 
           <div className="col-span-1 lg:col-span-2 flex justify-center mt-6">
