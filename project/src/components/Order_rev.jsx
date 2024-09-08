@@ -6,8 +6,6 @@ import { Bar } from "react-chartjs-2";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
-const chartsPerPage = 2; 
-
 function Order_rev() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
@@ -17,20 +15,16 @@ function Order_rev() {
   const [years, setYears] = useState([]);
   const [months, setMonths] = useState([]);
   const [dates, setDates] = useState([]);
-  const [currentPage, setCurrentPage] = useState(0);
-  const [allCharts, setAllCharts] = useState([]); 
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const [allCharts, setAllCharts] = useState([]);
   const [selectedYear, setSelectedYear] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
 
-  const handlePageChange = (pageIndex) => setCurrentPage(pageIndex);
-
-  const numberOfPages = Math.ceil(allCharts.length / chartsPerPage);
-  const chartsToDisplay = allCharts.slice(
-    currentPage * chartsPerPage,
-    (currentPage + 1) * chartsPerPage
-  );
-
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+  }, [theme]);
   const [chartData, setChartData] = useState({
     labels: [],
     datasets: [],
@@ -58,7 +52,6 @@ function Order_rev() {
     datasets: [],
   });
 
-  
   const [product, setProduct] = useState({
     labels: [],
     datasets: [],
@@ -78,7 +71,6 @@ function Order_rev() {
     datasets: [],
   });
 
-  
   const [totalWeight, setTotalWeight] = useState(0);
 
   const convertWtToKg = (wt) => wt / 1000;
@@ -164,7 +156,7 @@ function Order_rev() {
   const getZoneData = (data) => {
     const zoneData = data.reduce((acc, item) => {
       const zone = item.ZONE || "Unknown";
-      const wtGrams = item.WT || 0; 
+      const wtGrams = item.WT || 0;
 
       if (!acc[zone]) {
         acc[zone] = 0;
@@ -178,14 +170,14 @@ function Order_rev() {
       .filter(([zone, grams]) => grams > 0)
       .map(([zone, grams]) => ({
         zone,
-        kg: grams / 1000, 
+        kg: grams / 1000,
       }));
   };
 
   const getProject = (data) => {
     const project_data = data.reduce((acc, item) => {
       const zone = item.PROJECT || "Unknown";
-      const wtGrams = item.WT || 0; 
+      const wtGrams = item.WT || 0;
 
       if (!acc[zone]) {
         acc[zone] = 0;
@@ -199,14 +191,14 @@ function Order_rev() {
       .filter(([project, grams]) => grams > 0)
       .map(([project, grams]) => ({
         project,
-        kg: grams / 1000, 
+        kg: grams / 1000,
       }));
   };
 
   const getProduct = (data) => {
     const product_data = data.reduce((acc, item) => {
       const product = item.PRODUCT || "Unknown";
-      const wtGrams = item.WT || 0; 
+      const wtGrams = item.WT || 0;
 
       if (!acc[product]) {
         acc[product] = 0;
@@ -220,15 +212,14 @@ function Order_rev() {
       .filter(([product, grams]) => grams > 0)
       .map(([product, grams]) => ({
         product,
-        kg: grams / 1000, 
+        kg: grams / 1000,
       }));
   };
-
 
   const getsubproduct = (data) => {
     const sub_product_data = data.reduce((acc, item) => {
       const sub_product = item["SUB PRODUCT"] || "Unknown";
-      const wtGrams = item.WT || 0; 
+      const wtGrams = item.WT || 0;
 
       if (!acc[sub_product]) {
         acc[sub_product] = 0;
@@ -242,14 +233,14 @@ function Order_rev() {
       .filter(([sub_product, grams]) => grams > 0)
       .map(([sub_product, grams]) => ({
         sub_product,
-        kg: grams / 1000, 
+        kg: grams / 1000,
       }));
   };
 
   const getPartywise = (data) => {
     const party_data = data.reduce((acc, item) => {
       const party = item.PRODUCT || "Unknown";
-      const wtGrams = item.WT || 0; 
+      const wtGrams = item.WT || 0;
 
       if (!acc[party]) {
         acc[party] = 0;
@@ -263,14 +254,14 @@ function Order_rev() {
       .filter(([party_wise, grams]) => grams > 0)
       .map(([party_wise, grams]) => ({
         party_wise,
-        kg: grams / 1000, 
+        kg: grams / 1000,
       }));
   };
 
   const getPhoto_no_wise = (data) => {
     const photo_data = data.reduce((acc, item) => {
-      const photo = item.PRODUCT || "Unknown";
-      const wtGrams = item.WT || 0; 
+      const photo = item["PHOTO NO 2"] || "Unknown";
+      const wtGrams = item.WT || 0;
 
       if (!acc[photo]) {
         acc[photo] = 0;
@@ -284,7 +275,7 @@ function Order_rev() {
       .filter(([photo_wise, grams]) => grams > 0)
       .map(([[photo_wise], grams]) => ({
         photo_wise,
-        kg: grams / 1000, 
+        kg: grams / 1000,
       }));
   };
   const prepareColorData = (data) => {
@@ -302,7 +293,7 @@ function Order_rev() {
 
     return Object.entries(colorData).map(([color, kg]) => ({
       color,
-      kg: kg / 1000, 
+      kg: kg / 1000,
     }));
   };
 
@@ -411,7 +402,7 @@ function Order_rev() {
               label: "KG Count by Project",
               data: getProject(filteredData).map((entry) => entry.kg),
               backgroundColor: "rgba(255, 159, 64, 0.2)",
-              borderColor: "rgba(255, 159, 64, 1)"  ,
+              borderColor: "rgba(255, 159, 64, 1)",
               borderWidth: 1,
             },
           ],
@@ -430,24 +421,19 @@ function Order_rev() {
           ],
         });
 
-
-
-        
         setSubproduct({
           labels: getsubproduct(filteredData).map((entry) => entry.sub_product),
           datasets: [
             {
               label: "KG Count by sub product",
               data: getsubproduct(filteredData).map((entry) => entry.kg),
-              backgroundColor: "rgba(153, 102, 255, 0.2)",
-              borderColor: "#9900cc",
+              backgroundColor: "rgba(75, 192, 192, 0.2)",
+              borderColor: "#215e5e",
               borderWidth: 1,
             },
           ],
         });
 
-
-        
         setPartywise({
           labels: getPartywise(filteredData).map((entry) => entry.party_wise),
           datasets: [
@@ -461,13 +447,13 @@ function Order_rev() {
           ],
         });
 
-
-        
         setPhoto_no_wise({
-          labels: getPhoto_no_wise(filteredData).map((entry) => entry.product),
+          labels: getPhoto_no_wise(filteredData).map(
+            (entry) => entry.photo_wise
+          ),
           datasets: [
             {
-              label: "KG Count by product",
+              label: "KG Count by photo",
               data: getPhoto_no_wise(filteredData).map((entry) => entry.kg),
               backgroundColor: "rgba(153, 102, 255, 0.2)",
               borderColor: "#9900cc",
@@ -482,6 +468,8 @@ function Order_rev() {
           labels: colorData.map((entry) => entry.color),
           datasets: [
             {
+              label: "KG Count by Color",
+
               data: colorData.map((entry) => entry.kg),
             },
           ],
@@ -490,15 +478,628 @@ function Order_rev() {
           chartData,
           purityChartData,
           typeChartData,
-          zoneChartData
+          zoneChartData,
         ]);
       })
       .catch((error) => console.error("Error fetching data:", error));
   }, [theme, selectedYear, selectedMonth, selectedDate]);
 
+  const chartComponents = [
+    <div className="" key="total-weight">
+      <div className={`order-2 col-span-1 ${theme==='light'?'bg-white':'bg-slate-900'}  p-4 rounded shadow-md overflow-x-auto h-[400px]`}>
+        {!isLoading && (
+          <Bar
+            data={chartData}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                   display: true,
+
+                  labels: {
+                    color: theme === "light" ? "black" : "white",
+                  },
+                 },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      return `KG: ${context.raw.toFixed(2)}`;
+                    },
+                  },
+                },
+                datalabels: {
+                  display: true,
+                  align: "end",
+                  anchor: "end",
+                  formatter: (value) => value.toFixed(2),
+                  color: theme === "light" ? "black" : "white",
+
+                  font: {
+                    weight: "normal",
+                  },
+                },
+              },
+              scales: {
+                x: { title:
+                   { display: true, 
+                    text: "Year",
+                    color: theme === "light" ? "black" : "#94a3b8",
+                   },
+                   grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
+                  },
+                y: {
+                  title: { display: true, text: "KG Count" ,
+                  color: theme === "light" ? "black" : "#94a3b8",
+
+                  },
+                  beginAtZero: true,
+                  color: theme === "light" ? "black" : "red",
+                  grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
+                },
+                
+              },
+            }}
+            plugins={[ChartDataLabels]}
+          />
+        )}
+      </div>
+    </div>,
+    <div className="" key="kg-per-year-chart">
+      <div className={`order-3 col-span-1 ${theme==='light'?'bg-white':'bg-slate-900'}  p-4 rounded shadow-md overflow-x-auto h-[400px]`}>
+        {!isLoading && (
+          <Bar
+            data={purityChartData}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                   display: true,
+                  labels: {
+                    color: theme === "light" ? "black" : "white",
+                  }
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      return `KG: ${context.raw.toFixed(2)}`;
+                    },
+                  },
+                },
+                datalabels: {
+                  display: true,
+                  align: "end",
+                  anchor: "end",
+                  formatter: (value) => value.toFixed(2),
+                  color: theme === "light" ? "black" : "white",
+
+                  font: {
+                    weight: "normal",
+                  },
+                },
+              },
+              scales: {
+                x: { title: { display: true, text: "Purity",
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                grid: {
+                  display: true,
+                  color: theme === "light" ? "#e5e7eb" : "#374151",
+                },
+                ticks: {
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                border: {
+                  color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                },
+              },
+                y: {
+                  title: { display: true, text: "KG Count",
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  beginAtZero: true,
+                  grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
+                },
+              },
+            }}
+            plugins={[ChartDataLabels]}
+          />
+        )}
+      </div>
+    </div>,
+    <div className="" key="purity-wise-chart">
+      <div className={`order-2 col-span-1 ${theme==='light'?'bg-white':'bg-slate-900'}  p-4 rounded shadow-md  h-[450px]`}>
+        <h2 className={`text-xl font-bold mb-4 mt-8 ${theme==='light'?'text-slate-800':'text-slate-400'}`}>Order Weight by Zone</h2>
+        <div className="w-full h-full">
+          <Bar
+            data={zoneChartData}
+            options={{
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: {
+                datalabels: {
+                  display: true,
+                  align: "end",
+                  anchor: "end",
+                  formatter: (value) => `${value.toFixed(2)}`,
+                  color: theme === "light" ? "black" : "white",
+                  font: {
+                    weight: "normal",
+                  },
+                },
+                legend: {
+                  display: true,
+                  labels: {
+                    color: theme === "light" ? "black" : "white",
+                  },
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      return `KG: ${context.raw.toFixed(2)}`;
+                    },
+                  },
+                },
+              },
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "Zone",
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
+                },
+                y: {
+                  title: {
+                    display: true,
+                    text: "KG Count",
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  beginAtZero: true,
+                  grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
+                },
+              },
+            }}
+            plugins={[ChartDataLabels]}
+          />
+        </div>
+      </div>
+    </div>,
+    <div className="" key="zone-wise-chart">
+      <div className={`order-2 col-span-1 ${theme==='light'?'bg-white':'bg-slate-900'}  p-4 rounded shadow-md  h-[450px]`}>
+        <h2 className={`text-xl font-bold mb-4 mt-8 ${theme==='light'?'text-slate-800':'text-slate-400'}`}>Color Distribution</h2>
+        <div className="w-full h-full">
+        <Bar
+          data={colorChartData}
+          options={{
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              datalabels: {
+                display: true,
+                align: "end",
+                anchor: "end",
+                formatter: (value) => `${value.toFixed(2)}`,
+                color: theme === "light" ? "black" : "white",
+                font: {
+                  weight: "normal",
+                },
+              },
+              legend: {
+                display: true,
+                labels: {
+                  color: theme === "light" ? "black" : "white",
+                },
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `KG: ${context.raw.toFixed(2)}`;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "Color",
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                grid: {
+                  display: true,
+                  color: theme === "light" ? "#e5e7eb" : "#374151",
+                },
+                ticks: {
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                border: {
+                  color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                },
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "KG Count",
+                  color: theme === "light" ? "black" : "#94a3b8", 
+                },
+                beginAtZero: true,
+                grid: {
+                  display: true,
+                  color: theme === "light" ? "#e5e7eb" : "#374151",
+                },
+                ticks: {
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                border: {
+                  color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                },
+              },
+            },
+          }}
+          plugins={[ChartDataLabels]}
+        />
+        </div>
+      </div>
+    </div>,
+    <div className="" key="color-wise-chart">
+      <div className={`order-3 col-span-1 ${theme==='light'?'bg-white ':'bg-slate-900'} p-4 rounded shadow-md overflow-auto h-[700px]`}>
+     
+        <h2 className={`text-xl font-bold mb-4 mt-8 ${theme==='light'?'text-slate-800':'text-slate-400'}`}>Project Data</h2>
+
+        <Bar
+          data={projectData}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: "y",
+            plugins: {
+              datalabels: {
+                display: true,
+                align: "end",
+                anchor: "end",
+                formatter: (value) => `${value.toFixed(2)}`,
+                color: theme === "light" ? "black" : "white",
+                font: {
+                  weight: "normal",
+                },
+              },
+              legend: {
+                display: true,
+                labels: {
+                  color: theme === "light" ? "black" : "white",
+                },
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `KG: ${context.raw.toFixed(2)}`;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "KG Count",
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                beginAtZero: true,
+                grid: {
+                  display: true,
+                  color: theme === "light" ? "#e5e7eb" : "#374151",
+                },
+                ticks: {
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                border: {
+                  color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                },
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "Color",
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                grid: {
+                  display: true,
+                  color: theme === "light" ? "#e5e7eb" : "#374151",
+                },
+                ticks: {
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                border: {
+                  color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                },
+              },
+            },
+          }}
+          type="bar"
+          plugins={[ChartDataLabels]}
+        />
+      </div>
+    </div>,
+    <div className="" key="project-wise-chart">
+      <div
+        className={`order-3 col-span-1 p-4 rounded shadow-md h-[700px] overflow-auto ${
+          theme === "light" ? "bg-white" : "bg-slate-900"
+        }`}
+      >
+        <h2 className={`text-xl font-bold mb-4 mt-8 ${theme==='light'?'text-slate-800':'text-slate-400'}`}>Product Data</h2>
+
+        <Bar
+          data={product}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: "y",
+            plugins: {
+              datalabels: {
+                display: true,
+                align: "end",
+                anchor: "end",
+                formatter: (value) => `${value.toFixed(2)}`,
+                color: theme === "light" ? "black" : "white",
+                font: {
+                  weight: "normal",
+                },
+              },
+              legend: {
+                display: true,
+                labels: {
+                  color: theme === "light" ? "black" : "white",
+                },
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `KG: ${context.raw.toFixed(2)}`;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "KG Count",
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                beginAtZero: true,
+                grid: {
+                  display: true,
+                  color: theme === "light" ? "#e5e7eb" : "#374151",
+                },
+                ticks: {
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                border: {
+                  color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                },
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "Color",
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                ticks: {
+                  autoSkip: true,
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                grid: {
+                  display: true,
+                  color: theme === "light" ? "#e5e7eb" : "#374151",
+                },
+                border: {
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+              },
+            },
+          }}
+          type="bar"
+          plugins={[ChartDataLabels]}
+        />
+      </div>
+    </div>,
+    <div className="" key="product-wise-chart">
+      <div className={`order-3 col-span-1 ${theme==='light'? 'bg-white':'bg-slate-900'} p-4 rounded shadow-md overflow-auto h-[790px]`}>
+        <h2 className={`text-xl font-bold mb-4 mt-8 ${theme==='light'?'text-slate-800':'text-slate-400'}`}>Sub Product Distribution</h2>
+
+        <Bar
+          data={subproduct}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            indexAxis: "y",
+            plugins: {
+              datalabels: {
+                display: true,
+                align: "end",
+                anchor: "end",
+                formatter: (value) => `${value.toFixed(2)}`,
+                color: theme === "light" ? "black" : "white",
+                font: {
+                  weight: "normal",
+                },
+              },
+              legend: {
+                display: true,
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `KG: ${context.raw.toFixed(2)}`;
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "Color",
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                grid: {
+                  display: true,
+                  color: theme === "light" ? "#e5e7eb" : "#374151",
+                },
+                ticks: {
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                border: {
+                  color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                },
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "KG Count",
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                beginAtZero: true,
+                grid: {
+                  display: true,
+                  color: theme === "light" ? "#e5e7eb" : "#374151",
+                },
+                ticks: {
+                  color: theme === "light" ? "black" : "#94a3b8",
+                },
+                border: {
+                  color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                },
+              },
+            },
+          }}
+          plugins={[ChartDataLabels]}
+        />
+      </div>
+    </div>,
+    <div
+      className="order-3 col-span-1 bg-white p-4 rounded shadow-md overflow-x-auto h-[400px]"
+      key="subproduct-wise-chart"
+    >
+      {/* <div className="order-3 col-span-1 bg-white p-4 rounded shadow-md overflow-auto h-[790px]">
+            <h2 className="text-xl font-semibold mb-2">Photo No wise Distribution</h2>
+
+            <Bar
+              data={photo_no_wise}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                  datalabels: {
+                    display: true,
+                    align: "end",
+                    anchor: "end",
+                    formatter: (value) => `${value.toFixed(2)}`,
+                    color: "black",
+                    font: {
+                      weight: "normal",
+                    },
+                  },
+                  legend: {
+                    display: true,
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        return `KG: ${context.raw.toFixed(2)}`;
+                      },
+                    },
+                  },
+                },
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+                      text: "Color",
+                    },
+                    ticks: {
+                      autoSkip: true,
+                    },
+                    grid: {
+                      display: true,
+                    },
+                  },
+                  y: {
+                    title: {
+                      display: true,
+                      text: "KG Count",
+                    },
+                    beginAtZero: true,
+                    grid: {
+                      display: true,
+                    },
+                  },
+                },
+              }}
+              plugins={[ChartDataLabels]}
+            />
+          </div> */}
+    </div>,
+  ];
+  const itemsPerPage = 4;
+  const totalPages = Math.ceil(chartComponents.length / itemsPerPage);
+
+  const currentPageCharts = chartComponents.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
   return (
     <div
-      className={`min-h-screen min-w-screen w-full flex ${
+      className={`min-h-screen w-[180%] md:w-[100%] flex ${
         theme === "light" ? "bg-gray-100" : "bg-gray-800"
       }`}
     >
@@ -506,11 +1107,11 @@ function Order_rev() {
       <div className="flex-1 flex flex-col">
         <Header theme={theme} dark={setTheme} />
         {/* Filtering bar */}
-        <div className="p-4 bg-white shadow-md flex justify-center items-center space-x-4">
+        <div className={`p-4 ${theme=='light'?'bg-white':'bg-slate-900'} shadow-md flex justify-center items-center space-x-4 m-4`}>
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(e.target.value)}
-            className="p-2 border rounded"
+            className={`p-2 border rounded ${theme=='light'?'bg-white text-black border border-gray-200':'bg-slate-900 text-gray-400 border-gray-600'} `}
           >
             <option value="">Select Year</option>
             {years.map((year) => (
@@ -523,7 +1124,7 @@ function Order_rev() {
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
-            className="p-2 border rounded"
+            className={`p-2 border rounded ${theme=='light'?'bg-white text-black border border-gray-200':'bg-slate-900 text-gray-400 border-gray-600'} `}
           >
             <option value="">Select Month</option>
             {months.map((month) => (
@@ -536,7 +1137,7 @@ function Order_rev() {
           <select
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="p-2 border rounded"
+            className={`p-2 border rounded ${theme=='light'?'bg-white text-black border border-gray-200':'bg-slate-900 text-gray-400 border-gray-600'} `}
           >
             <option value="">Select Date</option>
             {dates.map((date) => (
@@ -547,484 +1148,48 @@ function Order_rev() {
           </select>
 
           <button
-            onClick={() => setIsLoading(true)} 
+            onClick={() => setIsLoading(true)}
             className="p-2 bg-blue-500 text-white rounded"
           >
             Filter
           </button>
         </div>
-
-        <main className="flex-1 p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Total weight card */}
+        <div className="p-4">
           <div className="col-span-1 lg:col-span-2 order-1">
-            <div className="bg-white p-6 rounded shadow-md text-center font-semibold">
+            <div className={`${theme==='light'?'bg-white':'bg-slate-900 text-slate-300' } p-6 rounded shadow-md text-center font-semibold`}>
               Total Weight: {totalWeight.toFixed(2)} KG
             </div>
           </div>
+        </div>
+
+        <main className="flex-1 p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Total weight card */}
+
           {/* KG per year bar chart */}
-          <div className="order-2 col-span-1 bg-white p-4 rounded shadow-md overflow-x-auto h-[400px]">
-            {!isLoading && (
-              <Bar
-                data={chartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { display: true },
-                    tooltip: {
-                      callbacks: {
-                        label: function (context) {
-                          return `KG: ${context.raw.toFixed(2)}`;
-                        },
-                      },
-                    },
-                    datalabels: {
-                      display: true,
-                      align: "end",
-                      anchor: "end",
-                      formatter: (value) => value.toFixed(2),
-                      color: "black",
-                      font: {
-                        weight: "normal",
-                      },
-                    },
-                  },
-                  scales: {
-                    x: { title: { display: true, text: "Year" } },
-                    y: {
-                      title: { display: true, text: "KG Count" },
-                      beginAtZero: true,
-                    },
-                  },
-                }}
-                plugins={[ChartDataLabels]}
-              />
-            )}
-          </div>
+
           {/* Purity-wise chart */}
-          <div className="order-3 col-span-1 bg-white p-4 rounded shadow-md overflow-x-auto h-[400px]">
-            {!isLoading && (
-              <Bar
-                data={purityChartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: { display: true },
-                    tooltip: {
-                      callbacks: {
-                        label: function (context) {
-                          return `KG: ${context.raw.toFixed(2)}`;
-                        },
-                      },
-                    },
-                    datalabels: {
-                      display: true,
-                      align: "end",
-                      anchor: "end",
-                      formatter: (value) => value.toFixed(2),
-                      color: "black",
-                      font: {
-                        weight: "normal",
-                      },
-                    },
-                  },
-                  scales: {
-                    x: { title: { display: true, text: "Purity" } },
-                    y: {
-                      title: { display: true, text: "KG Count" },
-                      beginAtZero: true,
-                    },
-                  },
-                }}
-                plugins={[ChartDataLabels]}
-              />
-            )}
+          {currentPageCharts}
+
+          <div className="col-span-1 lg:col-span-2 flex justify-center mt-6">
+            <button
+              onClick={() =>
+                setCurrentPage((prevPage) => Math.max(prevPage - 1, 1))
+              }
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-blue-500 text-white rounded mr-2"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() =>
+                setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-blue-500 text-white rounded"
+            >
+              Next
+            </button>
           </div>
-
-          <div className="order-3 col-span-1 bg-white p-4 rounded shadow-md h-[400px]">
-            <h2 className="text-xl font-bold mb-4 mt-8">
-              Order Weight by Zone
-            </h2>
-            <div className="w-full h-full">
-              <Bar
-                data={zoneChartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: true, 
-                  plugins: {
-                    datalabels: {
-                      display: true,
-                      align: "end",
-                      anchor: "end",
-                      formatter: (value) => `${value.toFixed(2)}`,
-                      color: "black",
-                      font: {
-                        weight: "normal",
-                      },
-                    },
-                    legend: {
-                      display: true,
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: function (context) {
-                          return `KG: ${context.raw.toFixed(2)}`;
-                        },
-                      },
-                    },
-                  },
-                  scales: {
-                    x: {
-                      title: {
-                        display: true,
-                        text: "Zone",
-                      },
-                      ticks: {
-                        autoSkip: true, 
-                      },
-                      grid: {
-                        display: true, 
-                      },
-                    },
-                    y: {
-                      title: {
-                        display: true,
-                        text: "KG Count",
-                      },
-                      beginAtZero: true,
-                      grid: {
-                        display: true, 
-                      },
-                    },
-                  },
-                }}
-                plugins={[ChartDataLabels]}
-              />
-            </div>
-          </div>
-          <div className="order-3 col-span-1 bg-white p-4 rounded shadow-md h-[400px]">
-            <h2 className="text-xl font-semibold mb-2">Color Distribution</h2>
-
-            <Bar
-              data={colorChartData}
-              options={{
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                  datalabels: {
-                    display: true,
-                    align: "end",
-                    anchor: "end",
-                    formatter: (value) => `${value.toFixed(2)}`,
-                    color: "black",
-                    font: {
-                      weight: "normal",
-                    },
-                  },
-                  legend: {
-                    display: true,
-                  },
-                  tooltip: {
-                    callbacks: {
-                      label: function (context) {
-                        return `KG: ${context.raw.toFixed(2)}`;
-                      },
-                    },
-                  },
-                },
-                scales: {
-                  x: {
-                    title: {
-                      display: true,
-                      text: "Color",
-                    },
-                    ticks: {
-                      autoSkip: true,
-                    },
-                    grid: {
-                      display: true,
-                    },
-                  },
-                  y: {
-                    title: {
-                      display: true,
-                      text: "KG Count",
-                    },
-                    beginAtZero: true,
-                    grid: {
-                      display: true,
-                    },
-                  },
-                },
-              }}
-              plugins={[ChartDataLabels]}
-            />
-          </div>
-
-
-          <div className="order-3 col-span-1 bg-white p-4 rounded shadow-md overflow-auto h-[700px]">
-            <h2 className="text-xl font-semibold mb-2">Project Data</h2>
-
-            <Bar
-  data={projectData}
-  options={{
-    responsive: true,
-    maintainAspectRatio: false,
-    indexAxis: 'y',
-    plugins: {
-      datalabels: {
-        display: true,
-        align: "end",
-        anchor: "end",
-        formatter: (value) => `${value.toFixed(2)}`,
-        color: "black",
-        font: {
-          weight: "normal",
-        },
-      },
-      legend: {
-        display: true,
-      },
-      tooltip: {
-        callbacks: {
-          label: function (context) {
-            return `KG: ${context.raw.toFixed(2)}`;
-          },
-        },
-      },
-    },
-    scales: {
-      x: {
-        title: {
-          display: true,
-          text: "KG Count",
-        },
-        beginAtZero: true,
-        grid: {
-          display: true,
-        },
-      },
-      y: {
-        title: {
-          display: true,
-          text: "Color",
-        },
-        ticks: {
-          autoSkip: true,
-        },
-        grid: {
-          display: true,
-        },
-      },
-    },
-  }}
-  type="bar"
-  plugins={[ChartDataLabels]}
-/>
-
-          </div>
-          <div
-  className={`order-3 col-span-1 p-4 rounded shadow-md h-[700px] overflow-auto ${
-    theme === 'light' ? 'bg-white' : 'bg-slate-700'
-  }`}
->
-  <h2 className="text-xl font-semibold mb-2">Product Data</h2>
-
-  <Bar
-    data={product}
-    options={{
-      responsive: true,
-      maintainAspectRatio: false,
-      indexAxis: 'y',
-      plugins: {
-        datalabels: {
-          display: true,
-          align: 'end',
-          anchor: 'end',
-          formatter: (value) => `${value.toFixed(2)}`,
-          color: theme === 'light' ? 'black' : 'white', 
-          font: {
-            weight: 'normal',
-          },
-        },
-        legend: {
-          display: true,
-          labels: {
-            color: theme === 'light' ? 'black' : 'white', 
-          },
-        },
-        tooltip: {
-          callbacks: {
-            label: function (context) {
-              return `KG: ${context.raw.toFixed(2)}`;
-            },
-          },
-        },
-      },
-      scales: {
-        x: {
-          title: {
-            display: true,
-            text: 'KG Count',
-            color: theme === 'light' ? 'black' : 'white', 
-          },
-          beginAtZero: true,
-          grid: {
-            display: true,
-            color: theme === 'light' ? '#e5e7eb' : '#374151',
-          },
-          ticks: {
-            color: theme === 'light' ? 'black' : 'white', 
-          },
-          border: {
-            color: theme === 'light' ? 'black' : '#94a3b8', 
-          },
-        },
-        y: {
-          title: {
-            display: true,
-            text: 'Color',
-            color: theme === 'light' ? 'black' : 'white',
-          },
-          ticks: {
-            autoSkip: true,
-            color: theme === 'light' ? 'black' : 'white', 
-          },
-          grid: {
-            display: true,
-            color: theme === 'light' ? '#e5e7eb' : '#374151', 
-          },
-          border: {
-            color: theme === 'light' ? 'black' : '#94a3b8', 
-          },
-        },
-      },
-    }}
-    type="bar"
-    plugins={[ChartDataLabels]}
-  />
-</div>
-          <div className="order-3 col-span-1 bg-white p-4 rounded shadow-md overflow-auto h-[790px]">
-            <h2 className="text-xl font-semibold mb-2">Sub Product Distribution</h2>
-
-            <Bar
-              data={subproduct}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: 'y',
-                plugins: {
-                  datalabels: {
-                    display: true,
-                    align: "end",
-                    anchor: "end",
-                    formatter: (value) => `${value.toFixed(2)}`,
-                    color: "black",
-                    font: {
-                      weight: "normal",
-                    },
-                  },
-                  legend: {
-                    display: true,
-                  },
-                  tooltip: {
-                    callbacks: {
-                      label: function (context) {
-                        return `KG: ${context.raw.toFixed(2)}`;
-                      },
-                    },
-                  },
-                },
-                scales: {
-                  x: {
-                    title: {
-                      display: true,
-                      text: "Color",
-                    },
-                    ticks: {
-                      autoSkip: true,
-                    },
-                    grid: {
-                      display: true,
-                    },
-                  },
-                  y: {
-                    title: {
-                      display: true,
-                      text: "KG Count",
-                    },
-                    beginAtZero: true,
-                    grid: {
-                      display: true,
-                    },
-                  },
-                },
-              }}
-              plugins={[ChartDataLabels]}
-            />
-          </div>
-
-          <div className="order-3 col-span-1 bg-white p-4 rounded shadow-md overflow-auto h-[790px]">
-            <h2 className="text-xl font-semibold mb-2">Sub Product Distribution</h2>
-
-            <Bar
-              data={partywise}
-              options={{
-                responsive: true,
-                maintainAspectRatio: false,
-                indexAxis: 'y',
-                plugins: {
-                  datalabels: {
-                    display: true,
-                    align: "end",
-                    anchor: "end",
-                    formatter: (value) => `${value.toFixed(2)}`,
-                    color: "black",
-                    font: {
-                      weight: "normal",
-                    },
-                  },
-                  legend: {
-                    display: true,
-                  },
-                  tooltip: {
-                    callbacks: {
-                      label: function (context) {
-                        return `KG: ${context.raw.toFixed(2)}`;
-                      },
-                    },
-                  },
-                },
-                scales: {
-                  x: {
-                    title: {
-                      display: true,
-                      text: "Color",
-                    },
-                    ticks: {
-                      autoSkip: true,
-                    },
-                    grid: {
-                      display: true,
-                    },
-                  },
-                  y: {
-                    title: {
-                      display: true,
-                      text: "KG Count",
-                    },
-                    beginAtZero: true,
-                    grid: {
-                      display: true,
-                    },
-                  },
-                },
-              }}
-              plugins={[ChartDataLabels]}
-            />
-          </div>
-
         </main>
       </div>
     </div>
