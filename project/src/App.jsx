@@ -25,8 +25,8 @@ function App() {
         <Route path='/task/view' element={<ViewTasks />} />
         <Route path = '/rejections' element={<Reject />} />
         <Route path = '/order_receiving&new_design' element={<Order_rev />} />
-        <Route path = '/sketch_rejections' element={<Skch_reject />} />
-        <Route path = '/dep_rejections' element={<Department_reject />} />
+        <Route path = '/rejections/detailed_rejections' element={<Skch_reject />} />
+        <Route path = '/rejections/dept_rejections' element={<Department_reject />} />
       </Routes>
       </div>
       

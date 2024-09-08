@@ -46,9 +46,9 @@ function Sidebar({ theme }) {
     } else if (path === '/order_receiving&new_design') {
       setActive('order_new_design');
     }
-    else if(path==='/dep_rejections'){
+    else if(path==='/rejections/dept_rejections'){
       setActive('rejections')
-    }else if(path==='/sketch_rejections'){
+    }else if(path==='/rejections/detailed_rejections'){
       setActive('rejections')
     }
   }, [location.pathname]);
