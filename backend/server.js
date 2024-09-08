@@ -378,9 +378,9 @@ app.get("/raw_filtered_production_data", (req, res) => {
   );
 
   const sql = `
-         SELECT fromdept1, todept1, pdscwqty1,pltcode
-         FROM production_log
-         WHERE fromdept1 IN (?)
+         SELECT \`From Dept\`,\`To Dept\`, \`CW Qty\`,Project
+         FROM Production_updated_data
+         WHERE \`From Dept\` IN (?)
             
       `;
 
@@ -400,27 +400,36 @@ app.get("/raw_filtered_production_data", (req, res) => {
     }
   );
 });
-
 app.get("/filtered_production_data", (req, res) => {
-  const deptFromFilter = Object.values(departmentMappings).flatMap(
-    (mapping) => mapping.from
-  );
-  const deptToFilter = Object.values(departmentMappings).flatMap(
-    (mapping) => mapping.to
-  );
+  const { startDate, endDate } = req.query;
 
-  const lowerDeptFromFilter = deptFromFilter.map((dept) => dept.toLowerCase());
-  const lowerDeptToFilter = deptToFilter.map((dept) => dept.toLowerCase());
+  const deptFromFilter = Object.values(departmentMappings).flatMap(mapping => mapping.from);
+  const deptToFilter = Object.values(departmentMappings).flatMap(mapping => mapping.to);
 
-  const sql = `
-            SELECT fromdept1, todept1, SUM(pdscwqty1) AS total_qty
-            FROM production_log
-            WHERE LOWER(fromdept1) IN (?)
-               AND LOWER(todept1) IN (?)
-            GROUP BY fromdept1, todept1
-         `;
+  const lowerDeptFromFilter = deptFromFilter.map(dept => dept.toLowerCase());
+  const lowerDeptToFilter = deptToFilter.map(dept => dept.toLowerCase());
 
-  db.query(sql, [lowerDeptFromFilter, lowerDeptToFilter], (err, data) => {
+  let sql = `
+    SELECT \`From Dept\`, \`To Dept\`, SUM(\`CW Qty\`) AS total_qty
+    FROM Production_updated_data
+    WHERE LOWER(\`From Dept\`) IN (?)
+      AND LOWER(\`To Dept\`) IN (?)
+  `;
+
+  const params = [lowerDeptFromFilter, lowerDeptToFilter];
+
+  if (startDate) {
+    sql += ` AND \`In Date\` >= ?`;
+    params.push(new Date(startDate));
+  }
+  if (endDate) {
+    sql += ` AND \`Out Date\` <= ?`;
+    params.push(new Date(endDate));
+  }
+
+  sql += ` GROUP BY \`From Dept\`, \`To Dept\``;
+
+  db.query(sql, params, (err, data) => {
     if (err) return res.json(err);
 
     const results = Object.keys(departmentMappings).reduce((acc, group) => {
@@ -429,8 +438,8 @@ app.get("/filtered_production_data", (req, res) => {
     }, {});
 
     data.forEach((row) => {
-      const fromDept = row.fromdept1.toUpperCase();
-      const toDept = row.todept1.toUpperCase();
+      const fromDept = row["From Dept"].toUpperCase();
+      const toDept = row["To Dept"].toUpperCase();
       const qty = row.total_qty;
 
       for (const [group, { from, to }] of Object.entries(departmentMappings)) {
@@ -443,6 +452,8 @@ app.get("/filtered_production_data", (req, res) => {
     return res.json(results);
   });
 });
+
+
 
 // app.get('/filtered_production_data', (req, res) => {
 //    const deptFilter = ['WBKOL-CAD', 'U4PD-CAD'];
@@ -491,7 +502,15 @@ app.get("/filtered_production_data", (req, res) => {
 // });
 
 app.get("/production_data", (req, res) => {
-  const sql = "SELECT * FROM production_log";
+  const sql = "SELECT * FROM Production_updated_data";
+  db.query(sql, (err, data) => {
+    if (err) return res.json(err);
+    return res.json(data);
+  });
+});
+
+app.get("/jewel_master", (req, res) => {
+  const sql = "SELECT * FROM Jewel_Master";
   db.query(sql, (err, data) => {
     if (err) return res.json(err);
     return res.json(data);
@@ -499,7 +518,7 @@ app.get("/production_data", (req, res) => {
 });
 
 app.get("/pending_data", (req, res) => {
-  const sql = "SELECT * FROM pending_log";
+  const sql = "SELECT * FROM Pending_updated_data";
   db.query(sql, (err, data) => {
     if (err) return res.json(err);
     return res.json(data);

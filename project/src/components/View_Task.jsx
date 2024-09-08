@@ -28,7 +28,7 @@ function ViewTasks() {
   useEffect(() => {
     fetch_task_data();
   }, []);
-  
+
   const handleSort = () => {
     const priorityOrders = [
       { High: 1, Medium: 2, Low: 3 }, 
@@ -37,7 +37,6 @@ function ViewTasks() {
     ];
 
     const currentOrder = priorityOrders[sortOrder % 3];
-
     const sortedTasks = [...tasks].sort((a, b) => currentOrder[a.priority] - currentOrder[b.priority]);
 
     setTasks(sortedTasks);
@@ -60,7 +59,7 @@ function ViewTasks() {
   const escapeRegExp = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
-  
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString();
@@ -69,7 +68,7 @@ function ViewTasks() {
   const filteredTasks = tasks.filter(task => {
     const escapedSearch = escapeRegExp(search.toLowerCase());
     const searchRegex = new RegExp(escapedSearch);
-  
+
     return searchRegex.test(task.ax_brief.toLowerCase()) ||
       searchRegex.test(task.collection_name.toLowerCase()) ||
       searchRegex.test(task.project.toLowerCase()) ||
@@ -93,17 +92,18 @@ function ViewTasks() {
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Tasks');
-  
+
     XLSX.writeFile(workbook, 'tasks.xlsx');
-  };  
+  };
+
   return (
-    <div className={`min-h-screen max-w-full flex ${theme === 'light' ? 'bg-gray-100' : 'bg-gray-800'}`}>
+    <div className={`min-h-screen min-w-max max-w-full flex ${theme === 'light' ? 'bg-gray-100' : 'bg-gray-800'}`}>
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <Header onSearch={setSearch} theme={theme} dark={setTheme} />
-        <main className="flex-1 overflow-y-auto p-4 md:px-8 lg:px-12 max-w-96 md:max-w-full">
+        <main className="flex-1 overflow-y-auto p-4 md:px-8 lg:px-12 max-w-full">
           {error && <p className="text-red-500">{error}</p>}
-  
+
           <div className="flex justify-between items-center mb-4">
             <h1 className={`text-xl font-bold ${theme === 'light' ? 'text-gray-800' : 'text-white'}`}>
               Task List
@@ -115,23 +115,16 @@ function ViewTasks() {
               Download
             </button>
           </div>
+
           <div className="overflow-x-auto">
             <table className={`min-w-full border rounded-lg ${theme === 'light' ? 'border-gray-300 bg-white' : 'border-gray-600 bg-slate-500'}`}>
               <thead>
                 <tr>
-                  <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>ID</th>
-                  <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Ax Brief</th>
-                  <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Collection Name</th>
-                  <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Project</th>
-                  <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Quantity</th>
-                  <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Assign Date</th>
-                  <th className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>Target Date</th>
-                  <th
-                    className={`px-4 py-2 text-left cursor-pointer ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`} 
-                    onClick={handleSort}
-                  >
-                    Priority
-                  </th>
+                  {['ID', 'Ax Brief', 'Collection Name', 'Project', 'Quantity', 'Assign Date', 'Target Date', 'Priority'].map((header, index) => (
+                    <th key={index} className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>
+                      {header}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -169,7 +162,6 @@ function ViewTasks() {
       </div>
     </div>
   );
-  
 }
 
 export default ViewTasks;

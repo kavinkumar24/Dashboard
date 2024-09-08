@@ -45,18 +45,17 @@ function DepartmentDetail() {
         if (type === 'production') {
           filteredData = dataToRender
             .filter(item => 
-              from.includes(item.fromdept1?.toUpperCase()) && 
-              to.includes(item.todept1?.toUpperCase()) &&
+              from.includes(item["From Dept"]?.toUpperCase()) && 
+              to.includes(item["To Dept"]?.toUpperCase()) &&
               (search.toLowerCase() === '' || 
-               item.fromdept1.toLowerCase().includes(search.toLowerCase()) || 
-               item.todept1.toLowerCase().includes(search.toLowerCase()))
+               item["From Dept"].toLowerCase().includes(search.toLowerCase()) || 
+               item["To Dept"].toLowerCase().includes(search.toLowerCase()))
             );
   
           console.log("Filtered Production Data:", filteredData);
           groupedData = groupDataByDept_production(filteredData);
   
         } else if (type === 'pending') {
-            
           filteredData = dataToRender.filter(item => 
             item.todept && from.includes(item.todept.toUpperCase()) &&
             (search.toLowerCase() === '' || item.todept.toLowerCase().includes(search.toLowerCase()))
@@ -109,14 +108,14 @@ function DepartmentDetail() {
   const groupDataByDept_production = (data) => {
     if (Array.isArray(data)) {
       return data.reduce((acc, item) => {
-        const dept = (item.fromdept1 || item.todept || 'Unknown').toUpperCase();
-        const pltcode = item.pltcode ||item.pltcoded1|| 'Unknown';
+        const dept = (item["From Dept"] || item["To Dept"] || 'Unknown').toUpperCase();
+        const pltcode = item.Project ||item.pltcoded1|| 'Unknown';
   
         if (!acc[dept]) {
           acc[dept] = { quantity: 0, pltcodes: {} };
         }
   
-        acc[dept].quantity += Number(item.pdscwqty1 || item.jcpdscwqty1) || 0;
+        acc[dept].quantity += Number(item["CW Qty"] || item.jcpdscwqty1) || 0;
   
         if (!acc[dept].pltcodes[pltcode]) {
           acc[dept].pltcodes[pltcode] = 0;

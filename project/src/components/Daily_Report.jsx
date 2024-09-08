@@ -48,7 +48,7 @@ function Daily_Report() {
   };
 
   const filteredPendingData = pendingData.filter((item) =>
-    isValidDate(item.recvdate1)
+    isValidDate(item.RECVDATE1)
   );
 
   const getDaysRange = (recvdate1) => {
@@ -65,8 +65,8 @@ function Daily_Report() {
   };
 
   const groupedData = filteredPendingData.reduce((acc, item) => {
-    const range = getDaysRange(item.recvdate1);
-    const toDept = item.todept;
+    const range = getDaysRange(item.RECVDATE1);
+    const toDept = item.TODEPT;
     const departmentName = departmentMappings[toDept] || "Unknown";
 
     if (!acc[departmentName]) {

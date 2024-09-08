@@ -300,13 +300,11 @@ function Reject() {
 
   const handleBarchange = (event, elements) => {
     if (elements.length > 0) {
-      const clickedElementIndex = elements[0].index; // Get the index of the clicked bar
-      const clickedLabel = chartData2.labels[clickedElementIndex]; // Get the label of the clicked bar
+      const clickedElementIndex = elements[0].index; 
+      const clickedLabel = chartData2.labels[clickedElementIndex]; 
   
       console.log("Clicked Label:", clickedLabel);
-
       const deptData = overAllData.filter((data)=>data.ToDept === clickedLabel)
-      // Navigate to another page, passing the clicked label
       navigate('/rejections/dept_rejections',{
         state:{clickedLabel,deptData},
       });
@@ -335,8 +333,6 @@ function Reject() {
     },
    
   };
-
-  // Sketch table data
   const [currentPage1, setCurrentPage1] = useState(1);
   const itemsPerPage = 6;
   
@@ -503,13 +499,7 @@ function Reject() {
           </div>
           <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
           <h1 className="text-lg font-semibold p-2">Reasons for Rejections</h1>
-          {/* <div className="chart-container">
-              {chartData4 ? (
-                <Pie data={chartData4}  />
-              ) : (
-                <p>Loading chart data...</p>
-              )}
-            </div> */}
+          
             <div className="chart-container">
               {chartData4 ? (
                 <Bar data={chartData4}  />
@@ -520,12 +510,10 @@ function Reject() {
           </div>
         </div>
 
-        {/* ///////////////////////////////////////////// */}
 
 <div className="m-6 px-10 border rounded-lg border-gray-300 bg-white shadow-lg">
 <h1 className="text-xl font-semibold pt-5">Detailed Top <span className="text-red-500">Rejections</span> </h1>
 
-       {/* Accordion Sketches */}
        <div className="border-b border-slate-200">
         <button
           onClick={() => toggleAccordion(1)}

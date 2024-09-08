@@ -5,6 +5,7 @@ import { BsGear, BsListTask, BsEye, BsPlusCircleDotted } from 'react-icons/bs';
 import { IoDocumentTextOutline } from 'react-icons/io5';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GoStop } from "react-icons/go";
+import { CgIfDesign } from "react-icons/cg";
 import { RiFolderReceivedLine } from "react-icons/ri";
 import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai'; 
 
@@ -45,6 +46,9 @@ function Sidebar({ theme }) {
 
     } else if (path === '/order_receiving&new_design') {
       setActive('order_new_design');
+    }
+    else if (path === '/new_design') {
+      setActive('new_design');
     }
     else if(path==='/rejections/dept_rejections'){
       setActive('rejections')
@@ -227,6 +231,20 @@ function Sidebar({ theme }) {
                 <RiFolderReceivedLine />
               </div>
               Order Receive
+            </div>
+          </a>
+
+
+          <a
+            href="#"
+            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('new_design')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+            onClick={() => handleNavigation('/new_design', '/new_design')}
+          >
+            <div className='flex flex-row p-2'>
+              <div className='mt-1 px-2'>
+                <CgIfDesign />
+              </div>
+              New Design
             </div>
           </a>
 

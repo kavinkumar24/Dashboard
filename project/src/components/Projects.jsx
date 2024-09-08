@@ -92,29 +92,25 @@ function Projects() {
         </div>
       );
     };
-
     const fetchData = async () => {
       try {
-        const productionResponse = await fetch(
-          "http://localhost:8081/production_data"
-        );
+        const productionResponse = await fetch("http://localhost:8081/production_data");
         const productionData = await productionResponse.json();
         const filteredProductionData = productionData.filter((item) =>
-          departmentsToShow.includes(item.pltcode.toUpperCase())
+          item.pltcode && departmentsToShow.includes(item.pltcode.toUpperCase())
         );
         setProductionData(filteredProductionData);
         const productionCounts = countDepartments(filteredProductionData);
-
-        const pendingResponse = await fetch(
-          "http://localhost:8081/pending_data"
-        );
+    
+        const pendingResponse = await fetch("http://localhost:8081/pending_data");
         const pendingData = await pendingResponse.json();
         const filteredPendingData = pendingData.filter((item) =>
-          departmentsToShow.includes(item.pltcoded1.toUpperCase())
+          (item.PLTCODE1 && departmentsToShow.includes(item.PLTCODE1.toUpperCase())) ||
+          (item.pltcode && departmentsToShow.includes(item.pltcode.toUpperCase()))
         );
         setPendingData(filteredPendingData);
         const pendingCounts = countDepartments(filteredPendingData, true);
-
+    
         const combinedCounts = {};
         departmentsToShow.forEach((dept) => {
           combinedCounts[dept] = {
@@ -123,7 +119,7 @@ function Projects() {
             total: (productionCounts[dept] || 0) + (pendingCounts[dept] || 0),
           };
         });
-
+    
         setDepartmentCounts(combinedCounts);
         const initialTab =
           departmentsToShow.find((dept) => combinedCounts[dept]?.total > 0) ||
@@ -133,15 +129,15 @@ function Projects() {
         console.error("Error fetching data:", error);
       }
     };
-
+    
     fetchData();
-  }, [search]);
+  },[search]);    
 
   const countDepartments = (data, isPending = false) => {
     const departmentCounts = {};
     data.forEach((item) => {
       const department = isPending
-        ? item.pltcoded1.toUpperCase()
+        ? item.PLTCODE1.toUpperCase()
         : item.pltcode.toUpperCase();
       departmentCounts[department] = (departmentCounts[department] || 0) + 1;
     });
@@ -163,18 +159,18 @@ function Projects() {
   const groupDataByPltcodeAndDepartment = (data, department) => {
     return data.reduce((acc, item) => {
       const pltcode = item.pltcode ? item.pltcode.toUpperCase() : "";
-      const pltcoded1 = item.pltcoded1 ? item.pltcoded1.toUpperCase() : "";
+      const pltcoded1 = item.PLTCODE1 ? item.PLTCODE1.toUpperCase() : "";
 
       if (pltcoded1 === department) {
-        const { todept, jcpdscwqty1 } = item;
+        const { TODEPT, JCPDSCWQTY1 } = item;
 
-        const normalizedqty = parseInt(jcpdscwqty1, 10);
-        if (!todept) {
+        const normalizedqty = parseInt(JCPDSCWQTY1, 10);
+        if (!TODEPT) {
           console.warn("Missing fromdept1 in item:", item);
           return acc;
         }
 
-        const normalizedDept = todept.toLowerCase();
+        const normalizedDept = TODEPT.toLowerCase();
         if (!acc[pltcoded1]) {
           acc[pltcoded1] = {};
         }
@@ -334,7 +330,7 @@ function Projects() {
   const renderCardCounts = (data, isPending = false) => {
     const groupedData = data.reduce((acc, item) => {
       const department = isPending
-        ? item.pltcoded1.toUpperCase()
+        ? item.PLTCODE1.toUpperCase()
         : item.pltcode.toUpperCase();
       acc[department] = (acc[department] || 0) + 1;
       return acc;

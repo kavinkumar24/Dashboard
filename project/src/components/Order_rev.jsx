@@ -84,7 +84,6 @@ function Order_rev() {
   const [monthlyData, setMonthlyData] = useState({});
 
   const convertWtToKg = (wt) => wt / 1000;
-
   const getYearlyData = (data) => {
     const yearlyData = data.reduce((acc, item) => {
       if (item.TRANSDATE) {
@@ -689,7 +688,7 @@ function Order_rev() {
       </div>
     </div>,
     <div className="" key="purity-wise-chart">
-      <div
+      <div  
         className={`order-2 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
         }  p-4 rounded shadow-md  h-[450px]`}
@@ -1029,7 +1028,8 @@ function Order_rev() {
                   color: theme === "light" ? "#e5e7eb" : "#374151",
                 },
                 border: {
-                  color: theme === "light" ? "black" : "#94a3b8",
+                  color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  
                 },
               },
             },
@@ -1221,7 +1221,6 @@ function Order_rev() {
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <Header theme={theme} dark={setTheme} />
-        {/* Filtering bar */}
         <div
           className={`p-4 ${
             theme == "light" ? "bg-white" : "bg-slate-900"
@@ -1293,7 +1292,7 @@ function Order_rev() {
         </div> */}
         </div>
         <div
-          className={`m-6 px-10 border rounded-lg  ${
+          className={`m-6 px-10 border rounded-lg   ${
             theme === "light"
               ? "bg-white border-gray-300"
               : "bg-slate-900 border-zinc-800"

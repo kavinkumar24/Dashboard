@@ -2,8 +2,11 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
+import axios from "axios";
 function Dashboard() {
   const [productionData, setProductionData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+
   // const [pendingData, setPendingData] = useState([]);
   const [departmentData, setDepartmentData] = useState({});
   // const[avg_prod,setAvg_prod] = useState(0);
@@ -18,6 +21,28 @@ function Dashboard() {
   });
   const [sortConfig, setSortConfig] = useState({ key: 'Production Qty', direction: 'ascending' });
 
+  const handleFilter = async (newFilter) => {
+    setFilter_on(newFilter);  // Update the filter state
+    
+    // Apply filter to the data
+    const filteredProductionData = productionData.filter(/* logic to filter productionData based on newFilter */);
+    setFilteredData(filteredProductionData);
+  };
+  
+  const handleDateRangeChange = async (fromDate, toDate) => {
+    try {
+      const response = await axios.get('http://localhost:8081/filtered_production_data', {
+        params: {
+          startDate: fromDate,
+          endDate: toDate
+        }
+      });
+      setFilteredData(response.data); // Update the filteredData state
+    } catch (error) {
+      console.error("Error fetching filtered data:", error);
+    }
+  };
+  
   useEffect(() => {
     fetch('http://localhost:8081/filtered_production_data')
       .then(response => response.json())
@@ -58,8 +83,9 @@ function Dashboard() {
     localStorage.setItem('theme', theme);
   }, [theme]);
   useEffect(() => {
+    setSkeleton(true)
     fetch("http://localhost:8081/filtered_pending_data")
-      .then(setSkeleton(true))
+      
       .then((res) => res.json())
       .then((data) => {
         console.log("Pending Data:", data);
@@ -249,7 +275,7 @@ function Dashboard() {
     <Sidebar theme={theme} />
       {/* Main content */}
       <div className="flex-1 flex flex-col">
-      <Header onSearch = {setSearch} onView = {setviewData} view = {viewData} theme = {theme} dark = {setTheme} on_filter = {setFilter_on} filter={filter_on}/>
+      <Header onSearch = {setSearch} onView = {setviewData} view = {viewData} theme = {theme} dark = {setTheme} on_filter = {setFilter_on} filter={filter_on} onDateRangeChange={handleDateRangeChange}/>
         <main className={`flex-1 px-4 overflow-y-auto ${filter_on===true?'opacity-10':'opacity-100'}`}>
         
           {/* Department Cards */}
