@@ -21,6 +21,12 @@ function Order_rev() {
   const [selectedYear, setSelectedYear] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
+  const [activeIndex, setActiveIndex] = useState(null);
+
+  const toggleAccordion = (index) => {
+    setActiveIndex(activeIndex === index ? null : index);
+  };
+
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
@@ -72,6 +78,8 @@ function Order_rev() {
   });
 
   const [totalWeight, setTotalWeight] = useState(0);
+  const [yearlyData, setYearlyData] = useState({});
+  const [monthlyData, setMonthlyData] = useState({});
 
   const convertWtToKg = (wt) => wt / 1000;
 
@@ -338,6 +346,24 @@ function Order_rev() {
           filteredData.reduce((total, item) => total + (item.WT || 0), 0) /
           1000;
         setTotalWeight(totalWeightFromAPI);
+        const yearData = filteredData.reduce((acc, item) => {
+          const year = new Date(item.TRANSDATE).getFullYear();
+          if (!acc[year]) acc[year] = 0;
+          acc[year] += (item.WT || 0);
+          return acc;
+        }, {});
+    
+        const monthData = filteredData.reduce((acc, item) => {
+          const date = new Date(item.TRANSDATE);
+          const yearMonth = `${date.getFullYear()}-${date.getMonth() + 1}`; 
+          if (!acc[yearMonth]) acc[yearMonth] = 0;
+          acc[yearMonth] += (item.WT || 0);
+          return acc;
+        }, {});
+    
+        setYearlyData(yearData);
+        setMonthlyData(monthData);
+    
 
         setChartData({
           labels: getYearlyData(filteredData).map((entry) => entry.year),
@@ -1155,19 +1181,78 @@ function Order_rev() {
           </button>
         </div>
         <div className="p-4">
-          <div className="col-span-1 lg:col-span-2 order-1">
-            <div className={`${theme==='light'?'bg-white':'bg-slate-900 text-slate-300' } p-6 rounded shadow-md text-center font-semibold`}>
-              Total Weight: {totalWeight.toFixed(2)} KG
+        <div className="col-span-1 lg:col-span-2 order-1">
+          <div className={`${theme === 'light' ? 'bg-white' : 'bg-slate-900 text-slate-300'} p-6 rounded shadow-md text-center font-semibold`}>
+            Total Weight: {totalWeight.toFixed(2)} KG
+          </div>
+        </div>
+      </div>
+      <div className="m-6 px-10 border rounded-lg border-gray-300 bg-white shadow-lg">
+        <h1 className="text-xl font-semibold p-2 pl-0 py-5">Total Weight: <span className="text-red-500">{totalWeight.toFixed(2)} KG</span></h1>
+        <div className="border-b border-slate-200">
+          <button
+            onClick={() => toggleAccordion(1)}
+            className="w-full flex justify-between items-center py-5 text-slate-800"
+          >
+            <span className="text-lg font-semibold">Details</span>
+            <span className="text-slate-800 transition-transform duration-300">
+              {activeIndex === 1 ? (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+                  <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+                  <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
+                </svg>
+              )}
+            </span>
+          </button>
+          <div
+            className={`${activeIndex === 1 ? "max-h-screen" : "max-h-0"} overflow-hidden transition-all duration-300 ease-in-out`}
+          >
+            <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
+              <h1 className="text-xl font-semibold p-2 pl-10 py-5">Based on year and month</h1>
+              <h2 className="text-lg font-semibold p-2">Yearly Data</h2>
+              <table className="w-full table-auto text-sm">
+                <thead>
+                  <tr className="bg-gray-300 text-gray-700">
+                    <th className="px-6 py-3 text-center font-semibold text-base">Year</th>
+                    <th className="px-6 py-3 text-center font-semibold text-base">Total Weight (KG)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(yearlyData).map(([year, weight], index) => (
+                    <tr key={index} className="bg-white even:bg-gray-50 hover:bg-gray-200 transition-colors duration-200">
+                      <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{year}</td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{(weight / 1000).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <h2 className="text-lg font-semibold p-2">Monthly Data</h2>
+              <table className="w-full table-auto text-sm">
+                <thead>
+                  <tr className="bg-gray-300 text-gray-700">
+                    <th className="px-6 py-3 text-center font-semibold text-base">Year-Month</th>
+                    <th className="px-6 py-3 text-center font-semibold text-base">Total Weight (KG)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(monthlyData).map(([yearMonth, weight], index) => (
+                    <tr key={index} className="bg-white even:bg-gray-50 hover:bg-gray-200 transition-colors duration-200">
+                      <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{yearMonth}</td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{(weight / 1000).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
+      </div>
 
         <main className="flex-1 p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Total weight card */}
-
-          {/* KG per year bar chart */}
-
-          {/* Purity-wise chart */}
+          
           {currentPageCharts}
 
           <div className="col-span-1 lg:col-span-2 flex justify-center mt-6">
