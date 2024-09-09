@@ -34,6 +34,8 @@ connection.connect((err) => {
   console.log('Connected to MySQL database.');
 });
 
+
+
 const createTableQuery = `CREATE TABLE IF NOT EXISTS rejection (
   file_ID VARCHAR(100),
   Yr VARCHAR(10),

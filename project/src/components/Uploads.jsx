@@ -13,6 +13,7 @@ function Uploads() {
   const [fileType, setFileType] = useState("");
   const [typeMsg, setTypeMsg] = useState("");
   const [detailedData, setDetailedData] = useState([]);
+  const [api, setApi] = useState("");
   const currentTime = new Date().toISOString(); 
 
 
@@ -29,6 +30,7 @@ function Uploads() {
           "CW Qty", "Qty", "From Dept", "To Dept", "In Date", "Out Date",
           "Hours", "Days", "Description", "Design specification", "PRODUNITID", "Remarks"
         ]);
+        setApi("http://localhost:8081/api/production/upload")
       } else if (selectedFileType === "pending") {
         setDetailedData([
           "TODEPT", "JCID1", "BRIEFNUM1", "MERCHANDISERBRIEF1", "SKETCHNUM1", "ITEMID", 
@@ -37,6 +39,7 @@ function Uploads() {
           "Textbox60", "DESIGNSPEC1", "RECEIVED1", "RECVDATE1", "REMARKS1", 
           "HALLMARKINCERTCODE1"
         ]);
+        setApi("http://localhost:8081/api/pending/upload")
       } else if (selectedFileType === "rejection") {
         setDetailedData([
           "Yr", "MONTH", "Date", "Raised Date", "RaisedDept", "Reason Dept", 
@@ -44,6 +47,8 @@ function Uploads() {
           "Problem arised", "Problem - 1", "Problem arised -2", "COUNT", 
           "Operator Name/ID"
         ]);
+        setApi("http://localhost:5000/api/rejection/upload")
+
       } else if (selectedFileType === "orderRece_newDesi") {
         setDetailedData([
           "NAME1", "ACCOUNTNUM", "Itemcwqty2", "Itemqty2", "JCID", "TRANSDATE", 
@@ -54,6 +59,7 @@ function Uploads() {
           "NIM_PROCATEGORY", "TOPSUBCATEGORY", "GENDER", "NAMEALIAS", 
           "PERSONNELNUMBER", "DesignerName2", "Itemcwqty", "Itemqty"
         ]);
+        setApi("http://localhost:8081/api/order/upload")
       }else {
         setDetailedData([]); // Clear the list if a different file type is selected
       }
@@ -89,9 +95,11 @@ function Uploads() {
     formData.append("file", selectedFile);
     formData.append("file_ID", currentTime);
 
+    
+
     try {
       const response = await axios.post(
-        "http://localhost:8081/api/production/upload",
+        api,
         formData,
         {
           headers: {

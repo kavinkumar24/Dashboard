@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import axios from "axios";
+import { IoCardOutline, IoFilterOutline } from "react-icons/io5";
 import { Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -92,7 +93,21 @@ function Reject() {
       const response = await axios.get(
         "http://localhost:5000/api/rejection/uploads"
       );
-      const data = response.data;
+      let data = response.data;
+
+      // Filter data based on selected date range (startDate and endDate should be state variables)
+      if (startDate && endDate) {
+        const parsedStartDate = new Date(startDate);
+        const parsedEndDate = new Date(endDate);
+        console.log(parsedStartDate , parsedEndDate)
+  
+        data = data.filter((item) => {
+          const itemDate = new Date(item.Date); // Parse item.Date in MM/DD/YY format
+          return itemDate >= parsedStartDate && itemDate <= parsedEndDate;
+        });
+        setoverAllData(data);
+      }
+
       setoverAllData(data);
 
       if (data && data.length > 0) {
@@ -416,6 +431,33 @@ function Reject() {
     setActiveIndex(activeIndex === index ? null : index);
   };
 
+  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  const handleFilterClick = () => {
+    setShowDatePickerModal(true); // Show the date picker modal
+  };
+
+  const handleCancelFilter = () => {
+    setShowDatePickerModal(false);
+  };
+
+  const handleApplyFilter = () => {
+    // You can perform any action with the selected dates here, like filtering data
+    console.log('Start Date:', startDate, 'End Date:', endDate);
+    setShowDatePickerModal(false); // Close the modal after applying the filter
+    fetchUploads();
+  };
+
+  const handleStartDateChange = (e) => {
+    setStartDate(e.target.value); // Update start date state
+  };
+
+  const handleEndDateChange = (e) => {
+    setEndDate(e.target.value); // Update end date state
+  };
+
   
 
   return (
@@ -428,18 +470,92 @@ function Reject() {
       <div className="flex-1 flex flex-col">
         <Header onSearch={setSearch} theme={theme} dark={setTheme} />
  
-        <div className="flex justify-between mx-4 mt-4">
-          <h1 className="font-bold text-xl">Rejections Overview</h1>
-          <button
-            className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
-              theme === "light"
-                ? "bg-blue-500 hover:bg-blue-700"
-                : "bg-blue-600 hover:bg-blue-800"
-            }`}
-          >
-            View Uploaded History
-          </button>
+
+        
+    <div className="flex justify-between mx-4 mt-4">
+      <h1 className="font-bold text-xl">Rejections Overview</h1>
+      <div className="flex">
+        <button
+          onClick={handleFilterClick}
+          className={`mr-3 py-2 px-4 font-bold text-sm text-white rounded-lg flex ${
+            theme === 'light'
+              ? 'bg-blue-500 hover:bg-blue-700'
+              : 'bg-blue-600 hover:bg-blue-800'
+          }`}
+        >
+          <IoFilterOutline
+            size={20}
+            className={`${
+              theme === 'light' ? 'text-gray-100' : 'text-gray-100'
+            } mr-2`}
+          />
+          Filter
+        </button>
+
+        <button
+          className={`py-2 px-4 font-bold text-sm text-white rounded-lg ${
+            theme === 'light'
+              ? 'bg-blue-500 hover:bg-blue-700'
+              : 'bg-blue-600 hover:bg-blue-800'
+          }`}
+        >
+          View Upload History
+        </button>
+      </div>
+
+      {/* Date Picker Modal */}
+      {showDatePickerModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-96">
+            <h2 className="text-lg font-bold mb-4 text-center">Select Date Range</h2>
+            <div className="flex items-center justify-center mb-4">
+              <input
+                id="datepicker-range-start"
+                name="start"
+                type="date"
+                value={startDate}
+                onChange={handleStartDateChange}
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Select start date"
+              />
+              <span className="mx-4 text-gray-500">to</span>
+              <input
+                id="datepicker-range-end"
+                name="end"
+                type="date"
+                value={endDate}
+                onChange={handleEndDateChange}
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Select end date"
+              />
+            </div>
+            <div className="flex justify-between mt-4">
+              <button
+                onClick={handleCancelFilter}
+                className={`py-2 px-4 font-bold text-sm text-white rounded-lg ${
+                  theme === 'light'
+                    ? 'bg-gray-500 hover:bg-gray-700'
+                    : 'bg-gray-600 hover:bg-gray-800'
+                }`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleApplyFilter}
+                className={`py-2 px-4 font-bold text-sm text-white rounded-lg ${
+                  theme === 'light'
+                    ? 'bg-blue-500 hover:bg-blue-700'
+                    : 'bg-blue-600 hover:bg-blue-800'
+                }`}
+              >
+                Apply Filter
+              </button>
+            </div>
+          </div>
         </div>
+      )}
+    </div>
+
 
         <div className="upload-container pt-10">
           <label

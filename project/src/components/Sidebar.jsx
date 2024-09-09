@@ -8,6 +8,7 @@ import { GoStop } from "react-icons/go";
 import { CgIfDesign } from "react-icons/cg";
 import { RiFolderReceivedLine } from "react-icons/ri";
 import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai'; // Icons for hamburger and close
+import { MdDriveFolderUpload } from "react-icons/md";
 
 function Sidebar({ theme }) {
   const navigate = useNavigate();
