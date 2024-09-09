@@ -32,37 +32,6 @@ const db = mysql.createConnection({
 // ************ Production Data endpoints ******************* //
 
 
-// const createProductionTableQuery = `CREATE TABLE IF NOT EXISTS product_data (
-//   file_name VARCHAR(50),
-//   type_of_data VARCHAR(50),
-//   JCID VARCHAR(50),
-//   BRIEFNUM VARCHAR(50),
-//   PRE_BRIEFNUM VARCHAR(50),
-//   SKETCH_NUM VARCHAR(50),
-//   ITEMID VARCHAR(50),
-//   PURITY VARCHAR(50),
-//   EMP_ID VARCHAR(50),
-//   REF_EMP_ID VARCHAR(50),
-//   NAME VARCHAR(255),
-//   JWTYPE VARCHAR(50),
-//   PROJECT VARCHAR(50),
-//   SUB_CATEGORY VARCHAR(50),
-//   INPDSCWQTY VARCHAR(50),
-//   INQTY VARCHAR(50),
-//   RCVCWQTY VARCHAR(50),
-//   RCVQTY VARCHAR(50),
-//   FROMWH VARCHAR(50),
-//   TOWH VARCHAR(50),
-//   IN_DATE_TIME DATETIME,
-//   OUT_DATE_TIME DATETIME,
-//   HOURS VARCHAR(50),
-//   DAYS VARCHAR(50),
-//   DESCRIPTION VARCHAR(255),
-//   DESIGN_SPECIFICATION VARCHAR(255),
-//   PRODUNITID VARCHAR(50),
-//   REMARKS VARCHAR(255)
-// );
-// `;
 
 const createProductionTableQuery = `CREATE TABLE IF NOT EXISTS \`Production_sample_data\` (
   \`JC ID\` varchar(255) DEFAULT NULL,
@@ -98,28 +67,35 @@ db.query(createProductionTableQuery, (err) => {
     console.error('Error creating table:', err);
     return;
   }
-  console.log('Table created or already exists.');
+  console.log('Table created or already exists. -->createProductionTableQuery');
 });
 
 
+// Convert Excel serial date to JavaScript Date
+function excelSerialDateToDate(serial) {
+  if (!serial || isNaN(serial)) {
+    return null;
+  }
+  const excelEpoch = new Date(1899, 11, 30); // Excel epoch starts from 1899-12-30
+  const days = Math.floor(serial); // Get the whole part of the serial date
+  const timeFraction = serial - days; // Get the time fraction of the day
+  const date = new Date(excelEpoch.getTime() + days * 86400000); // Convert days to milliseconds
+  date.setMinutes(date.getMinutes() + Math.round(timeFraction * 1440)); // Add time portion
+  return date;
+}
+
+// Format date for MySQL
 function formatDateForMySQL(date) {
+  if (!date) return null;
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-function excelSerialDateToDate(serial) {
-  // Excel's date system starts on January 1, 1900
-  const excelStartDate = new Date(1899, 11, 30); // December 30, 1899
-  const millisecondsPerDay = 86400000;
-  
-  return new Date(excelStartDate.getTime() + (serial * millisecondsPerDay));
-}
 
 
 
@@ -190,7 +166,7 @@ app.post('/api/production/upload', upload.single('file'), (req, res) => {
           console.error('Database error:', error);
           return res.status(500).send('Database error');
         }
-        console.log('Rows inserted:', results.affectedRows);
+        // console.log('Rows inserted:', results.affectedRows);
         res.send('File uploaded and data inserted successfully.');
       });
     } else {
@@ -203,8 +179,301 @@ app.post('/api/production/upload', upload.single('file'), (req, res) => {
 });
 
 
-// ************ End of Production Data endpoints ******************* //
+// ************ End of Production Data post endpoint ******************* //
 
+
+// ************ Pending Data post endpoints ******************* //
+
+const createPendingTableQuery = `CREATE TABLE IF NOT EXISTS \`Pending_sample_data\` (
+  \`TODEPT\` varchar(255) DEFAULT NULL,
+  \`JCID1\` varchar(255) DEFAULT NULL,
+  \`BRIEFNUM1\` varchar(255) DEFAULT NULL,
+  \`MERCHANDISERBRIEF1\` varchar(255) DEFAULT NULL,
+  \`SKETCHNUM1\` varchar(255) DEFAULT NULL,
+  \`ITEMID\` varchar(255) DEFAULT NULL,
+  \`PERSONNELNUMBER1\` varchar(255) DEFAULT NULL,
+  \`NAME1\` varchar(255) DEFAULT NULL,
+  \`PLTCODE1\` varchar(255) DEFAULT NULL,
+  \`PURITY1\` varchar(255) DEFAULT NULL,
+  \`ARTICLECODE1\` varchar(255) DEFAULT NULL,
+  \`COMPLEXITY1\` varchar(255) DEFAULT NULL,
+  \`JCPDSCWQTY1\` double DEFAULT NULL,
+  \`JCQTY1\` double DEFAULT NULL,
+  \`DATE1\` timestamp(6) NULL DEFAULT NULL,
+  \`Textbox56\` double DEFAULT NULL,
+  \`Textbox87\` double DEFAULT NULL,
+  \`Textbox60\` double DEFAULT NULL,
+  \`DESIGNSPEC1\` varchar(255) DEFAULT NULL,
+  \`RECEIVED1\` varchar(255) DEFAULT NULL,
+  \`RECVDATE1\` timestamp(6) NULL DEFAULT NULL,
+  \`REMARKS1\` varchar(255) DEFAULT NULL,
+  \`HALLMARKINCERTCODE1\` varchar(255) DEFAULT NULL
+)`;
+
+db.query(createPendingTableQuery, (err) => {
+  if (err) {
+    console.error('Error creating table:', err);
+    return;
+  }
+  console.log('Table created or already exists. --> createPendingTableQuery');
+});
+
+app.post('/api/pending/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+
+  const fileBuffer = req.file.buffer;
+  const fileName = req.file.originalname;
+
+  try {
+    const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(worksheet);
+
+    if (jsonData.length > 0) {
+      const values = jsonData.map(row => {
+        // Convert Excel serial date to JavaScript Date
+        const recvdDate = excelSerialDateToDate(row['RECVDATE1']);
+        let formattedRecvdDate = formatDateForMySQL(recvdDate);
+
+        // Handle invalid dates
+        if (!formattedRecvdDate || formattedRecvdDate === '1899-12-31 00:00:00') {
+          formattedRecvdDate = null;
+        }
+
+        const date1 = excelSerialDateToDate(row['DATE1']);
+        let formattedDate1 = formatDateForMySQL(date1);
+
+        if (!formattedDate1 || formattedDate1 === '1899-12-31 00:00:00') {
+          formattedDate1 = null;
+        }
+
+        return [
+          row['TODEPT'],
+          row['JCID1'],
+          row['BRIEFNUM1'],
+          row['MERCHANDISERBRIEF1'],
+          row['SKETCHNUM1'],
+          row['ITEMID'],
+          row['PERSONNELNUMBER1'],
+          row['NAME1'],
+          row['PLTCODE1'],
+          row['PURITY1'],
+          row['ARTICLECODE1'],
+          row['COMPLEXITY1'],
+          row['JCPDSCWQTY1'],
+          row['JCQTY1'],
+          formattedDate1,  // Properly formatted DATE1
+          row['Textbox56'],
+          row['Textbox87'],
+          row['Textbox60'],
+          row['DESIGNSPEC1'],
+          row['RECEIVED1'],
+          formattedRecvdDate,  // Properly formatted RECVDATE1
+          row['REMARKS1'],
+          row['HALLMARKINCERTCODE1']
+        ];
+      });
+
+      const query = `
+      INSERT INTO Pending_sample_data 
+      (\`TODEPT\`, \`JCID1\`, \`BRIEFNUM1\`, \`MERCHANDISERBRIEF1\`, \`SKETCHNUM1\`, \`ITEMID\`,
+       \`PERSONNELNUMBER1\`, \`NAME1\`, \`PLTCODE1\`, \`PURITY1\`, \`ARTICLECODE1\`,
+       \`COMPLEXITY1\`, \`JCPDSCWQTY1\`, \`JCQTY1\`, \`DATE1\`, \`Textbox56\`,
+       \`Textbox87\`, \`Textbox60\`, \`DESIGNSPEC1\`, \`RECEIVED1\`, \`RECVDATE1\`,
+       \`REMARKS1\`, \`HALLMARKINCERTCODE1\`)
+      VALUES ?
+    `;
+
+      db.query(query, [values], function (error, results, fields) {
+        if (error) {
+          console.error('Database error:', error);
+          return res.status(500).send('Database error');
+        }
+        res.send('File uploaded and data inserted successfully.');
+      });
+    } else {
+      res.status(400).send('No data found in Excel file');
+    }
+  } catch (error) {
+    console.error('Error processing file:', error);
+    res.status(500).send('Error processing file');
+  }
+});
+
+
+
+// ************ end of Pending Data post endpoints ******************* //
+
+// ************** order rececing //////////////////////////////////
+
+const createOrderReceivingTableQuery = `CREATE TABLE IF NOT EXISTS \`Order_receiving_log_sample\` (
+  \`NAME1\` varchar(255) DEFAULT NULL,
+  \`SUB_PARTY\` varchar(255) DEFAULT NULL,
+  \`Group_party\` varchar(255) DEFAULT NULL,
+  \`JCID\` varchar(255) DEFAULT NULL,
+  \`TRANSDATE\` timestamp(6) NULL DEFAULT NULL,
+  \`ORDERNO\` varchar(255) DEFAULT NULL,
+  \`OrderType\` varchar(255) DEFAULT NULL,
+  \`ZONE\` varchar(255) DEFAULT NULL,
+  \`OGPG\` varchar(255) DEFAULT NULL,
+  \`Purity\` varchar(255) DEFAULT NULL,
+  \`Color\` varchar(255) DEFAULT NULL,
+  \`PHOTO_NO\` varchar(255) DEFAULT NULL,
+  \`PHOTO_NO_2\` varchar(255) DEFAULT NULL,
+  \`PROJECT\` varchar(255) DEFAULT NULL,
+  \`TYPE\` varchar(255) DEFAULT NULL,
+  \`ITEM\` varchar(255) DEFAULT NULL,
+  \`PRODUCT\` varchar(255) DEFAULT NULL,
+  \`SUB_PRODUCT\` varchar(255) DEFAULT NULL,
+  \`QTY\` double DEFAULT NULL,
+  \`WT\` double DEFAULT NULL,
+  \`Avg\` double DEFAULT NULL,
+  \`Wt_range\` varchar(255) DEFAULT NULL,
+  \`PL_ST\` varchar(255) DEFAULT NULL,
+  \`DD\` timestamp(6) NULL DEFAULT NULL,
+  \`SKCHNI\` varchar(255) DEFAULT NULL,
+  \`EMP\` varchar(255) DEFAULT NULL,
+  \`Name\` varchar(255) DEFAULT NULL,
+  \`CODE\` varchar(255) DEFAULT NULL,
+  \`GENDER\` varchar(255) DEFAULT NULL,
+  \`2024_Set_Photo\` varchar(255) DEFAULT NULL,
+  \`Po_new\` varchar(255) DEFAULT NULL,
+  \`DD_month\` timestamp(6) NULL DEFAULT NULL,
+  \`Dyr\` double DEFAULT NULL,
+  \`Brief\` varchar(255) DEFAULT NULL,
+  \`Maketype\` varchar(255) DEFAULT NULL,
+  \`collection\` double DEFAULT NULL,
+  \`Collection_1\` varchar(255) DEFAULT NULL,
+  \`Collection_2\` varchar(255) DEFAULT NULL
+);`;
+
+
+db.query(createOrderReceivingTableQuery, (err) => {
+  if (err) {
+    console.error('Error creating table:', err);
+    return;
+  }
+  console.log('Table created or already exists. --> createOrderReceivingTableQuery');
+});
+
+function excelSerialDateToDate1(serial) {
+  const startDate = new Date(1899, 11, 30); // Excel starts from 1899-12-30
+  return new Date(startDate.getTime() + (serial * 24 * 60 * 60 * 1000));
+}
+function formatDateForMySQL1(date) {
+  const year = date.getFullYear();
+  const month = ('0' + (date.getMonth() + 1)).slice(-2);
+  const day = ('0' + date.getDate()).slice(-2);
+  return `${year}-${month}-${day}`;
+}
+
+
+app.post('/api/order/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+
+  const fileBuffer = req.file.buffer;
+  const fileName = req.file.originalname;
+
+  try {
+    const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(worksheet);
+
+    if (jsonData.length > 0) {
+      const values = jsonData.map(row => {
+        // Convert and format dates, handling possible invalid dates
+        const transDate = excelSerialDateToDate1(row['TRANSDATE']);
+  const formattedTransDate = transDate ? formatDateForMySQL1(transDate) : null;
+
+  const ddDate = excelSerialDateToDate1(row['DD']);
+  const formattedDdDate = ddDate ? formatDateForMySQL1(ddDate) : null;
+
+  const ddMonth = excelSerialDateToDate1(row['DD&month']);
+  const formattedDdMonth = ddMonth ? formatDateForMySQL1(ddMonth) : null;
+
+  // Log if any date is invalid
+  if (!formattedTransDate || !formattedDdDate || !formattedDdMonth) {
+    console.warn('Invalid date format for row:', row);
+  }
+
+  return [
+    row['NAME1'],
+    row['SUB PARTY'],
+    row['Group party'],
+    row['JCID'],
+    formattedTransDate,
+    row['ORDERNO'],
+    row['OrderType'],
+    row['ZONE'],
+    row['OGPG'],
+    row['Purity'],
+    row['Color'],
+    row['PHOTO NO'],
+    row['PHOTO NO 2'],
+    row['PROJECT'],
+    row['TYPE'],
+    row['ITEM'],
+    row['PRODUCT'],
+    row['SUB PRODUCT'],
+    row['QTY'],
+    row['WT'],
+    row['Avg'],
+    row['Wt range'],
+    row['PL-ST'],
+    formattedDdDate,
+    row['SKCHNI'],
+    row['EMP'],
+    row['Name'],
+    row['CODE'],
+    row['GENDER'],
+    row['2024 Set Photo'],
+    row['Po-new'],
+    formattedDdMonth,
+    row['Dyr'],
+    row['Brief'],
+    row['Maketype'],
+    row['collection'],
+    row['Collection-1'],
+    row['Collection-2']
+  ];
+      });
+
+      const query = `
+        INSERT INTO Order_receiving_log_sample 
+        (\`NAME1\`, \`SUB_PARTY\`, \`Group_party\`, \`JCID\`, \`TRANSDATE\`, \`ORDERNO\`,
+         \`OrderType\`, \`ZONE\`, \`OGPG\`, \`Purity\`, \`Color\`, \`PHOTO_NO\`,
+         \`PHOTO_NO_2\`, \`PROJECT\`, \`TYPE\`, \`ITEM\`, \`PRODUCT\`, \`SUB_PRODUCT\`,
+         \`QTY\`, \`WT\`, \`Avg\`, \`Wt_range\`, \`PL_ST\`, \`DD\`, \`SKCHNI\`,
+         \`EMP\`, \`Name\`, \`CODE\`, \`GENDER\`, \`2024_Set_Photo\`, \`Po_new\`,
+         \`DD_month\`, \`Dyr\`, \`Brief\`, \`Maketype\`, \`collection\`, \`Collection_1\`,
+         \`Collection_2\`)
+        VALUES ?
+      `;
+
+      db.query(query, [values], function (error, results, fields) {
+        if (error) {
+          console.error('Database error:', error);
+          return res.status(500).send('Database error');
+        }
+        res.send('File uploaded and order receiving data inserted successfully.');
+      });
+    } else {
+      res.status(400).send('No data found in Excel file');
+    }
+  } catch (error) {
+    console.error('Error processing file:', error);
+    res.status(500).send('Error processing file');
+  }
+});
+
+
+/////// ******** end of order receving *************************//
 
 
 app.post("/upload", (req, res) => {
@@ -246,6 +515,10 @@ app.post("/upload", (req, res) => {
     }
   });
 });
+
+
+
+
 
 function insertData(tableName, data, res) {
   const query = `INSERT INTO ${tableName} 
