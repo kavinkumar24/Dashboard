@@ -11,6 +11,10 @@ import Reject from './components/Reject';
 import Order_rev from './components/Order_rev';
 import Skch_reject from './components/Skch_reject';
 import Department_reject from './components/Department_reject';
+import Upload from './components/Uploads';
+import New_Design from './components/New_Design';
+
+
 function App() {
 
   return (
@@ -27,6 +31,8 @@ function App() {
         <Route path = '/order_receiving&new_design' element={<Order_rev />} />
         <Route path = '/rejections/detailed_rejections' element={<Skch_reject />} />
         <Route path = '/rejections/dept_rejections' element={<Department_reject />} />
+        <Route path = '/uploads' element={<Upload />} />
+        <Route path = '/new_design' element={<New_Design />} />
       </Routes>
       </div>
       
