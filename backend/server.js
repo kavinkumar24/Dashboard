@@ -1,6 +1,11 @@
 const express = require("express");
 const mysql = require("mysql");
 const cors = require("cors");
+const multer = require('multer');
+const xlsx = require('xlsx');
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+const moment = require('moment');
 
 const app = express();
 app.use(cors());
@@ -22,6 +27,186 @@ const db = mysql.createConnection({
 // // For Express 4.16+ you can use the built-in middleware
 // app.use(express.json({ limit: '50mb' }));
 // app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+
+// ************ Production Data endpoints ******************* //
+
+
+// const createProductionTableQuery = `CREATE TABLE IF NOT EXISTS product_data (
+//   file_name VARCHAR(50),
+//   type_of_data VARCHAR(50),
+//   JCID VARCHAR(50),
+//   BRIEFNUM VARCHAR(50),
+//   PRE_BRIEFNUM VARCHAR(50),
+//   SKETCH_NUM VARCHAR(50),
+//   ITEMID VARCHAR(50),
+//   PURITY VARCHAR(50),
+//   EMP_ID VARCHAR(50),
+//   REF_EMP_ID VARCHAR(50),
+//   NAME VARCHAR(255),
+//   JWTYPE VARCHAR(50),
+//   PROJECT VARCHAR(50),
+//   SUB_CATEGORY VARCHAR(50),
+//   INPDSCWQTY VARCHAR(50),
+//   INQTY VARCHAR(50),
+//   RCVCWQTY VARCHAR(50),
+//   RCVQTY VARCHAR(50),
+//   FROMWH VARCHAR(50),
+//   TOWH VARCHAR(50),
+//   IN_DATE_TIME DATETIME,
+//   OUT_DATE_TIME DATETIME,
+//   HOURS VARCHAR(50),
+//   DAYS VARCHAR(50),
+//   DESCRIPTION VARCHAR(255),
+//   DESIGN_SPECIFICATION VARCHAR(255),
+//   PRODUNITID VARCHAR(50),
+//   REMARKS VARCHAR(255)
+// );
+// `;
+
+const createProductionTableQuery = `CREATE TABLE IF NOT EXISTS \`Production_sample_data\` (
+  \`JC ID\` varchar(255) DEFAULT NULL,
+  \`Brief No\` varchar(255) DEFAULT NULL,
+  \`PRE-BRIEF NO\` varchar(255) DEFAULT NULL,
+  \`Sketch No\` varchar(255) DEFAULT NULL,
+  \`Item ID\` varchar(255) DEFAULT NULL,
+  \`Purity\` varchar(255) DEFAULT NULL,
+  \`Empid\` varchar(255) DEFAULT NULL,
+  \`Ref Empid\` varchar(255) DEFAULT NULL,
+  \`Name\` varchar(255) DEFAULT NULL,
+  \`Jwl Type\` varchar(255) DEFAULT NULL,
+  \`Project\` varchar(255) DEFAULT NULL,
+  \`Sub Category\` varchar(255) DEFAULT NULL,
+  \`CW Qty\` decimal(19,4) DEFAULT NULL,
+  \`Qty\` decimal(19,4) DEFAULT NULL,
+  \`From Dept\` varchar(255) DEFAULT NULL,
+  \`To Dept\` varchar(255) DEFAULT NULL,
+  \`In Date\` timestamp(6) NULL DEFAULT NULL,
+  \`Out Date\` timestamp(6) NULL DEFAULT NULL,
+  \`Hours\` varchar(255) DEFAULT NULL,
+  \`Days\` double DEFAULT NULL,
+  \`Description\` varchar(255) DEFAULT NULL,
+  \`Design specification\` varchar(255) DEFAULT NULL,
+  \`PRODUNITID\` varchar(255) DEFAULT NULL,
+  \`Remarks\` varchar(255) DEFAULT NULL
+)`;
+
+
+
+db.query(createProductionTableQuery, (err) => {
+  if (err) {
+    console.error('Error creating table:', err);
+    return;
+  }
+  console.log('Table created or already exists.');
+});
+
+
+function formatDateForMySQL(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+function excelSerialDateToDate(serial) {
+  // Excel's date system starts on January 1, 1900
+  const excelStartDate = new Date(1899, 11, 30); // December 30, 1899
+  const millisecondsPerDay = 86400000;
+  
+  return new Date(excelStartDate.getTime() + (serial * millisecondsPerDay));
+}
+
+
+
+app.post('/api/production/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+
+  const fileBuffer = req.file.buffer;
+  const fileName = req.file.originalname;
+
+  try {
+    const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(worksheet);
+
+    if (jsonData.length > 0) {
+      const values = jsonData.map(row => {
+        // Convert Excel serial date to JavaScript Date
+        const inDate = excelSerialDateToDate(row['In Date']);
+        const outDate = excelSerialDateToDate(row['Out Date']);
+        const formatedInDate = formatDateForMySQL(inDate);
+        const formatedoutDate = formatDateForMySQL(outDate);
+
+        return [
+          row['JC ID'],
+          row['Brief No'],
+          row['PRE-BRIEF NO'],
+          row['Sketch No'],
+          row['Item ID'],
+          row['Purity'],
+          row['Empid'],
+          row['Ref Empid'],
+          row['Name'],
+          row['Jwl Type'],
+          row['Project'],
+          row['Sub Category'],
+          row['CW Qty'],
+          row['Qty'],
+          row['From Dept'],
+          row['To Dept'],
+          // moment(inDate).format('YYYY-MM-DD HH:mm:ss'),
+          // moment(outDate).format('YYYY-MM-DD HH:mm:ss'),
+          formatedInDate,
+          formatedoutDate,
+          row['Hours'],
+          row['Days'],
+          row['Description'],
+          row['Design specification'],
+          row['PRODUNITID'],
+          row['Remarks']
+        ];
+      });
+
+      const query = `
+      INSERT INTO Production_sample_data 
+      (\`JC ID\`, \`Brief No\`, \`PRE-BRIEF NO\`, \`Sketch No\`, \`Item ID\`, 
+       \`Purity\`, \`Empid\`, \`Ref Empid\`, \`Name\`, \`Jwl Type\`, 
+       \`Project\`, \`Sub Category\`, \`CW Qty\`, \`Qty\`, \`From Dept\`, 
+       \`To Dept\`, \`In Date\`, \`Out Date\`, \`Hours\`, \`Days\`, 
+       \`Description\`, \`Design specification\`, \`PRODUNITID\`, \`Remarks\`)
+      VALUES ?
+    `;
+
+      db.query(query, [values], function (error, results, fields) {
+        if (error) {
+          console.error('Database error:', error);
+          return res.status(500).send('Database error');
+        }
+        console.log('Rows inserted:', results.affectedRows);
+        res.send('File uploaded and data inserted successfully.');
+      });
+    } else {
+      res.status(400).send('No data found in Excel file');
+    }
+  } catch (error) {
+    console.error('Error processing file:', error);
+    res.status(500).send('Error processing file');
+  }
+});
+
+
+// ************ End of Production Data endpoints ******************* //
+
+
+
 app.post("/upload", (req, res) => {
   const data = req.body;
 

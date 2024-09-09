@@ -7,7 +7,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { GoStop } from "react-icons/go";
 import { CgIfDesign } from "react-icons/cg";
 import { RiFolderReceivedLine } from "react-icons/ri";
-import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai'; 
+import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai'; // Icons for hamburger and close
 
 function Sidebar({ theme }) {
   const navigate = useNavigate();
@@ -54,6 +54,8 @@ function Sidebar({ theme }) {
       setActive('rejections')
     }else if(path==='/rejections/detailed_rejections'){
       setActive('rejections')
+    }else if(path == '/uploads'){
+      setActive('uploads')
     }
   }, [location.pathname]);
 
@@ -142,6 +144,20 @@ function Sidebar({ theme }) {
               Home
             </div>
           </a>
+
+          <a
+            href="#"
+            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('uploads')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+            onClick={() => handleNavigation('/uploads', '/uploads')}
+          >
+            <div className='flex flex-row p-2'>
+              <div className='mt-1 px-2'>
+              <MdDriveFolderUpload />
+              </div>
+              Uploads
+            </div>
+          </a>
+
           <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('projects')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}

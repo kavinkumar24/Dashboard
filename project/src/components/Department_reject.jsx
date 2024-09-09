@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -14,12 +14,12 @@ import {
   Legend,
   PointElement,
   LineElement,
-  elements,
   ArcElement,
 } from "chart.js";
 
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
-
+// Register Chart.js components and plugin once
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -29,8 +29,11 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ChartDataLabels // Register the plugin here
 );
+
+
 
 
 function Department_reject() {
@@ -78,6 +81,25 @@ function Department_reject() {
     fetchUploads();
   }, []);
 
+
+  const colors = [
+    "rgba(153, 102, 255, 0.2)",
+    "rgba(54, 162, 235, 0.2)",
+    "rgba(255, 99, 132, 0.2)",    
+    "rgba(255, 206, 86, 0.2)",
+    "rgba(75, 192, 192, 0.2)",    
+    "rgba(255, 159, 64, 0.2)",
+    "rgba(199, 199, 199, 0.2)",
+    "rgba(255, 99, 132, 0.3)",
+    "rgba(54, 162, 235, 0.3)",
+    "rgba(255, 206, 86, 0.3)",
+  ];
+
+  const getBorderColors = (colors) => {
+    return colors.map(color => color.replace(/0\.\d+\)/, '1)'));
+  };
+
+
   const fetchUploads = async () => {
     try {
       // const response = await axios.get(
@@ -92,37 +114,43 @@ function Department_reject() {
           const yearData = data.filter((item) => item.Yr === year);
           return yearData.reduce((total, item) => total + item.COUNT, 0);
         });
-
+        const borderColors = getBorderColors(colors);
         setChartData({
           labels: uniqueYears,
           datasets: [
             {
               label: "Counts by Year",
-              data: Yearcounts,
-              backgroundColor: "#c3bdf7",
-              borderColor: "#8679f7",
+              data: Yearcounts,          
+              backgroundColor: colors.slice(0, Yearcounts.length),
+              borderColor: borderColors.slice(0, Yearcounts.length),
               borderWidth: 1,
             },
           ],
         });
 
+              // Setting unique Raised Departments and their counts
         const uniqueskch = [...new Set(data.map((item) => item.RaisedDept))];
-        const counts2 = uniqueskch.map((year) => {
-          const yearData = data.filter((item) => item.RaisedDept === year);
-          return yearData.reduce((total, item) => total + item.COUNT, 0);
+
+        // Summing up the COUNT for each Raised Department
+        const counts2 = uniqueskch.map((dept) => {
+          const deptData = data.filter((item) => item.RaisedDept === dept);
+          return deptData.reduce((total, item) => total + item.COUNT, 0);
         });
+
+        // Setting the chart data
         setChartData2({
-          labels: uniqueskch,
+          labels: uniqueskch, // Labels for Raised Departments
           datasets: [
             {
-              label: "Based on the Rasied Departments",
-              data: counts2,
-              backgroundColor: "#c3bdf7",
-              borderColor: "#8679f7",
+              label: "Based on the Raised Departments",
+              data: counts2, // Data for each department
+              backgroundColor: colors.slice(0, counts2.length), // Dynamically set colors
+              borderColor: borderColors.slice(0, counts2.length), // Dynamically set border colors
               borderWidth: 1,
             },
           ],
         });
+
 
         
 
@@ -144,8 +172,8 @@ function Department_reject() {
             label: month,
             data: counts.map((countArr) => countArr[index]),
             fill: false,
-            backgroundColor: "#c3bdf7",
-              borderColor: "#8679f7",
+            backgroundColor: colors.slice(0, uniqueMonths.length)[index],
+              borderColor: borderColors.slice(0, uniqueMonths.length)[index],
               borderWidth: 1,
             tension: 0.1,
           })),
@@ -164,29 +192,15 @@ function Department_reject() {
 
       // console.log(reasonCount);
 
-      const backgroundColors = [
-        "#FF6384", // Red
-        "#36A2EB", // Blue
-        "#FFCE56", // Yellow
-        "#4BC0C0", // Teal
-        "#9966FF", // Purple
-        "#FF9F40", // Orange
-        "#7E57C2", // Deep Purple
-        "#FF7043", // Deep Orange
-        "#FF7043",
-        "#FF7043",
-        "#FF7043",
-        "#FF7043",
-      ];
-      
+      const borderColors = getBorderColors(colors);     
       setChartData4({
         labels: uniquetypeOfReason,
         datasets: [
           {
             label: "Based on the Rasied Departments",
             data: reasonCount,
-            backgroundColor: backgroundColors.slice(0, uniquetypeOfReason.length), // Use only needed colors
-            borderColor: "#8679f7",
+            backgroundColor: colors.slice(0, uniquetypeOfReason.length),  
+            borderColor: borderColors.slice(0, uniquetypeOfReason.length), 
             borderWidth: 1,
           },
         ],
@@ -476,12 +490,66 @@ function Department_reject() {
           <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
           <h1 className="text-lg font-semibold p-2">Rejections Count by Month</h1>
             
-            <div className="chart-container">
-              {chartData3 ? (
-                <Bar data={chartData3}  />
-              ) : (
-                <p>Loading chart data...</p>
-              )}
+            <div className="chart-container "style={{ height: '300px' }}>
+            {chartData3 ? (
+    <Bar
+      data={chartData3}
+      options={{
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y', 
+        plugins: {
+          datalabels: {
+            display: true,
+            align: "end",
+            anchor: "end",
+            formatter: (value) => `${value.toFixed(2)}`,
+            color: "black",
+            font: {
+              weight: "normal",
+            },
+          },
+          legend: {
+            display: true,  // Show legend
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                return `${context.raw.toFixed(2)}`;  // Custom tooltip formatting
+              },
+            },
+          },
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: "Count By months",  // X-axis title
+            },
+            beginAtZero: true,
+            grid: {
+              display: true,
+            },
+          },
+          y: {
+            title: {
+              display: true,
+              text: "Year",  // Y-axis title
+            },
+            ticks: {
+              autoSkip: true,
+            },
+            grid: {
+              display: true,
+            },
+          },
+        },
+      }}
+      plugins={[ChartDataLabels]}
+    />
+  ) : (
+    <p>Loading chart data...</p>
+  )}
             </div>
           </div>
           <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">

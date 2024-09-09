@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import Sidebar from "./Sidebar";
-import Header from "./Header";
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import Sidebar from './Sidebar';
+import Header from './Header';
 import axios from "axios";
 import { Bar, Pie } from "react-chartjs-2";
 import {
@@ -14,11 +14,12 @@ import {
   Legend,
   PointElement,
   LineElement,
-  elements,
   ArcElement,
 } from "chart.js";
 
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
+// Register Chart.js components and plugin once
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -28,9 +29,9 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ChartDataLabels // Register the plugin here
 );
-// ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Title, Tooltip, Legend);
 
 function Reject() {
   const navigate = useNavigate();
@@ -69,6 +70,23 @@ function Reject() {
     fetchUploads();
   }, []);
 
+  const colors = [
+    "rgba(153, 102, 255, 0.2)",
+    "rgba(54, 162, 235, 0.2)",
+    "rgba(255, 99, 132, 0.2)",    
+    "rgba(255, 206, 86, 0.2)",
+    "rgba(75, 192, 192, 0.2)",    
+    "rgba(255, 159, 64, 0.2)",
+    "rgba(199, 199, 199, 0.2)",
+    "rgba(255, 99, 132, 0.3)",
+    "rgba(54, 162, 235, 0.3)",
+    "rgba(255, 206, 86, 0.3)",
+  ];
+
+  const getBorderColors = (colors) => {
+    return colors.map(color => color.replace(/0\.\d+\)/, '1)'));
+  };
+
   const fetchUploads = async () => {
     try {
       const response = await axios.get(
@@ -84,18 +102,21 @@ function Reject() {
           return yearData.reduce((total, item) => total + item.COUNT, 0);
         });
 
+        const borderColors = getBorderColors(colors);
+
         setChartData({
           labels: uniqueYears,
           datasets: [
             {
               label: "Counts by Year",
               data: Yearcounts,
-              backgroundColor: "#c3bdf7",
-              borderColor: "#8679f7",
+              backgroundColor: colors.slice(0, Yearcounts.length),
+              borderColor: borderColors.slice(0, Yearcounts.length),
               borderWidth: 1,
             },
           ],
         });
+
 
         const uniqueskch = [...new Set(data.map((item) => item.ToDept))];
         const counts2 = uniqueskch.map((year) => {
@@ -108,8 +129,8 @@ function Reject() {
             {
               label: "Based on the Rasied Departments",
               data: counts2,
-              backgroundColor: "#c3bdf7",
-              borderColor: "#8679f7",
+              backgroundColor: colors.slice(0, counts2.length),
+              borderColor: borderColors.slice(0, counts2.length),
               borderWidth: 1,
             },
           ],
@@ -118,32 +139,33 @@ function Reject() {
         
 
         // const uniqueYears = [...new Set(data.map(item => item.Yr))];
-        const uniqueMonths = [...new Set(data.map((item) => item.MONTH))];
+          const uniqueMonths = [...new Set(data.map((item) => item.MONTH))];
 
-        const counts = uniqueYears.map((year) => {
-          return uniqueMonths.map((month) => {
-            const filteredData = data.filter(
-              (item) => item.Yr === year && item.MONTH === month
-            );
-            return filteredData.reduce((total, item) => total + item.COUNT, 0);
+          const counts = uniqueYears.map((year) => {
+            return uniqueMonths.map((month) => {
+              const filteredData = data.filter(
+                (item) => item.Yr === year && item.MONTH === month
+              );
+              return filteredData.reduce((total, item) => total + item.COUNT, 0);
+            });
           });
-        });
 
-        setChartData3({
-          labels: uniqueYears, // X-axis labels
-          datasets: uniqueMonths.map((month, index) => ({
-            label: month,
-            data: counts.map((countArr) => countArr[index]),
-            fill: false,
-            backgroundColor: "#c3bdf7",
-              borderColor: "#8679f7",
+          setChartData3({
+            labels: uniqueYears, // X-axis labels
+            datasets: uniqueMonths.map((month, index) => ({
+              label: month,
+              data: counts.map((countArr) => countArr[index]),
+              fill: false,
+              backgroundColor: colors.slice(0, uniqueMonths.length)[index],  // Colors for each month
+              borderColor: borderColors.slice(0, uniqueMonths.length)[index],  // Borders for each month
               borderWidth: 1,
-            tension: 0.1,
-          })),
-        });
-      } else {
+              tension: 0.1,
+            })),
+          });
+ } else {
         console.warn("No data available");
       }
+
 
       const uniquetypeOfReason = [...new Set(data.map((reason)=>reason.TypeOfReason.toLowerCase().trim()))]
 
@@ -155,33 +177,23 @@ function Reject() {
 
       // console.log(reasonCount);
 
-      const backgroundColors = [
-        "#FF6384", // Red
-        "#36A2EB", // Blue
-        "#FFCE56", // Yellow
-        "#4BC0C0", // Teal
-        "#9966FF", // Purple
-        "#FF9F40", // Orange
-        "#7E57C2", // Deep Purple
-        "#FF7043", // Deep Orange
-        "#FF7043",
-        "#FF7043",
-        "#FF7043",
-        "#FF7043",
-      ];
+
+      const borderColors = getBorderColors(colors);
       
       setChartData4({
         labels: uniquetypeOfReason,
         datasets: [
           {
-            label: "Based on the Rasied Departments",
+            label: "Based on the Raised Departments",
             data: reasonCount,
-            backgroundColor: backgroundColors.slice(0, uniquetypeOfReason.length), // Use only needed colors
-            borderColor: "#8679f7",
+            backgroundColor: colors.slice(0, uniquetypeOfReason.length),  // Assign background colors
+            borderColor: borderColors.slice(0, uniquetypeOfReason.length),  // Assign border colors
             borderWidth: 1,
           },
         ],
       });
+
+
 
       /// Sketch table data
       const skchTableData = [...new Set(data.map((skch)=>skch.SketchNo))]
@@ -486,17 +498,87 @@ function Reject() {
           </div>
         </div>
         <div className="flex">
-          <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
-          <h1 className="text-lg font-semibold p-2">Rejections Count by Month</h1>
-            
-            <div className="chart-container">
-              {chartData3 ? (
-                <Bar data={chartData3}  />
-              ) : (
-                <p>Loading chart data...</p>
-              )}
-            </div>
-          </div>
+        <div className="bg-white w-1/2 m-6 border rounded-lg border-gray-300 shadow-lg">
+  <h1 className="text-lg font-semibold p-2 pl-10">Rejections Count by Month</h1>
+  
+  <div className="chart-container" style={{ height: '310px' }}>  {/* Add specific height for the chart container */}
+    {chartData3 ? (
+      <Bar
+        data={chartData3}
+        options={{
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          plugins: {
+            datalabels: {
+              display: true,
+              align: "end",
+              anchor: "end",
+              formatter: (value) => `${value.toFixed(2)}`,
+              color: "black",
+              font: {
+                weight: "normal",
+              },
+            },
+            legend: {
+              display: true,
+              position: "top",  // Position the legend at the top
+              labels: {
+                boxWidth: 15,  // Customize the size of the legend box
+                padding: 10,   // Add padding around legend items
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  return `${context.raw.toFixed(2)}`;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: "Count By Months",
+                color: "#555", // X-axis title color
+                font: {
+                  size: 14, // X-axis title font size
+                },
+              },
+              beginAtZero: true,
+              grid: {
+                display: true,
+                color: "#eee",  // Light grid lines
+              },
+            },
+            y: {
+              title: {
+                display: true,
+                text: "Year",
+                color: "#555",  // Y-axis title color
+                font: {
+                  size: 14,  // Y-axis title font size
+                },
+              },
+              ticks: {
+                autoSkip: true,
+              },
+              grid: {
+                display: true,
+                color: "#eee",  // Light grid lines
+              },
+            },
+          },
+        }}
+        plugins={[ChartDataLabels]}
+      />
+    ) : (
+      <p className="text-gray-500 text-center">Loading chart data...</p>
+    )}
+  </div>
+</div>
+
           <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
           <h1 className="text-lg font-semibold p-2">Reasons for Rejections</h1>
           

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
-import { Bar } from "react-chartjs-2";
+import axios from "axios";
+import { Bar, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -16,10 +17,9 @@ import {
   ArcElement,
 } from "chart.js";
 
-import html2canvas from 'html2canvas'; // Import html2canvas
-import jsPDF from 'jspdf'; // Import jsPDF
+import ChartDataLabels from "chartjs-plugin-datalabels";
 
-// ChartJS registration
+// Register Chart.js components and plugin once
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -29,8 +29,10 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ChartDataLabels // Register the plugin here
 );
+
 
 function Skch_reject() {
   const location = useLocation();
@@ -45,6 +47,23 @@ function Skch_reject() {
   const [chartData6, setChartData6] = useState(null);
   const [tableData, setTableData] = useState([]);
 
+  
+  const colors = [
+    "rgba(153, 102, 255, 0.2)",
+    "rgba(54, 162, 235, 0.2)",
+    "rgba(255, 99, 132, 0.2)",    
+    "rgba(255, 206, 86, 0.2)",
+    "rgba(75, 192, 192, 0.2)",    
+    "rgba(255, 159, 64, 0.2)",
+    "rgba(199, 199, 199, 0.2)",
+    "rgba(255, 99, 132, 0.3)",
+    "rgba(54, 162, 235, 0.3)",
+    "rgba(255, 206, 86, 0.3)",
+  ];
+
+  const getBorderColors = (colors) => {
+    return colors.map(color => color.replace(/0\.\d+\)/, '1)'));
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -74,8 +93,11 @@ function Skch_reject() {
     }
   };
 
+  
   // Function to generate chart data
   const generateChartData = (data) => {
+    const borderColors = getBorderColors(colors);
+
     const uniqueYears = [...new Set(data.map(item => item.Yr))];
     const Yearcounts = uniqueYears.map(year => {
       const yearData = data.filter(item => item.Yr === year);
@@ -87,8 +109,8 @@ function Skch_reject() {
       datasets: [{
         label: "Counts by Year",
         data: Yearcounts,
-        backgroundColor: "#c3bdf7",
-        borderColor: "#8679f7",
+        backgroundColor: colors.slice(0, Yearcounts.length),
+        borderColor: borderColors.slice(0, Yearcounts.length),
         borderWidth: 1,
       }],
     });
@@ -104,8 +126,8 @@ function Skch_reject() {
       datasets: [{
         label: "Counts by To Dept",
         data: DeptCounts,
-        backgroundColor: "#c3bdf7",
-        borderColor: "#8679f7",
+        backgroundColor: colors.slice(0, DeptCounts.length),
+        borderColor: borderColors.slice(0, DeptCounts.length),
         borderWidth: 1,
       }],
     });
@@ -123,8 +145,8 @@ function Skch_reject() {
       datasets: uniqueMonths.map((month, index) => ({
         label: month,
         data: countsByMonth.map(countArr => countArr[index]),
-        backgroundColor: "#c3bdf7",
-        borderColor: "#8679f7",
+        backgroundColor: colors.slice(0, uniqueMonths.length)[index],
+        borderColor: borderColors.slice(0, uniqueMonths.length)[index],
         borderWidth: 1,
       })),
     });
@@ -140,8 +162,8 @@ function Skch_reject() {
       datasets: [{
         label: "Counts by Reason",
         data: reasonCounts,
-        backgroundColor: "#c3bdf7",
-        borderColor: "#8679f7",
+        backgroundColor: colors.slice(0, uniqueReasons.length),  
+        borderColor: borderColors.slice(0, uniqueReasons.length),
         borderWidth: 1,
       }],
     });
@@ -157,8 +179,8 @@ function Skch_reject() {
       datasets: [{
         label: "Counts by Raised Dept",
         data: raisedDeptCounts,
-        backgroundColor: "#c3bdf7",
-        borderColor: "#8679f7",
+        backgroundColor: colors.slice(0, uniqueRaisedDept.length),  
+        borderColor: borderColors.slice(0, uniqueRaisedDept.length),
         borderWidth: 1,
       }],
     });
@@ -174,8 +196,8 @@ function Skch_reject() {
       datasets: [{
         label: "Counts by Problem Arised",
         data: problemArisedCounts,
-        backgroundColor: "#c3bdf7",
-        borderColor: "#8679f7",
+        backgroundColor: colors.slice(0, uniqueProblemArised.length),  
+        borderColor: borderColors.slice(0, uniqueProblemArised.length),
         borderWidth: 1,
       }],
     });
@@ -348,19 +370,87 @@ function Skch_reject() {
             </div>
           </div>
 
-          <div className="bg-white w-1/2 m-6 border rounded-lg border-gray-300 shadow-lg">
-          <h1 className="text-lg font-semibold p-2 pl-10">Rejections Count by Month</h1>
-            <div className="px-10">
-              {chartData3 ? (
-                <Bar data={chartData3} />
-              ) : (
-                <p className="text-center text-gray-500">
-                  Loading chart data...
-                </p>
-              )}
-            </div>
-            
-          </div>
+          <div className="bg-white w-1/2 mx-auto my-6 mr-6 border border-gray-300 rounded-lg shadow-lg">
+  <h1 className="text-xl font-bold text-left text-gray-700 mb-4 px-6">Rejections Count by Month</h1>
+  
+  <div className="px-6 " style={{ height: '300px' }}>
+    {chartData3 ? (
+      <Bar
+        data={chartData3}
+        options={{
+          responsive: true,
+          maintainAspectRatio: false,
+          indexAxis: 'y',
+          plugins: {
+            datalabels: {
+              display: true,
+              align: "end",
+              anchor: "end",
+              formatter: (value) => `${value.toFixed(2)}`,
+              color: "black",
+              font: {
+                weight: "normal",
+              },
+            },
+            legend: {
+              display: true,
+              position: "top",
+              labels: {
+                boxWidth: 15,
+                padding: 10,
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  return `${context.raw.toFixed(2)}`;
+                },
+              },
+            },
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: "Count By Months",
+                color: "#555",
+                font: {
+                  size: 14,
+                },
+              },
+              beginAtZero: true,
+              grid: {
+                display: true,
+                color: "#eee",
+              },
+            },
+            y: {
+              title: {
+                display: true,
+                text: "Year",
+                color: "#555",
+                font: {
+                  size: 14,
+                },
+              },
+              ticks: {
+                autoSkip: true,
+              },
+              grid: {
+                display: true,
+                color: "#eee",
+              },
+            },
+          },
+        }}
+        plugins={[ChartDataLabels]}
+      />
+    ) : (
+      <p className="text-gray-500 text-center">Loading chart data...</p>
+    )}
+  </div>
+</div>
+
         </div>
         <div className="flex">
           <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
