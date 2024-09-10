@@ -13,7 +13,7 @@ function New_Design() {
     () => localStorage.getItem("theme") || "light"
   );
   const [orderData, setOrderData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]); // State for filtered data
+  const [filteredData, setFilteredData] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [years, setYears] = useState([]);
@@ -379,7 +379,7 @@ function New_Design() {
         const sortedData = filteredData.sort((a, b) => b.WT - a.WT);
         const uniqueOrdersByWeight = calculateTotalWeight(sortedData);
         const top25Orders = uniqueOrdersByWeight
-          .sort((a, b) => b.ORDERNO - a.ORDERNO)
+          .sort((a, b) => b["PHOTO NO 2"] - a["PHOTO NO 2"])
           .slice(0, 25);
         setOrderData(top25Orders);
 
@@ -470,7 +470,7 @@ function New_Design() {
                 theme === "light" ? "text-slate-800" : "text-slate-300"
               }`}
             >
-              Order Details
+              Top <span className="text-red-500">25</span> Photo no
             </span>
             <span className="text-slate-800 transition-transform duration-300">
               {activeIndex === 1 ? (
@@ -514,7 +514,7 @@ function New_Design() {
                       theme === "light" ? "bg-gray-200" : "bg-slate-700"
                     }`}
                   >
-                    <th className="p-2 border text-center">Order No</th>
+                    <th className="p-2 border text-center">Photo No</th>
                     <th align="center" className="p-2 border text-center">
                       Project
                     </th>
@@ -524,7 +524,7 @@ function New_Design() {
                 <tbody>
                   {currentData.map((item, index) => (
                     <tr key={index}>
-                      <td className="p-2 border text-center">{item.ORDERNO}</td>
+                      <td className="p-2 border text-center">{item["PHOTO NO 2"]}</td>
                       <td className="p-2 border text-center">{item.PROJECT}</td>
                       <td className="p-2 border text-center">{item.WT}</td>
                     </tr>
