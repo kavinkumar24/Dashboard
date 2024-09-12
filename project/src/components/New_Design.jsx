@@ -7,6 +7,10 @@ import { Bar } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import { FiMinusCircle } from "react-icons/fi";
+import CustomMultiSelect from "./Custom/Mutliselect";
+import { IoFilterOutline } from "react-icons/io5";
+import { Pie } from "react-chartjs-2";
+
 function New_Design() {
   const [search, setSearch] = useState("");
   const [theme, setTheme] = useState(
@@ -23,14 +27,18 @@ function New_Design() {
   const [active, setActive] = useState(null);
   const itemsPerPage = 10;
   const [allCharts, setAllCharts] = useState([]);
-  const [selectedYear, setSelectedYear] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState("");
+  const [selectedYear, setSelectedYear] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState([]);
   const [activeIndex, setActiveIndex] = useState(null);
   const [activeIndex1, setActiveIndex1] = useState(null);
   const totalPages = Math.ceil(orderData.length / itemsPerPage);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = orderData.slice(startIndex, startIndex + itemsPerPage);
+
+  const handleCancelFilter = () => {
+    setShowDatePickerModal(false);
+  };
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -43,8 +51,17 @@ function New_Design() {
   const toggleAccordion1 = (index) => {
     setActiveIndex1(activeIndex1 === index ? null : index);
   };
+
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const handleDropdownToggle = (dropdownType) => {
+    setOpenDropdown(openDropdown === dropdownType ? null : dropdownType);
+  };
+
+
   const handleFilter = () => {
     setIsLoading(true);
+    setShowDatePickerModal(false);
+
     setfilter(!filter);
   };
 
@@ -82,12 +99,16 @@ function New_Design() {
     datasets: [],
   });
 
-
+  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
   const [totalWeight, setTotalWeight] = useState(0);
   const [yearlyData, setYearlyData] = useState({});
   const [monthlyData, setMonthlyData] = useState({});
 
   const [filter, setfilter] = useState(false);
+  const handleFilterClick = () => {
+    setShowDatePickerModal(true);
+  };
+
 
   const convertWtToKg = (wt) => wt / 1000;
   const getYearlyData = (data) => {
@@ -159,16 +180,16 @@ function New_Design() {
     }, {});
 
     const colors = [
-      "rgba(255, 99, 132, 0.2)",
-      "rgba(54, 162, 235, 0.2)",
-      "rgba(255, 206, 86, 0.2)",
-      "rgba(75, 192, 192, 0.2)",
-      "rgba(153, 102, 255, 0.2)",
-      "rgba(255, 159, 64, 0.2)",
-      "rgba(199, 199, 199, 0.2)",
-      "rgba(255, 99, 132, 0.3)",
-      "rgba(54, 162, 235, 0.3)",
-      "rgba(255, 206, 86, 0.3)",
+      "rgba(0, 123, 255, 0.7)",
+      "rgba(40, 167, 69, 0.7)",
+      "rgba(255, 193, 7, 0.7)",
+      "rgba(220, 53, 69, 0.7)",
+      "rgba(255, 87, 34, 0.7)",
+      "rgba(156, 39, 176, 0.7)",
+      "rgba(23, 162, 184, 0.7)",
+      "rgba(255, 99, 132, 0.7)",
+      "rgba(103, 58, 183, 0.7)",
+      "rgba(96, 125, 139, 0.7)",
     ];
 
     return Object.entries(purityData)
@@ -268,19 +289,18 @@ function New_Design() {
         setYears(Array.from(allYears).sort((a, b) => b - a));
         setMonths(Array.from(allMonths).sort((a, b) => a - b));
         setDates(Array.from(allDates).sort((a, b) => a - b));
-
         const filteredData = data.filter((item) => {
           const itemDate = new Date(item["DD&month"]);
-
+        
           const itemYear = itemDate.getFullYear();
-          const itemMonth = itemDate.getMonth() + 1;
-          const itemDateOnly = itemDate.getDate();
-
-          return (
-            (!selectedYear || itemYear === parseInt(selectedYear)) &&
-            (!selectedMonth || itemMonth === parseInt(selectedMonth))
-          );
+          const itemMonth = itemDate.getMonth() + 1; 
+        
+          const yearMatch = !selectedYear.length || selectedYear.includes(itemYear);
+          const monthMatch = !selectedMonth.length || selectedMonth.includes(itemMonth);
+        
+          return yearMatch && monthMatch;
         });
+        
 
         const totalWeightFromAPI =
           filteredData.reduce((total, item) => total + (item.WT || 0), 0) /
@@ -406,7 +426,7 @@ function New_Design() {
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <Header onSearch={setSearch} theme={theme} dark={setTheme} />
-        <div
+        {/* <div
           className={`p-4  m-6 ${
             theme === "light"
             ? "bg-white border-gray-300"
@@ -453,7 +473,90 @@ function New_Design() {
           >
             Filter
           </button>
+        </div> */}
+        <div className="flex justify-end mr-10">
+          <button
+            onClick={handleFilterClick}
+            className={`mr-3 py-2 px-4 font-bold text-sm text-white rounded-lg flex ${
+              theme === "light"
+                ? "bg-blue-500 hover:bg-blue-700"
+                : "bg-blue-600 hover:bg-blue-800"
+            }`}
+          >
+            <IoFilterOutline
+              size={20}
+              className={`${
+                theme === "light" ? "text-gray-100" : "text-gray-100"
+              } mr-2`}
+            />
+            Filter
+          </button>
         </div>
+
+
+        {showDatePickerModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
+            <div
+              className={` ${
+                theme === "light" ? "bg-white" : "bg-gray-900"
+              }  rounded-lg shadow-lg p-6 w-[30%]`}
+            >
+              <h2
+                className={` ${
+                  theme === "light" ? "text-black" : "text-slate-200"
+                } text-lg font-bold mb-4 text-center`}
+              >
+                Select Date Range
+              </h2>
+              <div className="mb-4 flex justify-center items-center space-x-4 m-4">
+                <CustomMultiSelect
+                  theme={theme}
+                  options={years}
+                  selectedOptions={selectedYear}
+                  setSelectedOptions={setSelectedYear}
+                  label="Select Year"
+                  isOpen={openDropdown === "year"}
+                  onToggle={() => handleDropdownToggle("year")}
+                  onClose={() => setOpenDropdown(null)}
+                />
+                <CustomMultiSelect
+                  theme={theme}
+                  options={months}
+                  selectedOptions={selectedMonth}
+                  setSelectedOptions={setSelectedMonth}
+                  label="Select Month"
+                  isOpen={openDropdown === "month"}
+                  onToggle={() => handleDropdownToggle("month")}
+                  onClose={() => setOpenDropdown(null)}
+                />
+               
+              </div>
+              <div className="flex justify-between mt-4">
+                <button
+                  onClick={handleCancelFilter}
+                  className={`py-2 px-4 font-bold text-sm text-white rounded-lg ${
+                    theme === "light"
+                      ? "bg-gray-500 hover:bg-gray-700"
+                      : "bg-gray-600 hover:bg-gray-800"
+                  }`}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleFilter}
+                  className="p-2 bg-blue-500 text-white rounded"
+                >
+                  Filter
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        
+
+
+        
         <div
           className={`m-6 px-10 border rounded-lg ${
             theme === "light"
@@ -670,7 +773,7 @@ function New_Design() {
             } p-4 rounded shadow-md overflow-x-auto h-[400px]`}
           >
             {!isLoading && (
-              <Bar
+                <Pie
                 data={purityChartData}
                 options={{
                   responsive: true,
@@ -680,61 +783,51 @@ function New_Design() {
                       display: true,
                       labels: {
                         color: theme === "light" ? "black" : "white",
+                        generateLabels: function (chart) {
+                          const data = chart.data;
+                          const totalWeight = data.datasets[0].data.reduce(
+                            (acc, curr) => acc + curr,
+                            0
+                          );
+              
+                          return data.labels.map((label, index) => {
+                            const value = data.datasets[0].data[index];
+                            const percentage = totalWeight === 0 ? 0 : ((value / totalWeight) * 100).toFixed(2);
+                            return {
+                              text: `${label} (${percentage}%)`,
+                              fillStyle: data.datasets[0].backgroundColor[index],
+                              strokeStyle: data.datasets[0].borderColor[index],
+                              lineWidth: 1,
+                              hidden: false,
+                              index: index
+                            };
+                          });
+                        }
                       },
                     },
                     tooltip: {
                       callbacks: {
                         label: function (context) {
-                          return `KG: ${context.raw.toFixed(2)}`;
+                          const label = context.label || '';
+                          const value = context.raw.toFixed(2);
+              
+                          const totalWeight = context.chart.data.datasets[0].data.reduce(
+                            (acc, curr) => acc + curr,
+                            0
+                          );
+              
+                          if (totalWeight === 0) {
+                            return `${label}: ${value} KG (0%)`;
+                          }
+              
+                          const percentage = ((context.raw / totalWeight) * 100).toFixed(2);
+              
+                          return `${label}: ${value} KG (${percentage}%)`;
                         },
                       },
                     },
                     datalabels: {
-                      display: true,
-                      align: "end",
-                      anchor: "end",
-                      formatter: (value) => value.toFixed(2),
-                      color: theme === "light" ? "black" : "white",
-                      font: {
-                        weight: "normal",
-                      },
-                    },
-                  },
-                  scales: {
-                    x: {
-                      title: {
-                        display: true,
-                        text: "Purity",
-                        color: theme === "light" ? "black" : "#94a3b8",
-                      },
-                      grid: {
-                        display: true,
-                        color: theme === "light" ? "#e5e7eb" : "#374151",
-                      },
-                      ticks: {
-                        color: theme === "light" ? "black" : "#94a3b8",
-                      },
-                      border: {
-                        color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                      },
-                    },
-                    y: {
-                      title: {
-                        display: true,
-                        text: "KG Count",
-                        color: theme === "light" ? "black" : "#94a3b8",
-                      },
-                      beginAtZero: true,
-                      grid: {
-                        display: true,
-                        color: theme === "light" ? "#e5e7eb" : "#374151",
-                      },
-                      ticks: {
-                        color: theme === "light" ? "black" : "#94a3b8",
-                      },
-                      border: {
-                        color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                      },
+                      display: false,
                     },
                   },
                 }}

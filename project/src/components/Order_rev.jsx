@@ -6,93 +6,16 @@ import { Bar } from "react-chartjs-2";
 import Chart from "chart.js/auto";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import { FiMinusCircle } from "react-icons/fi";
-import { Pie } from 'react-chartjs-2';
+import { Pie } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import { useRef } from "react";
-const CustomMultiSelect = ({
-  theme,
-  options,
-  selectedOptions,
-  setSelectedOptions,
-  label,
-  isOpen,
-  onToggle,
-  onClose,
-}) => {
-  const dropdownRef = useRef(); 
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        onClose();
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [onClose]);
-
-  const handleOptionChange = (value) => {
-    if (selectedOptions.includes(value)) {
-      setSelectedOptions(selectedOptions.filter((option) => option !== value));
-    } else {
-      setSelectedOptions([...selectedOptions, value]);
-    }
-  };
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      {/* Dropdown Button */}
-      <button
-        onClick={onToggle}
-        className={`p-2 border rounded w-40 ${
-          theme === "light"
-            ? "bg-white text-black border-gray-200"
-            : "bg-slate-900 text-gray-400 border-gray-600"
-        } flex justify-between items-center`}
-      >
-        {label}
-        <span>{isOpen ? "▲" : "▼"}</span>
-      </button>
-
-      {/* Dropdown List */}
-      {isOpen && (
-        <div
-          className={`absolute mt-1 z-10 w-40 max-h-40 overflow-y-auto border rounded shadow-lg ${
-            theme === "light"
-              ? "bg-white text-black border-gray-200"
-              : "bg-slate-900 text-gray-400 border-gray-600"
-          }`}
-        >
-          {options.map((option) => (
-            <label
-              key={option}
-              className="flex items-center p-2 cursor-pointer hover:bg-gray-100"
-            >
-              <input
-                type="checkbox"
-                checked={selectedOptions.includes(option)}
-                onChange={() => handleOptionChange(option)}
-                className="mr-2"
-              />
-              {option}
-            </label>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
+import { IoFilterOutline } from "react-icons/io5";
+import CustomMultiSelect from "./Custom/Mutliselect";
 
 function Order_rev() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
-  const [openDropdown, setOpenDropdown] = useState(null); 
+  const [openDropdown, setOpenDropdown] = useState(null);
 
   const [orderData, setOrderData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,20 +23,28 @@ function Order_rev() {
   const [months, setMonths] = useState([]);
   const [dates, setDates] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filteredData, setFilteredData] = useState([]);
 
   const [allCharts, setAllCharts] = useState([]);
-  const [selectedYear, setSelectedYear] = useState("");
-  const [selectedMonth, setSelectedMonth] = useState("");
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedYear, setSelectedYear] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState([]);
+  
+  const [selectedDate, setSelectedDate] = useState([]);
+
   const [activeIndex, setActiveIndex] = useState(null);
 
+  const [showDatePickerModal, setShowDatePickerModal] = useState(false);
 
-  const handleDropdownToggle = (dropdown) => {
-    if (openDropdown === dropdown) {
-      setOpenDropdown(null);
-    } else {
-      setOpenDropdown(dropdown);
-    }
+  const handleFilterClick = () => {
+    setShowDatePickerModal(true);
+  };
+
+  const handleCancelFilter = () => {
+    setShowDatePickerModal(false);
+  };
+
+  const handleDropdownToggle = (dropdownType) => {
+    setOpenDropdown(openDropdown === dropdownType ? null : dropdownType);
   };
 
   const toggleAccordion = (index) => {
@@ -210,18 +141,18 @@ function Order_rev() {
     }, {});
 
     const colors = [
-      "rgba(0, 123, 255, 0.7)",   
-      "rgba(40, 167, 69, 0.7)",   
-      "rgba(255, 193, 7, 0.7)",   
-      "rgba(220, 53, 69, 0.7)",   
-      "rgba(255, 87, 34, 0.7)",   
-      "rgba(156, 39, 176, 0.7)",  
-      "rgba(23, 162, 184, 0.7)",  
-      "rgba(255, 99, 132, 0.7)",  
-      "rgba(103, 58, 183, 0.7)", 
-      "rgba(96, 125, 139, 0.7)", 
+      "rgba(0, 123, 255, 0.7)",
+      "rgba(40, 167, 69, 0.7)",
+      "rgba(255, 193, 7, 0.7)",
+      "rgba(220, 53, 69, 0.7)",
+      "rgba(255, 87, 34, 0.7)",
+      "rgba(156, 39, 176, 0.7)",
+      "rgba(23, 162, 184, 0.7)",
+      "rgba(255, 99, 132, 0.7)",
+      "rgba(103, 58, 183, 0.7)",
+      "rgba(96, 125, 139, 0.7)",
     ];
-    
+
     return Object.entries(purityData)
       .filter(([purity, kg]) => kg > 0)
       .map(([purity, kg], index) => ({
@@ -260,6 +191,7 @@ function Order_rev() {
       if (!acc[zone]) {
         acc[zone] = 0;
       }
+
       acc[zone] += wtGrams;
 
       return acc;
@@ -276,6 +208,8 @@ function Order_rev() {
   const [filter, setfilter] = useState(false);
   const handleFilter = () => {
     setIsLoading(true);
+    setShowDatePickerModal(false);
+
     setfilter(!filter);
   };
 
@@ -383,26 +317,24 @@ function Order_rev() {
         kg: grams / 1000,
       }));
   };
-    const prepareColorData = (data) => {
-      const colorData = data.reduce((acc, item) => {
-        const color = item.Color || "Unknown";
-        const kg = parseFloat(item.WT) || 0;
+  const prepareColorData = (data) => {
+    const colorData = data.reduce((acc, item) => {
+      const color = item.Color || "Unknown";
+      const kg = parseFloat(item.WT) || 0;
 
-        if (!acc[color]) {
-          acc[color] = 0;
-        }
-        acc[color] += kg;
+      if (!acc[color]) {
+        acc[color] = 0;
+      }
+      acc[color] += kg;
 
-        return acc;
-      }, {});
+      return acc;
+    }, {});
 
-      
-      return Object.entries(colorData).map(([color, kg]) => ({
-        color,
-        kg: kg / 1000,
-        
-      }));
-    };
+    return Object.entries(colorData).map(([color, kg]) => ({
+      color,
+      kg: kg / 1000,
+    }));
+  };
 
   useEffect(() => {
     fetch("http://localhost:8081/order_receive&new_design")
@@ -430,18 +362,23 @@ function Order_rev() {
 
         const filteredData = data.filter((item) => {
           const itemDate = new Date(item.TRANSDATE);
-
           const itemYear = itemDate.getFullYear();
           const itemMonth = itemDate.getMonth() + 1;
           const itemDateOnly = itemDate.getDate();
 
           return (
-            (!selectedYear || itemYear === parseInt(selectedYear)) &&
-            (!selectedMonth || itemMonth === parseInt(selectedMonth)) &&
-            (!selectedDate || itemDateOnly === parseInt(selectedDate))
+            (selectedYear.length === 0 || selectedYear.includes(itemYear)) &&
+            (selectedMonth.length === 0 || selectedMonth.includes(itemMonth)) &&
+            (selectedDate.length === 0 || selectedDate.includes(itemDateOnly))
           );
         });
 
+        console.log("Selected Date:", selectedDate);
+        console.log("Selected Month:", selectedMonth);
+        console.log("Selected Year:", selectedYear);
+        console.log("Filtered Data:", filteredData);
+
+        setFilteredData(filteredData);
         const totalWeightFromAPI =
           filteredData.reduce((total, item) => total + (item.WT || 0), 0) /
           1000;
@@ -457,7 +394,7 @@ function Order_rev() {
         const monthData = filteredData.reduce((acc, item) => {
           const date = new Date(item.TRANSDATE);
           const year = date.getFullYear();
-          const monthIndex = date.getMonth();
+          const monthIndex = date.getMonth() + 1;
           const yearMonth = `${year}, ${getMonthName(monthIndex)}`;
           if (!acc[yearMonth]) acc[yearMonth] = 0;
           acc[yearMonth] += item.WT || 0;
@@ -468,18 +405,17 @@ function Order_rev() {
         setMonthlyData(monthData);
 
         setChartData({
-          labels: getYearlyData(filteredData).map((entry) => entry.year),
+          labels: Object.keys(yearData),
           datasets: [
             {
               label: "KG Count per Year",
-              data: getYearlyData(filteredData).map((entry) => entry.kg),
+              data: Object.values(yearData).map((value) => value / 1000),
               backgroundColor: "rgba(75, 192, 192, 0.2)",
               borderColor: "rgba(75, 192, 192, 1)",
               borderWidth: 1,
             },
           ],
         });
-
         const purityData = getPurityData(filteredData);
 
         setPurityChartData({
@@ -559,22 +495,19 @@ function Order_rev() {
 
               data: colorData.map((entry) => entry.kg),
               backgroundColor: [
-                "rgba(255, 99, 132, 0.2)",
-                "rgba(54, 162, 235, 0.2)",
-                "rgba(255, 206, 86, 0.2)",
-                "rgba(75, 192, 192, 0.2)",
-                "rgba(153, 102, 255, 0.2)",
-                "rgba(255, 159, 64, 0.2)",
-                "rgba(199, 199, 199, 0.2)",
-                "rgba(255, 99, 132, 0.3)",
-                "rgba(54, 162, 235, 0.3)",
-                "rgba(255, 206, 86, 0.3)",
+                "rgba(0, 123, 255, 0.7)",
+                "rgba(40, 167, 69, 0.7)",
+                "rgba(255, 193, 7, 0.7)",
+                "rgba(220, 53, 69, 0.7)",
+                "rgba(255, 87, 34, 0.7)",
+                "rgba(156, 39, 176, 0.7)",
+                "rgba(23, 162, 184, 0.7)",
+                "rgba(255, 99, 132, 0.7)",
+                "rgba(103, 58, 183, 0.7)",
+                "rgba(96, 125, 139, 0.7)",
               ],
+
               borderWidth: 1,
-              borderColor: purityData.map((entry) =>
-                entry.color.replace("0.2", "1")
-              ),
-              
             },
           ],
         });
@@ -631,12 +564,13 @@ function Order_rev() {
       .catch((error) => console.error("Error fetching data:", error));
   }, [theme, filter]);
 
+  
   const chartComponents = [
     <div className="" key="total-weight">
       <div
         className={`order-2 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
-        }  p-4 rounded shadow-md overflow-x-auto h-[400px]`}
+        }  p-4 rounded shadow-md overflow-x-auto h-[450px]`}
       >
         {!isLoading && (
           <Bar
@@ -717,45 +651,92 @@ function Order_rev() {
     </div>,
     <div className="" key="kg-per-year-chart">
       <div
-        className={`order-3 col-span-1 ${
+        className={`order-2 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
-        }  p-4 rounded shadow-md overflow-x-auto h-[400px]`}
+        } p-4 rounded shadow-md h-[450px] flex flex-col`}
       >
-       
-       {!isLoading && (
-    <div className="flex-1 w-full h-full overflow-hidden">
-    <Pie
-    data={purityChartData}
-    options={{
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          display: true,
-          labels: {
-            color: theme === "light" ? "black" : "white",
-          },
-        },
-        tooltip: {
-          callbacks: {
-            label: function (context) {
-              return `KG: ${context.raw.toFixed(2)}`;
-            },
-          },
-        },
-        datalabels: {
-          display: false, 
-        },
-      },
-    }}
-    plugins={[ChartDataLabels]}
-  />
-  </div>
-    )}
+        <h2
+          className={`text-sm font-thin text-center ${
+            theme === "light" ? "text-slate-800" : "text-slate-400"
+          }`}
+        >
+          Purity
+        </h2>
+        {!isLoading && (
+          <div className="flex-1 w-full h-full overflow-hidden">
+            <Pie
+              data={purityChartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: true,
+                    labels: {
+                      color: theme === "light" ? "black" : "white",
+                      generateLabels: function (chart) {
+                        const data = chart.data;
+                        const totalWeight = data.datasets[0].data.reduce(
+                          (acc, curr) => acc + curr,
+                          0
+                        );
+
+                        return data.labels.map((label, index) => {
+                          const value = data.datasets[0].data[index];
+                          const percentage =
+                            totalWeight === 0
+                              ? 0
+                              : ((value / totalWeight) * 100).toFixed(2);
+                          return {
+                            text: `${label} (${percentage}%)`,
+                            fillStyle: data.datasets[0].backgroundColor[index],
+                            strokeStyle: data.datasets[0].borderColor[index],
+                            lineWidth: 1,
+                            hidden: false,
+                            index: index,
+                          };
+                        });
+                      },
+                    },
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        const label = context.label || "";
+                        const value = context.raw.toFixed(2);
+
+                        const totalWeight =
+                          context.chart.data.datasets[0].data.reduce(
+                            (acc, curr) => acc + curr,
+                            0
+                          );
+
+                        if (totalWeight === 0) {
+                          return `${label}: ${value} KG (0%)`;
+                        }
+
+                        const percentage = (
+                          (context.raw / totalWeight) *
+                          100
+                        ).toFixed(2);
+
+                        return `${label}: ${value} KG (${percentage}%)`;
+                      },
+                    },
+                  },
+                  datalabels: {
+                    display: false,
+                  },
+                },
+              }}
+              plugins={[ChartDataLabels]}
+            />
+          </div>
+        )}
       </div>
     </div>,
     <div className="" key="purity-wise-chart">
-      <div  
+      <div
         className={`order-2 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
         }  p-4 rounded shadow-md  h-[450px]`}
@@ -778,7 +759,22 @@ function Order_rev() {
                   display: true,
                   align: "end",
                   anchor: "end",
-                  formatter: (value) => `${value.toFixed(2)}`,
+                  formatter: (value, context) => {
+                    const totalWeight = getZoneData(filteredData).reduce(
+                      (acc, entry) => acc + entry.kg,
+                      0
+                    );
+                    if (totalWeight === 0) {
+                      return `${value.toFixed(2)} KG (0%)`;
+                    }
+
+                    const percentage =
+                      totalWeight > 0
+                        ? ((value / totalWeight) * 100).toFixed(2)
+                        : "0.00";
+
+                    return `   (${percentage})%\n${value.toFixed(2)} KG`;
+                  },
                   color: theme === "light" ? "black" : "white",
                   font: {
                     weight: "normal",
@@ -793,7 +789,15 @@ function Order_rev() {
                 tooltip: {
                   callbacks: {
                     label: function (context) {
-                      return `KG: ${context.raw.toFixed(2)}`;
+                      const totalWeight = getZoneData(filteredData).reduce(
+                        (acc, entry) => acc + entry.kg,
+                        0
+                      );
+                      const percentage = (
+                        (context.raw / totalWeight) *
+                        100
+                      ).toFixed(2);
+                      return `KG: ${context.raw.toFixed(2)} (${percentage}%)`;
                     },
                   },
                 },
@@ -842,48 +846,64 @@ function Order_rev() {
       </div>
     </div>,
     <div className="" key="zone-wise-chart">
-   <div
-  className={`order-2 col-span-1 ${
-    theme === "light" ? "bg-white" : "bg-slate-900"
-  } p-4 rounded shadow-md h-[450px] flex flex-col`}
->
-  <h2
-    className={`text-xl font-bold mb-4 mt-8 ${
-      theme === "light" ? "text-slate-800" : "text-slate-400"
-    }`}
-  >
-    Color Distribution
-  </h2>
-  <div className="flex-1 w-full h-full overflow-hidden">
-    <Pie
-      data={colorChartData}
-      options={{
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: true,
-            labels: {
-              color: theme === "light" ? "black" : "white",
-            },
-          },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return `KG: ${context.raw.toFixed(2)}`;
-              },
-            },
-          },
-          datalabels: {
-            display: false, 
-          },
-        },
-      }}
-      plugins={[ChartDataLabels]}
-    />
-  </div>
-</div>
+      <div
+        className={`order-2 col-span-1 ${
+          theme === "light" ? "bg-white" : "bg-slate-900"
+        } p-4 rounded shadow-md h-[450px] flex flex-col`}
+      >
+        <h2
+          className={`text-sm font-thin ${
+            theme === "light" ? "text-slate-800" : "text-slate-400"
+          }`}
+        >
+          Color Distribution
+        </h2>
+        <div className="flex-1 w-full h-full overflow-hidden">
+          <Pie
+            data={colorChartData}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  display: true,
+                  labels: {
+                    color: theme === "light" ? "black" : "white",
+                  },
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      const label = context.label || "";
+                      const value = context.raw.toFixed(2);
+                      const totalWeight =
+                        context.chart.data.datasets[0].data.reduce(
+                          (acc, curr) => acc + curr,
+                          0
+                        );
 
+                      if (totalWeight === 0) {
+                        return `${label}: ${value} KG (0%)`;
+                      }
+
+                      const percentage = (
+                        (context.raw / totalWeight) *
+                        100
+                      ).toFixed(2);
+
+                      return `${label}: ${value} KG (${percentage}%)`;
+                    },
+                  },
+                },
+                datalabels: {
+                  display: false,
+                },
+              },
+            }}
+            plugins={[ChartDataLabels]}
+          />
+        </div>
+      </div>
     </div>,
     <div className="" key="color-wise-chart">
       <div
@@ -1053,7 +1073,6 @@ function Order_rev() {
                 },
                 border: {
                   color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                  
                 },
               },
             },
@@ -1245,48 +1264,105 @@ function Order_rev() {
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <Header theme={theme} dark={setTheme} />
-        <div
+        {/* <div
           className={`p-4 ${
             theme == "light" ? "bg-white" : "bg-slate-900"
           } shadow-md flex justify-center items-center space-x-4 m-4`}
         >
-       <CustomMultiSelect
-        theme={theme}
-        options={years}
-        selectedOptions={selectedYear}
-        setSelectedOptions={setSelectedYear}
-        label="Select Year"
-        isOpen={openDropdown === "year"}
-        onToggle={() => handleDropdownToggle("year")}
-        onClose={() => setOpenDropdown(null)}
-      />
-      <CustomMultiSelect
-        theme={theme}
-        options={months}
-        selectedOptions={selectedMonth}
-        setSelectedOptions={setSelectedMonth}
-        label="Select Month"
-        isOpen={openDropdown === "month"}
-        onToggle={() => handleDropdownToggle("month")}
-        onClose={() => setOpenDropdown(null)}
-      />
-      <CustomMultiSelect
-        theme={theme}
-        options={dates}
-        selectedOptions={selectedDate}
-        setSelectedOptions={setSelectedDate}
-        label="Select Date"
-        isOpen={openDropdown === "date"}
-        onToggle={() => handleDropdownToggle("date")}
-        onClose={() => setOpenDropdown(null)}
-      />
+         
           <button
             onClick={handleFilter}
             className="p-2 bg-blue-500 text-white rounded"
           >
             Filter
           </button>
+        </div> */}
+        <div className="flex justify-end mr-10">
+          <button
+            onClick={handleFilterClick}
+            className={`mr-3 py-2 px-4 font-bold text-sm text-white rounded-lg flex ${
+              theme === "light"
+                ? "bg-blue-500 hover:bg-blue-700"
+                : "bg-blue-600 hover:bg-blue-800"
+            }`}
+          >
+            <IoFilterOutline
+              size={20}
+              className={`${
+                theme === "light" ? "text-gray-100" : "text-gray-100"
+              } mr-2`}
+            />
+            Filter
+          </button>
         </div>
+        {showDatePickerModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
+            <div
+              className={` ${
+                theme === "light" ? "bg-white" : "bg-gray-900"
+              }  rounded-lg shadow-lg p-6 w-[50%]`}
+            >
+              <h2
+                className={` ${
+                  theme === "light" ? "text-black" : "text-slate-200"
+                } text-lg font-bold mb-4 text-center`}
+              >
+                Select Date Range
+              </h2>
+              <div className="mb-4 flex justify-center items-center space-x-4 m-4">
+                <CustomMultiSelect
+                  theme={theme}
+                  options={years}
+                  selectedOptions={selectedYear}
+                  setSelectedOptions={setSelectedYear}
+                  label="Select Year"
+                  isOpen={openDropdown === "year"}
+                  onToggle={() => handleDropdownToggle("year")}
+                  onClose={() => setOpenDropdown(null)}
+                />
+                <CustomMultiSelect
+                  theme={theme}
+                  options={months}
+                  selectedOptions={selectedMonth}
+                  setSelectedOptions={setSelectedMonth}
+                  label="Select Month"
+                  isOpen={openDropdown === "month"}
+                  onToggle={() => handleDropdownToggle("month")}
+                  onClose={() => setOpenDropdown(null)}
+                />
+                <CustomMultiSelect
+                  theme={theme}
+                  options={dates}
+                  selectedOptions={selectedDate}
+                  setSelectedOptions={setSelectedDate}
+                  label="Select Date"
+                  isOpen={openDropdown === "date"}
+                  onToggle={() => handleDropdownToggle("date")}
+                  onClose={() => setOpenDropdown(null)}
+                />
+              </div>
+              <div className="flex justify-between mt-4">
+                <button
+                  onClick={handleCancelFilter}
+                  className={`py-2 px-4 font-bold text-sm text-white rounded-lg ${
+                    theme === "light"
+                      ? "bg-gray-500 hover:bg-gray-700"
+                      : "bg-gray-600 hover:bg-gray-800"
+                  }`}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleFilter}
+                  className="p-2 bg-blue-500 text-white rounded"
+                >
+                  Filter
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="p-2">
           {/* <div className="col-span-1 lg:col-span-2 order-1">
           <div className={`${theme === 'light' ? 'bg-white' : 'bg-slate-900 text-slate-300'} p-6 rounded shadow-md text-center font-semibold`}>
