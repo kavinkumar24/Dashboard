@@ -6,13 +6,94 @@ import { Bar } from "react-chartjs-2";
 import Chart from "chart.js/auto";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import { FiMinusCircle } from "react-icons/fi";
-
+import { Pie } from 'react-chartjs-2';
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import { useRef } from "react";
+const CustomMultiSelect = ({
+  theme,
+  options,
+  selectedOptions,
+  setSelectedOptions,
+  label,
+  isOpen,
+  onToggle,
+  onClose,
+}) => {
+  const dropdownRef = useRef(); 
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [onClose]);
+
+  const handleOptionChange = (value) => {
+    if (selectedOptions.includes(value)) {
+      setSelectedOptions(selectedOptions.filter((option) => option !== value));
+    } else {
+      setSelectedOptions([...selectedOptions, value]);
+    }
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      {/* Dropdown Button */}
+      <button
+        onClick={onToggle}
+        className={`p-2 border rounded w-40 ${
+          theme === "light"
+            ? "bg-white text-black border-gray-200"
+            : "bg-slate-900 text-gray-400 border-gray-600"
+        } flex justify-between items-center`}
+      >
+        {label}
+        <span>{isOpen ? "▲" : "▼"}</span>
+      </button>
+
+      {/* Dropdown List */}
+      {isOpen && (
+        <div
+          className={`absolute mt-1 z-10 w-40 max-h-40 overflow-y-auto border rounded shadow-lg ${
+            theme === "light"
+              ? "bg-white text-black border-gray-200"
+              : "bg-slate-900 text-gray-400 border-gray-600"
+          }`}
+        >
+          {options.map((option) => (
+            <label
+              key={option}
+              className="flex items-center p-2 cursor-pointer hover:bg-gray-100"
+            >
+              <input
+                type="checkbox"
+                checked={selectedOptions.includes(option)}
+                onChange={() => handleOptionChange(option)}
+                className="mr-2"
+              />
+              {option}
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 
 function Order_rev() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
+  const [openDropdown, setOpenDropdown] = useState(null); 
+
   const [orderData, setOrderData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [years, setYears] = useState([]);
@@ -25,6 +106,15 @@ function Order_rev() {
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [activeIndex, setActiveIndex] = useState(null);
+
+
+  const handleDropdownToggle = (dropdown) => {
+    if (openDropdown === dropdown) {
+      setOpenDropdown(null);
+    } else {
+      setOpenDropdown(dropdown);
+    }
+  };
 
   const toggleAccordion = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
@@ -120,18 +210,18 @@ function Order_rev() {
     }, {});
 
     const colors = [
-      "rgba(255, 99, 132, 0.2)",
-      "rgba(54, 162, 235, 0.2)",
-      "rgba(255, 206, 86, 0.2)",
-      "rgba(75, 192, 192, 0.2)",
-      "rgba(153, 102, 255, 0.2)",
-      "rgba(255, 159, 64, 0.2)",
-      "rgba(199, 199, 199, 0.2)",
-      "rgba(255, 99, 132, 0.3)",
-      "rgba(54, 162, 235, 0.3)",
-      "rgba(255, 206, 86, 0.3)",
+      "rgba(0, 123, 255, 0.7)",   
+      "rgba(40, 167, 69, 0.7)",   
+      "rgba(255, 193, 7, 0.7)",   
+      "rgba(220, 53, 69, 0.7)",   
+      "rgba(255, 87, 34, 0.7)",   
+      "rgba(156, 39, 176, 0.7)",  
+      "rgba(23, 162, 184, 0.7)",  
+      "rgba(255, 99, 132, 0.7)",  
+      "rgba(103, 58, 183, 0.7)", 
+      "rgba(96, 125, 139, 0.7)", 
     ];
-
+    
     return Object.entries(purityData)
       .filter(([purity, kg]) => kg > 0)
       .map(([purity, kg], index) => ({
@@ -293,24 +383,26 @@ function Order_rev() {
         kg: grams / 1000,
       }));
   };
-  const prepareColorData = (data) => {
-    const colorData = data.reduce((acc, item) => {
-      const color = item.Color || "Unknown";
-      const kg = parseFloat(item.WT) || 0;
+    const prepareColorData = (data) => {
+      const colorData = data.reduce((acc, item) => {
+        const color = item.Color || "Unknown";
+        const kg = parseFloat(item.WT) || 0;
 
-      if (!acc[color]) {
-        acc[color] = 0;
-      }
-      acc[color] += kg;
+        if (!acc[color]) {
+          acc[color] = 0;
+        }
+        acc[color] += kg;
 
-      return acc;
-    }, {});
+        return acc;
+      }, {});
 
-    return Object.entries(colorData).map(([color, kg]) => ({
-      color,
-      kg: kg / 1000,
-    }));
-  };
+      
+      return Object.entries(colorData).map(([color, kg]) => ({
+        color,
+        kg: kg / 1000,
+        
+      }));
+    };
 
   useEffect(() => {
     fetch("http://localhost:8081/order_receive&new_design")
@@ -466,6 +558,23 @@ function Order_rev() {
               label: "KG Count by Color",
 
               data: colorData.map((entry) => entry.kg),
+              backgroundColor: [
+                "rgba(255, 99, 132, 0.2)",
+                "rgba(54, 162, 235, 0.2)",
+                "rgba(255, 206, 86, 0.2)",
+                "rgba(75, 192, 192, 0.2)",
+                "rgba(153, 102, 255, 0.2)",
+                "rgba(255, 159, 64, 0.2)",
+                "rgba(199, 199, 199, 0.2)",
+                "rgba(255, 99, 132, 0.3)",
+                "rgba(54, 162, 235, 0.3)",
+                "rgba(255, 206, 86, 0.3)",
+              ],
+              borderWidth: 1,
+              borderColor: purityData.map((entry) =>
+                entry.color.replace("0.2", "1")
+              ),
+              
             },
           ],
         });
@@ -612,79 +721,37 @@ function Order_rev() {
           theme === "light" ? "bg-white" : "bg-slate-900"
         }  p-4 rounded shadow-md overflow-x-auto h-[400px]`}
       >
-        {!isLoading && (
-          <Bar
-            data={purityChartData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  display: true,
-                  labels: {
-                    color: theme === "light" ? "black" : "white",
-                  },
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function (context) {
-                      return `KG: ${context.raw.toFixed(2)}`;
-                    },
-                  },
-                },
-                datalabels: {
-                  display: true,
-                  align: "end",
-                  anchor: "end",
-                  formatter: (value) => value.toFixed(2),
-                  color: theme === "light" ? "black" : "white",
-
-                  font: {
-                    weight: "normal",
-                  },
-                },
-              },
-              scales: {
-                x: {
-                  title: {
-                    display: true,
-                    text: "Purity",
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  grid: {
-                    display: true,
-                    color: theme === "light" ? "#e5e7eb" : "#374151",
-                  },
-                  ticks: {
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  border: {
-                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                  },
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: "KG Count",
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  beginAtZero: true,
-                  grid: {
-                    display: true,
-                    color: theme === "light" ? "#e5e7eb" : "#374151",
-                  },
-                  ticks: {
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  border: {
-                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                  },
-                },
-              },
-            }}
-            plugins={[ChartDataLabels]}
-          />
-        )}
+       
+       {!isLoading && (
+    <div className="flex-1 w-full h-full overflow-hidden">
+    <Pie
+    data={purityChartData}
+    options={{
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          labels: {
+            color: theme === "light" ? "black" : "white",
+          },
+        },
+        tooltip: {
+          callbacks: {
+            label: function (context) {
+              return `KG: ${context.raw.toFixed(2)}`;
+            },
+          },
+        },
+        datalabels: {
+          display: false, 
+        },
+      },
+    }}
+    plugins={[ChartDataLabels]}
+  />
+  </div>
+    )}
       </div>
     </div>,
     <div className="" key="purity-wise-chart">
@@ -775,91 +842,48 @@ function Order_rev() {
       </div>
     </div>,
     <div className="" key="zone-wise-chart">
-      <div
-        className={`order-2 col-span-1 ${
-          theme === "light" ? "bg-white" : "bg-slate-900"
-        }  p-4 rounded shadow-md  h-[450px]`}
-      >
-        <h2
-          className={`text-xl font-bold mb-4 mt-8 ${
-            theme === "light" ? "text-slate-800" : "text-slate-400"
-          }`}
-        >
-          Color Distribution
-        </h2>
-        <div className="w-full h-full">
-          <Bar
-            data={colorChartData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: true,
-              plugins: {
-                datalabels: {
-                  display: true,
-                  align: "end",
-                  anchor: "end",
-                  formatter: (value) => `${value.toFixed(2)}`,
-                  color: theme === "light" ? "black" : "white",
-                  font: {
-                    weight: "normal",
-                  },
-                },
-                legend: {
-                  display: true,
-                  labels: {
-                    color: theme === "light" ? "black" : "white",
-                  },
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function (context) {
-                      return `KG: ${context.raw.toFixed(2)}`;
-                    },
-                  },
-                },
+   <div
+  className={`order-2 col-span-1 ${
+    theme === "light" ? "bg-white" : "bg-slate-900"
+  } p-4 rounded shadow-md h-[450px] flex flex-col`}
+>
+  <h2
+    className={`text-xl font-bold mb-4 mt-8 ${
+      theme === "light" ? "text-slate-800" : "text-slate-400"
+    }`}
+  >
+    Color Distribution
+  </h2>
+  <div className="flex-1 w-full h-full overflow-hidden">
+    <Pie
+      data={colorChartData}
+      options={{
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            labels: {
+              color: theme === "light" ? "black" : "white",
+            },
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                return `KG: ${context.raw.toFixed(2)}`;
               },
-              scales: {
-                x: {
-                  title: {
-                    display: true,
-                    text: "Color",
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  grid: {
-                    display: true,
-                    color: theme === "light" ? "#e5e7eb" : "#374151",
-                  },
-                  ticks: {
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  border: {
-                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                  },
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: "KG Count",
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  beginAtZero: true,
-                  grid: {
-                    display: true,
-                    color: theme === "light" ? "#e5e7eb" : "#374151",
-                  },
-                  ticks: {
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  border: {
-                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                  },
-                },
-              },
-            }}
-            plugins={[ChartDataLabels]}
-          />
-        </div>
-      </div>
+            },
+          },
+          datalabels: {
+            display: false, 
+          },
+        },
+      }}
+      plugins={[ChartDataLabels]}
+    />
+  </div>
+</div>
+
     </div>,
     <div className="" key="color-wise-chart">
       <div
@@ -1226,57 +1250,36 @@ function Order_rev() {
             theme == "light" ? "bg-white" : "bg-slate-900"
           } shadow-md flex justify-center items-center space-x-4 m-4`}
         >
-          <select
-            value={selectedYear}
-            onChange={(e) => setSelectedYear(e.target.value)}
-            className={`p-2 border rounded ${
-              theme == "light"
-                ? "bg-white text-black border border-gray-200"
-                : "bg-slate-900 text-gray-400 border-gray-600"
-            } `}
-          >
-            <option value="">Select Year</option>
-            {years.map((year) => (
-              <option key={year} value={year}>
-                {year}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className={`p-2 border rounded ${
-              theme == "light"
-                ? "bg-white text-black border border-gray-200"
-                : "bg-slate-900 text-gray-400 border-gray-600"
-            } `}
-          >
-            <option value="">Select Month</option>
-            {months.map((month) => (
-              <option key={month} value={month}>
-                {month}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className={`p-2 border rounded ${
-              theme == "light"
-                ? "bg-white text-black border border-gray-200"
-                : "bg-slate-900 text-gray-400 border-gray-600"
-            } `}
-          >
-            <option value="">Select Date</option>
-            {dates.map((date) => (
-              <option key={date} value={date}>
-                {date}
-              </option>
-            ))}
-          </select>
-
+       <CustomMultiSelect
+        theme={theme}
+        options={years}
+        selectedOptions={selectedYear}
+        setSelectedOptions={setSelectedYear}
+        label="Select Year"
+        isOpen={openDropdown === "year"}
+        onToggle={() => handleDropdownToggle("year")}
+        onClose={() => setOpenDropdown(null)}
+      />
+      <CustomMultiSelect
+        theme={theme}
+        options={months}
+        selectedOptions={selectedMonth}
+        setSelectedOptions={setSelectedMonth}
+        label="Select Month"
+        isOpen={openDropdown === "month"}
+        onToggle={() => handleDropdownToggle("month")}
+        onClose={() => setOpenDropdown(null)}
+      />
+      <CustomMultiSelect
+        theme={theme}
+        options={dates}
+        selectedOptions={selectedDate}
+        setSelectedOptions={setSelectedDate}
+        label="Select Date"
+        isOpen={openDropdown === "date"}
+        onToggle={() => handleDropdownToggle("date")}
+        onClose={() => setOpenDropdown(null)}
+      />
           <button
             onClick={handleFilter}
             className="p-2 bg-blue-500 text-white rounded"
