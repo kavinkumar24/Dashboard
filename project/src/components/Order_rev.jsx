@@ -10,11 +10,16 @@ import { Pie } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { IoFilterOutline } from "react-icons/io5";
 import CustomMultiSelect from "./Custom/Mutliselect";
+import { Doughnut } from "react-chartjs-2";
 
 function Order_rev() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
+
+  const [isSelected, setIsSelected] = useState(false);
+  const [isSorted, setIsSorted] = useState(false);
+
   const [openDropdown, setOpenDropdown] = useState(null);
 
   const [orderData, setOrderData] = useState([]);
@@ -41,6 +46,66 @@ function Order_rev() {
 
   const handleCancelFilter = () => {
     setShowDatePickerModal(false);
+  };
+  const handleButtonClick = () => {
+    setIsSelected((prevState) => !prevState);
+    setIsSorted((prevState) => !prevState);
+
+    const isSorting = !isSorted;
+    const currentProjectData = getProject(filteredData);
+    const currentProductData = getProduct(filteredData);
+    const currentSubproductData = getsubproduct(filteredData);
+
+    const sortedProjectData = isSorting
+      ? [...currentProjectData].sort((a, b) => b.kg - a.kg)
+      : currentProjectData;
+
+    const sortedProductData = isSorting
+      ? [...currentProductData].sort((a, b) => b.kg - a.kg)
+      : currentProductData;
+
+    const sortedSubproductData = isSorting
+      ? [...currentSubproductData].sort((a, b) => b.kg - a.kg)
+      : currentSubproductData;
+
+    setProjectData({
+      labels: sortedProjectData.map((entry) => entry.project),
+      datasets: [
+        {
+          label: "KG Count by Project",
+          data: sortedProjectData.map((entry) => entry.kg),
+          backgroundColor: "rgba(255, 159, 64, 0.2)",
+          borderColor: "rgba(255, 159, 64, 1)",
+          borderWidth: 1,
+        },
+      ],
+    });
+
+    setProduct({
+      labels: sortedProductData.map((entry) => entry.product),
+      datasets: [
+        {
+          label: "KG Count by product",
+          data: sortedProductData.map((entry) => entry.kg),
+          backgroundColor: "rgba(153, 102, 255, 0.2)",
+          borderColor: "#9900cc",
+          borderWidth: 1,
+        },
+      ],
+    });
+
+    setSubproduct({
+      labels: sortedSubproductData.map((entry) => entry.sub_product),
+      datasets: [
+        {
+          label: "KG Count by sub product",
+          data: sortedSubproductData.map((entry) => entry.kg),
+          backgroundColor: "rgba(75, 192, 192, 0.2)",
+          borderColor: "#215e5e",
+          borderWidth: 1,
+        },
+      ],
+    });
   };
 
   const handleDropdownToggle = (dropdownType) => {
@@ -145,16 +210,16 @@ function Order_rev() {
     }, {});
 
     const colors = [
-      "rgba(0, 123, 255, 0.7)",
-      "rgba(40, 167, 69, 0.7)",
-      "rgba(255, 193, 7, 0.7)",
-      "rgba(220, 53, 69, 0.7)",
-      "rgba(255, 87, 34, 0.7)",
-      "rgba(156, 39, 176, 0.7)",
-      "rgba(23, 162, 184, 0.7)",
-      "rgba(255, 99, 132, 0.7)",
-      "rgba(103, 58, 183, 0.7)",
-      "rgba(96, 125, 139, 0.7)",
+      "rgba(0, 123, 255, 0.3)",
+      "rgba(40, 167, 69, 0.3)",
+      "rgba(255, 193, 7, 0.3)",
+      "rgba(220, 53, 69, 0.3)",
+      "rgba(255, 87, 34, 0.3)",
+      "rgba(156, 39, 176, 0.3)",
+      "rgba(23, 162, 184, 0.3)",
+      "rgba(255, 99, 132, 0.3)",
+      "rgba(103, 58, 183, 0.3)",
+      "rgba(96, 125, 139, 0.3)",
     ];
 
     return Object.entries(purityData)
@@ -321,6 +386,20 @@ function Order_rev() {
         kg: grams / 1000,
       }));
   };
+  const colorMapping = {
+    Y: "rgba(255, 223, 0, 0.6)", // Bright Yellow
+    P: "rgba(255, 105, 180, 0.6)", // Bright Pink
+    "Y/P": "rgba(255, 165, 79, 0.6)", // Soft Orange (Blend of Yellow and Pink)
+    W: "rgba(245, 245, 245, 0.8)", // Off-White
+    R: "rgba(255, 69, 58, 0.9)", // Vivid Red
+    "W/P": "rgba(255, 182, 193, 0.6)", // Light Pink (White and Pink blend)
+    "W/P/Y": "rgba(255, 222, 179, 0.6)", // Soft Beige (White, Pink, Yellow blend)
+    "Y/P/W": "rgba(255, 228, 196, 0.6)", // Bisque (Yellow, Pink, White blend)
+    "W/Y": "rgba(255, 250, 205, 0.7)", // Lemon Chiffon (White and Yellow blend)
+    "Y/Base metal": "rgba(169, 169, 169, 0.6)", // Dim Gray
+    Unknown: "rgba(211, 211, 211, 0.6)", // Light Gray
+  };
+
   const prepareColorData = (data) => {
     const colorData = data.reduce((acc, item) => {
       const color = item.Color || "Unknown";
@@ -337,20 +416,22 @@ function Order_rev() {
     return Object.entries(colorData).map(([color, kg]) => ({
       color,
       kg: kg / 1000,
+      backgroundColor: colorMapping[color] || "rgba(211, 211, 211, 0.6)", 
     }));
   };
 
   useEffect(() => {
-    fetch("http://localhost:8081/order_receive&new_design")
-      .then((response) => response.json())
-      .then((data) => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("http://localhost:8081/order_receive&new_design");
+        const data = await response.json();
         setOrderData(data);
         setIsLoading(false);
-
+  
         const allYears = new Set();
         const allMonths = new Set();
         const allDates = new Set();
-
+  
         data.forEach((item) => {
           if (item.TRANSDATE) {
             const date = new Date(item.TRANSDATE);
@@ -359,232 +440,328 @@ function Order_rev() {
             allDates.add(date.getDate());
           }
         });
-
+  
         setYears(Array.from(allYears).sort((a, b) => b - a));
         setMonths(Array.from(allMonths).sort((a, b) => a - b));
         setDates(Array.from(allDates).sort((a, b) => a - b));
-
+  
+        
         const filteredData = data.filter((item) => {
           const itemDate = new Date(item.TRANSDATE);
           const itemYear = itemDate.getFullYear();
           const itemMonth = itemDate.getMonth() + 1;
           const itemDateOnly = itemDate.getDate();
-
+  
           return (
             (selectedYear.length === 0 || selectedYear.includes(itemYear)) &&
             (selectedMonth.length === 0 || selectedMonth.includes(itemMonth)) &&
             (selectedDate.length === 0 || selectedDate.includes(itemDateOnly))
           );
         });
-
-        console.log("Selected Date:", selectedDate);
-        console.log("Selected Month:", selectedMonth);
-        console.log("Selected Year:", selectedYear);
-        console.log("Filtered Data:", filteredData);
-
+  
         setFilteredData(filteredData);
-        const totalWeightFromAPI =
-          filteredData.reduce((total, item) => total + (item.WT || 0), 0) /
-          1000;
+  
+        const totalWeightFromAPI = filteredData.reduce((total, item) => total + (item.WT || 0), 0) / 1000;
         setTotalWeight(totalWeightFromAPI);
-
-        const yearData = filteredData.reduce((acc, item) => {
-          const year = new Date(item.TRANSDATE).getFullYear();
-          if (!acc[year]) acc[year] = 0;
-          acc[year] += item.WT || 0;
-          return acc;
-        }, {});
-
-        const monthData = filteredData.reduce((acc, item) => {
-          const date = new Date(item.TRANSDATE);
-          const year = date.getFullYear();
-          const monthIndex = date.getMonth() + 1;
-          const yearMonth = `${year}, ${getMonthName(monthIndex)}`;
-          if (!acc[yearMonth]) acc[yearMonth] = 0;
-          acc[yearMonth] += item.WT || 0;
-          return acc;
-        }, {});
-
+  
+        const yearData = computeYearData(filteredData);
+        const monthData = computeMonthData(filteredData);
+  
         setYearlyData(yearData);
         setMonthlyData(monthData);
-
-        setChartData({
-          labels: Object.keys(yearData),
-          datasets: [
-            {
-              label: "KG Count per Year",
-              data: Object.values(yearData).map((value) => value / 1000),
-              backgroundColor: "rgba(75, 192, 192, 0.2)",
-              borderColor: "rgba(75, 192, 192, 1)",
-              borderWidth: 1,
-            },
-          ],
-        });
-
-        setChartmonthData({
-          labels: Object.keys(monthData),
-          datasets: [
-            {
-              label: "KG Count per month",
-              data: Object.values(monthData).map((value) => value / 1000),
-              backgroundColor: "rgba(240, 128, 128, 0.2)",
-
-              borderColor: "#ec5f5f",
-              borderWidth: 1,
-            },
-          ],
-        });
-
-        const purityData = getPurityData(filteredData);
-
-        setPurityChartData({
-          labels: purityData.map((entry) => entry.purity),
-          datasets: [
-            {
-              label: "KG Count by Purity",
-              data: purityData.map((entry) => entry.kg),
-              backgroundColor: purityData.map((entry) => entry.color),
-              borderColor: purityData.map((entry) =>
-                entry.color.replace("0.2", "1")
-              ),
-              borderWidth: 1,
-            },
-          ],
-        });
-
-        setTypeChartData({
-          labels: getTypeData(filteredData).map((entry) => entry.type),
-          datasets: [
-            {
-              label: "KG Count by Type",
-              data: getTypeData(filteredData).map((entry) => entry.kg),
-              backgroundColor: "rgba(153, 102, 255, 0.2)",
-              borderColor: "rgba(153, 102, 255, 1)",
-              borderWidth: 1,
-            },
-          ],
-        });
-
-        setZoneChartData({
-          labels: getZoneData(filteredData).map((entry) => entry.zone),
-          datasets: [
-            {
-              label: "KG Count by Zone",
-              data: getZoneData(filteredData).map((entry) => entry.kg),
-              backgroundColor: "rgba(255, 159, 64, 0.2)",
-              borderColor: "rgba(255, 159, 64, 1)",
-              borderWidth: 1,
-            },
-          ],
-        });
-
-        setProjectData({
-          labels: getProject(filteredData).map((entry) => entry.project),
-          datasets: [
-            {
-              label: "KG Count by Project",
-              data: getProject(filteredData).map((entry) => entry.kg),
-              backgroundColor: "rgba(255, 159, 64, 0.2)",
-              borderColor: "rgba(255, 159, 64, 1)",
-              borderWidth: 1,
-            },
-          ],
-        });
-
-        setProduct({
-          labels: getProduct(filteredData).map((entry) => entry.product),
-          datasets: [
-            {
-              label: "KG Count by product",
-              data: getProduct(filteredData).map((entry) => entry.kg),
-              backgroundColor: "rgba(153, 102, 255, 0.2)",
-              borderColor: "#9900cc",
-              borderWidth: 1,
-            },
-          ],
-        });
-
-        const colorData = prepareColorData(filteredData);
-
-        setColorChartData({
-          labels: colorData.map((entry) => entry.color),
-          datasets: [
-            {
-              label: "KG Count by Color",
-
-              data: colorData.map((entry) => entry.kg),
-              backgroundColor: [
-                "rgba(0, 123, 255, 0.7)",
-                "rgba(40, 167, 69, 0.7)",
-                "rgba(255, 193, 7, 0.7)",
-                "rgba(220, 53, 69, 0.7)",
-                "rgba(255, 87, 34, 0.7)",
-                "rgba(156, 39, 176, 0.7)",
-                "rgba(23, 162, 184, 0.7)",
-                "rgba(255, 99, 132, 0.7)",
-                "rgba(103, 58, 183, 0.7)",
-                "rgba(96, 125, 139, 0.7)",
-              ],
-              borderColor: purityData.map((entry) =>
-                entry.color.replace("0.2", "1")
-              ),
-
-              borderWidth: 1,
-            },
-          ],
-        });
-        setSubproduct({
-          labels: getsubproduct(filteredData).map((entry) => entry.sub_product),
-          datasets: [
-            {
-              label: "KG Count by sub product",
-              data: getsubproduct(filteredData).map((entry) => entry.kg),
-              backgroundColor: "rgba(75, 192, 192, 0.2)",
-              borderColor: "#215e5e",
-              borderWidth: 1,
-            },
-          ],
-        });
-
-        setPartywise({
-          labels: getPartywise(filteredData).map((entry) => entry.party_wise),
-          datasets: [
-            {
-              label: "KG Count by party",
-              data: getPartywise(filteredData).map((entry) => entry.kg),
-              backgroundColor: "rgba(153, 102, 255, 0.2)",
-              borderColor: "#9900cc",
-              borderWidth: 1,
-            },
-          ],
-        });
-
-        setPhoto_no_wise({
-          labels: getPhoto_no_wise(filteredData).map(
-            (entry) => entry.photo_wise
-          ),
-          datasets: [
-            {
-              label: "KG Count by photo",
-              data: getPhoto_no_wise(filteredData).map((entry) => entry.kg),
-              backgroundColor: "rgba(153, 102, 255, 0.2)",
-              borderColor: "#9900cc",
-              borderWidth: 1,
-            },
-          ],
-        });
-
-        setAllCharts([
-          chartData,
-          purityChartData,
-          typeChartData,
-          zoneChartData,
-        ]);
-        console.log(selectedDate, selectedMonth, selectedYear);
-        console.log("Filtered Data:", filteredData);
-      })
-      .catch((error) => console.error("Error fetching data:", error));
+  
+        updateChartData(yearData, monthData, filteredData);
+  
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+  
+    fetchData();
   }, [theme, filter]);
+
+const computeYearData = (filteredData) => {
+  return filteredData.reduce((acc, item) => {
+    const year = new Date(item.TRANSDATE).getFullYear();
+    if (!acc[year]) acc[year] = 0;
+    acc[year] += item.WT || 0;
+    return acc;
+  }, {});
+};
+
+const computeMonthData = (filteredData) => {
+  return filteredData.reduce((acc, item) => {
+    const date = new Date(item.TRANSDATE);
+    const year = date.getFullYear();
+    const monthIndex = date.getMonth() + 1;
+    const yearMonth = `${year}, ${getMonthName(monthIndex)}`;
+    if (!acc[yearMonth]) acc[yearMonth] = 0;
+    acc[yearMonth] += item.WT || 0;
+    return acc;
+  }, {});
+};
+
+const updateChartData = (yearData, monthData, filteredData) => {
+  setChartData({
+    labels: Object.keys(yearData),
+    datasets: [
+      {
+        label: "KG Count per Year",
+        data: Object.values(yearData).map((value) => value / 1000),
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        borderColor: "rgba(75, 192, 192, 1)",
+        borderWidth: 1,
+      },
+    ],
+  });
+
+  setChartmonthData({
+    labels: Object.keys(monthData),
+    datasets: [
+      {
+        label: "KG Count per month",
+        data: Object.values(monthData).map((value) => value / 1000),
+        backgroundColor: "rgba(240, 128, 128, 0.2)",
+        borderColor: "#ec5f5f",
+        borderWidth: 1,
+      },
+    ],
+  });
+  const purityData = getPurityData(filteredData);
+
+  setPurityChartData({
+    labels: purityData.map((entry) => entry.purity),
+    datasets: [
+      {
+        label: "KG Count by Purity",
+        data: purityData.map((entry) => entry.kg),
+        backgroundColor: purityData.map((entry) => entry.color),
+        borderColor: purityData.map((entry) =>
+          entry.color.replace("0.3", "1")
+        ),
+        borderWidth: 1,
+      },
+    ],
+  });
+
+  setTypeChartData({
+    labels: getTypeData(filteredData).map((entry) => entry.type),
+    datasets: [
+      {
+        label: "KG Count by Type",
+        data: getTypeData(filteredData).map((entry) => entry.kg),
+        backgroundColor: "rgba(153, 102, 255, 0.2)",
+        borderColor: "rgba(153, 102, 255, 1)",
+        borderWidth: 1,
+      },
+    ],
+  });
+
+  setZoneChartData({
+    labels: getZoneData(filteredData).map((entry) => entry.zone),
+    datasets: [
+      {
+        label: "KG Count by Zone",
+        data: getZoneData(filteredData).map((entry) => entry.kg),
+        backgroundColor: "rgba(255, 159, 64, 0.2)",
+        borderColor: "rgba(255, 159, 64, 1)",
+        borderWidth: 1,
+      },
+    ],
+  });
+
+  setProjectData({
+    labels: getProject(filteredData).map((entry) => entry.project),
+    datasets: [
+      {
+        label: "KG Count by Project",
+        data: getProject(filteredData).map((entry) => entry.kg),
+        backgroundColor: "rgba(255, 159, 64, 0.2)",
+        borderColor: "rgba(255, 159, 64, 1)",
+        borderWidth: 1,
+      },
+    ],
+  });
+
+  setProduct({
+    labels: getProduct(filteredData).map((entry) => entry.product),
+    datasets: [
+      {
+        label: "KG Count by product",
+        data: getProduct(filteredData).map((entry) => entry.kg),
+        backgroundColor: "rgba(153, 102, 255, 0.2)",
+        borderColor: "#9900cc",
+        borderWidth: 1,
+      },
+    ],
+  });
+
+  const colorData = prepareColorData(filteredData);
+
+  setColorChartData({
+    labels: colorData.map((entry) => entry.color),
+    datasets: [
+      {
+        label: "KG Count by Color",
+        data: colorData.map((entry) => entry.kg),
+        backgroundColor: colorData.map((entry) => entry.backgroundColor), 
+        borderColor: colorData.map((entry) =>
+          entry.backgroundColor.replace("0.4", "1")
+        ),
+        borderWidth: 1,
+      },
+    ],
+  });
+
+  setSubproduct({
+    labels: getsubproduct(filteredData).map((entry) => entry.sub_product),
+    datasets: [
+      {
+        label: "KG Count by sub product",
+        data: getsubproduct(filteredData).map((entry) => entry.kg),
+        backgroundColor: "rgba(75, 192, 192, 0.2)",
+        borderColor: "#215e5e",
+        borderWidth: 1,
+      },
+    ],
+  });
+};
+
+  // useEffect(() => {
+  //   fetch("http://localhost:8081/order_receive&new_design")
+  //     .then((response) => response.json())
+  //     .then((data) => {
+  //       setOrderData(data);
+  //       setIsLoading(false);
+
+  //       const allYears = new Set();
+  //       const allMonths = new Set();
+  //       const allDates = new Set();
+
+  //       data.forEach((item) => {
+  //         if (item.TRANSDATE) {
+  //           const date = new Date(item.TRANSDATE);
+  //           allYears.add(date.getFullYear());
+  //           allMonths.add(date.getMonth() + 1);
+  //           allDates.add(date.getDate());
+  //         }
+  //       });
+
+  //       setYears(Array.from(allYears).sort((a, b) => b - a));
+  //       setMonths(Array.from(allMonths).sort((a, b) => a - b));
+  //       setDates(Array.from(allDates).sort((a, b) => a - b));
+
+  //       const filteredData = data.filter((item) => {
+  //         const itemDate = new Date(item.TRANSDATE);
+  //         const itemYear = itemDate.getFullYear();
+  //         const itemMonth = itemDate.getMonth() + 1;
+  //         const itemDateOnly = itemDate.getDate();
+
+  //         return (
+  //           (selectedYear.length === 0 || selectedYear.includes(itemYear)) &&
+  //           (selectedMonth.length === 0 || selectedMonth.includes(itemMonth)) &&
+  //           (selectedDate.length === 0 || selectedDate.includes(itemDateOnly))
+  //         );
+  //       });
+
+  //       console.log("Selected Date:", selectedDate);
+  //       console.log("Selected Month:", selectedMonth);
+  //       console.log("Selected Year:", selectedYear);
+  //       console.log("Filtered Data:", filteredData);
+
+  //       setFilteredData(filteredData);
+  //       const totalWeightFromAPI =
+  //         filteredData.reduce((total, item) => total + (item.WT || 0), 0) /
+  //         1000;
+  //       setTotalWeight(totalWeightFromAPI);
+
+  //       const yearData = filteredData.reduce((acc, item) => {
+  //         const year = new Date(item.TRANSDATE).getFullYear();
+  //         if (!acc[year]) acc[year] = 0;
+  //         acc[year] += item.WT || 0;
+  //         return acc;
+  //       }, {});
+
+  //       const monthData = filteredData.reduce((acc, item) => {
+  //         const date = new Date(item.TRANSDATE);
+  //         const year = date.getFullYear();
+  //         const monthIndex = date.getMonth() + 1;
+  //         const yearMonth = `${year}, ${getMonthName(monthIndex)}`;
+  //         if (!acc[yearMonth]) acc[yearMonth] = 0;
+  //         acc[yearMonth] += item.WT || 0;
+  //         return acc;
+  //       }, {});
+
+  //       setYearlyData(yearData);
+  //       setMonthlyData(monthData);
+
+  //       setChartData({
+  //         labels: Object.keys(yearData),
+  //         datasets: [
+  //           {
+  //             label: "KG Count per Year",
+  //             data: Object.values(yearData).map((value) => value / 1000),
+  //             backgroundColor: "rgba(75, 192, 192, 0.2)",
+  //             borderColor: "rgba(75, 192, 192, 1)",
+  //             borderWidth: 1,
+  //           },
+  //         ],
+  //       });
+
+  //       setChartmonthData({
+  //         labels: Object.keys(monthData),
+  //         datasets: [
+  //           {
+  //             label: "KG Count per month",
+  //             data: Object.values(monthData).map((value) => value / 1000),
+  //             backgroundColor: "rgba(240, 128, 128, 0.2)",
+
+  //             borderColor: "#ec5f5f",
+  //             borderWidth: 1,
+  //           },
+  //         ],
+  //       });
+
+        
+  //       setPartywise({
+  //         labels: getPartywise(filteredData).map((entry) => entry.party_wise),
+  //         datasets: [
+  //           {
+  //             label: "KG Count by party",
+  //             data: getPartywise(filteredData).map((entry) => entry.kg),
+  //             backgroundColor: "rgba(153, 102, 255, 0.2)",
+  //             borderColor: "#9900cc",
+  //             borderWidth: 1,
+  //           },
+  //         ],
+  //       });
+
+  //       setPhoto_no_wise({
+  //         labels: getPhoto_no_wise(filteredData).map(
+  //           (entry) => entry.photo_wise
+  //         ),
+  //         datasets: [
+  //           {
+  //             label: "KG Count by photo",
+  //             data: getPhoto_no_wise(filteredData).map((entry) => entry.kg),
+  //             backgroundColor: "rgba(153, 102, 255, 0.2)",
+  //             borderColor: "#9900cc",
+  //             borderWidth: 1,
+  //           },
+  //         ],
+  //       });
+
+  //       setAllCharts([
+  //         chartData,
+  //         purityChartData,
+  //         typeChartData,
+  //         zoneChartData,
+  //       ]);
+  //       console.log(selectedDate, selectedMonth, selectedYear);
+  //       console.log("Filtered Data:", filteredData);
+  //     })
+  //     .catch((error) => console.error("Error fetching data:", error));
+  // }, [theme, filter]);
 
   const chartComponents = [
     <div className="" key="total-weight">
@@ -769,7 +946,7 @@ function Order_rev() {
         </h2>
         {!isLoading && (
           <div className="flex-1 w-full h-full overflow-hidden">
-            <Pie
+            <Bar
               data={purityChartData}
               options={{
                 responsive: true,
@@ -779,37 +956,8 @@ function Order_rev() {
                     display: true,
                     labels: {
                       color: theme === "light" ? "black" : "white",
-                      generateLabels: function (chart) {
-                        const data = chart.data;
-                        const totalWeight = data.datasets[0].data.reduce(
-                          (acc, curr) => acc + curr,
-                          0
-                        );
-
-                        return data.labels.map((label, index) => {
-                          const value = data.datasets[0].data[index];
-                          const percentage =
-                            totalWeight === 0
-                              ? 0
-                              : ((value / totalWeight) * 100).toFixed(2);
-                          const fontColor =
-                            theme === "light" ? "black" : "white";
-
-                          const isHidden =
-                            chart.getDatasetMeta(0).data[index].hidden;
-
-                          return {
-                            text: `${label} (${percentage}%)`,
-                            fillStyle: data.datasets[0].backgroundColor[index],
-                            strokeStyle: data.datasets[0].borderColor[index],
-                            lineWidth: 1,
-                            hidden: isHidden,
-                            index: index,
-                            fontColor: fontColor,
-                            fontStyle: isHidden ? "line-through" : "normal",
-                          };
-                        });
-                      },
+                      usePointStyle: false,
+                      boxWidth: 0,
                     },
                     onClick: function (e, legendItem, legend) {
                       const index = legendItem.index;
@@ -847,7 +995,29 @@ function Order_rev() {
                     },
                   },
                   datalabels: {
-                    display: false,
+                    display: true,
+                    align: "end",
+                    anchor: "end",
+                    formatter: (value, context) => {
+                      const totalWeight = getPurityData(filteredData).reduce(
+                        (acc, entry) => acc + entry.kg,
+                        0
+                      );
+                      if (totalWeight === 0) {
+                        return `${value.toFixed(2)} KG (0%)`;
+                      }
+
+                      const percentage =
+                        totalWeight > 0
+                          ? Math.round((value / totalWeight) * 100)
+                          : "0.00";
+
+                      return `     (${percentage})%\n${value.toFixed(2)} KG`;
+                    },
+                    color: theme === "light" ? "black" : "white",
+                    font: {
+                      weight: "normal",
+                    },
                   },
                 },
               }}
@@ -969,117 +1139,117 @@ function Order_rev() {
     </div>,
     <div className="" key="zone-wise-chart">
       <div
-  className={`order-2 col-span-1 ${
-    theme === "light" ? "bg-white" : "bg-slate-900"
-  } p-4 rounded shadow-md h-[700px] flex flex-col`}
->
-  <h2
-    className={`text-sm font-thin ${
-      theme === "light" ? "text-slate-800" : "text-slate-400"
-    }`}
-  >
-    Color Distribution
-  </h2>
-  <div className="flex-1 w-full h-full overflow-hidden flex justify-center items-center">
-    <div className="w-[500px] h-[500px]">
-      <Pie
-        data={colorChartData}
-        options={{
-          responsive: true,
-          maintainAspectRatio: true,
-          plugins: {
-            legend: {
-              display: true,
-              labels: {
-                color: theme === "light" ? "black" : "white",
-                generateLabels: function (chart) {
-                  const data = chart.data;
-                  if (
-                    !data ||
-                    !data.datasets ||
-                    !data.datasets[0] ||
-                    !data.datasets[0].data
-                  ) {
-                    return [];
-                  }
+        className={`order-2 col-span-1 ${
+          theme === "light" ? "bg-white" : "bg-slate-900"
+        } p-4 rounded shadow-md h-[700px] flex flex-col`}
+      >
+        <h2
+          className={`text-sm font-thin ${
+            theme === "light" ? "text-slate-800" : "text-slate-400"
+          }`}
+        >
+          Color Distribution
+        </h2>
+        <div className="flex-1 w-full h-full overflow-hidden flex justify-center items-center">
+          <div className="w-[500px] h-[500px]">
+            <Doughnut
+              data={colorChartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                  legend: {
+                    display: true,
+                    labels: {
+                      color: theme === "light" ? "black" : "white",
+                      generateLabels: function (chart) {
+                        const data = chart.data;
+                        if (
+                          !data ||
+                          !data.datasets ||
+                          !data.datasets[0] ||
+                          !data.datasets[0].data
+                        ) {
+                          return [];
+                        }
 
-                  const totalWeight = data.datasets[0].data.reduce(
-                    (acc, curr) => acc + curr,
-                    0
-                  );
+                        const totalWeight = data.datasets[0].data.reduce(
+                          (acc, curr) => acc + curr,
+                          0
+                        );
 
-                  return data.labels.map((label, index) => {
-                    const value = data.datasets[0].data[index];
-                    const percentage =
-                      totalWeight === 0
-                        ? 0
-                        : ((value / totalWeight) * 100).toFixed(2);
-                    const fontColor = theme === "light" ? "black" : "white";
-                    const isHidden =
-                      chart.getDatasetMeta(0).data[index].hidden;
-                    return {
-                      text: `${label} (${percentage}%)`,
-                      fillStyle: data.datasets[0].backgroundColor[index],
-                      strokeStyle: data.datasets[0].borderColor[index],
-                      lineWidth: 1,
-                      hidden: isHidden,
-                      index: index,
-                      fontColor: fontColor,
-                      fontStyle: isHidden ? "line-through" : "normal",
-                    };
-                  });
+                        return data.labels.map((label, index) => {
+                          const value = data.datasets[0].data[index];
+                          const percentage =
+                            totalWeight === 0
+                              ? 0
+                              : ((value / totalWeight) * 100).toFixed(2);
+                          const fontColor =
+                            theme === "light" ? "black" : "white";
+                          const isHidden =
+                            chart.getDatasetMeta(0).data[index].hidden;
+                          return {
+                            text: `${label} (${percentage}%)`,
+                            fillStyle: data.datasets[0].backgroundColor[index],
+                            strokeStyle: data.datasets[0].borderColor[index],
+                            lineWidth: 1,
+                            hidden: isHidden,
+                            index: index,
+                            fontColor: fontColor,
+                            fontStyle: isHidden ? "line-through" : "normal",
+                          };
+                        });
+                      },
+                    },
+                    onClick: function (e, legendItem, legend) {
+                      const index = legendItem.index;
+                      const ci = legend.chart;
+                      const meta = ci.getDatasetMeta(0);
+
+                      meta.data[index].hidden = !meta.data[index].hidden;
+                      ci.update();
+                    },
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        const label = context.label || "";
+                        const value = context.raw.toFixed(2);
+                        const totalWeight =
+                          context.chart.data.datasets[0].data.reduce(
+                            (acc, curr) => acc + curr,
+                            0
+                          );
+
+                        if (totalWeight === 0) {
+                          return `${label}: ${value} KG (0%)`;
+                        }
+
+                        const percentage = (
+                          (context.raw / totalWeight) *
+                          100
+                        ).toFixed(2);
+
+                        return `${label}: ${value} KG (${percentage}%)`;
+                      },
+                    },
+                  },
+                  datalabels: {
+                    display: false,
+                  },
                 },
-              },
-              onClick: function (e, legendItem, legend) {
-                const index = legendItem.index;
-                const ci = legend.chart;
-                const meta = ci.getDatasetMeta(0);
-
-                meta.data[index].hidden = !meta.data[index].hidden;
-                ci.update();
-              },
-            },
-            tooltip: {
-              callbacks: {
-                label: function (context) {
-                  const label = context.label || "";
-                  const value = context.raw.toFixed(2);
-                  const totalWeight =
-                    context.chart.data.datasets[0].data.reduce(
-                      (acc, curr) => acc + curr,
-                      0
-                    );
-
-                  if (totalWeight === 0) {
-                    return `${label}: ${value} KG (0%)`;
-                  }
-
-                  const percentage = (
-                    (context.raw / totalWeight) *
-                    100
-                  ).toFixed(2);
-
-                  return `${label}: ${value} KG (${percentage}%)`;
-                },
-              },
-            },
-            datalabels: {
-              display: false,
-            },
-          },
-        }}
-        plugins={[ChartDataLabels]}
-      />
-    </div>
-  </div>
-</div>
-
+              }}
+              plugins={[ChartDataLabels]}
+            />
+          </div>
+        </div>
+      </div>
     </div>,
     <div className="" key="color-wise-chart">
       <div
         className={`order-3 col-span-1 ${
           theme === "light" ? "bg-white " : "bg-slate-900"
-        } p-4 rounded shadow-md overflow-auto h-[700px]`}
+        } p-4 rounded shadow-md overflow-auto h-[700px] custom-scrollbar`}
       >
         <h2
           className={`text-xl font-bold mb-4 mt-8 ${
@@ -1165,7 +1335,7 @@ function Order_rev() {
     </div>,
     <div className="" key="project-wise-chart">
       <div
-        className={`order-3 col-span-1 p-4 rounded shadow-md h-[700px] overflow-auto ${
+        className={`order-3 col-span-1 p-4 rounded shadow-md h-[750px] overflow-y-auto custom-scrollbar ${
           theme === "light" ? "bg-white" : "bg-slate-900"
         }`}
       >
@@ -1174,7 +1344,7 @@ function Order_rev() {
             theme === "light" ? "text-slate-800" : "text-slate-400"
           }`}
         >
-          Product Data
+          Product Distribution
         </h2>
 
         <Bar
@@ -1256,7 +1426,7 @@ function Order_rev() {
       <div
         className={`order-3 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
-        } p-4 rounded shadow-md overflow-auto h-[790px]`}
+        } p-4 rounded shadow-md overflow-auto h-[750px] custom-scrollbar`}
       >
         <h2
           className={`text-xl font-bold mb-4 mt-8 ${
@@ -1465,6 +1635,28 @@ function Order_rev() {
             Filter
           </button>
         </div>
+        <button
+          className={`mb-4 p-2 rounded ${
+            isSelected
+              ? "bg-blue-500 text-white hover:bg-blue-600"
+              : theme === "light"
+              ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              : "bg-slate-700 text-white hover:bg-slate-600"
+          }`}
+          onClick={handleButtonClick}
+        >
+          {isSelected ? (
+            <span className="flex items-center justify-between">
+              Sort by KG (Ascending)
+              <span className="ml-2 border border-white rounded-full px-1">
+                X
+              </span>
+            </span>
+          ) : (
+            "Sort by KG (Ascending)"
+          )}
+        </button>
+
         {showDatePickerModal && (
           <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
             <div

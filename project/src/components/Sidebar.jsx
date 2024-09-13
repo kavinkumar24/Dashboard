@@ -146,6 +146,7 @@ function Sidebar({ theme }) {
             </div>
           </a>
 
+         
           <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('uploads')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}

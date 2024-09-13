@@ -10,7 +10,25 @@ import { FiMinusCircle } from "react-icons/fi";
 import CustomMultiSelect from "./Custom/Mutliselect";
 import { IoFilterOutline } from "react-icons/io5";
 import { Pie } from "react-chartjs-2";
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Tooltip,
+  Legend
+);
 function New_Design() {
   const [search, setSearch] = useState("");
   const [theme, setTheme] = useState(
@@ -35,7 +53,7 @@ function New_Design() {
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = orderData.slice(startIndex, startIndex + itemsPerPage);
-
+  
   const handleCancelFilter = () => {
     setShowDatePickerModal(false);
   };
@@ -190,6 +208,8 @@ function New_Design() {
 
     return Array.from(orderWeightMap.values());
   };
+ 
+
 
   const getPurityData = (data) => {
     const purityData = data.reduce((acc, item) => {
@@ -205,14 +225,14 @@ function New_Design() {
     }, {});
 
     const colors = [
-      "rgba(0, 123, 255, 0.7)",
-      "rgba(40, 167, 69, 0.7)",
-      "rgba(255, 193, 7, 0.7)",
-      "rgba(220, 53, 69, 0.7)",
-      "rgba(255, 87, 34, 0.7)",
-      "rgba(156, 39, 176, 0.7)",
-      "rgba(23, 162, 184, 0.7)",
-      "rgba(255, 99, 132, 0.7)",
+      "rgba(221, 160, 221, 0.2)",
+      "rgba(250, 128, 114, 0.2)",
+    "rgba(240, 230, 140, 0.2)",  
+    "rgba(175, 238, 238, 0.2)",  
+    "rgba(255, 228, 196, 0.2)",  
+    "rgba(224, 255, 255, 0.2)",  
+    "rgba(238, 130, 238, 0.2)",  
+    "rgba(245, 222, 179, 0.2)", 
       "rgba(103, 58, 183, 0.7)",
       "rgba(96, 125, 139, 0.7)",
     ];
@@ -299,7 +319,7 @@ useEffect(() => {
 
 const filterByYear = (data, year) => {
   return data.filter(item => item.Dyr === year);
-};
+};  
   useEffect(() => {
     fetch("http://localhost:8081/order_receive&new_design")
       .then((response) => response.json())
@@ -367,7 +387,7 @@ const filterByYear = (data, year) => {
               label: "KG Count per Year",
               data: getYearlyData(filteredData).map((entry) => entry.kg),
               backgroundColor: [
-                "#ccebff",
+                "rgba(75, 192, 192, 0.2)",
                 "rgba(144, 238, 144, 0.2)",
                 "rgba(255, 182, 193, 0.2)",
                 "rgba(153, 102, 255, 0.2)",
@@ -379,7 +399,7 @@ const filterByYear = (data, year) => {
                 "rgba(96, 125, 139, 0.7)",
               ],
               borderColor: [
-                "rgba(173, 216, 230, 1)",
+                "#215e5e",
                 "rgba(144, 238, 144, 1)",
                 "rgba(255, 182, 193, 1)",
                 "rgba(153, 102, 255, 1)",
@@ -397,14 +417,12 @@ const filterByYear = (data, year) => {
         }, 0);
         
         console.log("Latest Year:", latestYear);
-        
         const monthData1 = filteredData.reduce((acc, item) => {
           const date = new Date(item["DD&month"]);
           const year = date.getFullYear();
           const monthIndex = date.getMonth();
           const monthName = getMonthName(monthIndex);
         
-          
           if (last4Years.includes(year)) {
             const yearMonth = `${year}, ${monthName}`;
             if (!acc[yearMonth]) acc[yearMonth] = 0;
@@ -413,33 +431,76 @@ const filterByYear = (data, year) => {
         
           return acc;
         }, {});
+        
+        let yearsToDisplay = [];
+        
+        if (selectedYear.length === 0) {
+          yearsToDisplay =[ Math.max(...last4Years)]; 
+        } else {
+          yearsToDisplay = selectedYear; 
+        }
+        
+        const selectedYearsData = {};
+        const otherYearsData = {};
+        
+        for (const key in monthData1) {
+          const [year] = key.split(', ');   
+        
+          if (yearsToDisplay.includes(parseInt(year))) {
+            selectedYearsData[key] = monthData1[key];
+          } else {
+            otherYearsData[key] = monthData1[key];
+          }
+        }
+        
+        const monthOrder = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        const sortedSelectedYearsData = Object.keys(selectedYearsData)
+          .sort((a, b) => {
+            const [, monthA] = a.split(', '); 
+            const [, monthB] = b.split(', ');
+            return monthOrder.indexOf(monthA) - monthOrder.indexOf(monthB); 
+          })
+          .reduce((acc, key) => {
+            acc[key] = selectedYearsData[key];
+            return acc;
+          }, {});
+        
+        const initialDisplayData = { ...sortedSelectedYearsData };
+        
+        console.log("Initial Display Data (Selected Years):", initialDisplayData);
+        
+        const sortedMonthData = {
+          ...sortedSelectedYearsData,
+          ...otherYearsData,
+        };
+        
+        console.log("Sorted Month Data:", sortedMonthData);
+        
+        const allMonthData = {};
+        
+        last4Years.forEach((year) => {
+          monthOrder.forEach((month) => {
+            allMonthData[`${year}, ${month}`] = monthData1[`${year}, ${month}`] || 0;
+          });
+        });
+        
+        console.log("All Month Data:", allMonthData);
+        
 
-       
-const allMonthData = {};
-
-last4Years.forEach(year => {
-  allMonths.forEach(month => {
-    allMonthData[`${year}, ${month}`] = monthData1[`${year}, ${month}`] || 0;
-  });
+setChartmonthData({
+  labels: Object.keys(initialDisplayData), 
+  datasets: [
+    {
+      label: "KG Count per month",
+      data: Object.values(initialDisplayData).map((value) => value / 1000),
+      backgroundColor: "rgba(240, 128, 128, 0.2)",
+      borderColor: "#ec5f5f",
+      borderWidth: 1,
+    },
+  ],
 });
 
-
-        
-        
-        console.log("Month Data1:", monthData1);
-        
-        setChartmonthData({
-          labels: Object.keys(monthData1),
-          datasets: [
-            {
-              label: "KG Count per month",
-              data: Object.values(monthData1).map((value) => value / 1000),
-              backgroundColor: "rgba(240, 128, 128, 0.2)",
-              borderColor: "#ec5f5f",
-              borderWidth: 1,
-            },
-          ],
-        });
         
         
   
@@ -505,6 +566,12 @@ last4Years.forEach(year => {
           .sort((a, b) => b["PHOTO NO 2"] - a["PHOTO NO 2"])
           .slice(0, 25);
         setOrderData(top25Orders);
+
+        const uniquegroup_party = calculateTotalWeight(sortedData)
+        const top25group_party = uniquegroup_party 
+        .sort((a,b)=>b["Group party"])
+        setgroup_party(top25group_party)
+
   
         setAllCharts([
           chartData,
@@ -519,7 +586,7 @@ last4Years.forEach(year => {
 
   }, [theme, filter, currentYear]);
   
-
+const[group_party,setgroup_party] = useState([]);
   // const getMonthName = (index) => {
   //   const months = [
   //     "January", "February", "March", "April", "May", "June",
@@ -665,6 +732,129 @@ last4Years.forEach(year => {
           </div>
         )}
 
+<div
+          className={`m-6 px-10 border rounded-lg ${
+            theme === "light"
+              ? "bg-white border-gray-300"
+              : "bg-slate-900 border-zinc-800"
+          } shadow-lg`}
+        >
+          <button
+            onClick={() => toggleAccordion(1)}
+            className="w-full flex justify-between items-center py-5"
+          >
+            <span
+              className={`text-lg font-semibold ${
+                theme === "light" ? "text-slate-800" : "text-slate-300"
+              }`}
+            >
+              Top <span className="text-red-500">25</span> Group party
+            </span>
+            <span className="text-slate-800 transition-transform duration-300">
+              {activeIndex === 1 ? (
+                <FiMinusCircle
+                  className={`text-2xl ${
+                    theme === "light" ? "text-gray-800" : "text-gray-300"
+                  }`}
+                />
+              ) : (
+                <IoIosAddCircleOutline
+                  className={`text-2xl ${
+                    theme === "light" ? "text-gray-800" : "text-gray-300"
+                  }`}
+                />
+              )}
+            </span>
+          </button>
+
+          <div
+            className={`${
+              activeIndex === 1 ? "max-h-screen" : "max-h-0"
+            } overflow-hidden transition-all duration-300 ease-in-out`}
+          >
+            <div
+              className={`m-6 border rounded-lg ${
+                theme === "light"
+                  ? "border-gray-300 bg-white"
+                  : "border-slate-700 bg-slate-800"
+              } shadow-lg`}
+            >
+              <table
+                className={`w-full text-left table-auto text-sm ${
+                  theme === "light"
+                    ? "bg-white text-gray-800"
+                    : "bg-slate-800 text-gray-300"
+                }`}
+              >
+                <thead>
+                  <tr
+                    className={`${
+                      theme === "light" ? "bg-gray-200" : "bg-slate-700"
+                    }`}
+                  >
+                    <th className="p-2 border text-center">Group party</th>
+                    <th align="center" className="p-2 border text-center">
+                      Project
+                    </th>
+                    <th className="p-2 border text-center">Weight in grams</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {group_party.map((item, index) => (
+                    <tr key={index}>
+                      <td className="p-2 border text-center">
+                        {item["Group party"]}
+                      </td>
+                      <td className="p-2 border text-center">{item.PROJECT}</td>
+                      <td className="p-2 border text-center">{item.WT}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="flex justify-center mt-4 mb-4">
+                <button
+                  className={`mx-1 px-3 py-1 rounded ${
+                    theme === "light"
+                      ? "bg-gray-200 text-gray-800"
+                      : "bg-slate-700 text-gray-300"
+                  }`}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </button>
+                {[...Array(totalPages)].map((_, pageIndex) => (
+                  <button
+                    key={pageIndex}
+                    className={`mx-1 px-3 py-1 rounded ${
+                      currentPage === pageIndex + 1
+                        ? "bg-blue-500 text-white"
+                        : theme === "light"
+                        ? "bg-gray-200 text-gray-800"
+                        : "bg-slate-700 text-gray-300"
+                    }`}
+                    onClick={() => handlePageChange(pageIndex + 1)}
+                  >
+                    {pageIndex + 1}
+                  </button>
+                ))}
+                <button
+                  className={`mx-1 px-3 py-1 rounded ${
+                    theme === "light"
+                      ? "bg-gray-200 text-gray-800"
+                      : "bg-slate-700 text-gray-300"
+                  }`}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div
           className={`m-6 px-10 border rounded-lg ${
             theme === "light"
@@ -801,7 +991,7 @@ last4Years.forEach(year => {
           <div
             className={`order-2 col-span-1 ${
               theme === "light" ? "bg-white" : "bg-slate-900"
-            } p-4 rounded shadow-md overflow-x-auto h-[400px]`}
+            } p-4 rounded shadow-md overflow-x-auto h-[450px]`}
           >
             {!isLoading && (
               <Bar
@@ -883,190 +1073,173 @@ last4Years.forEach(year => {
             }  p-4 rounded shadow-md overflow-x-auto h-[450px]`}
           >
             {!isLoading && (
-              <Bar
-                data={chartmonthData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      display: true,
-                      labels: {
-                        color: theme === "light" ? "black" : "white",
-                      },
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: function (context) {
-                          return `KG: ${context.raw.toFixed(2)}`;
-                        },
-                      },
-                    },
-                    datalabels: {
-                      display: true,
-                      align: "end",
-                      anchor: "end",
-                      formatter: (value) => value.toFixed(2),
+              <Line
+              data={chartmonthData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: true,
+                    labels: {
                       color: theme === "light" ? "black" : "white",
-                      font: {
-                        weight: "normal",
+                    },
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        return `KG: ${context.raw.toFixed(2)}`;
                       },
                     },
                   },
-                  scales: {
-                    x: {
-                      title: {
-                        display: true,
-                        text: "month",
-                        color: theme === "light" ? "black" : "#94a3b8",
-                      },
-                      grid: {
-                        display: true,
-                        color: theme === "light" ? "#e5e7eb" : "#374151",
-                      },
-                      ticks: {
-                        color: theme === "light" ? "black" : "#94a3b8",
-                      },
-                      border: {
-                        color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                      },
-                    },
-                    y: {
-                      title: {
-                        display: true,
-                        text: "KG Count",
-                        color: theme === "light" ? "black" : "#94a3b8",
-                      },
-                      beginAtZero: true,
-                      color: theme === "light" ? "black" : "red",
-                      grid: {
-                        display: true,
-                        color: theme === "light" ? "#e5e7eb" : "#374151",
-                      },
-                      ticks: {
-                        color: theme === "light" ? "black" : "#94a3b8",
-                      },
-                      border: {
-                        color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                      },
+                  datalabels: {
+                    display: true,
+                    align: "end",
+                    anchor: "end",
+                    formatter: (value) => value.toFixed(2),
+                    color: theme === "light" ? "black" : "white",
+                    font: {
+                      weight: "normal",
                     },
                   },
-                }}
-                plugins={[ChartDataLabels]}
-              />
+                },
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+                      text: "Month",
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    grid: {
+                      display: true,
+                      color: theme === "light" ? "#e5e7eb" : "#374151",
+                    },
+                    ticks: {
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    border: {
+                      color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                    },
+                  },
+                  y: {
+                    title: {
+                      display: true,
+                      text: "KG Count",
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    beginAtZero: true,
+                    color: theme === "light" ? "black" : "red",
+                    grid: {
+                      display: true,
+                      color: theme === "light" ? "#e5e7eb" : "#374151",
+                    },
+                    ticks: {
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    border: {
+                      color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                    },
+                  },
+                },
+              }}
+              plugins={[ChartDataLabels]}
+            />
             )}
           </div>
 
           <div
             className={`order-3 col-span-1 ${
               theme === "light" ? "bg-white" : "bg-slate-900"
-            } p-4 rounded shadow-md overflow-x-auto h-[400px]`}
+            } p-4 rounded shadow-md overflow-x-auto h-[450px]`}
           >
             {!isLoading && (
-              <Pie
-                data={purityChartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
+               <Bar
+               data={purityChartData}
+               options={{
+                 responsive: true,
+                 maintainAspectRatio: false,
+                 plugins: {
+                   legend: {
                       display: true,
-                      labels: {
-                        color: theme === "light" ? "black" : "white",
-                        generateLabels: function (chart) {
-                          const data = chart.data;
-                          const totalWeight = data.datasets[0].data.reduce(
-                            (acc, curr) => acc + curr,
-                            0
-                          );
-
-                          return data.labels.map((label, index) => {
-                            const value = data.datasets[0].data[index];
-                            const percentage =
-                              totalWeight === 0
-                                ? 0
-                                : ((value / totalWeight) * 100).toFixed(2);
-                            const fontColor =
-                              theme === "light" ? "black" : "white";
-
-                            const isHidden =
-                              chart.getDatasetMeta(0).data[index].hidden;
-                            return {
-                              text: `${label} (${percentage}%)`,
-                              fillStyle:
-                                data.datasets[0].backgroundColor[index],
-                              strokeStyle: data.datasets[0].borderColor[index],
-                              lineWidth: 1,
-                              hidden: isHidden,
-                              index: index,
-                              fontColor: fontColor,
-                              fontStyle: isHidden ? "line-through" : "normal",
-                            };
-                          });
-                        },
-                      },
-                      onClick: function (e, legendItem, legend) {
-                        const index = legendItem.index;
-                        const ci = legend.chart;
-                        const meta = ci.getDatasetMeta(0);
-
-                        meta.data[index].hidden = !meta.data[index].hidden;
-                        ci.update();
-                      },
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: function (context) {
-                          const label = context.label || "";
-                          const value = context.raw.toFixed(2);
-
-                          const totalWeight =
-                            context.chart.data.datasets[0].data.reduce(
-                              (acc, curr) => acc + curr,
-                              0
-                            );
-
-                          if (totalWeight === 0) {
-                            return `${label}: ${value} KG (0%)`;
-                          }
-
-                          const percentage = (
-                            (context.raw / totalWeight) *
-                            100
-                          ).toFixed(2);
-
-                          return `${label}: ${value} KG (${percentage}%)`;
-                        },
-                      },
-                    },
-                    datalabels: {
-                      display: false,
-                    },
-                  },
-                }}
-                plugins={[ChartDataLabels]}
-              />
+                     labels: {
+                       color: theme === "light" ? "black" : "white",
+                     }
+                   },
+                   tooltip: {
+                     callbacks: {
+                       label: function (context) {
+                         return `KG: ${context.raw.toFixed(2)}`;
+                       },
+                     },
+                   },
+                   datalabels: {
+                     display: true,
+                     align: "end",
+                     anchor: "end",
+                     formatter: (value) => value.toFixed(2),
+                     color: theme === "light" ? "black" : "white",
+   
+                     font: {
+                       weight: "normal",
+                     },
+                   },
+                 },
+                 scales: {
+                   x: { title: { display: true, text: "Purity",
+                     color: theme === "light" ? "black" : "#94a3b8",
+                   },
+                   grid: {
+                     display: true,
+                     color: theme === "light" ? "#e5e7eb" : "#374151",
+                   },
+                   ticks: {
+                     color: theme === "light" ? "black" : "#94a3b8",
+                   },
+                   border: {
+                     color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                   },
+                 },
+                   y: {
+                     title: { display: true, text: "KG Count",
+                       color: theme === "light" ? "black" : "#94a3b8",
+                     },
+                     beginAtZero: true,
+                     grid: {
+                       display: true,
+                       color: theme === "light" ? "#e5e7eb" : "#374151",
+                     },
+                     ticks: {
+                       color: theme === "light" ? "black" : "#94a3b8",
+                     },
+                     border: {
+                       color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                     },
+                   },
+                 },
+               }}
+               plugins={[ChartDataLabels]}
+             />
             )}
           </div>
-
           <div
-            className={`order-4 col-span-1 ${
-              theme === "light" ? "bg-white" : "bg-slate-900"
-            }  p-4 rounded shadow-md  h-[450px]`}
-          >
-            <h2
-              className={`text-sm font-normal ${
-                theme === "light" ? "text-slate-800" : "text-slate-400"
-              }`}
+  className={`order-4 col-span-1 ${
+    theme === "light" ? "bg-white" : "bg-slate-900"
+  } p-4 rounded shadow-md 
+     h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] xl:h-[450px] 2xl:h-[450px]`} 
+>
+<h2
+    className={`text-sm font-normal ${
+      theme === "light" ? "text-slate-800" : "text-slate-400"
+    }`} 
             >
               Order Weight by Zone
             </h2>
-            <div className="w-full h-full">
+            
               <Bar
                 data={zoneChartData}
                 options={{
                   responsive: true,
-                  maintainAspectRatio: true,
+                  maintainAspectRatio: false,
                   plugins: {
                     datalabels: {
                       display: true,
@@ -1132,14 +1305,14 @@ last4Years.forEach(year => {
                 }}
                 plugins={[ChartDataLabels]}
               />
-            </div>
+            
           </div>
-
           <div
-            className={`order-4 col-span-1 ${
-              theme === "light" ? "bg-white" : "bg-slate-900"
-            }  p-4 rounded shadow-md  h-[450px]`}
-          >
+  className={`order-4 col-span-1 ${
+    theme === "light" ? "bg-white" : "bg-slate-900"
+  } p-4 rounded shadow-md 
+     h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] xl:h-[450px] 2xl:h-[500px]`} 
+>
             <h2
               className={`text-sm font-normal ${
                 theme === "light" ? "text-slate-800" : "text-slate-400"
@@ -1147,12 +1320,13 @@ last4Years.forEach(year => {
             >
               Product wise
             </h2>
-            <div className="w-full h-full">
+            
               <Bar
                 data={product}
                 options={{
                   responsive: true,
-                  maintainAspectRatio: true,
+                  maintainAspectRatio: false,
+                  indexAxis: "y",
                   plugins: {
                     datalabels: {
                       display: true,
@@ -1218,7 +1392,7 @@ last4Years.forEach(year => {
                 }}
                 plugins={[ChartDataLabels]}
               />
-            </div>
+            
           </div>
         </main>
       </div>
