@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import { useEffect } from "react";
 
 const CustomMultiSelect = ({
@@ -35,6 +34,14 @@ const CustomMultiSelect = ({
     }
   };
 
+  const handleSelectAll = () => {
+    setSelectedOptions(options);
+  };
+
+  const handleDeselectAll = () => {
+    setSelectedOptions([]);
+  };
+
   return (
     <div className={`relative custom-multi-select`}>
       {/* Dropdown Button */}
@@ -59,6 +66,23 @@ const CustomMultiSelect = ({
               : "bg-slate-900 text-gray-400 border-gray-600"
           }`}
         >
+          {/* Select All / Deselect All */}
+          <div className="flex flex-col p-2 border-b">
+            <button
+              onClick={handleSelectAll}
+              className="p-2 text-blue-500 hover:bg-gray-100 w-full text-left"
+            >
+              Select All
+            </button>
+            <button
+              onClick={handleDeselectAll}
+              className="p-2 text-red-500 hover:bg-gray-100 w-full text-left"
+            >
+              Deselect All
+            </button>
+          </div>
+
+          {/* Options */}
           {options.map((option) => (
             <div
               key={option}
@@ -79,5 +103,5 @@ const CustomMultiSelect = ({
     </div>
   );
 };
- 
+
 export default CustomMultiSelect;

@@ -969,108 +969,111 @@ function Order_rev() {
     </div>,
     <div className="" key="zone-wise-chart">
       <div
-        className={`order-2 col-span-1 ${
-          theme === "light" ? "bg-white" : "bg-slate-900"
-        } p-4 rounded shadow-md h-[700px] flex flex-col`}
-      >
-        <h2
-          className={`text-sm font-thin ${
-            theme === "light" ? "text-slate-800" : "text-slate-400"
-          }`}
-        >
-          Color Distribution
-        </h2>
-        <div className="flex-1 w-full h-full overflow-hidden">
-          <Pie
-            data={colorChartData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: true,
-              plugins: {
-                legend: {
-                  display: true,
-                  labels: {
-                    color: theme === "light" ? "black" : "white",
-                    generateLabels: function (chart) {
-                      const data = chart.data;
-                      if (
-                        !data ||
-                        !data.datasets ||
-                        !data.datasets[0] ||
-                        !data.datasets[0].data
-                      ) {
-                        return [];
-                      }
+  className={`order-2 col-span-1 ${
+    theme === "light" ? "bg-white" : "bg-slate-900"
+  } p-4 rounded shadow-md h-[700px] flex flex-col`}
+>
+  <h2
+    className={`text-sm font-thin ${
+      theme === "light" ? "text-slate-800" : "text-slate-400"
+    }`}
+  >
+    Color Distribution
+  </h2>
+  <div className="flex-1 w-full h-full overflow-hidden flex justify-center items-center">
+    <div className="w-[500px] h-[500px]">
+      <Pie
+        data={colorChartData}
+        options={{
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              labels: {
+                color: theme === "light" ? "black" : "white",
+                generateLabels: function (chart) {
+                  const data = chart.data;
+                  if (
+                    !data ||
+                    !data.datasets ||
+                    !data.datasets[0] ||
+                    !data.datasets[0].data
+                  ) {
+                    return [];
+                  }
 
-                      const totalWeight = data.datasets[0].data.reduce(
-                        (acc, curr) => acc + curr,
-                        0
-                      );
+                  const totalWeight = data.datasets[0].data.reduce(
+                    (acc, curr) => acc + curr,
+                    0
+                  );
 
-                      return data.labels.map((label, index) => {
-                        const value = data.datasets[0].data[index];
-                        const percentage =
-                          totalWeight === 0
-                            ? 0
-                            : ((value / totalWeight) * 100).toFixed(2);
-                        const fontColor = theme === "light" ? "black" : "white";
-                        const isHidden =
-                          chart.getDatasetMeta(0).data[index].hidden;
-                        return {
-                          text: `${label} (${percentage}%)`,
-                          fillStyle: data.datasets[0].backgroundColor[index],
-                          strokeStyle: data.datasets[0].borderColor[index],
-                          lineWidth: 1,
-                          hidden: isHidden,
-                          index: index,
-                          fontColor: fontColor,
-                          fontStyle: isHidden ? "line-through" : "normal",
-                        };
-                      });
-                    },
-                  },
-                  onClick: function (e, legendItem, legend) {
-                    const index = legendItem.index;
-                    const ci = legend.chart;
-                    const meta = ci.getDatasetMeta(0);
-
-                    meta.data[index].hidden = !meta.data[index].hidden;
-                    ci.update();
-                  },
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function (context) {
-                      const label = context.label || "";
-                      const value = context.raw.toFixed(2);
-                      const totalWeight =
-                        context.chart.data.datasets[0].data.reduce(
-                          (acc, curr) => acc + curr,
-                          0
-                        );
-
-                      if (totalWeight === 0) {
-                        return `${label}: ${value} KG (0%)`;
-                      }
-
-                      const percentage = (
-                        (context.raw / totalWeight) *
-                        100
-                      ).toFixed(2);
-
-                      return `${label}: ${value} KG (${percentage}%)`;
-                    },
-                  },
-                },
-                datalabels: {
-                  display: false,
+                  return data.labels.map((label, index) => {
+                    const value = data.datasets[0].data[index];
+                    const percentage =
+                      totalWeight === 0
+                        ? 0
+                        : ((value / totalWeight) * 100).toFixed(2);
+                    const fontColor = theme === "light" ? "black" : "white";
+                    const isHidden =
+                      chart.getDatasetMeta(0).data[index].hidden;
+                    return {
+                      text: `${label} (${percentage}%)`,
+                      fillStyle: data.datasets[0].backgroundColor[index],
+                      strokeStyle: data.datasets[0].borderColor[index],
+                      lineWidth: 1,
+                      hidden: isHidden,
+                      index: index,
+                      fontColor: fontColor,
+                      fontStyle: isHidden ? "line-through" : "normal",
+                    };
+                  });
                 },
               },
-            }}
-            plugins={[ChartDataLabels]}
-          />
-        </div>
-      </div>
+              onClick: function (e, legendItem, legend) {
+                const index = legendItem.index;
+                const ci = legend.chart;
+                const meta = ci.getDatasetMeta(0);
+
+                meta.data[index].hidden = !meta.data[index].hidden;
+                ci.update();
+              },
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  const label = context.label || "";
+                  const value = context.raw.toFixed(2);
+                  const totalWeight =
+                    context.chart.data.datasets[0].data.reduce(
+                      (acc, curr) => acc + curr,
+                      0
+                    );
+
+                  if (totalWeight === 0) {
+                    return `${label}: ${value} KG (0%)`;
+                  }
+
+                  const percentage = (
+                    (context.raw / totalWeight) *
+                    100
+                  ).toFixed(2);
+
+                  return `${label}: ${value} KG (${percentage}%)`;
+                },
+              },
+            },
+            datalabels: {
+              display: false,
+            },
+          },
+        }}
+        plugins={[ChartDataLabels]}
+      />
+    </div>
+  </div>
+</div>
+
     </div>,
     <div className="" key="color-wise-chart">
       <div
