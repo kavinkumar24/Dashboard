@@ -673,7 +673,11 @@ function Reject() {
           
             <div className="chart-container">
               {chartData4 ? (
-                <Bar data={chartData4}  />
+                <Bar data={chartData4}  
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                }}/>
               ) : (
                 <p>Loading chart data...</p>
               )}

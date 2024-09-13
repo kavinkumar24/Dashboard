@@ -28,7 +28,7 @@ function Order_rev() {
   const [allCharts, setAllCharts] = useState([]);
   const [selectedYear, setSelectedYear] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState([]);
-  
+
   const [selectedDate, setSelectedDate] = useState([]);
 
   const [activeIndex, setActiveIndex] = useState(null);
@@ -55,6 +55,10 @@ function Order_rev() {
     localStorage.setItem("theme", theme);
   }, [theme]);
   const [chartData, setChartData] = useState({
+    labels: [],
+    datasets: [],
+  });
+  const [chartmonthData, setChartmonthData] = useState({
     labels: [],
     datasets: [],
   });
@@ -196,13 +200,13 @@ function Order_rev() {
 
       return acc;
     }, {});
-
     return Object.entries(zoneData)
       .filter(([zone, grams]) => grams > 0)
       .map(([zone, grams]) => ({
         zone,
         kg: grams / 1000,
-      }));
+      }))
+      .sort((a, b) => b.kg - a.kg);
   };
 
   const [filter, setfilter] = useState(false);
@@ -416,6 +420,21 @@ function Order_rev() {
             },
           ],
         });
+
+        setChartmonthData({
+          labels: Object.keys(monthData),
+          datasets: [
+            {
+              label: "KG Count per month",
+              data: Object.values(monthData).map((value) => value / 1000),
+              backgroundColor: "rgba(240, 128, 128, 0.2)",
+
+              borderColor: "#ec5f5f",
+              borderWidth: 1,
+            },
+          ],
+        });
+
         const purityData = getPurityData(filteredData);
 
         setPurityChartData({
@@ -506,6 +525,9 @@ function Order_rev() {
                 "rgba(103, 58, 183, 0.7)",
                 "rgba(96, 125, 139, 0.7)",
               ],
+              borderColor: purityData.map((entry) =>
+                entry.color.replace("0.2", "1")
+              ),
 
               borderWidth: 1,
             },
@@ -564,11 +586,10 @@ function Order_rev() {
       .catch((error) => console.error("Error fetching data:", error));
   }, [theme, filter]);
 
-  
   const chartComponents = [
     <div className="" key="total-weight">
       <div
-        className={`order-2 col-span-1 ${
+        className={`order-1 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
         }  p-4 rounded shadow-md overflow-x-auto h-[450px]`}
       >
@@ -649,6 +670,90 @@ function Order_rev() {
         )}
       </div>
     </div>,
+    <div className="" key="total-weight-month">
+      <div
+        className={`order-1 col-span-1 ${
+          theme === "light" ? "bg-white" : "bg-slate-900"
+        }  p-4 rounded shadow-md overflow-x-auto h-[450px]`}
+      >
+        {!isLoading && (
+          <Bar
+            data={chartmonthData}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  display: true,
+
+                  labels: {
+                    color: theme === "light" ? "black" : "white",
+                  },
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      return `KG: ${context.raw.toFixed(2)}`;
+                    },
+                  },
+                },
+                datalabels: {
+                  display: true,
+                  align: "end",
+                  anchor: "end",
+                  formatter: (value) => value.toFixed(2),
+                  color: theme === "light" ? "black" : "white",
+
+                  font: {
+                    weight: "normal",
+                  },
+                },
+              },
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "Year",
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
+                },
+                y: {
+                  title: {
+                    display: true,
+                    text: "KG Count",
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  beginAtZero: true,
+                  color: theme === "light" ? "black" : "red",
+                  grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
+                },
+              },
+            }}
+            plugins={[ChartDataLabels]}
+          />
+        )}
+      </div>
+    </div>,
+
     <div className="" key="kg-per-year-chart">
       <div
         className={`order-2 col-span-1 ${
@@ -687,18 +792,35 @@ function Order_rev() {
                             totalWeight === 0
                               ? 0
                               : ((value / totalWeight) * 100).toFixed(2);
+                          const fontColor =
+                            theme === "light" ? "black" : "white";
+
+                          const isHidden =
+                            chart.getDatasetMeta(0).data[index].hidden;
+
                           return {
                             text: `${label} (${percentage}%)`,
                             fillStyle: data.datasets[0].backgroundColor[index],
                             strokeStyle: data.datasets[0].borderColor[index],
                             lineWidth: 1,
-                            hidden: false,
+                            hidden: isHidden,
                             index: index,
+                            fontColor: fontColor,
+                            fontStyle: isHidden ? "line-through" : "normal",
                           };
                         });
                       },
                     },
+                    onClick: function (e, legendItem, legend) {
+                      const index = legendItem.index;
+                      const ci = legend.chart;
+                      const meta = ci.getDatasetMeta(0);
+
+                      meta.data[index].hidden = !meta.data[index].hidden;
+                      ci.update();
+                    },
                   },
+
                   tooltip: {
                     callbacks: {
                       label: function (context) {
@@ -739,10 +861,10 @@ function Order_rev() {
       <div
         className={`order-2 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
-        }  p-4 rounded shadow-md  h-[450px]`}
+        }  p-4 rounded shadow-md   h-[450px]`}
       >
         <h2
-          className={`text-xl font-bold mb-4 mt-8 ${
+          className={`text-sm font-thin ${
             theme === "light" ? "text-slate-800" : "text-slate-400"
           }`}
         >
@@ -753,7 +875,7 @@ function Order_rev() {
             data={zoneChartData}
             options={{
               responsive: true,
-              maintainAspectRatio: true,
+              maintainAspectRatio: false,
               plugins: {
                 datalabels: {
                   display: true,
@@ -849,7 +971,7 @@ function Order_rev() {
       <div
         className={`order-2 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
-        } p-4 rounded shadow-md h-[450px] flex flex-col`}
+        } p-4 rounded shadow-md h-[700px] flex flex-col`}
       >
         <h2
           className={`text-sm font-thin ${
@@ -863,12 +985,57 @@ function Order_rev() {
             data={colorChartData}
             options={{
               responsive: true,
-              maintainAspectRatio: false,
+              maintainAspectRatio: true,
               plugins: {
                 legend: {
                   display: true,
                   labels: {
                     color: theme === "light" ? "black" : "white",
+                    generateLabels: function (chart) {
+                      const data = chart.data;
+                      if (
+                        !data ||
+                        !data.datasets ||
+                        !data.datasets[0] ||
+                        !data.datasets[0].data
+                      ) {
+                        return [];
+                      }
+
+                      const totalWeight = data.datasets[0].data.reduce(
+                        (acc, curr) => acc + curr,
+                        0
+                      );
+
+                      return data.labels.map((label, index) => {
+                        const value = data.datasets[0].data[index];
+                        const percentage =
+                          totalWeight === 0
+                            ? 0
+                            : ((value / totalWeight) * 100).toFixed(2);
+                        const fontColor = theme === "light" ? "black" : "white";
+                        const isHidden =
+                          chart.getDatasetMeta(0).data[index].hidden;
+                        return {
+                          text: `${label} (${percentage}%)`,
+                          fillStyle: data.datasets[0].backgroundColor[index],
+                          strokeStyle: data.datasets[0].borderColor[index],
+                          lineWidth: 1,
+                          hidden: isHidden,
+                          index: index,
+                          fontColor: fontColor,
+                          fontStyle: isHidden ? "line-through" : "normal",
+                        };
+                      });
+                    },
+                  },
+                  onClick: function (e, legendItem, legend) {
+                    const index = legendItem.index;
+                    const ci = legend.chart;
+                    const meta = ci.getDatasetMeta(0);
+
+                    meta.data[index].hidden = !meta.data[index].hidden;
+                    ci.update();
                   },
                 },
                 tooltip: {

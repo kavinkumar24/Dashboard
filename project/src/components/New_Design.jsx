@@ -111,12 +111,12 @@ function New_Design() {
 
 
   const convertWtToKg = (wt) => wt / 1000;
-  const getYearlyData = (data) => {
+  const getYearlyData = (data, filterYear = null) => {
     const yearlyData = data.reduce((acc, item) => {
       if (item["DD&month"]) {
         const year = new Date(item["DD&month"]).getFullYear();
         const wtKg = convertWtToKg(item.WT || 0);
-
+  
         if (!acc[year]) {
           acc[year] = 0;
         }
@@ -124,14 +124,38 @@ function New_Design() {
       }
       return acc;
     }, {});
-
-    return Object.entries(yearlyData)
-      .filter(([year, kg]) => kg > 0)
-      .map(([year, kg]) => ({
-        year,
-        kg,
-      }));
+  
+    if (filterYear) {
+      return Object.entries(yearlyData)
+        .filter(([year]) => year === filterYear)
+        .map(([year, kg]) => ({
+          year,
+          kg,
+        }));
+    }
+  
+    const sortedYears = Object.keys(yearlyData).sort((a, b) => b - a); 
+    const lastFourYears = sortedYears.slice(0, 4);
+    
+    const othersCount = Object.entries(yearlyData)
+      .filter(([year]) => !lastFourYears.includes(year))
+      .reduce((sum, [, kg]) => sum + kg, 0);
+  
+    const result = lastFourYears.map((year) => ({
+      year,
+      kg: yearlyData[year],
+    }));
+  
+    if (othersCount > 0) {
+      result.push({
+        year: "Others",
+        kg: othersCount,
+      });
+    }
+  
+    return result;
   };
+  
 
   const monthNames = [
     "January",
@@ -333,8 +357,28 @@ function New_Design() {
             {
               label: "KG Count per Year",
               data: getYearlyData(filteredData).map((entry) => entry.kg),
-              backgroundColor: "rgba(75, 192, 192, 0.2)",
-              borderColor: "rgba(75, 192, 192, 1)",
+              backgroundColor: [
+                "#ccebff",
+                "rgba(144, 238, 144, 0.2)",
+                "rgba(255, 182, 193, 0.2)",
+                "rgba(153, 102, 255, 0.2)",
+                "rgba(240, 128, 128, 0.2)",
+                "rgba(230, 230, 250, 0.2)",
+                "rgba(23, 162, 184, 0.7)",
+                "rgba(255, 99, 132, 0.7)",
+                "rgba(103, 58, 183, 0.7)",
+                "rgba(96, 125, 139, 0.7)",
+              ],
+              borderColor:[
+                "rgba(173, 216, 230, 1)",
+                "rgba(144, 238, 144, 1)",
+                "rgba(255, 182, 193, 1)",
+                "rgba(153, 102, 255, 1)",
+                "rgba(240, 128, 128, 1)",
+                "rgba(230, 230, 250, 1)",
+                "rgba(23, 162, 184, 1)",
+              ],
+
               borderWidth: 1,
             },
           ],
@@ -841,11 +885,11 @@ function New_Design() {
               theme === "light" ? "bg-white" : "bg-slate-900"
             }  p-4 rounded shadow-md  h-[450px]`}
           >
-            <h2
-              className={`text-xl font-bold mb-4 mt-8 ${
-                theme === "light" ? "text-slate-800" : "text-slate-400"
-              }`}
-            >
+             <h2
+          className={`text-sm font-normal ${
+            theme === "light" ? "text-slate-800" : "text-slate-400"
+          }`}
+        >
               Order Weight by Zone
             </h2>
             <div className="w-full h-full">
@@ -929,11 +973,11 @@ function New_Design() {
               theme === "light" ? "bg-white" : "bg-slate-900"
             }  p-4 rounded shadow-md  h-[450px]`}
           >
-            <h2
-              className={`text-xl font-bold mb-4 mt-8 ${
-                theme === "light" ? "text-slate-800" : "text-slate-400"
-              }`}
-            >
+         <h2
+          className={`text-sm font-normal ${
+            theme === "light" ? "text-slate-800" : "text-slate-400"
+          }`}
+        >
               Product wise
             </h2>
             <div className="w-full h-full">
