@@ -14,7 +14,7 @@ import Department_reject from './components/Department_reject';
 import Upload from './components/Uploads';
 import New_Design from './components/New_Design';
 import Demo from './components/Demo';
-
+import ZoneDetail from './components/Zonedetails';
 
 function App() {
 
@@ -35,6 +35,9 @@ function App() {
         <Route path = '/uploads' element={<Upload />} />
         <Route path = '/new_design' element={<New_Design />} />
         <Route path = '/demo' element={<Demo />} />
+        <Route path="/zone-detail/:zone" element={<ZoneDetail />} />
+
+
       </Routes>
       </div>
       

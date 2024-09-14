@@ -11,8 +11,10 @@ import ChartDataLabels from "chartjs-plugin-datalabels";
 import { IoFilterOutline } from "react-icons/io5";
 import CustomMultiSelect from "./Custom/Mutliselect";
 import { Doughnut } from "react-chartjs-2";
+import { useNavigate } from "react-router-dom";
 
 function Order_rev() {
+  const navigate = useNavigate();
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
@@ -135,8 +137,8 @@ function Order_rev() {
 
     setIsSelected_top15((prevState) => {
       const newTop15State = !prevState;
-      setIsloading_sort(true); // Trigger loading while sorting
-      return newTop15State; // Toggle the top 15 selection
+      setIsloading_sort(true); 
+      return newTop15State;
     });
 
   };
@@ -323,9 +325,9 @@ function Order_rev() {
   };
 
   
-  const [groupedData, setGroupedData] = useState([]); // For grouped data (sum by project/department)
+  const [groupedData, setGroupedData] = useState([]);
   const groupByProject = (data, isSorted = false) => {
-    console.log("isSorted value:", isSorted); // Verify the value of isSorted
+    console.log("isSorted value:", isSorted);
   
     // Group weights by project
     const grouped = data.reduce((acc, item) => {
@@ -333,15 +335,14 @@ function Order_rev() {
       if (!acc[project]) {
         acc[project] = [];
       }
-      acc[project].push(item.WT);  // Collect weights for each project
+      acc[project].push(item.WT); 
       return acc;
     }, {});
   
-    // Process grouped data to get the sum of top 15 weights
     const processedData = Object.keys(grouped).map(project => {
       const weights = grouped[project];
-      const top15Weights = [...weights].sort((a, b) => b - a).slice(0, 15); // Top 15 weights
-      const top15Sum = top15Weights.reduce((sum, weight) => sum + weight, 0); // Sum of top 15 weights
+      const top15Weights = [...weights].sort((a, b) => b - a).slice(0, 15); 
+      const top15Sum = top15Weights.reduce((sum, weight) => sum + weight, 0); 
       return {
         project,
         kg: top15Sum / 1000,
@@ -355,7 +356,6 @@ function Order_rev() {
 
   
   function groupBysubproduct_individual(data) {
-    // Group data by subproduct
     const grouped = data.reduce((acc, currentItem) => {
       const subproduct = currentItem.SUBPRODUCT;
       const weight = currentItem.WT;
@@ -367,7 +367,6 @@ function Order_rev() {
       return acc;
     }, {});
   
-    // Get top 15 subproducts by total weight
     const finalData = Object.keys(grouped).map(subproduct => {
       const weights = grouped[subproduct];
       const top15Weights = [...weights].sort((a, b) => b - a).slice(0, 15);
@@ -375,16 +374,15 @@ function Order_rev() {
       return { SUBPRODUCT: subproduct, WT: top15Sum };
     }).sort((a, b) => b.WT - a.WT).slice(0, 15);
   
-    // Return graph data for chart
     return {
-      labels: finalData.map(item => item.SUBPRODUCT), // X-axis labels (subproduct names)
+      labels: finalData.map(item => item.SUBPRODUCT), 
       datasets: [
         {
-          label: "Top 15 Subproducts by Weight",  // Dataset label
-          data: finalData.map(item => item.WT),  // Y-axis data (weights)
-          backgroundColor: "rgba(255, 159, 64, 0.2)",  // Bar color
-          borderColor: "rgba(255, 159, 64, 1)",  // Border color
-          borderWidth: 1  // Border width
+          label: "Top 15 Subproducts by Weight",  
+          data: finalData.map(item => item.WT), 
+          backgroundColor: "rgba(255, 159, 64, 0.2)",
+          borderColor: "rgba(255, 159, 64, 1)",  
+          borderWidth: 1  
         }
       ]
     };
@@ -442,7 +440,6 @@ function Order_rev() {
     datasets: [],
   });
   const getGroupPartyData = (data) => {
-    // Step 1: Group weights by 'Group party'
     const groupedData = data.reduce((acc, item) => {
       const groupParty = item["Group party"] || "Unknown";
       const weight = item.WT || 0;
@@ -455,17 +452,12 @@ function Order_rev() {
       return acc;
     }, {});
   
-    // Debug: Print grouped data
     console.log('Grouped Data:', groupedData);
   
-    // Step 2: Process each group to get the sum of top 15 weights
     const processedData = Object.entries(groupedData).map(([groupParty, weights]) => {
-      // Sort weights and get the top 15
       const top15Weights = weights.sort((a, b) => b - a).slice(0, 15);
-      // Calculate the sum of top 15 weights
       const top15Sum = top15Weights.reduce((sum, weight) => sum + weight, 0);
   
-      // Debug: Print top 15 weights and their sum
       console.log(`Group: ${groupParty}, Top 15 Weights:`, top15Weights, `Sum: ${top15Sum}`);
   
       return {
@@ -474,23 +466,20 @@ function Order_rev() {
       };
     });
   
-    // Step 3: Sort processed data and get the top 15 groups
     const top15Groups = processedData
-      .sort((a, b) => b.top15Sum - a.top15Sum) // Sort by top15Sum in descending order
-      .slice(0, 15); // Select top 15 groups
+      .sort((a, b) => b.top15Sum - a.top15Sum) 
+      .slice(0, 15); 
   
-    // Debug: Print top 15 groups
     console.log('Top 15 Groups:', top15Groups);
   
-    // Step 4: Format the top 15 data for the line chart
     return {
-      labels: top15Groups.map(({ groupParty }) => groupParty), // X-axis labels
+      labels: top15Groups.map(({ groupParty }) => groupParty), 
       datasets: [
         {
           label: 'Sum of Top 15 Weights',
-          data: top15Groups.map(({ top15Sum }) => top15Sum / 1000), // Convert grams to kilograms
+          data: top15Groups.map(({ top15Sum }) => top15Sum / 1000), 
           fill: false,
-          borderColor: '#4caf50', // Line color
+          borderColor: '#4caf50', 
           tension: 0.1,
         }
       ]
@@ -544,10 +533,8 @@ const[chartdata1,setChartData1]=useState({
 
   
   const calculateTop15WeightRanges = (data) => {
-    // Sort the data in descending order based on WT
     const sortedData = data.sort((a, b) => b.WT - a.WT);
     
-    // Get the top 15 items based on their weight
     const top15 = sortedData.slice(0, 15);
     
     return top15;
@@ -1170,6 +1157,14 @@ const[chartdata1,setChartData1]=useState({
             options={{
               responsive: true,
               maintainAspectRatio: false,
+              onClick: (event, elements) => {
+                if (elements.length > 0) {
+                  const elementIndex = elements[0].index;
+                  const clickedZone = zoneChartData.labels[elementIndex];
+                  navigate(`/zone-detail/${encodeURIComponent(clickedZone)}`);
+                }
+              }
+            ,
               plugins: {
                 datalabels: {
                   display: true,
