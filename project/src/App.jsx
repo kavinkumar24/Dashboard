@@ -13,6 +13,7 @@ import Skch_reject from './components/Skch_reject';
 import Department_reject from './components/Department_reject';
 import Upload from './components/Uploads';
 import New_Design from './components/New_Design';
+import Demo from './components/Demo';
 
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
         <Route path = '/rejections/dept_rejections' element={<Department_reject />} />
         <Route path = '/uploads' element={<Upload />} />
         <Route path = '/new_design' element={<New_Design />} />
+        <Route path = '/demo' element={<Demo />} />
       </Routes>
       </div>
       

@@ -63,6 +63,7 @@ function Reject() {
   const [endYear, setEndYear] = useState([]);
   const [endMonth, setEndMonth] = useState([]);
   const [endDay, setEndDay] = useState([]);
+  const[filter,setfilter]=useState(false)
 
   const handleStartYearChange = (e) => setStartYear(e.target.value);
   const handleStartMonthChange = (e) => setStartMonth(e.target.value);
@@ -186,7 +187,7 @@ function Reject() {
 
   useEffect(() => {
     fetchUploads();
-  }, []);
+  }, [filter]);
 
   const colors = [
     "rgba(153, 102, 255, 0.2)",
@@ -578,7 +579,7 @@ function Reject() {
   const handleApplyFilter = () => {
     const newStartDate = `${startYear}-${startMonth}-${startDay}`;
     const newEndDate = `${endYear}-${endMonth}-${endDay}`;
-  
+     setfilter(!filter)
     setStartDate(newStartDate);
     setEndDate(newEndDate);
   

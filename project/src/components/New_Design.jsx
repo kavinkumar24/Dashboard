@@ -36,6 +36,7 @@ function New_Design() {
   );
   const [orderData, setOrderData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
+  const[group_party,setgroup_party] = useState([]);
 
   const [isLoading, setIsLoading] = useState(true);
   const [years, setYears] = useState([]);
@@ -51,9 +52,11 @@ function New_Design() {
   const [activeIndex1, setActiveIndex1] = useState(null);
   const totalPages = Math.ceil(orderData.length / itemsPerPage);
 
+const [currentPage1, setCurrentPage1] = useState(1);
+
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = orderData.slice(startIndex, startIndex + itemsPerPage);
-  
+
   const handleCancelFilter = () => {
     setShowDatePickerModal(false);
   };
@@ -61,6 +64,21 @@ function New_Design() {
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
   };
+  
+  
+  const totalpages1 = Math.ceil(group_party.length / itemsPerPage);
+  
+  const handlePageChange1 = (page) => {
+    if (page >= 1 && page <= totalpages1) {
+      setCurrentPage1(page);
+    }
+  };
+  
+  // Pagination logic to slice the data for the current page
+  const indexOfLastItem = currentPage1 * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentdata1 = group_party.slice(indexOfFirstItem, indexOfLastItem);
+  
 
   const toggleAccordion = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
@@ -325,6 +343,7 @@ const filterByYear = (data, year) => {
       .then((response) => response.json())
       .then((data) => {
         setOrderData(data);  
+        // setgroup_party(data)
         const allYears = new Set();
         const allMonths = new Set();
         const allDates = new Set();
@@ -569,7 +588,8 @@ setChartmonthData({
 
         const uniquegroup_party = calculateTotalWeight(sortedData)
         const top25group_party = uniquegroup_party 
-        .sort((a,b)=>b["Group party"])
+        .sort((a,b)=>b["Group party"]-a["Group party"])
+        .slice(0,25);
         setgroup_party(top25group_party)
 
   
@@ -586,7 +606,8 @@ setChartmonthData({
 
   }, [theme, filter, currentYear]);
   
-const[group_party,setgroup_party] = useState([]);
+
+
   // const getMonthName = (index) => {
   //   const months = [
   //     "January", "February", "March", "April", "May", "June",
@@ -740,7 +761,7 @@ const[group_party,setgroup_party] = useState([]);
           } shadow-lg`}
         >
           <button
-            onClick={() => toggleAccordion(1)}
+            onClick={() => toggleAccordion1(1)}
             className="w-full flex justify-between items-center py-5"
           >
             <span
@@ -751,7 +772,7 @@ const[group_party,setgroup_party] = useState([]);
               Top <span className="text-red-500">25</span> Group party
             </span>
             <span className="text-slate-800 transition-transform duration-300">
-              {activeIndex === 1 ? (
+              {activeIndex1 === 1 ? (
                 <FiMinusCircle
                   className={`text-2xl ${
                     theme === "light" ? "text-gray-800" : "text-gray-300"
@@ -769,7 +790,7 @@ const[group_party,setgroup_party] = useState([]);
 
           <div
             className={`${
-              activeIndex === 1 ? "max-h-screen" : "max-h-0"
+              activeIndex1 === 1 ? "max-h-screen" : "max-h-0"
             } overflow-hidden transition-all duration-300 ease-in-out`}
           >
             <div
@@ -792,21 +813,21 @@ const[group_party,setgroup_party] = useState([]);
                       theme === "light" ? "bg-gray-200" : "bg-slate-700"
                     }`}
                   >
-                    <th className="p-2 border text-center">Group party</th>
-                    <th align="center" className="p-2 border text-center">
+                    <th className={`p-2 border ${theme==='light'?'border-gray-200':'border-gray-700'} text-center`}>Group party</th>
+                    <th align="center" className={`p-2 border ${theme==='light'?'border-gray-200':'border-gray-700'} text-center`}>
                       Project
                     </th>
-                    <th className="p-2 border text-center">Weight in grams</th>
+                    <th className={`p-2 border ${theme==='light'?'border-gray-200':'border-gray-700'} text-center`}>Weight in KG</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {group_party.map((item, index) => (
+                  {currentdata1.map((item, index) => (
                     <tr key={index}>
-                      <td className="p-2 border text-center">
+                      <td className={`p-2 border ${theme==='light'?'border-gray-200':'border-gray-700'} text-center`}>
                         {item["Group party"]}
                       </td>
-                      <td className="p-2 border text-center">{item.PROJECT}</td>
-                      <td className="p-2 border text-center">{item.WT}</td>
+                      <td className={`p-2 border ${theme==='light'?'border-gray-200':'border-gray-700'} text-center`}>{item.PROJECT}</td>
+                      <td className={`p-2 border ${theme==='light'?'border-gray-200':'border-gray-700'} text-center`}>{item.WT}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -819,22 +840,22 @@ const[group_party,setgroup_party] = useState([]);
                       ? "bg-gray-200 text-gray-800"
                       : "bg-slate-700 text-gray-300"
                   }`}
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
+                  onClick={() => handlePageChange1(currentPage1 - 1)}
+                  disabled={currentPage1 === 1}
                 >
                   Previous
                 </button>
-                {[...Array(totalPages)].map((_, pageIndex) => (
+                {[...Array(totalpages1)].map((_, pageIndex) => (
                   <button
                     key={pageIndex}
                     className={`mx-1 px-3 py-1 rounded ${
-                      currentPage === pageIndex + 1
+                      currentPage1 === pageIndex + 1
                         ? "bg-blue-500 text-white"
                         : theme === "light"
                         ? "bg-gray-200 text-gray-800"
                         : "bg-slate-700 text-gray-300"
                     }`}
-                    onClick={() => handlePageChange(pageIndex + 1)}
+                    onClick={() => handlePageChange1(pageIndex + 1)}
                   >
                     {pageIndex + 1}
                   </button>
@@ -845,8 +866,8 @@ const[group_party,setgroup_party] = useState([]);
                       ? "bg-gray-200 text-gray-800"
                       : "bg-slate-700 text-gray-300"
                   }`}
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
+                  onClick={() => handlePageChange1(currentPage1 + 1)}
+                  disabled={currentPage1 === totalpages1}
                 >
                   Next
                 </button>
