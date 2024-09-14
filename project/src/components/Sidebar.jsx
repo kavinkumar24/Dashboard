@@ -19,6 +19,8 @@ function Sidebar({ theme }) {
   const [activeSubTask, setActiveSubTask] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
 
+  const [role, setRole] = useState('');
+
   useEffect(() => {
     const path = location.pathname;
     if (path === '/') {
@@ -59,6 +61,13 @@ function Sidebar({ theme }) {
       setActive('uploads')
     }
   }, [location.pathname]);
+
+
+  useEffect(()=>{
+    const roles = localStorage.getItem('role')
+    setRole(roles);
+    console.log(role);
+  },[role])
 
   const handleNavigation = (path, name) => {
     if (name !== 'task') {
@@ -133,7 +142,7 @@ function Sidebar({ theme }) {
         </div>
         <nav className="mt-5">
         <nav className="mt-5">
-          <a
+        { role == 'admin' && <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('home')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
             onClick={() => handleNavigation('/', 'home')}
@@ -144,9 +153,9 @@ function Sidebar({ theme }) {
               </div>
               Home
             </div>
-          </a>
+          </a>}
 
-          <a
+          { role == 'admin' &&  <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('uploads')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
             onClick={() => handleNavigation('/uploads', '/uploads')}
@@ -157,9 +166,9 @@ function Sidebar({ theme }) {
               </div>
               Uploads
             </div>
-          </a>
+          </a>}
 
-          <a
+          { role == 'admin' &&  <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('projects')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
             onClick={() => handleNavigation('/projects', 'projects')}
@@ -170,8 +179,8 @@ function Sidebar({ theme }) {
               </div>
               Projects
             </div>
-          </a>
-          <a
+          </a>}
+          { role == 'admin' &&     <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('daily-report')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
             onClick={() => handleNavigation('/daily-report', 'daily-report')}
@@ -182,7 +191,7 @@ function Sidebar({ theme }) {
               </div>
               Pending Range
             </div>
-          </a>
+          </a>}
           <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('task')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
@@ -198,7 +207,7 @@ function Sidebar({ theme }) {
           
           {taskExpanded && (
             <div className="ml-8">
-              <a
+              { role == 'admin' && <a
                 href="#"
                 className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('create')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
                 onClick={() => handleNavigation('/task/create', 'task')}
@@ -209,7 +218,7 @@ function Sidebar({ theme }) {
                   </div>
                   Create
                 </div>
-              </a>
+              </a>}
               <a
                 href="#"
                 className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('view')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
@@ -225,7 +234,7 @@ function Sidebar({ theme }) {
             </div>
           )}
 
-          <a
+{ role == 'admin' &&  <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('rejections')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
             onClick={() => handleNavigation('/rejections', 'rejections')}
@@ -237,8 +246,8 @@ function Sidebar({ theme }) {
               Rejections
             </div>
           </a>
-
-          <a
+}
+{ role == 'admin' &&     <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('order_new_design')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
             onClick={() => handleNavigation('/order_receiving&new_design', '/order_receiving&new_design')}
@@ -249,10 +258,10 @@ function Sidebar({ theme }) {
               </div>
               Order Receive
             </div>
-          </a>
+          </a>}
 
 
-          <a
+          { role == 'admin' &&     <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('new_design')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
             onClick={() => handleNavigation('/new_design', '/new_design')}
@@ -263,9 +272,9 @@ function Sidebar({ theme }) {
               </div>
               New Design
             </div>
-          </a>
+          </a>}
 
-          <a
+          { role == 'admin' && <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('settings')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
             onClick={() => handleNavigation('/settings', 'settings')}
@@ -276,7 +285,7 @@ function Sidebar({ theme }) {
               </div>
               Settings
             </div>
-          </a>
+          </a>}
         </nav>
 
         </nav>

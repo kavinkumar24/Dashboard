@@ -47,7 +47,7 @@ function Uploads() {
           "Problem arised", "Problem - 1", "Problem arised -2", "COUNT", 
           "Operator Name/ID"
         ]);
-        setApi("http://localhost:5000/api/rejection/upload")
+        setApi("http://localhost:8081/api/rejection/upload")
 
       } else if (selectedFileType === "orderRece_newDesi") {
         setDetailedData([

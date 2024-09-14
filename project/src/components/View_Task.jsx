@@ -56,6 +56,17 @@ function ViewTasks() {
     }
   };
 
+  const getStatusClass = (status) => {
+    return `text-white px-3 py-1 rounded-full shadow-sm text-center w-24 ${
+      {
+        Inprogress: 'bg-yellow-500 hover:bg-yellow-600',
+        Completed: 'bg-green-500 hover:bg-green-600',
+      }[status] || 'bg-gray-400'
+    } transition duration-200 ease-in-out`;
+  };
+  
+  
+
   const escapeRegExp = (string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
@@ -101,7 +112,7 @@ function ViewTasks() {
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <Header onSearch={setSearch} theme={theme} dark={setTheme} />
-        <main className="flex-1 overflow-y-auto p-4 md:px-8 lg:px-12 max-w-full">
+        <main className="flex-1 overflow-y-auto p-4 md:px-8 lg:px-4 max-w-full">
           {error && <p className="text-red-500">{error}</p>}
 
           <div className="flex justify-between items-center mb-4">
@@ -116,48 +127,78 @@ function ViewTasks() {
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className={`min-w-full border rounded-lg ${theme === 'light' ? 'border-gray-300 bg-white' : 'border-gray-600 bg-slate-500'}`}>
-              <thead>
-                <tr>
-                  {['ID', 'Ax Brief', 'Collection Name', 'Project', 'Quantity', 'Assign Date', 'Target Date', 'Priority'].map((header, index) => (
-                    <th key={index} className={`px-4 py-2 text-left ${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-700 text-gray-300'}`}>
-                      {header}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTasks.map((task, index) => (
-                  <tr
-                    key={`${task.id}-${index}`}
-                    className={`border-solid border-t text-sm ${
-                      theme === "light"
-                        ? index % 2 === 0
-                          ? "bg-gray-200 text-gray-700 border-slate-200"
-                          : "bg-white text-gray-700 border-slate-100"
-                        : index % 2 === 0
-                        ? "bg-gray-800 text-gray-300 border-slate-900"
-                        : "bg-gray-900 text-gray-300 border-gray-800"
-                    }`}
-                  >
-                    <td className="px-6 py-4">{task.id}</td>
-                    <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.ax_brief}</td>
-                    <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.collection_name}</td>
-                    <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.project}</td>
-                    <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{task.no_of_qty}</td>
-                    <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{formatDate(task.assign_date)}</td>
-                    <td className="px-4 py-2 whitespace-nowrap overflow-hidden">{formatDate(task.target_date)}</td>
-                    <td className="px-4 py-2">
-                      <span className={getPriorityClass(task.priority)}>
-                        {task.priority}
-                      </span>
-                    </td>
+          <div className="border rounded-lg border-gray-300 bg-white shadow-lg">
+            <h1 className="text-xl font-semibold p-2 pl-10 py-5">Task List</h1>
+
+            <div className="overflow-x-auto">
+              <table className="min-w-full table-auto text-sm">
+                <thead>
+                  <tr className="bg-gray-300 text-gray-700">
+                    {['ID', 'Ax Brief', 'Collection Name', 'Project', 'Quantity', 'Assign Date', 'Target Date', 'Priority', 'Status','View'].map((header, index) => (
+                      <th key={index} className="px-6 py-3 text-center font-semibold text-base">
+                        {header}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredTasks.map((task, index) => (
+                    <tr
+                      key={`${task.id}-${index}`}
+                      className="bg-white even:bg-gray-50 hover:bg-gray-200 transition-colors duration-200"
+                    >
+                      <td className="px-6 py-6 text-center whitespace-nowrap text-base">{task.id}</td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.ax_brief}</td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.collection_name}</td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.project}</td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.no_of_qty}</td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{formatDate(task.assign_date)}</td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{formatDate(task.target_date)}</td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        <span className={getPriorityClass(task.priority)}>{task.priority}</span>
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        <span className={getStatusClass("Completed")}>{"Completed"}</span>
+                      </td>
+                      <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                        <button  className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
+                          theme === "light"
+                            ? "bg-blue-500 hover:bg-blue-700"
+                            : "bg-blue-600 hover:bg-blue-800"
+                        }`} 
+                        // onClick={() => handleTableClick(skch, overAllData, "Sketch")} disabled={!overAllData} 
+                        > View </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* <div className="flex justify-center space-x-2 m-4">
+              <button
+                className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+              
+              <button className="text-base px-5 py-3 rounded-lg border bg-gray-300">
+                {currentPage}
+              </button>
+              
+              <button
+                className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage === totalPages ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+            </div> */}
           </div>
+
+
         </main>
       </div>
     </div>
