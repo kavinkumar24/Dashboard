@@ -7,6 +7,18 @@
   display: none;
 }
 
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 0; /* For WebKit browsers (Chrome, Safari) */
+}
+
+.custom-scrollbar {
+  -ms-overflow-style: none;  /* For Internet Explorer and Edge */
+  scrollbar-width: none;     /* For Firefox */
+}
+
+
+
 .eb-garamond-normal {
   font-family: "EB Garamond", serif;
   font-optical-sizing: auto;

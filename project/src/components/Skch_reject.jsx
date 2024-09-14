@@ -4,6 +4,8 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import axios from "axios";
 import { Bar, Pie } from "react-chartjs-2";
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -19,7 +21,6 @@ import {
 
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
-// Register Chart.js components and plugin once
 ChartJS.register(
   CategoryScale,
   LinearScale,

@@ -10,7 +10,25 @@ import { FiMinusCircle } from "react-icons/fi";
 import CustomMultiSelect from "./Custom/Mutliselect";
 import { IoFilterOutline } from "react-icons/io5";
 import { Pie } from "react-chartjs-2";
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Tooltip,
+  Legend,
+} from 'chart.js';
 
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Tooltip,
+  Legend
+);
 function New_Design() {
   const [search, setSearch] = useState("");
   const [theme, setTheme] = useState(
@@ -35,7 +53,7 @@ function New_Design() {
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentData = orderData.slice(startIndex, startIndex + itemsPerPage);
-
+  
   const handleCancelFilter = () => {
     setShowDatePickerModal(false);
   };
@@ -57,11 +75,9 @@ function New_Design() {
     setOpenDropdown(openDropdown === dropdownType ? null : dropdownType);
   };
 
-
   const handleFilter = () => {
     setIsLoading(true);
     setShowDatePickerModal(false);
-
     setfilter(!filter);
   };
 
@@ -72,6 +88,11 @@ function New_Design() {
     labels: [],
     datasets: [],
   });
+  const [chartmonthData, setChartmonthData] = useState({
+    labels: [],
+    datasets: [],
+  });
+
   const [purityChartData, setPurityChartData] = useState({
     labels: [],
     datasets: [],
@@ -109,9 +130,8 @@ function New_Design() {
     setShowDatePickerModal(true);
   };
 
-
   const convertWtToKg = (wt) => wt / 1000;
-  const getYearlyData = (data) => {
+  const getYearlyData = (data, filterYear = null) => {
     const yearlyData = data.reduce((acc, item) => {
       if (item["DD&month"]) {
         const year = new Date(item["DD&month"]).getFullYear();
@@ -125,12 +145,35 @@ function New_Design() {
       return acc;
     }, {});
 
-    return Object.entries(yearlyData)
-      .filter(([year, kg]) => kg > 0)
-      .map(([year, kg]) => ({
-        year,
-        kg,
-      }));
+    if (filterYear) {
+      return Object.entries(yearlyData)
+        .filter(([year]) => year === filterYear)
+        .map(([year, kg]) => ({
+          year,
+          kg,
+        }));
+    }
+
+    const sortedYears = Object.keys(yearlyData).sort((a, b) => b - a);
+    const lastFourYears = sortedYears.slice(0, 4);
+
+    const othersCount = Object.entries(yearlyData)
+      .filter(([year]) => !lastFourYears.includes(year))
+      .reduce((sum, [, kg]) => sum + kg, 0);
+
+    const result = lastFourYears.map((year) => ({
+      year,
+      kg: yearlyData[year],
+    }));
+
+    if (othersCount > 0) {
+      result.push({
+        year: "Others",
+        kg: othersCount,
+      });
+    }
+
+    return result;
   };
 
   const monthNames = [
@@ -165,6 +208,8 @@ function New_Design() {
 
     return Array.from(orderWeightMap.values());
   };
+ 
+
 
   const getPurityData = (data) => {
     const purityData = data.reduce((acc, item) => {
@@ -180,14 +225,14 @@ function New_Design() {
     }, {});
 
     const colors = [
-      "rgba(0, 123, 255, 0.7)",
-      "rgba(40, 167, 69, 0.7)",
-      "rgba(255, 193, 7, 0.7)",
-      "rgba(220, 53, 69, 0.7)",
-      "rgba(255, 87, 34, 0.7)",
-      "rgba(156, 39, 176, 0.7)",
-      "rgba(23, 162, 184, 0.7)",
-      "rgba(255, 99, 132, 0.7)",
+      "rgba(221, 160, 221, 0.2)",
+      "rgba(250, 128, 114, 0.2)",
+    "rgba(240, 230, 140, 0.2)",  
+    "rgba(175, 238, 238, 0.2)",  
+    "rgba(255, 228, 196, 0.2)",  
+    "rgba(224, 255, 255, 0.2)",  
+    "rgba(238, 130, 238, 0.2)",  
+    "rgba(245, 222, 179, 0.2)", 
       "rgba(103, 58, 183, 0.7)",
       "rgba(96, 125, 139, 0.7)",
     ];
@@ -240,7 +285,8 @@ function New_Design() {
       .map(([zone, grams]) => ({
         zone,
         kg: grams / 1000,
-      }));
+      }))
+      .sort((a, b) => b.kg - a.kg);
   };
 
   const getProduct = (data) => {
@@ -263,20 +309,26 @@ function New_Design() {
         kg: grams / 1000,
       }));
   };
+const currentYear = new Date().getFullYear();
+const last4Years = Array.from({ length: 4 }, (_, i) => currentYear - i);
 
 
-  
+useEffect(() => {
+  setFilteredData(filterByYear(orderData, selectedYear));
+}, [selectedYear, orderData]);
+
+const filterByYear = (data, year) => {
+  return data.filter(item => item.Dyr === year);
+};  
   useEffect(() => {
     fetch("http://localhost:8081/order_receive&new_design")
       .then((response) => response.json())
       .then((data) => {
-        setOrderData(data);
-        setIsLoading(false);
-
+        setOrderData(data);  
         const allYears = new Set();
         const allMonths = new Set();
         const allDates = new Set();
-
+  
         data.forEach((item) => {
           if (item["DD&month"]) {
             const date = new Date(item["DD&month"]);
@@ -285,28 +337,29 @@ function New_Design() {
             allDates.add(date.getDate());
           }
         });
-
+        setIsLoading(false);
+  
         setYears(Array.from(allYears).sort((a, b) => b - a));
         setMonths(Array.from(allMonths).sort((a, b) => a - b));
         setDates(Array.from(allDates).sort((a, b) => a - b));
+  
         const filteredData = data.filter((item) => {
           const itemDate = new Date(item["DD&month"]);
-        
           const itemYear = itemDate.getFullYear();
-          const itemMonth = itemDate.getMonth() + 1; 
-        
+          const itemMonth = itemDate.getMonth() + 1;
           const yearMatch = !selectedYear.length || selectedYear.includes(itemYear);
           const monthMatch = !selectedMonth.length || selectedMonth.includes(itemMonth);
         
           return yearMatch && monthMatch;
         });
         
-
-        const totalWeightFromAPI =
-          filteredData.reduce((total, item) => total + (item.WT || 0), 0) /
-          1000;
+        console.log("Filtered Data:", filteredData);
+        
+  
+        const totalWeightFromAPI = filteredData.reduce((total, item) => total + (item.WT || 0), 0) / 1000;
         setTotalWeight(totalWeightFromAPI);
-
+       
+  
         const monthData = filteredData.reduce((acc, item) => {
           const date = new Date(item["DD&month"]);
           const year = date.getFullYear();
@@ -316,32 +369,143 @@ function New_Design() {
           acc[yearMonth] += item.WT || 0;
           return acc;
         }, {});
-
+  
         const yearlyData = filteredData.reduce((acc, item) => {
           const year = new Date(item["DD&month"]).getFullYear();
           if (!acc[year]) acc[year] = 0;
           acc[year] += item.WT || 0;
           return acc;
         }, {});
-
+  
         setYearlyData(yearlyData);
         setMonthlyData(monthData);
-
+  
         setChartData({
           labels: getYearlyData(filteredData).map((entry) => entry.year),
           datasets: [
             {
               label: "KG Count per Year",
               data: getYearlyData(filteredData).map((entry) => entry.kg),
-              backgroundColor: "rgba(75, 192, 192, 0.2)",
-              borderColor: "rgba(75, 192, 192, 1)",
+              backgroundColor: [
+                "rgba(75, 192, 192, 0.2)",
+                "rgba(144, 238, 144, 0.2)",
+                "rgba(255, 182, 193, 0.2)",
+                "rgba(153, 102, 255, 0.2)",
+                "rgba(240, 128, 128, 0.2)",
+                "rgba(230, 230, 250, 0.2)",
+                "rgba(23, 162, 184, 0.7)",
+                "rgba(255, 99, 132, 0.7)",
+                "rgba(103, 58, 183, 0.7)",
+                "rgba(96, 125, 139, 0.7)",
+              ],
+              borderColor: [
+                "#215e5e",
+                "rgba(144, 238, 144, 1)",
+                "rgba(255, 182, 193, 1)",
+                "rgba(153, 102, 255, 1)",
+                "rgba(240, 128, 128, 1)",
+                "rgba(230, 230, 250, 1)",
+                "rgba(23, 162, 184, 1)",
+              ],
               borderWidth: 1,
             },
           ],
         });
+        const latestYear = data.reduce((latest, item) => {
+          const itemYear = new Date(item["DD&month"]).getFullYear();
+          return itemYear > latest ? itemYear : latest;
+        }, 0);
+        
+        console.log("Latest Year:", latestYear);
+        const monthData1 = filteredData.reduce((acc, item) => {
+          const date = new Date(item["DD&month"]);
+          const year = date.getFullYear();
+          const monthIndex = date.getMonth();
+          const monthName = getMonthName(monthIndex);
+        
+          if (last4Years.includes(year)) {
+            const yearMonth = `${year}, ${monthName}`;
+            if (!acc[yearMonth]) acc[yearMonth] = 0;
+            acc[yearMonth] += item.WT || 0;
+          }
+        
+          return acc;
+        }, {});
+        
+        let yearsToDisplay = [];
+        
+        if (selectedYear.length === 0) {
+          yearsToDisplay =[ Math.max(...last4Years)]; 
+        } else {
+          yearsToDisplay = selectedYear; 
+        }
+        
+        const selectedYearsData = {};
+        const otherYearsData = {};
+        
+        for (const key in monthData1) {
+          const [year] = key.split(', ');   
+        
+          if (yearsToDisplay.includes(parseInt(year))) {
+            selectedYearsData[key] = monthData1[key];
+          } else {
+            otherYearsData[key] = monthData1[key];
+          }
+        }
+        
+        const monthOrder = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+        
+        const sortedSelectedYearsData = Object.keys(selectedYearsData)
+          .sort((a, b) => {
+            const [, monthA] = a.split(', '); 
+            const [, monthB] = b.split(', ');
+            return monthOrder.indexOf(monthA) - monthOrder.indexOf(monthB); 
+          })
+          .reduce((acc, key) => {
+            acc[key] = selectedYearsData[key];
+            return acc;
+          }, {});
+        
+        const initialDisplayData = { ...sortedSelectedYearsData };
+        
+        console.log("Initial Display Data (Selected Years):", initialDisplayData);
+        
+        const sortedMonthData = {
+          ...sortedSelectedYearsData,
+          ...otherYearsData,
+        };
+        
+        console.log("Sorted Month Data:", sortedMonthData);
+        
+        const allMonthData = {};
+        
+        last4Years.forEach((year) => {
+          monthOrder.forEach((month) => {
+            allMonthData[`${year}, ${month}`] = monthData1[`${year}, ${month}`] || 0;
+          });
+        });
+        
+        console.log("All Month Data:", allMonthData);
+        
 
+setChartmonthData({
+  labels: Object.keys(initialDisplayData), 
+  datasets: [
+    {
+      label: "KG Count per month",
+      data: Object.values(initialDisplayData).map((value) => value / 1000),
+      backgroundColor: "rgba(240, 128, 128, 0.2)",
+      borderColor: "#ec5f5f",
+      borderWidth: 1,
+    },
+  ],
+});
+
+        
+        
+  
         const purityData = getPurityData(filteredData);
-
+  
         setPurityChartData({
           labels: purityData.map((entry) => entry.purity),
           datasets: [
@@ -356,7 +520,7 @@ function New_Design() {
             },
           ],
         });
-
+  
         setTypeChartData({
           labels: getTypeData(filteredData).map((entry) => entry.type),
           datasets: [
@@ -369,7 +533,7 @@ function New_Design() {
             },
           ],
         });
-
+  
         setZoneChartData({
           labels: getZoneData(filteredData).map((entry) => entry.zone),
           datasets: [
@@ -382,7 +546,7 @@ function New_Design() {
             },
           ],
         });
-        
+  
         setProduct({
           labels: getProduct(filteredData).map((entry) => entry.product),
           datasets: [
@@ -395,7 +559,7 @@ function New_Design() {
             },
           ],
         });
-
+  
         const sortedData = filteredData.sort((a, b) => b.WT - a.WT);
         const uniqueOrdersByWeight = calculateTotalWeight(sortedData);
         const top25Orders = uniqueOrdersByWeight
@@ -403,6 +567,12 @@ function New_Design() {
           .slice(0, 25);
         setOrderData(top25Orders);
 
+        const uniquegroup_party = calculateTotalWeight(sortedData)
+        const top25group_party = uniquegroup_party 
+        .sort((a,b)=>b["Group party"])
+        setgroup_party(top25group_party)
+
+  
         setAllCharts([
           chartData,
           purityChartData,
@@ -413,7 +583,17 @@ function New_Design() {
         console.log("Filtered Data:", filteredData);
       })
       .catch((error) => console.error("Error fetching data:", error));
-  }, [theme, filter]);
+
+  }, [theme, filter, currentYear]);
+  
+const[group_party,setgroup_party] = useState([]);
+  // const getMonthName = (index) => {
+  //   const months = [
+  //     "January", "February", "March", "April", "May", "June",
+  //     "July", "August", "September", "October", "November", "December"
+  //   ];
+  //   return months[index];
+  // };
 
   return (
     <div
@@ -493,7 +673,6 @@ function New_Design() {
           </button>
         </div>
 
-
         {showDatePickerModal && (
           <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
             <div
@@ -529,7 +708,6 @@ function New_Design() {
                   onToggle={() => handleDropdownToggle("month")}
                   onClose={() => setOpenDropdown(null)}
                 />
-               
               </div>
               <div className="flex justify-between mt-4">
                 <button
@@ -553,10 +731,130 @@ function New_Design() {
             </div>
           </div>
         )}
-        
 
+<div
+          className={`m-6 px-10 border rounded-lg ${
+            theme === "light"
+              ? "bg-white border-gray-300"
+              : "bg-slate-900 border-zinc-800"
+          } shadow-lg`}
+        >
+          <button
+            onClick={() => toggleAccordion(1)}
+            className="w-full flex justify-between items-center py-5"
+          >
+            <span
+              className={`text-lg font-semibold ${
+                theme === "light" ? "text-slate-800" : "text-slate-300"
+              }`}
+            >
+              Top <span className="text-red-500">25</span> Group party
+            </span>
+            <span className="text-slate-800 transition-transform duration-300">
+              {activeIndex === 1 ? (
+                <FiMinusCircle
+                  className={`text-2xl ${
+                    theme === "light" ? "text-gray-800" : "text-gray-300"
+                  }`}
+                />
+              ) : (
+                <IoIosAddCircleOutline
+                  className={`text-2xl ${
+                    theme === "light" ? "text-gray-800" : "text-gray-300"
+                  }`}
+                />
+              )}
+            </span>
+          </button>
 
-        
+          <div
+            className={`${
+              activeIndex === 1 ? "max-h-screen" : "max-h-0"
+            } overflow-hidden transition-all duration-300 ease-in-out`}
+          >
+            <div
+              className={`m-6 border rounded-lg ${
+                theme === "light"
+                  ? "border-gray-300 bg-white"
+                  : "border-slate-700 bg-slate-800"
+              } shadow-lg`}
+            >
+              <table
+                className={`w-full text-left table-auto text-sm ${
+                  theme === "light"
+                    ? "bg-white text-gray-800"
+                    : "bg-slate-800 text-gray-300"
+                }`}
+              >
+                <thead>
+                  <tr
+                    className={`${
+                      theme === "light" ? "bg-gray-200" : "bg-slate-700"
+                    }`}
+                  >
+                    <th className="p-2 border text-center">Group party</th>
+                    <th align="center" className="p-2 border text-center">
+                      Project
+                    </th>
+                    <th className="p-2 border text-center">Weight in grams</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {group_party.map((item, index) => (
+                    <tr key={index}>
+                      <td className="p-2 border text-center">
+                        {item["Group party"]}
+                      </td>
+                      <td className="p-2 border text-center">{item.PROJECT}</td>
+                      <td className="p-2 border text-center">{item.WT}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="flex justify-center mt-4 mb-4">
+                <button
+                  className={`mx-1 px-3 py-1 rounded ${
+                    theme === "light"
+                      ? "bg-gray-200 text-gray-800"
+                      : "bg-slate-700 text-gray-300"
+                  }`}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </button>
+                {[...Array(totalPages)].map((_, pageIndex) => (
+                  <button
+                    key={pageIndex}
+                    className={`mx-1 px-3 py-1 rounded ${
+                      currentPage === pageIndex + 1
+                        ? "bg-blue-500 text-white"
+                        : theme === "light"
+                        ? "bg-gray-200 text-gray-800"
+                        : "bg-slate-700 text-gray-300"
+                    }`}
+                    onClick={() => handlePageChange(pageIndex + 1)}
+                  >
+                    {pageIndex + 1}
+                  </button>
+                ))}
+                <button
+                  className={`mx-1 px-3 py-1 rounded ${
+                    theme === "light"
+                      ? "bg-gray-200 text-gray-800"
+                      : "bg-slate-700 text-gray-300"
+                  }`}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div
           className={`m-6 px-10 border rounded-lg ${
             theme === "light"
@@ -627,7 +925,9 @@ function New_Design() {
                 <tbody>
                   {currentData.map((item, index) => (
                     <tr key={index}>
-                      <td className="p-2 border text-center">{item["PHOTO NO 2"]}</td>
+                      <td className="p-2 border text-center">
+                        {item["PHOTO NO 2"]}
+                      </td>
                       <td className="p-2 border text-center">{item.PROJECT}</td>
                       <td className="p-2 border text-center">{item.WT}</td>
                     </tr>
@@ -679,7 +979,7 @@ function New_Design() {
         </div>
 
         <main className="flex-1 p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {isLoading && (
+          {isLoading && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
               <div className="flex gap-2 ml-40">
                 <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
@@ -691,7 +991,7 @@ function New_Design() {
           <div
             className={`order-2 col-span-1 ${
               theme === "light" ? "bg-white" : "bg-slate-900"
-            } p-4 rounded shadow-md overflow-x-auto h-[400px]`}
+            } p-4 rounded shadow-md overflow-x-auto h-[450px]`}
           >
             {!isLoading && (
               <Bar
@@ -768,92 +1068,178 @@ function New_Design() {
           </div>
 
           <div
-            className={`order-3 col-span-1 ${
+            className={`order-1 col-span-1 ${
               theme === "light" ? "bg-white" : "bg-slate-900"
-            } p-4 rounded shadow-md overflow-x-auto h-[400px]`}
+            }  p-4 rounded shadow-md overflow-x-auto h-[450px]`}
           >
             {!isLoading && (
-                <Pie
-                data={purityChartData}
-                options={{
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      display: true,
-                      labels: {
-                        color: theme === "light" ? "black" : "white",
-                        generateLabels: function (chart) {
-                          const data = chart.data;
-                          const totalWeight = data.datasets[0].data.reduce(
-                            (acc, curr) => acc + curr,
-                            0
-                          );
-              
-                          return data.labels.map((label, index) => {
-                            const value = data.datasets[0].data[index];
-                            const percentage = totalWeight === 0 ? 0 : ((value / totalWeight) * 100).toFixed(2);
-                            return {
-                              text: `${label} (${percentage}%)`,
-                              fillStyle: data.datasets[0].backgroundColor[index],
-                              strokeStyle: data.datasets[0].borderColor[index],
-                              lineWidth: 1,
-                              hidden: false,
-                              index: index
-                            };
-                          });
-                        }
-                      },
-                    },
-                    tooltip: {
-                      callbacks: {
-                        label: function (context) {
-                          const label = context.label || '';
-                          const value = context.raw.toFixed(2);
-              
-                          const totalWeight = context.chart.data.datasets[0].data.reduce(
-                            (acc, curr) => acc + curr,
-                            0
-                          );
-              
-                          if (totalWeight === 0) {
-                            return `${label}: ${value} KG (0%)`;
-                          }
-              
-                          const percentage = ((context.raw / totalWeight) * 100).toFixed(2);
-              
-                          return `${label}: ${value} KG (${percentage}%)`;
-                        },
-                      },
-                    },
-                    datalabels: {
-                      display: false,
+              <Line
+              data={chartmonthData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: true,
+                    labels: {
+                      color: theme === "light" ? "black" : "white",
                     },
                   },
-                }}
-                plugins={[ChartDataLabels]}
-              />
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        return `KG: ${context.raw.toFixed(2)}`;
+                      },
+                    },
+                  },
+                  datalabels: {
+                    display: true,
+                    align: "end",
+                    anchor: "end",
+                    formatter: (value) => value.toFixed(2),
+                    color: theme === "light" ? "black" : "white",
+                    font: {
+                      weight: "normal",
+                    },
+                  },
+                },
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+                      text: "Month",
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    grid: {
+                      display: true,
+                      color: theme === "light" ? "#e5e7eb" : "#374151",
+                    },
+                    ticks: {
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    border: {
+                      color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                    },
+                  },
+                  y: {
+                    title: {
+                      display: true,
+                      text: "KG Count",
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    beginAtZero: true,
+                    color: theme === "light" ? "black" : "red",
+                    grid: {
+                      display: true,
+                      color: theme === "light" ? "#e5e7eb" : "#374151",
+                    },
+                    ticks: {
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    border: {
+                      color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                    },
+                  },
+                },
+              }}
+              plugins={[ChartDataLabels]}
+            />
             )}
           </div>
 
           <div
-            className={`order-4 col-span-1 ${
+            className={`order-3 col-span-1 ${
               theme === "light" ? "bg-white" : "bg-slate-900"
-            }  p-4 rounded shadow-md  h-[450px]`}
+            } p-4 rounded shadow-md overflow-x-auto h-[450px]`}
           >
-            <h2
-              className={`text-xl font-bold mb-4 mt-8 ${
-                theme === "light" ? "text-slate-800" : "text-slate-400"
-              }`}
+            {!isLoading && (
+               <Bar
+               data={purityChartData}
+               options={{
+                 responsive: true,
+                 maintainAspectRatio: false,
+                 plugins: {
+                   legend: {
+                      display: true,
+                     labels: {
+                       color: theme === "light" ? "black" : "white",
+                     }
+                   },
+                   tooltip: {
+                     callbacks: {
+                       label: function (context) {
+                         return `KG: ${context.raw.toFixed(2)}`;
+                       },
+                     },
+                   },
+                   datalabels: {
+                     display: true,
+                     align: "end",
+                     anchor: "end",
+                     formatter: (value) => value.toFixed(2),
+                     color: theme === "light" ? "black" : "white",
+   
+                     font: {
+                       weight: "normal",
+                     },
+                   },
+                 },
+                 scales: {
+                   x: { title: { display: true, text: "Purity",
+                     color: theme === "light" ? "black" : "#94a3b8",
+                   },
+                   grid: {
+                     display: true,
+                     color: theme === "light" ? "#e5e7eb" : "#374151",
+                   },
+                   ticks: {
+                     color: theme === "light" ? "black" : "#94a3b8",
+                   },
+                   border: {
+                     color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                   },
+                 },
+                   y: {
+                     title: { display: true, text: "KG Count",
+                       color: theme === "light" ? "black" : "#94a3b8",
+                     },
+                     beginAtZero: true,
+                     grid: {
+                       display: true,
+                       color: theme === "light" ? "#e5e7eb" : "#374151",
+                     },
+                     ticks: {
+                       color: theme === "light" ? "black" : "#94a3b8",
+                     },
+                     border: {
+                       color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                     },
+                   },
+                 },
+               }}
+               plugins={[ChartDataLabels]}
+             />
+            )}
+          </div>
+          <div
+  className={`order-4 col-span-1 ${
+    theme === "light" ? "bg-white" : "bg-slate-900"
+  } p-4 rounded shadow-md 
+     h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] xl:h-[450px] 2xl:h-[450px]`} 
+>
+<h2
+    className={`text-sm font-normal ${
+      theme === "light" ? "text-slate-800" : "text-slate-400"
+    }`} 
             >
               Order Weight by Zone
             </h2>
-            <div className="w-full h-full">
+            
               <Bar
                 data={zoneChartData}
                 options={{
                   responsive: true,
-                  maintainAspectRatio: true,
+                  maintainAspectRatio: false,
                   plugins: {
                     datalabels: {
                       display: true,
@@ -919,29 +1305,28 @@ function New_Design() {
                 }}
                 plugins={[ChartDataLabels]}
               />
-            </div>
-
             
           </div>
-
           <div
-            className={`order-4 col-span-1 ${
-              theme === "light" ? "bg-white" : "bg-slate-900"
-            }  p-4 rounded shadow-md  h-[450px]`}
-          >
+  className={`order-4 col-span-1 ${
+    theme === "light" ? "bg-white" : "bg-slate-900"
+  } p-4 rounded shadow-md 
+     h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] xl:h-[450px] 2xl:h-[500px]`} 
+>
             <h2
-              className={`text-xl font-bold mb-4 mt-8 ${
+              className={`text-sm font-normal ${
                 theme === "light" ? "text-slate-800" : "text-slate-400"
               }`}
             >
               Product wise
             </h2>
-            <div className="w-full h-full">
+            
               <Bar
                 data={product}
                 options={{
                   responsive: true,
-                  maintainAspectRatio: true,
+                  maintainAspectRatio: false,
+                  indexAxis: "y",
                   plugins: {
                     datalabels: {
                       display: true,
@@ -1007,8 +1392,6 @@ function New_Design() {
                 }}
                 plugins={[ChartDataLabels]}
               />
-            </div>
-
             
           </div>
         </main>
