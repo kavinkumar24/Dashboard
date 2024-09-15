@@ -320,25 +320,9 @@ function Department_reject() {
     }
   };
 
-  const handleBarchange = (event, elements) => {
-    if (elements.length > 0) {
-      const clickedElementIndex = elements[0].index; // Get the index of the clicked bar
-      const clickedLabel = chartData2.labels[clickedElementIndex]; // Get the label of the clicked bar
-  
-      console.log("Clicked Label:", clickedLabel);
-
-      const deptData = overAllData.filter((data)=>data.ToDept === clickedLabel)
-      // Navigate to another page, passing the clicked label
-      navigate('/dep_rejections',{
-        state:{clickedLabel,deptData},
-      });
-    } else {
-      console.warn("No elements were clicked");
-    }
-  };
-  
+ 
   const optionschart2 = {
-    onClick: (event, elements) => handleBarchange(event, elements),
+    
     scales: {
       x: {
         title: {
@@ -408,20 +392,22 @@ function Department_reject() {
   };
 
   const handleTableClick = (skch, overAllData, status) => {
-
-    
-
     if (overAllData) {
-      navigate('/rejections/detailed_rejections', {
-        state: { skch, overAllData ,status}
-      });
-      
+      if(status === "Problem"){
+        navigate("/rejections/problem_arised", {
+          state: { skch, overAllData},
+        });
+        console.log(skch);
+        console.log(overAllData);
+      }
+      else {
+        navigate("/rejections/detailed_rejections", {
+          state: { skch, overAllData, status },
+        });
+      }
     } else {
-      console.log('Data is not available yet');
-    }
-
-    console.log("overAllData ",overAllData)
-  };
+      console.log("Data is not available yet");
+    }};
 
   const [activeIndex, setActiveIndex] = useState(null);
 
@@ -788,7 +774,7 @@ function Department_reject() {
         <th className="px-6 py-3 text-center font-semibold text-base">SI no.</th>
         <th className="px-6 py-3 text-center font-semibold text-base">Problem Arised</th>
         <th className="py-3 text-center font-semibold text-base">Number of Rejections</th>
-        {/* <th className="py-3 text-center font-semibold text-base">Detailed View</th> */}
+        <th className="py-3 text-center font-semibold text-base">Detailed View</th>
       </tr>
     </thead>
     <tbody>
@@ -797,13 +783,13 @@ function Department_reject() {
           <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{(currentPage3 - 1) * itemsPerPage3 + index + 1}</td>
           <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{skch.charAt(0).toUpperCase() + skch.slice(1).toLowerCase()}</td>
           <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">{count}</td>
-          {/* <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
+          <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
             <button  className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
               theme === "light"
                 ? "bg-blue-500 hover:bg-blue-700"
                 : "bg-blue-600 hover:bg-blue-800"
-            }`} onClick={() => handleTableClick(skch, overAllData, "Sketch")} disabled={!overAllData} > View </button>
-          </td> */}
+            }`} onClick={() => handleTableClick(skch, overAllData, "Problem")}  disabled={!overAllData} > View </button>
+          </td>
         </tr>
       ))}
     </tbody>

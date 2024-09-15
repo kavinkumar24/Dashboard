@@ -243,8 +243,8 @@ function Reject() {
             {
               label: "Counts by Year",
               data: Yearcounts,
-              backgroundColor: colors.slice(0, Yearcounts.length),
-              borderColor: borderColors.slice(0, Yearcounts.length),
+              backgroundColor: "rgba(75, 192, 192, 0.2)",
+              borderColor: "rgba(75, 192, 192, 1)",
               borderWidth: 1,
             },
           ],
@@ -255,6 +255,9 @@ function Reject() {
           const yearData = data.filter((item) => item.ToDept === year);
           return yearData.reduce((total, item) => total + item.COUNT, 0);
         });
+
+
+        
         setChartData2({
           labels: uniqueskch,
           datasets: [
@@ -279,6 +282,8 @@ function Reject() {
             return filteredData.reduce((total, item) => total + item.COUNT, 0);
           });
         });
+        
+        
 
         setChartData3({
           labels: uniqueYears, // X-axis labels
@@ -462,15 +467,36 @@ function Reject() {
     }
   };
 
-  const handleBarchange = (event, elements) => {
-    if (elements.length > 0) {
-      const clickedElementIndex = elements[0].index;
-      const clickedLabel = chartData2.labels[clickedElementIndex];
+  // const handleBarchange = (event, elements) => {
+  //   if (elements.length > 0) {
+  //     const clickedElementIndex = elements[0].index;
+  //     const clickedLabel = chartData2.labels[clickedElementIndex];
 
+  //     console.log("Clicked Label:", clickedLabel);
+  //     const deptData = overAllData.filter(
+  //       (data) => data.ToDept === clickedLabel
+  //     );
+  //     navigate("/rejections/dept_rejections", {
+  //       state: { clickedLabel, deptData },
+  //     });
+  //   } else {
+  //     console.warn("No elements were clicked");
+  //   }
+  // };
+
+  const handlePieChange = (event, elements) => {
+    if (elements.length > 0) {
+      const clickedElementIndex = elements[0].index; // Get the clicked slice's index
+      const clickedLabel = chartData2.labels[clickedElementIndex]; // Get the label of the clicked slice
+  
       console.log("Clicked Label:", clickedLabel);
+  
+      // Filter the data based on the clicked label
       const deptData = overAllData.filter(
         (data) => data.ToDept === clickedLabel
       );
+  
+      // Navigate to the desired route with state
       navigate("/rejections/dept_rejections", {
         state: { clickedLabel, deptData },
       });
@@ -478,6 +504,7 @@ function Reject() {
       console.warn("No elements were clicked");
     }
   };
+  
 
   const optionschart2 = {
     onClick: (event, elements) => handleBarchange(event, elements),
@@ -498,6 +525,24 @@ function Reject() {
       },
     },
   };
+
+  const optionschartPie = {
+    plugins: {
+      tooltip: {
+        callbacks: {
+          label: function (tooltipItem) {
+            // Customize tooltip if needed
+            return `${tooltipItem.label}: ${tooltipItem.raw}`;
+          },
+        },
+      },
+    },
+    onClick: (event, elements) => handlePieChange(event, elements),
+    maintainAspectRatio: false,
+  };
+
+  
+
   const [currentPage1, setCurrentPage1] = useState(1);
   const itemsPerPage = 6;
 
@@ -548,14 +593,21 @@ function Reject() {
 
   const handleTableClick = (skch, overAllData, status) => {
     if (overAllData) {
-      navigate("/rejections/detailed_rejections", {
-        state: { skch, overAllData, status },
-      });
+      if(status === "Problem"){
+        navigate("/rejections/problem_arised", {
+          state: { skch, overAllData},
+        });
+        console.log(skch);
+        console.log(overAllData);
+      }
+      else {
+        navigate("/rejections/detailed_rejections", {
+          state: { skch, overAllData, status },
+        });
+      }
     } else {
       console.log("Data is not available yet");
     }
-
-    console.log("overAllData ", overAllData);
   };
 
   const [activeIndex, setActiveIndex] = useState(null);
@@ -635,15 +687,6 @@ function Reject() {
               Filter
             </button>
 
-            <button
-              className={`py-2 px-4 font-bold text-sm text-white rounded-lg ${
-                theme === "light"
-                  ? "bg-blue-500 hover:bg-blue-700"
-                  : "bg-blue-600 hover:bg-blue-800"
-              }`}
-            >
-              View Upload History
-            </button>
           </div>
 
           {/* Date Picker Modal */}
@@ -774,13 +817,18 @@ function Reject() {
               Rejections Count by Department
             </h1>
             <div className="px-10">
-              {chartData2 ? (
-                <Bar data={chartData2} options={optionschart2} />
-              ) : (
-                <p className="text-center text-gray-500">
-                  Loading chart data...
-                </p>
-              )}
+            {chartData2 ? (
+              <div style={{ height: "300px",marginBottom: "20px"}}> {/* Set your desired dimensions */}
+                <Pie data={chartData2} options={{ 
+                  ...optionschartPie, 
+                  maintainAspectRatio: false // Disable aspect ratio for custom size
+                }} />
+              </div>
+            ) : (
+              <p className="text-center text-gray-500">
+                Loading chart data...
+              </p>
+            )}
             </div>
           </div>
         </div>
@@ -1212,7 +1260,7 @@ function Reject() {
                       <th className="py-3 text-center font-semibold text-base">
                         Number of Rejections
                       </th>
-                      {/* <th className="py-3 text-center font-semibold text-base">Detailed View</th> */}
+                      <th className="py-3 text-center font-semibold text-base">Detailed View</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1231,13 +1279,13 @@ function Reject() {
                         <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
                           {count}
                         </td>
-                        {/* <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                        <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
             <button  className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
               theme === "light"
                 ? "bg-blue-500 hover:bg-blue-700"
                 : "bg-blue-600 hover:bg-blue-800"
-            }`} onClick={() => handleTableClick(skch, overAllData, "Sketch")} disabled={!overAllData} > View </button>
-          </td> */}
+            }`} onClick={() => handleTableClick(skch, overAllData, "Problem")} disabled={!overAllData} > View </button>
+          </td>
                       </tr>
                     ))}
                   </tbody>

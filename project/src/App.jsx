@@ -21,6 +21,10 @@ import Project_Detail from './components/Order_receiving_detials/Project_detail'
 import Product_Detail from './components/Order_receiving_detials/Product_detail';
 import Subproduct_Detail from './components/Order_receiving_detials/Subproduct_details';
 import Department_AOP from './components/AOP/Department_AOP';
+import Brief_id from './components/Brief_id';
+import Problem_Arised from './components/Problem_Arised';
+import Des_Cen_Task from './components/Des_Cen_Task';
+import Detailed_task from './components/Detailed_task';
 
 function App() {
 
@@ -40,6 +44,7 @@ function App() {
         <Route path = '/rejections/dept_rejections' element={<Department_reject />} />
         <Route path = '/uploads' element={<Upload />} />
         <Route path = '/new_design' element={<New_Design />} />
+        <Route path='/login' element={<Login/>} />
         <Route path = '/demo' element={<Demo />} />
         <Route path="/zone-detail-order_receiving/:zone" element={<ZoneDetail />} />
         <Route path="/login" element={<Login />} />
@@ -47,8 +52,13 @@ function App() {
         <Route path="/project-detail-order_receiving/:project" element={<Project_Detail />} />
         <Route path="/product-detail-order_receiving/:product" element={<Product_Detail />} />
         <Route path="/subproduct-detail-order_receiving/:subproduct" element={<Subproduct_Detail />} />
-
         <Route path="/aop_schedule" element={<Department_AOP />} />
+        <Route path='/rejections/problem_arised' element={<Problem_Arised/>}/>
+        <Route path='/detailed_task/brief_id/:id' element={<Brief_id/>}/>
+        <Route path='/detailed_task/brief_id' element={<Brief_id/>}/>
+        <Route path='/task/design_center' element={<Des_Cen_Task/>}/>
+        <Route path='/detailed_task' element = {<Detailed_task/>}/>
+
       </Routes>
       </div>
       

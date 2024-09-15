@@ -45,16 +45,18 @@ function Sidebar({ theme }) {
         setActiveSubTask('create');
       } else if (path === '/task/view') {
         setActiveSubTask('view');
+      }else if('/task/design_center'){
+        setActiveSubTask('design_center');
       }
     } else if (path === '/rejections') {
       setActive('rejections');
-      setActiveSubTask('');
-
-      } else if (path === '/order_receiving&new_design'||/\/project-detail-order_receiving/.test(path)
-      ||/\/purity-detail-order_receiving/.test(path)
-      ||/\/zone-detail-order_receiving/.test(path)
-      ||/\/product-detail-order_receiving/.test(path)
-      ||/\/subproduct-detail-order_receiving/.test(path)
+    } else if (path === '/order_receiving&new_design') {
+      setActive('order_new_design');
+    } else if (path === '/order_receiving&new_design'|| /project-detail-order_receiving/.test(path)
+      ||/purity-detail-order_receiving/.test(path)
+      ||/zone-detail-order_receiving/.test(path)
+      ||/product-detail-order_receiving/.test(path)
+      ||/subproduct-detail-order_receiving/.test(path)
     ) {
         setActive('order_new_design');
       }
@@ -63,7 +65,7 @@ function Sidebar({ theme }) {
     }
     else if(path==='/rejections/dept_rejections'){
       setActive('rejections')
-    }else if(path==='/rejections/detailed_rejections'){
+    }else if(path==='/rejections/detailed_rejections' || path==='/rejections/problem_arised'){
       setActive('rejections')
     }else if(path == '/uploads'){
       setActive('uploads')
@@ -234,7 +236,21 @@ function Sidebar({ theme }) {
           </a>
           
           {taskExpanded && (
-            <div className="ml-8">
+            <div className="ml-2">
+
+              <a
+                href="#"
+                className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('design_center')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
+                onClick={() => handleNavigation('/task/design_center', 'task')}
+              >
+                <div className='flex flex-row p-0'>
+                  <div className='mt-1 px-2'>
+                    <BsEye />
+                  </div>
+                  Design Center
+                </div>
+              </a>
+
               { role == 'admin' && <a
                 href="#"
                 className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('create')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
@@ -259,6 +275,7 @@ function Sidebar({ theme }) {
                   View
                 </div>
               </a>
+              
             </div>
           )}
 
