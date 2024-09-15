@@ -27,6 +27,8 @@ const db = mysql.createConnection({
 
 
 
+
+
 // const bodyParser = require('body-parser');
 
 // // Increase the limit to 50MB
@@ -944,6 +946,32 @@ app.get("/jewel-master",(req,res)=>{
   )
 
 })
+
+app.get('/department-mappings', (req, res) => {
+  const sql = 'SELECT * FROM Production_master_deparment_mapping';
+  db.query(sql, (err, rows) => {
+    if (err) return res.json(err);
+
+    // Transform the data into the desired format
+    const result = {};
+
+    rows.forEach(row => {
+      const groupWh = row['Group Wh'];
+      if (!result[groupWh]) {
+        result[groupWh] = { from: [], to: [] };
+      }
+      if (row['From Dept'] && !result[groupWh].from.includes(row['From Dept'])) {
+        result[groupWh].from.push(row['From Dept']);
+      }
+      if (row['To Dept'] && !result[groupWh].to.includes(row['To Dept'])) {
+        result[groupWh].to.push(row['To Dept']);
+      }
+    });
+
+    res.json(result);
+  });
+});
+
 app.get("/raw_filtered_production_data", (req, res) => {
   const deptFromFilter = Object.values(departmentMappings).flatMap(
     (mapping) => mapping.from
@@ -1093,7 +1121,7 @@ app.get("/jewel_master", (req, res) => {
 });
 
 app.get("/pending_data", (req, res) => {
-  const sql = "SELECT * FROM Pending_updated_data";
+  const sql = "SELECT * FROM pending";
   db.query(sql, (err, data) => {
     if (err) return res.json(err);
     return res.json(data);

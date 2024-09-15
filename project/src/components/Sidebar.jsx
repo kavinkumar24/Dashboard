@@ -68,6 +68,10 @@ function Sidebar({ theme }) {
     }else if(path == '/uploads'){
       setActive('uploads')
     }
+    else if(path == '/aop_schedule'){
+      setActive('aop_schedule')
+    }
+    
   }, [location.pathname]);
 
 
@@ -176,6 +180,21 @@ function Sidebar({ theme }) {
               Uploads
             </div>
           </a>}
+
+
+          { role == 'admin' &&  <a
+            href="#"
+            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('uploads')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+            onClick={() => handleNavigation('/aop_schedule', '/aop_schedule')}
+          >
+            <div className='flex flex-row p-2'>
+              <div className='mt-1 px-2'>
+              <MdDriveFolderUpload />
+              </div>
+              AOP schedule
+            </div>
+          </a>}
+          
 
           { role == 'admin' &&  <a
             href="#"

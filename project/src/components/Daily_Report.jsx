@@ -15,7 +15,7 @@ function Daily_Report() {
     localStorage.setItem("theme", theme);
 
     Promise.all([
-      fetch("http://localhost:8081/departmentMappings").then((response) =>
+      fetch("http://localhost:8081/department-mappings").then((response) =>
         response.json()
       ),
       fetch("http://localhost:8081/pending_data").then((response) =>
@@ -61,7 +61,11 @@ function Daily_Report() {
     if (diffDays <= 15) return "11 to 15";
     if (diffDays <= 20) return "16 to 20";
     if (diffDays <= 25) return "21 to 25";
-    return "26 to 50";
+    if (diffDays <= 50) return "25 to 50";
+    if (diffDays <= 100) return "51 to 100";
+    if (diffDays <= 150) return "101 to 150";
+    if (diffDays <= 200) return "151 to 200";
+    return "200+";
   };
 
   const groupedData = filteredPendingData.reduce((acc, item) => {
@@ -75,7 +79,11 @@ function Daily_Report() {
         "11 to 15": 0,
         "16 to 20": 0,
         "21 to 25": 0,
-        "26 to 50": 0,
+        "25 to 50": 0,
+        "51 to 100": 0,
+        "101 to 150": 0,
+        "151 to 200": 0,
+        "200+": 0,
       };
     }
 
@@ -98,7 +106,17 @@ function Daily_Report() {
       return acc;
     }, {});
 
-  const allRanges = ["1 to 10", "11 to 15", "16 to 20", "21 to 25", "26 to 50"];
+  const allRanges = [
+    "1 to 10",
+    "11 to 15",
+    "16 to 20",
+    "21 to 25",
+    "25 to 50",
+    "51 to 100",
+    "101 to 150",
+    "151 to 200",
+    "200+",
+  ];
 
   return (
     <div
@@ -169,72 +187,7 @@ function Daily_Report() {
                           } rounded`}
                         ></div>
                         <div
-                          className={`h-2  ${
-                            theme === "dark" ? "bg-slate-700" : "bg-slate-200"
-                          } rounded`}
-                        ></div>
-                      </div>
-
-                      <div
-                        className={`h-2 w-[90%] ${
-                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
-                        } rounded`}
-                      ></div>
-                      <div
-                        className={`h-2 w-[90%] ${
-                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
-                        } rounded`}
-                      ></div>
-                      <div
-                        className={`h-2 w-[90%] ${
-                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
-                        } rounded`}
-                      ></div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div
-                          className={`h-2  ${
-                            theme === "dark" ? "bg-slate-700" : "bg-slate-200"
-                          } rounded`}
-                        ></div>
-                        <div
                           className={`h-2 ${
-                            theme === "dark" ? "bg-slate-700" : "bg-slate-200"
-                          } rounded`}
-                        ></div>
-                      </div>
-                      <div
-                        className={`h-2 w-[90%] ${
-                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
-                        } rounded`}
-                      ></div>
-                      <div
-                        className={`h-2 w-[90%] ${
-                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
-                        } rounded`}
-                      ></div>
-                      <div
-                        className={`h-2 w-[90%] ${
-                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
-                        } rounded`}
-                      ></div>
-                      <div
-                        className={`h-2 w-[90%] ${
-                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
-                        } rounded`}
-                      ></div>
-                      <div
-                        className={`h-2 w-[90%] ${
-                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
-                        } rounded`}
-                      ></div>
-                      <div className="grid grid-cols-3 gap-4">
-                        <div
-                          className={`h-2 ${
-                            theme === "dark" ? "bg-slate-700" : "bg-slate-200"
-                          } rounded`}
-                        ></div>
-                        <div
-                          className={`h-2  ${
                             theme === "dark" ? "bg-slate-700" : "bg-slate-200"
                           } rounded`}
                         ></div>
@@ -266,7 +219,7 @@ function Daily_Report() {
                           } rounded`}
                         ></div>
                         <div
-                          className={`h-2  ${
+                          className={`h-2 ${
                             theme === "dark" ? "bg-slate-700" : "bg-slate-200"
                           } rounded`}
                         ></div>
@@ -276,81 +229,60 @@ function Daily_Report() {
                 </div>
               </div>
             </div>
-          ) : Object.keys(searchedGroupedData).length === 0 ? (
-            <p className="text-center text-lg font-semibold">
-              No pending data available.
-            </p>
           ) : (
-            <div className="overflow-x-auto">
-              <table
-                className={` rounded-md min-w-full divide-y divide-gray-300 shadow-md ${
-                  theme === "light" ? "bg-slate-400 " : "bg-slate-900"
-                } `}
-              >
-                <thead
-                  className={`${
-                    theme === "light" ? "text-gray-800" : "text-gray-300"
-                  } `}
-                >
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs uppercase tracking-wider font-bold">
-                      Department
-                    </th>
-                    {allRanges.map((range) => (
+            <>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50 dark:bg-gray-800">
+                    <tr>
                       <th
-                        key={range}
-                        className="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider"
+                        scope="col"
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                       >
-                        {range}
+                        Department
                       </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody
-                  className={`divide-y ${
-                    theme === "dark" ? "bg-gray-700" : "bg-white"
-                  }`}
-                >
-                  {Object.keys(searchedGroupedData).map((dept, index) => (
-                    <tr
-                      key={dept}
-                      className={`border-b border-solid ${
-                        theme === "dark" ? "border-gray-500" : "border-gray-300"
-                      }
-                     ${
-                       theme === "light"
-                         ? index % 2 === 0
-                           ? "bg-gray-200 text-gray-700 border-slate-200"
-                           : "bg-white text-gray-700 border-slate-100"
-                         : index % 2 === 0
-                         ? "bg-gray-800 text-gray-300 border-slate-900"
-                         : "bg-gray-900 text-gray-300 border-gray-800"
-                     }`}
-                    >
-                      <td
-                        className={`px-6 py-4 text-sm ${
-                          theme === "light" ? "text-gray-700" : "text-gray-400"
-                        }`}
-                      >
-                        {dept}
-                      </td>
                       {allRanges.map((range) => (
-                        <td
+                        <th
                           key={range}
-                          className={`px-6 py-4 text-sm ${
-                            theme === "light"
-                              ? "text-gray-600"
-                              : "text-gray-400"
-                          }`}
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
-                          {searchedGroupedData[dept][range] || 0}
-                        </td>
+                          {range}
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                    {Object.keys(searchedGroupedData).length > 0 ? (
+                      Object.entries(searchedGroupedData).map(([department, data]) => (
+                        <tr key={department}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                            {department}
+                          </td>
+                          {allRanges.map((range) => (
+                            <td
+                              key={range}
+                              className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300"
+                            >
+                              {data[range] || 0}
+                            </td>
+                          ))}
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td
+                          colSpan={allRanges.length + 1}
+                          className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-300"
+                        >
+                          No data available
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </main>
       </div>

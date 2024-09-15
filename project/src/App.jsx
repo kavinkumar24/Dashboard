@@ -20,6 +20,8 @@ import PurityDetail from './components/Order_receiving_detials/Purity_detail';
 import Project_Detail from './components/Order_receiving_detials/Project_detail';
 import Product_Detail from './components/Order_receiving_detials/Product_detail';
 import Subproduct_Detail from './components/Order_receiving_detials/Subproduct_details';
+import Department_AOP from './components/AOP/Department_AOP';
+
 function App() {
 
   return (
@@ -44,8 +46,9 @@ function App() {
         <Route path="/purity-detail-order_receiving/:purity" element={<PurityDetail />} />
         <Route path="/project-detail-order_receiving/:project" element={<Project_Detail />} />
         <Route path="/product-detail-order_receiving/:product" element={<Product_Detail />} />
-
         <Route path="/subproduct-detail-order_receiving/:subproduct" element={<Subproduct_Detail />} />
+
+        <Route path="/aop_schedule" element={<Department_AOP />} />
       </Routes>
       </div>
       
