@@ -6,6 +6,8 @@ const xlsx = require('xlsx');
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 const moment = require('moment');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken'); 
 
 const app = express();
 app.use(cors());
@@ -18,6 +20,13 @@ const db = mysql.createConnection({
   database: "emerald",
 });
 
+
+
+
+
+
+
+
 // const bodyParser = require('body-parser');
 
 // // Increase the limit to 50MB
@@ -29,9 +38,106 @@ const db = mysql.createConnection({
 // app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 
+
+
+// login page api start
+
+// Secret key for signing the JWT (you should store this in an environment variable)
+const JWT_SECRET = 'ejindiadashboard';
+
+// Replace with your own secret
+
+app.use(cors({
+  origin: 'http://localhost:5173', // Replace with your frontend URL
+  credentials: true
+}));
+
+// JWT authentication middleware
+const authorize = (roles) => {
+  return (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1]; // Extract token from Authorization header
+    
+    console.log('Token:', token); // Debug: Check if token is present
+
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ message: 'Invalid token', error: err });
+      }
+
+      req.user = decoded;
+
+      // Check if user role is authorized
+      if (!roles.includes(decoded.role)) {
+        return res.status(403).json({ message: 'Forbidden' });
+      }
+
+      next();
+    });
+  };
+};
+
+// Login route
+app.post('/api/login', (req, res) => {
+  const { emp_id, password } = req.body;
+
+  if (!emp_id || !password) {
+    return res.status(400).json({ message: 'Employee ID and password are required' });
+  }
+
+  // Query to fetch the user based on emp_id
+  const query = 'SELECT * FROM users WHERE emp_id = ?';
+
+  db.query(query, [emp_id], (err, results) => {
+    if (err) return res.status(500).json({ message: 'Database error', error: err });
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const user = results[0];
+
+    // Compare password (without bcrypt)
+    if (password !== user.password) {
+      return res.status(401).json({ message: 'Invalid credentials' });
+    }
+
+    // Generate JWT token with role
+    const token = jwt.sign(
+      {
+        emp_id: user.emp_id,
+        employer_name: user.employer_name,
+        role: user.role // Include user role in the JWT payload
+      },
+      JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    // Send token as part of the response
+    return res.status(200).json({
+      message: 'Login successful',
+      token, // Return the JWT token
+      user: { emp_id: user.emp_id, employer_name: user.employer_name, role: user.role } // Include role in user object
+    });
+  });
+});
+
+// Protected route for admin
+app.use('/api/admin-only', authorize(['admin']), (req, res) => {
+  res.status(200).json({ message: 'Welcome, admin!' });
+});
+
+// Protected route for user
+app.get('/api/user-only', authorize(['user']), (req, res) => {
+  res.status(200).json({ message: 'Welcome, user!' });
+});
+
+// login page api end
+
 // ************ Production Data endpoints ******************* //
-
-
 
 const createProductionTableQuery = `CREATE TABLE IF NOT EXISTS \`Production_sample_data\` (
   \`JC ID\` varchar(255) DEFAULT NULL,
@@ -67,7 +173,7 @@ db.query(createProductionTableQuery, (err) => {
     console.error('Error creating table:', err);
     return;
   }
-  console.log('Table created or already exists. -->createProductionTableQuery');
+  
 });
 
 
@@ -215,7 +321,7 @@ db.query(createPendingTableQuery, (err) => {
     console.error('Error creating table:', err);
     return;
   }
-  console.log('Table created or already exists. --> createPendingTableQuery');
+  
 });
 
 app.post('/api/pending/upload', upload.single('file'), (req, res) => {
@@ -356,7 +462,7 @@ db.query(createOrderReceivingTableQuery, (err) => {
     console.error('Error creating table:', err);
     return;
   }
-  console.log('Table created or already exists. --> createOrderReceivingTableQuery');
+
 });
 
 function excelSerialDateToDate1(serial) {
@@ -827,6 +933,17 @@ app.get("/departmentMappings", (req, res) => {
   res.json(departmentMappings);
 });
 
+app.get("/jewel-master",(req,res)=>{
+  const sql = `
+  SELECT JewelCode, Product, \`sub Product\` from Jewel_Master
+  `;
+  db.query(sql,(err,data)=>{
+    if(err) return res.json(err);
+    return res.json(data);
+  }
+  )
+
+})
 app.get("/raw_filtered_production_data", (req, res) => {
   const deptFromFilter = Object.values(departmentMappings).flatMap(
     (mapping) => mapping.from
@@ -1113,6 +1230,103 @@ app.get("/order_receive&new_design", (req, res) => {
     res.json(results);
   });
 });
+
+
+const createTableQuery = `CREATE TABLE IF NOT EXISTS rejection (
+  file_ID VARCHAR(100),
+  Yr VARCHAR(10),
+  MONTH VARCHAR(20),
+  Date VARCHAR(10),  
+  RaisedDate VARCHAR(10),  
+  RaisedDept VARCHAR(50),
+  ReasonDept VARCHAR(50),
+  ToDept VARCHAR(50),
+  SketchNo VARCHAR(50),
+  JcidNo VARCHAR(50),
+  Collections VARCHAR(50),
+  TypeOfReason VARCHAR(50),
+  ProblemArised VARCHAR(255),
+  Problem1 VARCHAR(255),
+  ProblemArised2 VARCHAR(255),
+  COUNT INT,
+  OperatorNameID VARCHAR(50)
+);`;
+
+db.query(createTableQuery, (err) => {
+  if (err) {
+    console.error('Error creating table:', err);
+    return;
+  }
+});
+
+app.post('/api/rejection/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+
+  const fileBuffer = req.file.buffer;
+  const fileName = req.file.originalname;
+  const file_ID = req.body.file_ID + " " + fileName;
+
+  try {
+    const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(worksheet, { raw: false });
+
+    if (jsonData.length > 0) {
+      const values = jsonData.map(row => [
+        file_ID,
+        row.Yr,
+        row.MONTH,
+        xlsx.SSF.format('DD-MM-YYYY', row.Date),  // Convert Excel serial date to string
+        xlsx.SSF.format('DD-MM-YYYY', row['Raised Date']),  // Convert Excel serial date to string
+        row.RaisedDept,
+        row['Reason Dept'],
+        row['To Dept'],
+        row['Sketch No'],
+        row['Jcid No'],
+        row.Collections,
+        row['Type of Reason'],
+        row['Problem arised'],
+        row['Problem - 1'],
+        row['Problem arised -2'],
+        row.COUNT,
+        row['Operator Name/ID']
+      ]);
+
+      const query = `
+        INSERT INTO rejection 
+        (file_ID, Yr, MONTH, Date, RaisedDate, RaisedDept, ReasonDept, ToDept, SketchNo, JcidNo, Collections, TypeOfReason, ProblemArised, Problem1, ProblemArised2, COUNT, OperatorNameID) 
+        VALUES ?`;
+
+      db.query(query, [values], function (error, results) {
+        if (error) throw error;
+        console.log('Rows inserted:', results.affectedRows);
+        res.send('File uploaded and data inserted successfully.');
+      });
+    } else {
+      res.status(400).send('No data found in Excel file');
+    }
+  } catch (error) {
+    console.error('Error processing file:', error);
+    res.status(500).send('Error processing file');
+  }
+});
+
+  
+
+  app.get('/api/rejection/uploads', (req, res) => {
+    const query = 'SELECT * FROM rejection';
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error('Error fetching uploads:', err);
+        res.status(500).send('Error fetching uploads');
+        return;
+      }
+      res.json(results);
+    });
+  });
 
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);

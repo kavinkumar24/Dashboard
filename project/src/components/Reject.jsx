@@ -209,7 +209,7 @@ function Reject() {
   const fetchUploads = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:5000/api/rejection/uploads"
+        "http://localhost:8081/api/rejection/uploads"
       );
       let data = response.data;
 

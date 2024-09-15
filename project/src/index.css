@@ -7,6 +7,15 @@
   display: none;
 }
 
+.chart-container {
+  overflow-x: auto; /* Enable horizontal scrolling if content overflows */
+  overflow-y: hidden; /* Hide vertical overflow if not needed */
+  padding: 10px; /* Add padding around the container */
+}
+
+.chart {
+  min-width: 600px; /* Set a minimum width for the chart */
+}
 
 .custom-scrollbar::-webkit-scrollbar {
   width: 0; /* For WebKit browsers (Chrome, Safari) */

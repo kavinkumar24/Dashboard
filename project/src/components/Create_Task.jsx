@@ -27,6 +27,7 @@ function CreateTask() {
   const [description, setDescription] = useState('');
   const [no_of_qty, setNo_of_qty] = useState('');
   const [priority, setPriority] = useState('medium');
+  const [assignTo, setassignTo] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
   const [assign_date, setAssign_date] = useState('');
   const [target_date, setTarget_date] = useState('');
@@ -73,6 +74,7 @@ function CreateTask() {
       no_of_qty,
       assign_date,
       target_date,
+      assignTo,
       priority,
     };
   
@@ -120,7 +122,7 @@ function CreateTask() {
                     value={ax_brief}
                     onChange={handleAxBriefIdChange}
                     onBlur={handleAxBriefIdBlur}
-                    className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
+                    className={`appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     placeholder="Enter AX Brief ID" 
                     required
                   />
@@ -139,7 +141,7 @@ function CreateTask() {
                     value={collection_name}
                     readOnly={true}
                     onChange={(e) => setCollection_name(e.target.value)}
-                    className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
+                    className={`appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     placeholder="Enter Collection Name"
                     required
                   />
@@ -155,7 +157,7 @@ function CreateTask() {
                     value={project}
                     readOnly={true}
                     onChange={(e) => setProject(e.target.value)}
-                    className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
+                    className={`appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     placeholder="Enter Project Name"
                     required
                   />
@@ -170,7 +172,7 @@ function CreateTask() {
                     id="qty"
                     value={no_of_qty}
                     onChange={(e) => setNo_of_qty(e.target.value)}
-                    className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
+                    className={` appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     placeholder="Enter Quantity"
                     required
                   />
@@ -185,7 +187,7 @@ function CreateTask() {
                     id="assignDate"
                     value={assign_date}
                     onChange={(e) => setAssign_date(e.target.value)}
-                    className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
+                    className={`  appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     required
                   />
                 </div>
@@ -199,11 +201,27 @@ function CreateTask() {
                     id="targetDate"
                     value={target_date}
                     onChange={(e) => setTarget_date(e.target.value)}
-                    className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
+                    className={`  appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     required
                   />
                 </div>
 
+                <div className="mb-4">
+                  <label className={`block text-sm font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`} htmlFor="targetDate">
+                    Assign To
+                  </label>
+                  <select
+                    id="priority"
+                    value={priority}
+                    onChange={(e) => setassignTo(e.target.value)}
+                    className={` appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
+                    required
+                  >
+                    <option value="cad">E00346</option>
+                    <option value="cam">E18763</option>
+                  </select>
+                </div>
+                
 
                 <div className="mb-4">
                   <label className={`block text-sm font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`} htmlFor="priority">
@@ -213,7 +231,7 @@ function CreateTask() {
                     id="priority"
                     value={priority}
                     onChange={(e) => setPriority(e.target.value)}
-                    className={`shadow appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-slate-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
+                    className={` appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
                     required
                   >
                     <option value="low">Low</option>

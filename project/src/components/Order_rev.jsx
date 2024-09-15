@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Header from "./Header";
 import Sidebar from "./Sidebar";
 import * as XLSX from "xlsx";
@@ -11,10 +11,11 @@ import ChartDataLabels from "chartjs-plugin-datalabels";
 import { IoFilterOutline } from "react-icons/io5";
 import CustomMultiSelect from "./Custom/Mutliselect";
 import { Doughnut } from "react-chartjs-2";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function Order_rev() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
@@ -27,18 +28,18 @@ function Order_rev() {
   const [dates, setDates] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredData, setFilteredData] = useState([]);
-  
+
   const [allCharts, setAllCharts] = useState([]);
   const [selectedYear, setSelectedYear] = useState([]);
   const [selectedMonth, setSelectedMonth] = useState([]);
-  
+
   const [selectedDate, setSelectedDate] = useState([]);
-  
+
   const [activeIndex, setActiveIndex] = useState(null);
-  
+
   const [isSelected, setIsSelected] = useState(true);
   const [isSelected_top15, setIsSelected_top15] = useState(true);
-  const[individual_top15,setIndividual_top15]=useState(false);
+  const [individual_top15, setIndividual_top15] = useState(false);
   const [isSorted, setIsSorted] = useState(true);
   const [showDatePickerModal, setShowDatePickerModal] = useState(false);
 
@@ -61,7 +62,7 @@ function Order_rev() {
   useEffect(() => {
     localStorage.setItem("theme", theme);
   }, [theme]);
-  
+
   useEffect(() => {
     if (filteredData.length > 0) {
       const chartData = getGroupPartyData(filteredData);
@@ -126,31 +127,22 @@ function Order_rev() {
     setIsSorted((prevState) => {
       const newSortedState = !prevState;
       setIsSelected(newSortedState);
-
-      setIsloading_sort(true);
-
       return newSortedState;
     });
   };
 
   const handleTop25Click = () => {
-
     setIsSelected_top15((prevState) => {
       const newTop15State = !prevState;
-      setIsloading_sort(true); 
       return newTop15State;
     });
-
   };
-  const handle_individual_click = ()=> {
-    setIndividual_top15((prevstate)=>{
-    const new_top15_individual = !prevstate;
-    setIsloading_sort(true);
-    return new_top15_individual;
-  });
-}
-
-  
+  const handle_individual_click = () => {
+    setIndividual_top15((prevstate) => {
+      const new_top15_individual = !prevstate;
+      return new_top15_individual;
+    });
+  };
 
   const convertWtToKg = (wt) => wt / 1000;
   const getYearlyData = (data) => {
@@ -230,6 +222,94 @@ function Order_rev() {
         kg,
       }));
   };
+
+  const clickTimeout = useRef(null);
+
+  const handleChartClick = (event, elements) => {
+    if (elements.length > 0) {
+      const clickedIndex = elements[0].index;
+      const clickedProduct = product.labels[clickedIndex];
+
+      if (clickTimeout.current) {
+        clearTimeout(clickTimeout.current);
+        clickTimeout.current = null;
+      }
+
+      // Set a timeout to detect a single click
+      clickTimeout.current = setTimeout(() => {
+        console.log('Single click detected:', clickedProduct);
+        handleProductClick(event, elements); // Handle single click action
+      }, 250); // Delay for distinguishing single and double click
+    }
+  };
+
+
+  
+  const handleChartDoubleClick = (event, elements) => {
+    if (elements.length > 0) {
+      const elementIndex = elements[0].index;
+      const clickedProduct = product.labels[elementIndex];
+      console.log("Double click detected:", clickedProduct);
+      
+      
+      navigate(`/product-detail-order_receiving/${encodeURIComponent(clickedProduct)}`);
+    }
+  };
+  
+
+  const handleProductClick = (event, elements) => {
+    console.log('Elements:', elements);
+  
+    if (elements.length > 0) {
+      // Get the clicked product's index
+      const clickedIndex = elements[0].index;
+  
+      // Retrieve the corresponding product from the chart
+      const clickedProduct = product.labels[clickedIndex];
+      console.log('Clicked Product:', clickedProduct);
+  
+      // Ensure `filteredData` is populated
+      if (!filteredData || filteredData.length === 0) {
+        console.error('Filtered data is empty or not available.');
+        return;
+      }
+  
+      // Filter subproduct data based on the clicked product (case-insensitive comparison)
+      const filteredSubproductData = filteredData.filter(item => item.PRODUCT.toLowerCase() === clickedProduct.toLowerCase());
+      console.log('Filtered Subproduct Data:', filteredSubproductData);
+  
+      // Check if any subproduct data was found
+      if (filteredSubproductData.length === 0) {
+        console.warn('No subproduct data found for the selected product.');
+        return;
+      }
+  
+      // Aggregate the filtered data for subproducts
+      const subproductData = filteredSubproductData.reduce((acc, item) => {
+        const subproduct = item["SUB PRODUCT"]; // Using exact case from your data
+        if (!acc[subproduct]) acc[subproduct] = 0;
+        acc[subproduct] += item.WT || 0;
+        return acc;
+      }, {});
+  
+      console.log('Aggregated Subproduct Data:', subproductData);
+  
+      // Now you can update the chart with the aggregated subproduct data
+      setSubproduct({
+        labels: Object.keys(subproductData),
+        datasets: [
+          {
+            label: 'KG Count by Sub Product',
+            data: Object.values(subproductData).map(value => value / 1000), // Adjust as per your data units
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: '#215e5e',
+            borderWidth: 1,
+          },
+        ],
+      });
+    }
+  };
+  
 
   const getZoneData = (data) => {
     const zoneData = data.reduce((acc, item) => {
@@ -324,74 +404,70 @@ function Order_rev() {
       }));
   };
 
-  
   const [groupedData, setGroupedData] = useState([]);
-  const groupByProject = (data, isSorted = false) => {
+  const groupByProject = (data, isSorted = true) => {
     console.log("isSorted value:", isSorted);
-  
+
     // Group weights by project
     const grouped = data.reduce((acc, item) => {
       const project = item.PROJECT;
       if (!acc[project]) {
         acc[project] = [];
       }
-      acc[project].push(item.WT); 
+      acc[project].push(item.WT);
       return acc;
     }, {});
-  
-    const processedData = Object.keys(grouped).map(project => {
+
+    const processedData = Object.keys(grouped).map((project) => {
       const weights = grouped[project];
-      const top15Weights = [...weights].sort((a, b) => b - a).slice(0, 15); 
-      const top15Sum = top15Weights.reduce((sum, weight) => sum + weight, 0); 
+      const top15Weights = [...weights].sort((a, b) => b - a).slice(0, 15);
+      const top15Sum = top15Weights.reduce((sum, weight) => sum + weight, 0);
       return {
         project,
         kg: top15Sum / 1000,
       };
     });
-  
+
     const sortedData = processedData.sort((a, b) => b.kg - a.kg);
     console.log("Sorted data:", sortedData);
     return sortedData;
   };
 
-  
   function groupBysubproduct_individual(data) {
     const grouped = data.reduce((acc, currentItem) => {
       const subproduct = currentItem.SUBPRODUCT;
       const weight = currentItem.WT;
-      
+
       if (!acc[subproduct]) {
         acc[subproduct] = [];
       }
       acc[subproduct].push(weight);
       return acc;
     }, {});
-  
-    const finalData = Object.keys(grouped).map(subproduct => {
-      const weights = grouped[subproduct];
-      const top15Weights = [...weights].sort((a, b) => b - a).slice(0, 15);
-      const top15Sum = top15Weights.reduce((sum, weight) => sum + weight, 0);
-      return { SUBPRODUCT: subproduct, WT: top15Sum };
-    }).sort((a, b) => b.WT - a.WT).slice(0, 15);
-  
+
+    const finalData = Object.keys(grouped)
+      .map((subproduct) => {
+        const weights = grouped[subproduct];
+        const top15Weights = [...weights].sort((a, b) => b - a).slice(0, 15);
+        const top15Sum = top15Weights.reduce((sum, weight) => sum + weight, 0);
+        return { SUBPRODUCT: subproduct, WT: top15Sum };
+      })
+      .sort((a, b) => b.WT - a.WT)
+      .slice(0, 15);
+
     return {
-      labels: finalData.map(item => item.SUBPRODUCT), 
+      labels: finalData.map((item) => item.SUBPRODUCT),
       datasets: [
         {
-          label: "Top 15 Subproducts by Weight",  
-          data: finalData.map(item => item.WT), 
+          label: "Top 15 Subproducts by Weight",
+          data: finalData.map((item) => item.WT),
           backgroundColor: "rgba(255, 159, 64, 0.2)",
-          borderColor: "rgba(255, 159, 64, 1)",  
-          borderWidth: 1  
-        }
-      ]
+          borderColor: "rgba(255, 159, 64, 1)",
+          borderWidth: 1,
+        },
+      ],
     };
   }
-  
-  
-
-
-  
 
   const getPartywise = (data) => {
     const party_data = data.reduce((acc, item) => {
@@ -443,54 +519,47 @@ function Order_rev() {
     const groupedData = data.reduce((acc, item) => {
       const groupParty = item["Group party"] || "Unknown";
       const weight = item.WT || 0;
-  
+
       if (!acc[groupParty]) {
         acc[groupParty] = [];
       }
       acc[groupParty].push(weight);
-  
+
       return acc;
     }, {});
-  
-    console.log('Grouped Data:', groupedData);
-  
-    const processedData = Object.entries(groupedData).map(([groupParty, weights]) => {
-      const top15Weights = weights.sort((a, b) => b - a).slice(0, 15);
-      const top15Sum = top15Weights.reduce((sum, weight) => sum + weight, 0);
-  
-      console.log(`Group: ${groupParty}, Top 15 Weights:`, top15Weights, `Sum: ${top15Sum}`);
-  
-      return {
-        groupParty,
-        top15Sum,
-      };
-    });
-  
+
+    const processedData = Object.entries(groupedData).map(
+      ([groupParty, weights]) => {
+        const top15Weights = weights.sort((a, b) => b - a).slice(0, 15);
+        const top15Sum = top15Weights.reduce((sum, weight) => sum + weight, 0);
+
+        return {
+          groupParty,
+          top15Sum,
+        };
+      }
+    );
+
     const top15Groups = processedData
-      .sort((a, b) => b.top15Sum - a.top15Sum) 
-      .slice(0, 15); 
-  
-    console.log('Top 15 Groups:', top15Groups);
-  
+      .sort((a, b) => b.top15Sum - a.top15Sum)
+      .slice(0, 15);
+
+    console.log("Top 15 Groups:", top15Groups);
+
     return {
-      labels: top15Groups.map(({ groupParty }) => groupParty), 
+      labels: top15Groups.map(({ groupParty }) => groupParty),
       datasets: [
         {
-          label: 'Sum of Top 15 Weights',
-          data: top15Groups.map(({ top15Sum }) => top15Sum / 1000), 
+          label: "Sum of Top 15 Weights",
+          data: top15Groups.map(({ top15Sum }) => top15Sum / 1000),
           fill: false,
-          borderColor: '#4caf50', 
+          borderColor: "#4caf50",
           tension: 0.1,
-        }
-      ]
+        },
+      ],
     };
   };
-  
-  
-  
 
-
-  
   const colorMapping = {
     Y: "rgba(255, 223, 0, 0.6)", // Bright Yellow
     P: "rgba(255, 105, 180, 0.6)", // Bright Pink
@@ -525,241 +594,225 @@ function Order_rev() {
     }));
   };
 
+  const [chartdata1, setChartData1] = useState({
+    labels: [],
+    datasets: [],
+  });
 
-const[chartdata1,setChartData1]=useState({
-  labels: [],
-  datasets: [],
-});
-
-  
   const calculateTop15WeightRanges = (data) => {
     const sortedData = data.sort((a, b) => b.WT - a.WT);
-    
     const top15 = sortedData.slice(0, 15);
-    
+
     return top15;
   };
+
+  const fetchedDataRef = useRef(null);
+
   useEffect(() => {
+    if (fetchedDataRef.current) {
+      console.log("Using cached data");
+      processFetchedData(fetchedDataRef.current);
+      setIsLoading(false);
+      return;
+    }
+
     fetch("http://localhost:8081/order_receive&new_design")
       .then((response) => response.json())
       .then((data) => {
+        fetchedDataRef.current = data; // Cache data
         setOrderData(data);
+        processFetchedData(data);
+      })
+      .catch((error) => console.error("Error fetching data:", error))
+      .finally(() => setIsLoading(false));
+  }, [theme, filter, isSorted, isSelected, isSelected_top15,individual_top15]);
 
-        const allYears = new Set();
-        const allMonths = new Set();
-        const allDates = new Set();
-        setIsLoading(false);
-        data.forEach((item) => {
-          if (item.TRANSDATE) {
-            const date = new Date(item.TRANSDATE);
-            allYears.add(date.getFullYear());
-            allMonths.add(date.getMonth() + 1);
-            allDates.add(date.getDate());
-          }
-        });
+  const processFetchedData = (data) => {
+    const allYears = new Set();
+    const allMonths = new Set();
+    const allDates = new Set();
 
-        setYears(Array.from(allYears).sort((a, b) => b - a));
-        setMonths(Array.from(allMonths).sort((a, b) => a - b));
-        setDates(Array.from(allDates).sort((a, b) => a - b));
+    data.forEach((item) => {
+      if (item.TRANSDATE) {
+        const date = new Date(item.TRANSDATE);
+        allYears.add(date.getFullYear());
+        allMonths.add(date.getMonth() + 1);
+        allDates.add(date.getDate());
+      }
+    });
 
-        const filteredData = data.filter((item) => {
-          const itemDate = new Date(item.TRANSDATE);
-          const itemYear = itemDate.getFullYear();
-          const itemMonth = itemDate.getMonth() + 1;
-          const itemDateOnly = itemDate.getDate();
+    setYears(Array.from(allYears).sort((a, b) => b - a));
+    setMonths(Array.from(allMonths).sort((a, b) => a - b));
+    setDates(Array.from(allDates).sort((a, b) => a - b));
 
-          return (
-            (selectedYear.length === 0 || selectedYear.includes(itemYear)) &&
-            (selectedMonth.length === 0 || selectedMonth.includes(itemMonth)) &&
-            (selectedDate.length === 0 || selectedDate.includes(itemDateOnly))
-          );
-        });
+    const filteredData = data.filter((item) => {
+      const itemDate = new Date(item.TRANSDATE);
+      const itemYear = itemDate.getFullYear();
+      const itemMonth = itemDate.getMonth() + 1;
+      const itemDateOnly = itemDate.getDate();
 
-        console.log("Selected Date:", selectedDate);
-        console.log("Selected Month:", selectedMonth);
-        console.log("Selected Year:", selectedYear);
-        console.log("Filtered Data:", filteredData);
+      return (
+        (selectedYear.length === 0 || selectedYear.includes(itemYear)) &&
+        (selectedMonth.length === 0 || selectedMonth.includes(itemMonth)) &&
+        (selectedDate.length === 0 || selectedDate.includes(itemDateOnly))
+      );
+    });
 
-        setFilteredData(filteredData);
-        const totalWeightFromAPI =
-          filteredData.reduce((total, item) => total + (item.WT || 0), 0) /
-          1000;
-        setTotalWeight(totalWeightFromAPI);
+    console.log("Selected Date:", selectedDate);
+    console.log("Selected Month:", selectedMonth);
+    console.log("Selected Year:", selectedYear);
+    console.log("Filtered Data:", filteredData);
 
-        const yearData = filteredData.reduce((acc, item) => {
-          const year = new Date(item.TRANSDATE).getFullYear();
-          if (!acc[year]) acc[year] = 0;
-          acc[year] += item.WT || 0;
-          return acc;
-        }, {});
+    setFilteredData(filteredData);
+    const totalWeightFromAPI =
+      filteredData.reduce((total, item) => total + (item.WT || 0), 0) / 1000;
+    setTotalWeight(totalWeightFromAPI);
 
-        const monthData = filteredData.reduce((acc, item) => {
-          const date = new Date(item.TRANSDATE);
-          const year = date.getFullYear();
-          const monthIndex = date.getMonth() + 1;
-          const yearMonth = `${year}, ${getMonthName(monthIndex)}`;
-          if (!acc[yearMonth]) acc[yearMonth] = 0;
-          acc[yearMonth] += item.WT || 0;
-          return acc;
-        }, {});
+    const yearData = filteredData.reduce((acc, item) => {
+      const year = new Date(item.TRANSDATE).getFullYear();
+      if (!acc[year]) acc[year] = 0;
+      acc[year] += item.WT || 0;
+      return acc;
+    }, {});
 
-        let sortedData = [...filteredData].sort((a, b) => b.WT - a.WT);
-       console.log(sortedData)
-        setYearlyData(yearData);
-        setMonthlyData(monthData);
+    const monthData = filteredData.reduce((acc, item) => {
+      const date = new Date(item.TRANSDATE);
+      const year = date.getFullYear();
+      const monthIndex = date.getMonth() + 1;
+      const yearMonth = `${year}, ${getMonthName(monthIndex)}`;
+      if (!acc[yearMonth]) acc[yearMonth] = 0;
+      acc[yearMonth] += item.WT || 0;
+      return acc;
+    }, {});
 
-        const istop15 = isSelected_top15;
-        const isSorting = isSorted;
-        const istop_individual = individual_top15;
+    let sortedData = [...filteredData].sort((a, b) => b.WT - a.WT);
 
-        const currentProjectData = getProject(filteredData);
-        const currentProductData = getProduct(filteredData);
-        const currentSubproductData = getsubproduct(filteredData);
+    setYearlyData(yearData);
+    setMonthlyData(monthData);
 
-        let sortedProjectData = currentProjectData;
-        let sortedProductData = currentProductData;
-        let sortedSubproductData = currentSubproductData;
-        console.log("found");
-        console.log("Top click", istop15);
-        console.log("Sorted",isSorted)
-        console.log("Individual",individual_top15)
-        if (isSorting) {
-          sortedProjectData = [...currentProjectData].sort(
-            (a, b) => b.kg - a.kg
-          );
-          sortedProductData = [...currentProductData].sort(
-            (a, b) => b.kg - a.kg
-          );
-          sortedSubproductData = [...currentSubproductData].sort(
-            (a, b) => b.kg - a.kg
-          );
-        }
+    const istop15 = isSelected_top15;
+    const isSorting = isSorted;
+    const istop_individual = individual_top15;
 
+    console.log("isSorting:", isSorting);
+    console.log("istop15:", istop15);
+    console.log("istop_individual:", istop_individual);
 
-        if (individual_top15) {
-          sortedProjectData = groupByProject(filteredData)
-          // let currentProductData = groupByProduct_individual(filteredData)
-          // let currentSubproductData = groupBysubproduct_individual(filteredData)
-        
-          // setProjectData(Currentproject);
-          // setProduct(currentProductData);
-          // setSubproduct(currentSubproductData);
-          setChartData1({
-            labels: groupedData.map(item => item.PROJECT), // Use project names as labels
-            datasets: [
-              {
-                label: 'Top 15 Weight (WT)',
-                data: groupedData.map(item => item.WT), // Weight values for each project
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1,
-              },
-            ],
-          });
-        }
-        
-        // if(istop_individual){
-        //   let Currentproject = groupByProject_individual(filteredData);
-        //   let currentProductData = groupByProduct_individual(filteredData);
-        //   let currentSubproductData = groupBysubproduct_individual(filteredData);
-        //   sortedProjectData = Currentproject.slice(0, 15);
-        //   sortedProductData = currentProductData.slice(0, 15);
-        //   sortedSubproductData = currentSubproductData.slice(0, 15);
+    
 
-        // }
+    const currentProjectData = getProject(sortedData);
+    const currentProductData = getProduct(sortedData);
+    const currentSubproductData = getsubproduct(sortedData);
+  
+   
+    let sortedProjectData = [...currentProjectData].sort((a, b) => b.kg - a.kg);
+    let sortedProductData = [...currentProductData].sort((a, b) => b.kg - a.kg);
+    let sortedSubproductData = [...currentSubproductData].sort((a, b) => b.kg - a.kg);
+  
+ setIsLoading(false);
+    
 
-        if (istop15 && isSorting) {
-          let Currentproject = getProject(sortedData);
-          let currentProductData = getProduct(sortedData);
-          let currentSubproductData = getsubproduct(sortedData);
+ if (istop15) {
+  if (isSorting) {
+    sortedProjectData = sortedProjectData.slice(0, 15);
+    sortedProductData = sortedProductData.slice(0, 15);
+    sortedSubproductData = sortedSubproductData.slice(0, 15);
+  } else {
+    sortedProjectData = currentProjectData.slice(0, 15);
+    sortedProductData = currentProductData.slice(0, 15);
+    sortedSubproductData = currentSubproductData.slice(0, 15);
+  }
+}
+if (!istop15 && istop_individual) {
 
-          sortedProjectData = [...Currentproject]
-            .sort((a, b) => b.kg - a.kg)
-            .slice(0, 15);
-          sortedProductData = [...currentProductData]
-            .sort((a, b) => b.kg - a.kg)
-            .slice(0, 15);
-          sortedSubproductData = [...currentSubproductData]
-            .sort((a, b) => b.kg - a.kg)
-            .slice(0, 15);
-        } else if (istop15) {
-          sortedProjectData = currentProjectData.slice(0, 15);
-          sortedProductData = currentProductData.slice(0, 15);
-          sortedSubproductData = currentSubproductData.slice(0, 15);
-        }
+  const groupedData = groupByProject(filteredData, true);
+  sortedProjectData =  groupByProject(filteredData, true);
+  // setGroupedData(groupedData);
 
+  setChartData1({
+    labels: groupedData.map((item) => item.project),
+    datasets: [
+      {
+        label: "Top 15 Weight (WT)",
+        data: groupedData.map((item) => item.kg), 
+        backgroundColor: "rgba(75, 192, 192, 0.6)",
+        borderColor: "rgba(75, 192, 192, 1)",
+        borderWidth: 1,
+      },
+    ],
+  });
+} 
 
-       
+    setChartData({
+      labels: Object.keys(yearData),
+      datasets: [
+        {
+          label: "KG Count per Year",
+          data: Object.values(yearData).map((value) => value / 1000),
+          backgroundColor: "rgba(75, 192, 192, 0.2)",
+          borderColor: "rgba(75, 192, 192, 1)",
+          borderWidth: 1,
+        },
+      ],
+    });
 
-        
-        setChartData({
-          labels: Object.keys(yearData),
-          datasets: [
-            {
-              label: "KG Count per Year",
-              data: Object.values(yearData).map((value) => value / 1000),
-              backgroundColor: "rgba(75, 192, 192, 0.2)",
-              borderColor: "rgba(75, 192, 192, 1)",
-              borderWidth: 1,
-            },
-          ],
-        });
-        setChartmonthData({
-          labels: Object.keys(monthData),
-          datasets: [
-            {
-              label: "KG Count per Month",
-              data: Object.values(monthData).map((value) => value / 1000),
-              backgroundColor: "rgba(240, 128, 128, 0.2)",
-              borderColor: "#ec5f5f",
-              borderWidth: 1,
-            },
-          ],
-        });
+    setChartmonthData({
+      labels: Object.keys(monthData),
+      datasets: [
+        {
+          label: "KG Count per Month",
+          data: Object.values(monthData).map((value) => value / 1000),
+          backgroundColor: "rgba(240, 128, 128, 0.2)",
+          borderColor: "#ec5f5f",
+          borderWidth: 1,
+        },
+      ],
+    });
 
-        setPurityChartData({
-          labels: getPurityData(filteredData).map((entry) => entry.purity),
-          datasets: [
-            {
-              label: "KG Count by Purity",
-              data: getPurityData(filteredData).map((entry) => entry.kg),
-              backgroundColor: getPurityData(filteredData).map(
-                (entry) => entry.color
-              ),
-              borderColor: getPurityData(filteredData).map((entry) =>
-                entry.color.replace("0.3", "1")
-              ),
-              borderWidth: 1,
-            },
-          ],
-        });
+    setPurityChartData({
+      labels: getPurityData(filteredData).map((entry) => entry.purity),
+      datasets: [
+        {
+          label: "KG Count by Purity",
+          data: getPurityData(filteredData).map((entry) => entry.kg),
+          backgroundColor: getPurityData(filteredData).map(
+            (entry) => entry.color
+          ),
+          borderColor: getPurityData(filteredData).map((entry) =>
+            entry.color.replace("0.3", "1")
+          ),
+          borderWidth: 1,
+        },
+      ],
+    });
 
-        setTypeChartData({
-          labels: getTypeData(filteredData).map((entry) => entry.type),
-          datasets: [
-            {
-              label: "KG Count by Type",
-              data: getTypeData(filteredData).map((entry) => entry.kg),
-              backgroundColor: "rgba(153, 102, 255, 0.2)",
-              borderColor: "rgba(153, 102, 255, 1)",
-              borderWidth: 1,
-            },
-          ],
-        });
+    setTypeChartData({
+      labels: getTypeData(filteredData).map((entry) => entry.type),
+      datasets: [
+        {
+          label: "KG Count by Type",
+          data: getTypeData(filteredData).map((entry) => entry.kg),
+          backgroundColor: "rgba(153, 102, 255, 0.2)",
+          borderColor: "rgba(153, 102, 255, 1)",
+          borderWidth: 1,
+        },
+      ],
+    });
 
-        setZoneChartData({
-          labels: getZoneData(filteredData).map((entry) => entry.zone),
-          datasets: [
-            {
-              label: "KG Count by Zone",
-              data: getZoneData(filteredData).map((entry) => entry.kg),
-              backgroundColor: "rgba(255, 159, 64, 0.2)",
-              borderColor: "rgba(255, 159, 64, 1)",
-              borderWidth: 1,
-            },
-          ],
-        });
+    setZoneChartData({
+      labels: getZoneData(filteredData).map((entry) => entry.zone),
+      datasets: [
+        {
+          label: "KG Count by Zone",
+          data: getZoneData(filteredData).map((entry) => entry.kg),
+          backgroundColor: "rgba(255, 159, 64, 0.2)",
+          borderColor: "rgba(255, 159, 64, 1)",
+          borderWidth: 1,
+        },
+      ],
+    });
 
+ 
         const colorData = prepareColorData(filteredData);
 
         setColorChartData({
@@ -777,33 +830,33 @@ const[chartdata1,setChartData1]=useState({
           ],
         });
 
-        setProjectData({
-          labels: sortedProjectData.map((entry) => entry.project),
-          datasets: [
-            {
-              label: "KG Count by Project",
-              data: sortedProjectData.map((entry) => entry.kg),
-              backgroundColor: "rgba(255, 159, 64, 0.2)",
-              borderColor: "rgba(255, 159, 64, 1)",
-              borderWidth: 1,
-            },
-          ],
-        });
+    setProjectData({
+      labels: sortedProjectData.map((entry) => entry.project),
+      datasets: [
+        {
+          label: "KG Count by Project",
+          data: sortedProjectData.map((entry) => entry.kg),
+          backgroundColor: "rgba(255, 159, 64, 0.2)",
+          borderColor: "rgba(255, 159, 64, 1)",
+          borderWidth: 1,
+        },
+      ],
+    });
 
-        setProduct({
-          labels: sortedProductData.map((entry) => entry.product),
-          datasets: [
-            {
-              label: "KG Count by Product",
-              data: sortedProductData.map((entry) => entry.kg),
-              backgroundColor: "rgba(153, 102, 255, 0.2)",
-              borderColor: "#9900cc",
-              borderWidth: 1,
-            },
-          ],
-        });
+    setProduct({
+      labels: sortedProductData.map((entry) => entry.product),
+      datasets: [
+        {
+          label: "KG Count by Product",
+          data: sortedProductData.map((entry) => entry.kg),
+          backgroundColor: "rgba(153, 102, 255, 0.2)",
+          borderColor: "#9900cc",
+          borderWidth: 1,
+        },
+      ],
+    });
 
-        setSubproduct({
+           setSubproduct({
           labels: sortedSubproductData.map((entry) => entry.sub_product),
           datasets: [
             {
@@ -815,30 +868,326 @@ const[chartdata1,setChartData1]=useState({
             },
           ],
         });
-    //     setGroupParty({
-    //       labels: Object.keys(groupedData), // X-axis labels
-    // datasets: [
-    //   {
-    //     label: 'Total Weight',
-    //     data: Object.values(groupedData).map(weight => weight / 1000), // Convert grams to kilograms
-    //     fill: false,
-    //     borderColor: '#4caf50', // Line color
-    //     tension: 0.1,
-    //   }
-    // ]
-    //     })
-        setAllCharts([
-          chartData,
-          purityChartData,
-          typeChartData,
-          zoneChartData,
-        ]);
-        console.log(selectedDate, selectedMonth, selectedYear);
-        console.log("Filtered Data:", filteredData);
-        setIsloading_sort(false);
-      })
-      .catch((error) => console.error("Error fetching data:", error));
-  }, [theme, filter, isSorted, isSelected,isSelected_top15,individual_top15]);
+
+              setGroupParty({
+          labels: Object.keys(groupedData), // X-axis labels
+    datasets: [
+      {
+        label: 'Total Weight',
+        data: Object.values(groupedData).map(weight => weight / 1000), 
+        fill: false,
+        borderColor: '#4caf50', // Line color
+        tension: 0.1,
+      }
+    ]
+        })
+
+    
+    setAllCharts([
+      { data: chartData, title: "Yearly Weight Distribution" },
+      { data: chartmonthData, title: "Monthly Weight Distribution" },
+      { data: purityChartData, title: "Purity Distribution" },
+      { data: typeChartData, title: "Type Distribution" },
+      { data: zoneChartData, title: "Zone Distribution" },
+      { data: colorChartData, title: "Color Distribution" },
+    ]);
+  };
+
+  // useEffect(() => {
+  //   fetch("http://localhost:8081/order_receive&new_design")
+  //     .then((response) => response.json())
+  //     .then((data) => {
+  //       setOrderData(data);
+
+  //       const allYears = new Set();
+  //       const allMonths = new Set();
+  //       const allDates = new Set();
+  //       setIsLoading(false);
+  //       data.forEach((item) => {
+  //         if (item.TRANSDATE) {
+  //           const date = new Date(item.TRANSDATE);
+  //           allYears.add(date.getFullYear());
+  //           allMonths.add(date.getMonth() + 1);
+  //           allDates.add(date.getDate());
+  //         }
+  //       });
+
+  //       setYears(Array.from(allYears).sort((a, b) => b - a));
+  //       setMonths(Array.from(allMonths).sort((a, b) => a - b));
+  //       setDates(Array.from(allDates).sort((a, b) => a - b));
+
+  //       const filteredData = data.filter((item) => {
+  //         const itemDate = new Date(item.TRANSDATE);
+  //         const itemYear = itemDate.getFullYear();
+  //         const itemMonth = itemDate.getMonth() + 1;
+  //         const itemDateOnly = itemDate.getDate();
+
+  //         return (
+  //           (selectedYear.length === 0 || selectedYear.includes(itemYear)) &&
+  //           (selectedMonth.length === 0 || selectedMonth.includes(itemMonth)) &&
+  //           (selectedDate.length === 0 || selectedDate.includes(itemDateOnly))
+  //         );
+  //       });
+
+  //       console.log("Selected Date:", selectedDate);
+  //       console.log("Selected Month:", selectedMonth);
+  //       console.log("Selected Year:", selectedYear);
+  //       console.log("Filtered Data:", filteredData);
+
+  //       setFilteredData(filteredData);
+  //       const totalWeightFromAPI =
+  //         filteredData.reduce((total, item) => total + (item.WT || 0), 0) /
+  //         1000;
+  //       setTotalWeight(totalWeightFromAPI);
+
+  //       const yearData = filteredData.reduce((acc, item) => {
+  //         const year = new Date(item.TRANSDATE).getFullYear();
+  //         if (!acc[year]) acc[year] = 0;
+  //         acc[year] += item.WT || 0;
+  //         return acc;
+  //       }, {});
+
+  //       const monthData = filteredData.reduce((acc, item) => {
+  //         const date = new Date(item.TRANSDATE);
+  //         const year = date.getFullYear();
+  //         const monthIndex = date.getMonth() + 1;
+  //         const yearMonth = `${year}, ${getMonthName(monthIndex)}`;
+  //         if (!acc[yearMonth]) acc[yearMonth] = 0;
+  //         acc[yearMonth] += item.WT || 0;
+  //         return acc;
+  //       }, {});
+
+  //       let sortedData = [...filteredData].sort((a, b) => b.WT - a.WT);
+  //      console.log(sortedData)
+  //       setYearlyData(yearData);
+  //       setMonthlyData(monthData);
+
+  //       const istop15 = isSelected_top15;
+  //       const isSorting = isSorted;
+  //       const istop_individual = individual_top15;
+
+  //       const currentProjectData = getProject(filteredData);
+  //       const currentProductData = getProduct(filteredData);
+  //       const currentSubproductData = getsubproduct(filteredData);
+
+  //       let sortedProjectData = currentProjectData;
+  //       let sortedProductData = currentProductData;
+  //       let sortedSubproductData = currentSubproductData;
+  //       console.log("found");
+  //       console.log("Top click", istop15);
+  //       console.log("Sorted",isSorted)
+  //       console.log("Individual",individual_top15)
+  //       if (isSorting) {
+  //         sortedProjectData = [...currentProjectData].sort(
+  //           (a, b) => b.kg - a.kg
+  //         );
+  //         sortedProductData = [...currentProductData].sort(
+  //           (a, b) => b.kg - a.kg
+  //         );
+  //         sortedSubproductData = [...currentSubproductData].sort(
+  //           (a, b) => b.kg - a.kg
+  //         );
+  //       }
+
+  //       if (individual_top15) {
+  //         sortedProjectData = groupByProject(filteredData)
+  //         // let currentProductData = groupByProduct_individual(filteredData)
+  //         // let currentSubproductData = groupBysubproduct_individual(filteredData)
+
+  //         // setProjectData(Currentproject);
+  //         // setProduct(currentProductData);
+  //         // setSubproduct(currentSubproductData);
+  //         setChartData1({
+  //           labels: groupedData.map(item => item.PROJECT), // Use project names as labels
+  //           datasets: [
+  //             {
+  //               label: 'Top 15 Weight (WT)',
+  //               data: groupedData.map(item => item.WT), // Weight values for each project
+  //               backgroundColor: 'rgba(75, 192, 192, 0.6)',
+  //               borderColor: 'rgba(75, 192, 192, 1)',
+  //               borderWidth: 1,
+  //             },
+  //           ],
+  //         });
+  //       }
+
+  //       // if(istop_individual){
+  //       //   let Currentproject = groupByProject_individual(filteredData);
+  //       //   let currentProductData = groupByProduct_individual(filteredData);
+  //       //   let currentSubproductData = groupBysubproduct_individual(filteredData);
+  //       //   sortedProjectData = Currentproject.slice(0, 15);
+  //       //   sortedProductData = currentProductData.slice(0, 15);
+  //       //   sortedSubproductData = currentSubproductData.slice(0, 15);
+
+  //       // }
+
+  //       if (istop15 && isSorting) {
+  //         let Currentproject = getProject(sortedData);
+  //         let currentProductData = getProduct(sortedData);
+  //         let currentSubproductData = getsubproduct(sortedData);
+
+  //         sortedProjectData = [...Currentproject]
+  //           .sort((a, b) => b.kg - a.kg)
+  //           .slice(0, 15);
+  //         sortedProductData = [...currentProductData]
+  //           .sort((a, b) => b.kg - a.kg)
+  //           .slice(0, 15);
+  //         sortedSubproductData = [...currentSubproductData]
+  //           .sort((a, b) => b.kg - a.kg)
+  //           .slice(0, 15);
+  //       } else if (istop15) {
+  //         sortedProjectData = currentProjectData.slice(0, 15);
+  //         sortedProductData = currentProductData.slice(0, 15);
+  //         sortedSubproductData = currentSubproductData.slice(0, 15);
+  //       }
+
+  //       setChartData({
+  //         labels: Object.keys(yearData),
+  //         datasets: [
+  //           {
+  //             label: "KG Count per Year",
+  //             data: Object.values(yearData).map((value) => value / 1000),
+  //             backgroundColor: "rgba(75, 192, 192, 0.2)",
+  //             borderColor: "rgba(75, 192, 192, 1)",
+  //             borderWidth: 1,
+  //           },
+  //         ],
+  //       });
+  //       setChartmonthData({
+  //         labels: Object.keys(monthData),
+  //         datasets: [
+  //           {
+  //             label: "KG Count per Month",
+  //             data: Object.values(monthData).map((value) => value / 1000),
+  //             backgroundColor: "rgba(240, 128, 128, 0.2)",
+  //             borderColor: "#ec5f5f",
+  //             borderWidth: 1,
+  //           },
+  //         ],
+  //       });
+
+  //       setPurityChartData({
+  //         labels: getPurityData(filteredData).map((entry) => entry.purity),
+  //         datasets: [
+  //           {
+  //             label: "KG Count by Purity",
+  //             data: getPurityData(filteredData).map((entry) => entry.kg),
+  //             backgroundColor: getPurityData(filteredData).map(
+  //               (entry) => entry.color
+  //             ),
+  //             borderColor: getPurityData(filteredData).map((entry) =>
+  //               entry.color.replace("0.3", "1")
+  //             ),
+  //             borderWidth: 1,
+  //           },
+  //         ],
+  //       });
+
+  //       setTypeChartData({
+  //         labels: getTypeData(filteredData).map((entry) => entry.type),
+  //         datasets: [
+  //           {
+  //             label: "KG Count by Type",
+  //             data: getTypeData(filteredData).map((entry) => entry.kg),
+  //             backgroundColor: "rgba(153, 102, 255, 0.2)",
+  //             borderColor: "rgba(153, 102, 255, 1)",
+  //             borderWidth: 1,
+  //           },
+  //         ],
+  //       });
+
+  //       setZoneChartData({
+  //         labels: getZoneData(filteredData).map((entry) => entry.zone),
+  //         datasets: [
+  //           {
+  //             label: "KG Count by Zone",
+  //             data: getZoneData(filteredData).map((entry) => entry.kg),
+  //             backgroundColor: "rgba(255, 159, 64, 0.2)",
+  //             borderColor: "rgba(255, 159, 64, 1)",
+  //             borderWidth: 1,
+  //           },
+  //         ],
+  //       });
+
+  //       const colorData = prepareColorData(filteredData);
+
+  //       setColorChartData({
+  //         labels: colorData.map((entry) => entry.color),
+  //         datasets: [
+  //           {
+  //             label: "KG Count by Color",
+  //             data: colorData.map((entry) => entry.kg),
+  //             backgroundColor: colorData.map((entry) => entry.backgroundColor),
+  //             borderColor: colorData.map((entry) =>
+  //               entry.backgroundColor.replace("0.4", "1")
+  //             ),
+  //             borderWidth: 1,
+  //           },
+  //         ],
+  //       });
+
+  //       setProjectData({
+  //         labels: sortedProjectData.map((entry) => entry.project),
+  //         datasets: [
+  //           {
+  //             label: "KG Count by Project",
+  //             data: sortedProjectData.map((entry) => entry.kg),
+  //             backgroundColor: "rgba(255, 159, 64, 0.2)",
+  //             borderColor: "rgba(255, 159, 64, 1)",
+  //             borderWidth: 1,
+  //           },
+  //         ],
+  //       });
+
+  //       setProduct({
+  //         labels: sortedProductData.map((entry) => entry.product),
+  //         datasets: [
+  //           {
+  //             label: "KG Count by Product",
+  //             data: sortedProductData.map((entry) => entry.kg),
+  //             backgroundColor: "rgba(153, 102, 255, 0.2)",
+  //             borderColor: "#9900cc",
+  //             borderWidth: 1,
+  //           },
+  //         ],
+  //       });
+
+  //       setSubproduct({
+  //         labels: sortedSubproductData.map((entry) => entry.sub_product),
+  //         datasets: [
+  //           {
+  //             label: "KG Count by Sub Product",
+  //             data: sortedSubproductData.map((entry) => entry.kg),
+  //             backgroundColor: "rgba(75, 192, 192, 0.2)",
+  //             borderColor: "#215e5e",
+  //             borderWidth: 1,
+  //           },
+  //         ],
+  //       });
+  //   //     setGroupParty({
+  //   //       labels: Object.keys(groupedData), // X-axis labels
+  //   // datasets: [
+  //   //   {
+  //   //     label: 'Total Weight',
+  //   //     data: Object.values(groupedData).map(weight => weight / 1000), // Convert grams to kilograms
+  //   //     fill: false,
+  //   //     borderColor: '#4caf50', // Line color
+  //   //     tension: 0.1,
+  //   //   }
+  //   // ]
+  //   //     })
+  //       setAllCharts([
+  //         chartData,
+  //         purityChartData,
+  //         typeChartData,
+  //         zoneChartData,
+  //       ]);
+  //       console.log(selectedDate, selectedMonth, selectedYear);
+  //       console.log("Filtered Data:", filteredData);
+  //       setIsloading_sort(false);
+  //     })
+  //     .catch((error) => console.error("Error fetching data:", error));
+  // }, [theme, filter, isSorted, isSelected,isSelected_top15,individual_top15]);
 
   const chartComponents = [
     <div className="" key="total-weight">
@@ -1028,6 +1377,13 @@ const[chartdata1,setChartData1]=useState({
               options={{
                 responsive: true,
                 maintainAspectRatio: false,
+                onClick: (event, elements) => {
+                  if (elements.length > 0) {
+                    const elementIndex = elements[0].index;
+                    const clickedZone = purityChartData.labels[elementIndex];
+                    navigate(`/purity-detail-order_receiving/${encodeURIComponent(clickedZone)}`);
+                  }
+                },
                 plugins: {
                   legend: {
                     display: true,
@@ -1085,6 +1441,10 @@ const[chartdata1,setChartData1]=useState({
                       border: {
                         color: theme === "light" ? "#e5e7eb" : "#94a3b8",
                       },
+                      grid: {
+                        color: theme === "light" ? "#e5e7eb" : "#4b5563", 
+                        borderDash: [5, 5], 
+                      },
                     },
                     y: {
                       title: {
@@ -1096,6 +1456,7 @@ const[chartdata1,setChartData1]=useState({
                       grid: {
                         display: true,
                         color: theme === "light" ? "#e5e7eb" : "#4b5563",
+                        borderDash: [5, 5], 
                       },
                       ticks: {
                         color: theme === "light" ? "black" : "#94a3b8",
@@ -1103,6 +1464,7 @@ const[chartdata1,setChartData1]=useState({
                       border: {
                         color: theme === "light" ? "#e5e7eb" : "#94a3b8",
                       },
+                     
                     },
                   },
                   datalabels: {
@@ -1161,10 +1523,9 @@ const[chartdata1,setChartData1]=useState({
                 if (elements.length > 0) {
                   const elementIndex = elements[0].index;
                   const clickedZone = zoneChartData.labels[elementIndex];
-                  navigate(`/zone-detail/${encodeURIComponent(clickedZone)}`);
+                  navigate(`/zone-detail-order_receiving/${encodeURIComponent(clickedZone)}`);
                 }
-              }
-            ,
+              },
               plugins: {
                 datalabels: {
                   display: true,
@@ -1379,8 +1740,15 @@ const[chartdata1,setChartData1]=useState({
         </h2>
 
         <Bar
-         data={projectData}
+           data={projectData}
           options={{
+            onClick: (event, elements) => {
+              if (elements.length > 0) {
+                const elementIndex = elements[0].index;
+                const clickedZone = projectData.labels[elementIndex];
+                navigate(`/project-detail-order_receiving/${encodeURIComponent(clickedZone)}`);
+              }
+            },
             responsive: true,
             maintainAspectRatio: false,
             indexAxis: "y",
@@ -1390,12 +1758,11 @@ const[chartdata1,setChartData1]=useState({
                 align: "end",
                 anchor: "end",
                 formatter: (value, context) => {
-                  if (value !== undefined && value !== null && !isNaN(value)){
-                  return ` ${value.toFixed(2)} KG`;
-                 }
-                 else{
-                  return '0.00'
-                 }
+                  if (value !== undefined && value !== null && !isNaN(value)) {
+                    return ` ${value.toFixed(2)} KG`;
+                  } else {
+                    return "0.00";
+                  }
                 },
                 color: theme === "light" ? "black" : "white",
                 font: {
@@ -1480,10 +1847,24 @@ const[chartdata1,setChartData1]=useState({
         >
           Product Data
         </h2>
+   
 
         <Bar
           data={product}
           options={{
+            onClick: (event, elements) => {
+              if (clickTimeout.current) {
+                clearTimeout(clickTimeout.current);
+                clickTimeout.current = null;
+                handleChartDoubleClick(event, elements);
+              } else {
+                // Set a timeout for single-click detection
+                clickTimeout.current = setTimeout(() => {
+                  handleChartClick(event, elements);
+                  clickTimeout.current = null; // Reset after single-click handling
+                }, 300); // Delay in ms to differentiate single and double click
+              }
+            },
             responsive: true,
             maintainAspectRatio: false,
             indexAxis: "y",
@@ -1493,13 +1874,12 @@ const[chartdata1,setChartData1]=useState({
                 align: "end",
                 anchor: "end",
                 formatter: (value, context) => {
-                  if (value !== undefined && value !== null && !isNaN(value)){
-                   return ` ${value.toFixed(2)} KG`;
+                  if (value !== undefined && value !== null && !isNaN(value)) {
+                    return ` ${value.toFixed(2)} KG`;
+                  } else {
+                    return "0.00";
                   }
-                  else{
-                   return '0.00'
-                  }
-                 },
+                },
                 color: theme === "light" ? "black" : "white",
                 font: {
                   weight: "normal",
@@ -1524,7 +1904,6 @@ const[chartdata1,setChartData1]=useState({
                     ).toFixed(2);
                     return `KG: ${context.raw.toFixed(2)} (${percentage}%)`;
                   },
-                
                 },
               },
             },
@@ -1566,6 +1945,7 @@ const[chartdata1,setChartData1]=useState({
                 },
               },
             },
+            
           }}
           type="bar"
           plugins={[ChartDataLabels]}
@@ -1578,17 +1958,28 @@ const[chartdata1,setChartData1]=useState({
           theme === "light" ? "bg-white" : "bg-slate-900"
         } p-4 rounded shadow-md overflow-auto h-[790px] custom-scrollbar`}
       >
+        <div className="flex flex-row justify-between">
         <h2
-          className={`text-xl font-bold mb-4 mt-8 ${
+          className={`text-xl font-bold  mt-0 ${
             theme === "light" ? "text-slate-800" : "text-slate-400"
           }`}
         >
           Sub Product Distribution
         </h2>
+        <button className="bg-blue-500 hover:bg-blue-800 p-2 text-white font-semibold rounded-md" onClick={!filter}>View all</button>
+        </div>
+
 
         <Bar
           data={subproduct}
           options={{
+            onClick: (event, elements) => {
+              if (elements.length > 0) {
+                const elementIndex = elements[0].index;
+                const clickedZone = subproduct.labels[elementIndex];
+                navigate(`/subproduct-detail-order_receiving/${encodeURIComponent(clickedZone)}`);
+              }
+            },
             responsive: true,
             maintainAspectRatio: false,
             indexAxis: "y",
@@ -1598,12 +1989,11 @@ const[chartdata1,setChartData1]=useState({
                 align: "end",
                 anchor: "end",
                 formatter: (value, context) => {
-                  if (value !== undefined && value !== null && !isNaN(value)){
-                  return ` ${value.toFixed(2)} KG`;
-                 }
-                 else{
-                  return '0.00'
-                 }
+                  if (value !== undefined && value !== null && !isNaN(value)) {
+                    return ` ${value.toFixed(2)} KG`;
+                  } else {
+                    return "0.00";
+                  }
                 },
                 color: theme === "light" ? "black" : "white",
                 font: {
@@ -1626,7 +2016,6 @@ const[chartdata1,setChartData1]=useState({
                     ).toFixed(2);
                     return `KG: ${context.raw.toFixed(2)} (${percentage}%)`;
                   },
-                
                 },
               },
             },
@@ -1673,87 +2062,85 @@ const[chartdata1,setChartData1]=useState({
       </div>
     </div>,
     <div key="group party-wise-chart">
-    <div
-    className={`order-1 col-span-1 ${
-      theme === "light" ? "bg-white" : "bg-slate-900"
-    }  p-4 rounded shadow-md overflow-x-auto h-[450px]`}
-  >
-    {!isLoading && (
-       <Line
-       data={groupparty}
-       options={{
-         responsive: true,
-         maintainAspectRatio: false,
-         plugins: {
-           legend: {
-             display: true,
-             labels: {
-               color: theme === "light" ? "black" : "white",
-             },
-           },
-           tooltip: {
-             callbacks: {
-               label: function (context) {
-                 return `KG: ${context.raw.toFixed(2)}`;
-               },
-             },
-           },
-           datalabels: {
-             display: true,
-             align: "end",
-             anchor: "end",
-             formatter: (value) => value.toFixed(2),
-             color: theme === "light" ? "black" : "white",
-             font: {
-               weight: "normal",
-             },
-           },
-         },
-         scales: {
-           x: {
-             title: {
-               display: true,
-               text: "Group Party",
-               color: theme === "light" ? "black" : "#94a3b8",
-             },
-             grid: {
-               display: true,
-               color: theme === "light" ? "#e5e7eb" : "#374151",
-             },
-             ticks: {
-               color: theme === "light" ? "black" : "#94a3b8",
-             },
-             border: {
-               color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-             },
-           },
-           y: {
-             title: {
-               display: true,
-               text: "KG Count",
-               color: theme === "light" ? "black" : "#94a3b8",
-             },
-             beginAtZero: true,
-             grid: {
-               display: true,
-               color: theme === "light" ? "#e5e7eb" : "#374151",
-             },
-             ticks: {
-               color: theme === "light" ? "black" : "#94a3b8",
-             },
-             border: {
-               color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-             },
-           },
-         },
-       }}
-       plugins={[ChartDataLabels]}
-     />
-    )}
-  </div>
-  </div>,
-
-    
+      <div
+        className={`order-1 col-span-1 ${
+          theme === "light" ? "bg-white" : "bg-slate-900"
+        }  p-4 rounded shadow-md overflow-x-auto h-[450px]`}
+      >
+        {!isLoading && (
+          <Line
+            data={groupparty}
+            options={{
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  display: true,
+                  labels: {
+                    color: theme === "light" ? "black" : "white",
+                  },
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      return `KG: ${context.raw.toFixed(2)}`;
+                    },
+                  },
+                },
+                datalabels: {
+                  display: true,
+                  align: "end",
+                  anchor: "end",
+                  formatter: (value) => value.toFixed(2),
+                  color: theme === "light" ? "black" : "white",
+                  font: {
+                    weight: "normal",
+                  },
+                },
+              },
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "Group Party",
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
+                },
+                y: {
+                  title: {
+                    display: true,
+                    text: "KG Count",
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  beginAtZero: true,
+                  grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
+                },
+              },
+            }}
+            plugins={[ChartDataLabels]}
+          />
+        )}
+      </div>
+    </div>,
   ];
   const itemsPerPage = 4;
   const totalPages = Math.ceil(chartComponents.length / itemsPerPage);
@@ -1819,7 +2206,7 @@ const[chartdata1,setChartData1]=useState({
             Filter
           </button>
           <div className="flex justify-between space-x-2">
-            <button
+            {/* <button
               className={`p-2 rounded ${
                 isSelected
                   ? "bg-blue-500 text-white hover:bg-blue-600"
@@ -1839,7 +2226,7 @@ const[chartdata1,setChartData1]=useState({
               ) : (
                 "Sort charts"
               )}
-            </button>
+            </button> */}
 
             <button
               className={`p-2 rounded ${
@@ -1862,7 +2249,7 @@ const[chartdata1,setChartData1]=useState({
                 "Top 15"
               )}
             </button>
-
+{/* 
             <button
               className={`p-2 rounded ${
                 individual_top15
@@ -1883,8 +2270,7 @@ const[chartdata1,setChartData1]=useState({
               ) : (
                 "Top 15 individual"
               )}
-            </button>
-
+            </button> */}
           </div>
         </div>
         {showDatePickerModal && (

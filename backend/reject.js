@@ -31,7 +31,6 @@ connection.connect((err) => {
     console.error('Error connecting to MySQL:', err);
     return;
   }
-  console.log('Connected to MySQL database.');
 });
 
 
@@ -61,7 +60,6 @@ connection.query(createTableQuery, (err) => {
     console.error('Error creating table:', err);
     return;
   }
-  console.log('Table created or already exists.');
 });
 
 app.post('/api/rejection/upload', upload.single('file'), (req, res) => {
