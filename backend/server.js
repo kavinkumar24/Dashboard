@@ -20,10 +20,74 @@ const db = mysql.createConnection({
   database: "emerald",
 });
 
+app.post('/save-targets', (req, res) => {
+  const targets = req.body.targets; // Expecting an array of objects with project and target values
+
+  if (!Array.isArray(targets) || targets.length === 0) {
+    return res.status(400).json({ error: 'No valid target data provided' });
+  }
+
+  // Check if the table exists, and create it if it doesn't
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS projects_targets (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      project VARCHAR(255) NOT NULL UNIQUE,
+      target INT NOT NULL
+    )
+  `;
+
+  db.query(createTableQuery, (err) => {
+    if (err) {
+      console.error("Error creating table:", err);
+      return res.status(500).send("Error creating table");
+    }
+
+    // Insert or update the data to avoid duplicates
+    const insertDataQuery = `
+      INSERT INTO projects_targets (project, target) 
+      VALUES ?
+      ON DUPLICATE KEY UPDATE target = VALUES(target)
+    `;
+    const values = targets.map(item => [item.project, item.target]);
+
+    db.query(insertDataQuery, [values], (err) => {
+      if (err) {
+        console.error("Error inserting data:", err);
+        return res.status(500).send("Error inserting data");
+      }
+      res.status(200).json({ message: 'Data saved successfully' });
+    });
+  });
+});
+
+app.get("/pending-sum", (req, res) => {
+  const query = `
+    SELECT PLTCODE1, COUNT(JCPDSCWQTY1) AS total_quantity
+    FROM pending
+    GROUP BY PLTCODE1;
+  `;
+
+  db.query(query, (err, result) => {
+    if (err) {
+      console.error("Error fetching data:", err);
+      return res.status(500).json({ message: "Error fetching data" });
+    }
+    res.json(result);
+  });
+});
 
 
 
-
+app.get("/targets", (req, res) => {
+  db.query("SELECT * FROM projects_targets", (err, result) => {
+    if (err) {
+      console.error("Error fetching data:", err);
+      return res.status(500).json({ message: "Error fetching data" });
+    }
+    res.json(result);
+  }
+  );
+});
 
 
 
@@ -671,269 +735,271 @@ function insertData(tableName, data, res) {
 //    });
 // });
 
-const departmentMappings = {
-  CAD: {
-    from: ["WBKOL-CAD", "U4PD-CAD", "U1CAD", "U1CAD-NMP"],
-    to: [
-      "U4PD-PRBOM",
-      "U1MMD",
-      "U1TOOL",
-      "U1CAM",
-      "U4PD-CAM",
-      "U1ST-SISMA",
-      "U1PRE-BOM",
-    ],
-  },
-  "PRE-BOM": {
-    from: ["U4PD-PRBOM", "U1PRE-BOM"],
-    to: [
-      "U4PD-CAM",
-      "U4PD-WAX",
-      "U4PD-DIE",
-      "U1CAM",
-      "U4DIE",
-      "U4PD3-SISM",
-      "U1ST-SISMA",
-      "U1PDD3-BUF",
-    ],
-  },
-  CAM: {
-    from: ["U1CAM", "U4PD-CAM", "U1INWARD"],
-    to: [
-      "U4PD-MFD",
-      "U1MP",
-      "U1WAX-PL",
-      "U1WAX-SORT",
-      "U1NMP-SFD",
-      "U1EXP-SFD",
-      "U1SFD",
-      "U4MFD",
-      "U1MP",
-      "U4-EFMFD",
-    ],
-  },
-  MFD: {
-    from: ["U4PD-MFD", "U1NMP-SFD", "U1SFD"],
-    to: ["U4PD-DIE", "U4PD-WAX", "U4PD-PRBOM", "U1SAM-WAX", "U1DIE"],
-  },
-  SFD: {
-    from: ["U1NMP-SFD"],
-    to: ["U4PD-WAX", "U1SAM-WAX", "U1DIE"],
-  },
+// const departmentMappings = {
+//   CAD: {
+//     from: ["WBKOL-CAD", "U4PD-CAD", "U1CAD", "U1CAD-NMP"],
+//     to: [
+//       "U4PD-PRBOM",
+//       "U1MMD",
+//       "U1TOOL",
+//       "U1CAM",
+//       "U4PD-CAM",
+//       "U1ST-SISMA",
+//       "U1PRE-BOM",
+//     ],
+//   },
+//   "PRE-BOM": {
+//     from: ["U4PD-PRBOM", "U1PRE-BOM"],
+//     to: [
+//       "U4PD-CAM",
+//       "U4PD-WAX",
+//       "U4PD-DIE",
+//       "U1CAM",
+//       "U4DIE",
+//       "U4PD3-SISM",
+//       "U1ST-SISMA",
+//       "U1PDD3-BUF",
+//     ],
+//   },
+//   CAM: {
+//     from: ["U1CAM", "U4PD-CAM", "U1INWARD"],
+//     to: [
+//       "U4PD-MFD",
+//       "U1MP",
+//       "U1WAX-PL",
+//       "U1WAX-SORT",
+//       "U1NMP-SFD",
+//       "U1EXP-SFD",
+//       "U1SFD",
+//       "U4MFD",
+//       "U1MP",
+//       "U4-EFMFD",
+//     ],
+//   },
+//   MFD: {
+//     from: ["U4PD-MFD", "U1NMP-SFD", "U1SFD"],
+//     to: ["U4PD-DIE", "U4PD-WAX", "U4PD-PRBOM", "U1SAM-WAX", "U1DIE"],
+//   },
+//   SFD: {
+//     from: ["U1NMP-SFD"],
+//     to: ["U4PD-WAX", "U1SAM-WAX", "U1DIE"],
+//   },
 
-  DIE: {
-    from: ["U4PD-DIE", "U1DIE"],
-    to: ["U4PD-WAX", "U1SAM-WAX"],
-  },
+//   DIE: {
+//     from: ["U4PD-DIE", "U1DIE"],
+//     to: ["U4PD-WAX", "U1SAM-WAX"],
+//   },
 
-  MP: {
-    from: ["U1MP"],
-    to: ["U4PD-DIE", "U1DIE", "U4PD-WAX", "U4PD-PRBOM", "U1SAM-WAX"],
-  },
-  WAX: {
-    from: ["U4PD-WAX", "U1SAM-WAX"],
-    to: ["U4SJ-CAST", "U1CAST"],
-  },
-  CAST: {
-    from: ["U1CAST", "U4SJ-CAST"],
-    to: [
-      "U1SAMP",
-      "U1PDD2-SEP",
-      "U1SEP-SPR1",
-      "U1SEP-SST",
-      "U1SEP",
-      "U4PD1-SEP",
-    ],
-  },
-  SEPRATION: {
-    from: ["U1PDD2-SEP", "U1SAMP"],
-    to: [
-      "U1PDD2-ASY",
-      "U1PDD2-BUF",
-      "U1C5L1-ASY",
-      "U1C5L1-ASS",
-      "U1PDD3-BUF",
-      "U1PDD3-ASY",
-      "U1PDD3-CLR",
-      "U1PDD3-COR",
-      "U1PDD3-BP",
-      "U1PDD2-CLR",
-      "U1FUSION",
-      "U1PDD",
-      "U1PDD2-COR",
-      "U1PDD3-SEP",
-      "U1C5L1-ASY",
-      "U1C6L2-ASY",
-      "U1PDD",
-      "U1C6L1-COR",
-      "U1FUL2-ASY",
-      "U1C22-ASY",
-      "U1C22-COR",
-      "U1C5L1-ASY",
-      "U1CELL-6",
-      "U1CNC-ASY",
-      "U1C22-PLT",
-      "U1MGS-L&F",
-      "U1MGS-ASY",
-      "U1IND",
-      "U1MARIYA",
-    ],
-  },
-  "PD-ASSY": {
-    from: ["U1PDD2-ASY", "U1SAM-ASY"],
-    to: ["U1PDD2-BUF", "U1BP"],
-  },
-  BP: {
-    from: ["U1BP"],
-    to: ["U1SAM-COR"],
-  },
-  "PD-CORR": {
-    from: ["U1SAM-COR"],
-    to: ["U1SAM-QC", "U1SAM-SST", "U1SAM-BUF"],
-  },
-  "PD-SETTING": {
-    from: ["U1SAM-SST", "U1PDD2-SST"],
-    to: ["U1SAM-BUF", "U1PDD2-TXT"],
-  },
-  "PD-BUFF": {
-    from: ["U1PDD2-BUF", "U1SAM-BUF"],
-    to: [
-      "U1PDD2-SST",
-      "U1PDD2-TXT",
-      "U1SAM-TEX",
-      "U1CH-18K",
-      "U1CH-22K",
-      "U1MGS-L&F",
-    ],
-  },
-  "PD-TEXTURING": {
-    from: ["U1PDD2-TXT", "U1SAM-TEX"],
-    to: [
-      "U1PDD2-CORR",
-      "U1GS",
-      "U1C5L1-ASY",
-      "U1C5L1-ASS",
-      "U1C5L1-BUF",
-      "U1PDD3-SST",
-      "U1PDD2-CORR",
-    ],
-  },
-  "PD-BOM": {
-    from: ["U1PDD3-SST", "U4PD3-BOM", "U1PDD-CORR"],
-    to: ["U1PDD2-CORR", "U4FI-BOM", "U1PHOTO", "U1PACK", "U1PACK-SI"],
-  },
-  PHOTO: {
-    from: ["U1PHOTO"],
-    to: ["U1PACK", "U1PACK-SI"],
-  },
-  // 'CORR':{
-  //    from:['U1PDD-CORR','U1PHOTO'],
-  //    to:['U1PHOTO','U1PACK','U1PACK-SI']
-  // },
-  SISMA: {
-    from: ["U4PD3-SISM", "U1PDD3-BUF"],
-    to: [
-      "U4PD3-1",
-      "U4PD3-2",
-      "U4PD3-3",
-      "U4PD3-4",
-      "U4PD3-5",
-      "U4PD3-6",
-      "U4PD3-7",
-      "U4PD1-SEP",
-      "U1PDD3-ASY",
-      "U1PDD3-BP",
-      "U1PDD3-CLR",
-      "U1PDD3-SEP",
-      "U1PDD3-BUF",
-      "U1PDD",
-      "U1PDD3-COR",
-      "U1PDD2-SEP",
-      "U1PDD2-ASY",
-    ],
-  },
-  "INDIANIA CELL": {
-    from: ["U1IND"],
-    to: ["U1SAM-TEX", "U1PDD2-TXT"],
-  },
-  "MMD CELL": {
-    from: ["U1MMD", "U1MMD1", "U1MMD2"],
-    to: ["U1GS", "U1SAM-BUF", "U1SAM-TEX", "U1PDD2-TXT", "U1PDD2-BUF"],
-  },
+//   MP: {
+//     from: ["U1MP"],
+//     to: ["U4PD-DIE", "U1DIE", "U4PD-WAX", "U4PD-PRBOM", "U1SAM-WAX"],
+//   },
+//   WAX: {
+//     from: ["U4PD-WAX", "U1SAM-WAX"],
+//     to: ["U4SJ-CAST", "U1CAST"],
+//   },
+//   CAST: {
+//     from: ["U1CAST", "U4SJ-CAST"],
+//     to: [
+//       "U1SAMP",
+//       "U1PDD2-SEP",
+//       "U1SEP-SPR1",
+//       "U1SEP-SST",
+//       "U1SEP",
+//       "U4PD1-SEP",
+//     ],
+//   },
+//   SEPRATION: {
+//     from: ["U1PDD2-SEP", "U1SAMP"],
+//     to: [
+//       "U1PDD2-ASY",
+//       "U1PDD2-BUF",
+//       "U1C5L1-ASY",
+//       "U1C5L1-ASS",
+//       "U1PDD3-BUF",
+//       "U1PDD3-ASY",
+//       "U1PDD3-CLR",
+//       "U1PDD3-COR",
+//       "U1PDD3-BP",
+//       "U1PDD2-CLR",
+//       "U1FUSION",
+//       "U1PDD",
+//       "U1PDD2-COR",
+//       "U1PDD3-SEP",
+//       "U1C5L1-ASY",
+//       "U1C6L2-ASY",
+//       "U1PDD",
+//       "U1C6L1-COR",
+//       "U1FUL2-ASY",
+//       "U1C22-ASY",
+//       "U1C22-COR",
+//       "U1C5L1-ASY",
+//       "U1CELL-6",
+//       "U1CNC-ASY",
+//       "U1C22-PLT",
+//       "U1MGS-L&F",
+//       "U1MGS-ASY",
+//       "U1IND",
+//       "U1MARIYA",
+//     ],
+//   },
+//   "PD-ASSY": {
+//     from: ["U1PDD2-ASY", "U1SAM-ASY"],
+//     to: ["U1PDD2-BUF", "U1BP"],
+//   },
+//   BP: {
+//     from: ["U1BP"],
+//     to: ["U1SAM-COR"],
+//   },
+//   "PD-CORR": {
+//     from: ["U1SAM-COR"],
+//     to: ["U1SAM-QC", "U1SAM-SST", "U1SAM-BUF"],
+//   },
+//   "PD-SETTING": {
+//     from: ["U1SAM-SST", "U1PDD2-SST"],
+//     to: ["U1SAM-BUF", "U1PDD2-TXT"],
+//   },
+//   "PD-BUFF": {
+//     from: ["U1PDD2-BUF", "U1SAM-BUF"],
+//     to: [
+//       "U1PDD2-SST",
+//       "U1PDD2-TXT",
+//       "U1SAM-TEX",
+//       "U1CH-18K",
+//       "U1CH-22K",
+//       "U1MGS-L&F",
+//     ],
+//   },
+//   "PD-TEXTURING": {
+//     from: ["U1PDD2-TXT", "U1SAM-TEX"],
+//     to: [
+//       "U1PDD2-CORR",
+//       "U1GS",
+//       "U1C5L1-ASY",
+//       "U1C5L1-ASS",
+//       "U1C5L1-BUF",
+//       "U1PDD3-SST",
+//       "U1PDD2-CORR",
+//     ],
+//   },
+//   "PD-BOM": {
+//     from: ["U1PDD3-SST", "U4PD3-BOM", "U1PDD-CORR"],
+//     to: ["U1PDD2-CORR", "U4FI-BOM", "U1PHOTO", "U1PACK", "U1PACK-SI"],
+//   },
+//   PHOTO: {
+//     from: ["U1PHOTO"],
+//     to: ["U1PACK", "U1PACK-SI"],
+//   },
+//   // 'CORR':{
+//   //    from:['U1PDD-CORR','U1PHOTO'],
+//   //    to:['U1PHOTO','U1PACK','U1PACK-SI']
+//   // },
+//   SISMA: {
+//     from: ["U4PD3-SISM", "U1PDD3-BUF"],
+//     to: [
+//       "U4PD3-1",
+//       "U4PD3-2",
+//       "U4PD3-3",
+//       "U4PD3-4",
+//       "U4PD3-5",
+//       "U4PD3-6",
+//       "U4PD3-7",
+//       "U4PD1-SEP",
+//       "U1PDD3-ASY",
+//       "U1PDD3-BP",
+//       "U1PDD3-CLR",
+//       "U1PDD3-SEP",
+//       "U1PDD3-BUF",
+//       "U1PDD",
+//       "U1PDD3-COR",
+//       "U1PDD2-SEP",
+//       "U1PDD2-ASY",
+//     ],
+//   },
+//   "INDIANIA CELL": {
+//     from: ["U1IND"],
+//     to: ["U1SAM-TEX", "U1PDD2-TXT"],
+//   },
+//   "MMD CELL": {
+//     from: ["U1MMD", "U1MMD1", "U1MMD2"],
+//     to: ["U1GS", "U1SAM-BUF", "U1SAM-TEX", "U1PDD2-TXT", "U1PDD2-BUF"],
+//   },
 
-  "STAMPING CELL": {
-    from: ["U1ST-PRESS"],
-    to: ["U1GS", "U1SAMP", "U1PDD2-SEP"],
-  },
-  "ENAMEL CELL": {
-    from: ["U1DLE", "U1PDD2-QC", "U1SAM-QC"],
-    to: ["U1PDD2-TXT", "U1SAM-TEX", "U1SAM-BUF", "U1SAM-SST"],
-  },
-  "Imprez cell": {
-    from: ["U1IM-PRESS"],
-    to: ["U1GS", "U1SAMP", "U1PDD2-SEP"],
-  },
-  "Fusion Cell": {
-    from: ["U1FUL1-BUF", "U1FU-TEXT", "U1FUL1-ASY", "U1FUL1-COR"],
-    to: ["U1GS", "U1PDD2-BUF", "U1SAM-BUF", "U1PDD2-TXT", "U1SAM-TEX"],
-  },
-  "Gemstone cell": {
-    from: [
-      "U1C5L1-SST",
-      "U1C5L1-ASY",
-      "U1C5L1-ASS",
-      "U1C5L1-BUF",
-      "U1C5L1-TXT",
-    ],
-    to: ["U1GS", "U1QA", "U1SAM-TEX", "U1PDD2-TXT"],
-  },
-  "Cnc cell": {
-    from: ["U1CNC -TXT"],
-    to: ["U1QA"],
-  },
-  "UNIT-4 EFCELL": {
-    from: [
-      "U4PD-3DSCA",
-      "U4FOUN",
-      "U4MFD",
-      "U4SCUL",
-      "U4DIE",
-      "U4CAST",
-      "U4EF",
-    ],
-    to: [
-      "U4PD-CAD",
-      "U4FOUN",
-      "U4CAST",
-      "U4DIE",
-      "U4PD-PRBOM",
-      "U4EF",
-      "U4SEP",
-      "U4PD1-SEP",
-    ],
-  },
-  "PD3 CELL": {
-    from: [
-      "U4PD3-1",
-      "U4PD3-2",
-      "U4PD3-3",
-      "U4PD3-4",
-      "U4PD3-5",
-      "U4PD3-6",
-      "U4PD3-7",
-      "U1PDD3-ASY",
-      "U1PDD3-BP",
-      "U1PDD3-CLR",
-      "U1PDD3-SEP",
-      "U1PDD",
-      "U1PDD3-COR",
-    ],
-    to: ["U4PD1-BUF", "U4PD1-SST", "U1PDD2-BUF", "U1PDD2-SST"],
-  },
-};
-app.get("/departmentMappings", (req, res) => {
-  res.json(departmentMappings);
-});
+//   "STAMPING CELL": {
+//     from: ["U1ST-PRESS"],
+//     to: ["U1GS", "U1SAMP", "U1PDD2-SEP"],
+//   },
+//   "ENAMEL CELL": {
+//     from: ["U1DLE", "U1PDD2-QC", "U1SAM-QC"],
+//     to: ["U1PDD2-TXT", "U1SAM-TEX", "U1SAM-BUF", "U1SAM-SST"],
+//   },
+//   "Imprez cell": {
+//     from: ["U1IM-PRESS"],
+//     to: ["U1GS", "U1SAMP", "U1PDD2-SEP"],
+//   },
+//   "Fusion Cell": {
+//     from: ["U1FUL1-BUF", "U1FU-TEXT", "U1FUL1-ASY", "U1FUL1-COR"],
+//     to: ["U1GS", "U1PDD2-BUF", "U1SAM-BUF", "U1PDD2-TXT", "U1SAM-TEX"],
+//   },
+//   "Gemstone cell": {
+//     from: [
+//       "U1C5L1-SST",
+//       "U1C5L1-ASY",
+//       "U1C5L1-ASS",
+//       "U1C5L1-BUF",
+//       "U1C5L1-TXT",
+//     ],
+//     to: ["U1GS", "U1QA", "U1SAM-TEX", "U1PDD2-TXT"],
+//   },
+//   "Cnc cell": {
+//     from: ["U1CNC -TXT"],
+//     to: ["U1QA"],
+//   },
+//   "UNIT-4 EFCELL": {
+//     from: [
+//       "U4PD-3DSCA",
+//       "U4FOUN",
+//       "U4MFD",
+//       "U4SCUL",
+//       "U4DIE",
+//       "U4CAST",
+//       "U4EF",
+//     ],
+//     to: [
+//       "U4PD-CAD",
+//       "U4FOUN",
+//       "U4CAST",
+//       "U4DIE",
+//       "U4PD-PRBOM",
+//       "U4EF",
+//       "U4SEP",
+//       "U4PD1-SEP",
+//     ],
+//   },
+//   "PD3 CELL": {
+//     from: [
+//       "U4PD3-1",
+//       "U4PD3-2",
+//       "U4PD3-3",
+//       "U4PD3-4",
+//       "U4PD3-5",
+//       "U4PD3-6",
+//       "U4PD3-7",
+//       "U1PDD3-ASY",
+//       "U1PDD3-BP",
+//       "U1PDD3-CLR",
+//       "U1PDD3-SEP",
+//       "U1PDD",
+//       "U1PDD3-COR",
+//     ],
+//     to: ["U4PD1-BUF", "U4PD1-SST", "U1PDD2-BUF", "U1PDD2-SST"],
+//   },
+// };
+
+
+// app.get("/departmentMappings", (req, res) => {
+//   res.json(departmentMappings);
+// });
 
 app.get("/jewel-master",(req,res)=>{
   const sql = `
@@ -972,11 +1038,13 @@ app.get('/department-mappings', (req, res) => {
   });
 });
 
-app.get("/raw_filtered_production_data", (req, res) => {
-  const deptFromFilter = Object.values(departmentMappings).flatMap(
+app.get("/raw_filtered_production_data",async(req, res) => {
+  const response = await axios.get("http://localhost:8081/department-mappings");
+  const departmentMapping = response.data;
+  const deptFromFilter = Object.values(departmentMapping).flatMap(
     (mapping) => mapping.from
   );
-  const deptToFilter = Object.values(departmentMappings).flatMap(
+  const deptToFilter = Object.values(departmentMapping).flatMap(
     (mapping) => mapping.to
   );
 
@@ -1003,7 +1071,9 @@ app.get("/raw_filtered_production_data", (req, res) => {
     }
   );
 });
-app.get("/filtered_production_data", (req, res) => {
+app.get("/filtered_production_data", async (req, res) => {
+  const response = await axios.get("http://localhost:8081/department-mappings");
+  const departmentMappings = response.data;
   const { startDate, endDate } = req.query;
 
   const deptFromFilter = Object.values(departmentMappings).flatMap(mapping => mapping.from);
@@ -1033,6 +1103,7 @@ app.get("/filtered_production_data", (req, res) => {
   sql += ` GROUP BY \`From Dept\`, \`To Dept\``;
 
   db.query(sql, params, (err, data) => {
+    
     if (err) return res.json(err);
 
     const results = Object.keys(departmentMappings).reduce((acc, group) => {
@@ -1128,7 +1199,9 @@ app.get("/pending_data", (req, res) => {
   });
 });
 
-app.get("/raw_filtered_pending_data", (req, res) => {
+app.get("/raw_filtered_pending_data", async (req, res) => {
+  const response = await axios.get("http://localhost:8081/department-mappings");
+  const departmentMappings = response.data;
   const deptToFilter = Object.values(departmentMappings).flatMap(
     (mapping) => mapping.from
   );
@@ -1198,7 +1271,13 @@ app.get("/tasks", (req, res) => {
    });
    }
 );
-app.get("/filtered_pending_data", (req, res) => {
+
+const axios = require("axios");
+
+app.get("/filtered_pending_data", async (req, res) => {
+  const response = await axios.get("http://localhost:8081/department-mappings");
+const departmentMappings = response.data;
+
   const toDeptFilter = Object.values(departmentMappings).flatMap(
     (mapping) => mapping.from
   );
@@ -1206,7 +1285,7 @@ app.get("/filtered_pending_data", (req, res) => {
 
   const sql = `
             SELECT todept, SUM(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty
-            FROM pending_log
+            FROM pending
             WHERE LOWER(todept) IN (?)
             GROUP BY todept
          `;
@@ -1356,18 +1435,6 @@ app.post('/api/rejection/upload', upload.single('file'), (req, res) => {
     });
   });
 
-  app.get('/api/cellmaster', (req, res) => {
-    const query = 'SELECT * FROM Cell_Master';
-    db.query(query, (err, results) => {
-      if (err) {
-        console.error('Error fetching uploads:', err);
-        res.status(500).send('Error fetching uploads');
-        return;
-      }
-      res.json(results);
-    });
-  });
-
   app.get('/api/desCenTask', (req, res) => {
     const query = 'SELECT * FROM design_center_task';
     db.query(query, (err, results) => {
@@ -1383,3 +1450,5 @@ app.post('/api/rejection/upload', upload.single('file'), (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
+
+

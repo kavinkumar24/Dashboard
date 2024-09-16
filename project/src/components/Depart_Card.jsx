@@ -76,7 +76,7 @@ function DepartmentDetail() {
 
   const fetchDepartmentMappings = async () => {
     try {
-      const res = await fetch('http://localhost:8081/departmentMappings');
+      const res = await fetch('http://localhost:8081/department-mappings');
       if (!res.ok) throw new Error('Network response was not ok');
       const data = await res.json();
       setDepartmentMappings(data);

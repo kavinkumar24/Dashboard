@@ -9,6 +9,7 @@ import { CgIfDesign } from "react-icons/cg";
 import { RiFolderReceivedLine } from "react-icons/ri";
 import { AiOutlineMenu, AiOutlineClose } from 'react-icons/ai';
 import { MdDriveFolderUpload } from "react-icons/md";
+import { MdSchedule } from 'react-icons/md';
 
 function Sidebar({ theme }) {
   const navigate = useNavigate();
@@ -186,12 +187,12 @@ function Sidebar({ theme }) {
 
           { role == 'admin' &&  <a
             href="#"
-            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('uploads')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('aop_schedule')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
             onClick={() => handleNavigation('/aop_schedule', '/aop_schedule')}
           >
             <div className='flex flex-row p-2'>
               <div className='mt-1 px-2'>
-              <MdDriveFolderUpload />
+              <MdSchedule />
               </div>
               AOP schedule
             </div>
