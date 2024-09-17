@@ -9,7 +9,7 @@ import Sidebar from "../Sidebar";
 Chart.register(ChartDataLabels);
 
 const ProjectDetails = () => {
-  const { subproduct } = useParams();
+  const { group_party } = useParams();
   const [data, setData] = useState(null);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -155,7 +155,7 @@ const ProjectDetails = () => {
     };
   }
 
-  const validValues = Object.values(subproductAcc).filter(
+  const validValues = Object.values(groupPartyAcc).filter(
     (value) => value != null && value !== 0
   );
   const total = validValues.reduce((sum, value) => sum + value, 0);
@@ -190,7 +190,7 @@ const ProjectDetails = () => {
           const itemDay = itemDate.getDate();
 
           return (
-            item["SUB PRODUCT"] === subproduct &&
+            item["Group party"] === group_party &&
             (years.length === 0 || years.includes(itemYear)) &&
             (months.length === 0 || months.includes(itemMonth)) &&
             (dates.length === 0 || dates.includes(itemDay))
@@ -232,7 +232,7 @@ const ProjectDetails = () => {
     };
 
     fetchData();
-  }, [subproduct]);
+  }, [group_party]);
 
   const grouppartyChartRef = useRef(null); // Create a ref for the subproduct chart div
 
@@ -803,7 +803,8 @@ const ProjectDetails = () => {
         />
 
         {/* Main Content */}
-        <main className="flex-1 p-6 overflow-y-auto grid grid-cols-2 gap-4">
+        <main className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 p-4">
+
           {isLoading && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
               <div className="flex gap-2 ml-40">
@@ -832,7 +833,7 @@ const ProjectDetails = () => {
                 </span>
               </span>
             ) : (
-              "Top 15 in " + subproduct
+              "Top 15 in " + group_party
             )}
           </button>
           <div className={`flex justify-center items-center p-4`}>
@@ -843,7 +844,7 @@ const ProjectDetails = () => {
                 }`}
               >
                 <h1 className="col-span-2">
-                  Details for Sub Product: {subproduct} in {formattedTotalWeight}
+                  Details for Group Party: {group_party} in {formattedTotalWeight}
                 </h1>
               </div>
 
@@ -935,7 +936,7 @@ const ProjectDetails = () => {
             <Bar data={zoneChartdata} options={chartOptions} />
           </div>
           {/* Project Chart */}
-          <div ref={grouppartyChartRef}
+          <div
             className={`order-5 col-span-1 ${
               theme === "light" ? "bg-white" : "bg-gray-900"
             } p-4 rounded shadow-md overflow-auto h-[650px] custom-scrollbar`}
@@ -982,7 +983,7 @@ const ProjectDetails = () => {
         </main>
 
         {/* Full-Width Line Chart Below */}
-        <div 
+        <div ref={grouppartyChartRef}
           className={`w-full ${
             theme === "light" ? "bg-white" : "bg-slate-900"
           } p-4 rounded shadow-md h-[450px] overflow-x-auto overflow-y-auto mb-20`}

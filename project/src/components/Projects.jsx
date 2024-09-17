@@ -13,47 +13,47 @@ function Projects() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
-  const [departmentsToShow, setDepartmentsToShow] = useState([]);
+  // const [departmentsToShow, setDepartmentsToShow] = useState([]);
 
   const [viewData, setviewData] = useState(false);
   useEffect(() => {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-  // const departmentsToShow = [
-  //   "CASTING",
-  //   "CHAIN",
-  //   "CHAIN MIX",
-  //   "DIAMOND",
-  //   "DIRECT CASTING",
-  //   "EKTARA",
-  //   "ELECTRO FORMING",
-  //   "EMERALD GEMSTONE JEW",
-  //   "FUSION",
-  //   "HAND MADE",
-  //   "ILA BANGLES",
-  //   "IMPREZ",
-  //   "INDIANIA",
-  //   "ISHTAA",
-  //   "LASER CUT",
-  //   "MANGALSUTRA",
-  //   "MARIYA",
-  //   "MMD",
-  //   "PLATINUM",
-  //   "RUMI",
-  //   "STAMPING",
-  //   "THIN CASTING",
-  //   "TURKISH",
-  //   "UNIKRAFT",
-  //   "KALAKRITI",
-  // ];
+  const departmentsToShow = [
+    "CASTING",
+    "CHAIN",
+    "CHAIN MIX",
+    "DIAMOND",
+    "DIRECT CASTING",
+    "EKTARA",
+    "ELECTRO FORMING",
+    "EMERALD GEMSTONE JEW",
+    "FUSION",
+    "HAND MADE",
+    "ILA BANGLES",
+    "IMPREZ",
+    "INDIANIA",
+    "ISHTAA",
+    "LASER CUT",
+    "MANGALSUTRA",
+    "MARIYA",
+    "MMD",
+    "PLATINUM",
+    "RUMI",
+    "STAMPING",
+    "THIN CASTING",
+    "TURKISH",
+    "UNIKRAFT",
+    "KALAKRITI",
+  ];
 
   const fetchPendingData = async () => {
     try {
       const response = await axios.get('http://localhost:8081/pending_data');
       const pendingData = response.data;
       const uniquePLTCodes = [...new Set(pendingData.map(item => item.PLTCODE1))];
-      setDepartmentsToShow(uniquePLTCodes);
+      // setDepartmentsToShow(uniquePLTCodes);
     } catch (error) {
       console.error('Error fetching data:', error);
     }

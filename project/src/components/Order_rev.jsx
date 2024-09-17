@@ -109,6 +109,10 @@ function Order_rev() {
     labels: [],
     datasets: [],
   });
+  const [plainStone, setPlainStone] = useState({
+    labels: [],
+    datasets: [],
+  });
 
   const [partywise, setPartywise] = useState({
     labels: [],
@@ -164,6 +168,40 @@ function Order_rev() {
       .map(([year, kg]) => ({
         year,
         kg,
+      }));
+  };
+
+  const getplainStone = (data) => {
+    const purityData = data.reduce((acc, item) => {
+      const purity = item["PL-ST"] || "Unknown";
+      const wtKg = convertWtToKg(item.WT || 0);
+      if (!acc[purity]) {
+        acc[purity] = 0;
+      }
+      acc[purity] += wtKg;
+
+      return acc;
+    }, {});
+
+    const colors = [
+      "rgba(0, 123, 255, 0.3)",
+      "rgba(40, 167, 69, 0.3)",
+      "rgba(255, 193, 7, 0.3)",
+      "rgba(220, 53, 69, 0.3)",
+      "rgba(255, 87, 34, 0.3)",
+      "rgba(156, 39, 176, 0.3)",
+      "rgba(23, 162, 184, 0.3)",
+      "rgba(255, 99, 132, 0.3)",
+      "rgba(103, 58, 183, 0.3)",
+      "rgba(96, 125, 139, 0.3)",
+    ];
+
+    return Object.entries(purityData)
+      .filter(([purity, kg]) => kg > 0)
+      .map(([purity, kg], index) => ({
+        purity,
+        kg,
+        color: colors[index % colors.length],
       }));
   };
 
@@ -237,53 +275,67 @@ function Order_rev() {
 
       // Set a timeout to detect a single click
       clickTimeout.current = setTimeout(() => {
-        console.log('Single click detected:', clickedProduct);
+        console.log("Single click detected:", clickedProduct);
         handleProductClick(event, elements); // Handle single click action
       }, 250); // Delay for distinguishing single and double click
     }
   };
 
-
-  
   const handleChartDoubleClick = (event, elements) => {
     if (elements.length > 0) {
       const elementIndex = elements[0].index;
       const clickedProduct = product.labels[elementIndex];
       console.log("Double click detected:", clickedProduct);
+
+      let productDetilUrl = `/product-detail-order_receiving/${encodeURIComponent( clickedProduct)}`;
+
+      if (years) {
+        productDetilUrl += `?year=${encodeURIComponent(selectedYear)}`;
+      }
+      if (months) {
+       
+        productDetilUrl += `${years ? '&' : '?'}month=${encodeURIComponent(selectedMonth)}`;
+      }   
+      if(dates){
+        productDetilUrl += `${years ? '&' : '?'}date=${encodeURIComponent(selectedDate)}`;
+      }            
+      if (totalWeight) {
+        productDetilUrl += `${years || months || dates ? '&' : '?'}totalweight=${encodeURIComponent(totalWeight)}`;
+      }
+      navigate(productDetilUrl);
       
-      
-      navigate(`/product-detail-order_receiving/${encodeURIComponent(clickedProduct)}`);
     }
   };
-  
 
   const handleProductClick = (event, elements) => {
-    console.log('Elements:', elements);
-  
+    console.log("Elements:", elements);
+
     if (elements.length > 0) {
       // Get the clicked product's index
       const clickedIndex = elements[0].index;
-  
+
       // Retrieve the corresponding product from the chart
       const clickedProduct = product.labels[clickedIndex];
-      console.log('Clicked Product:', clickedProduct);
-  
+      console.log("Clicked Product:", clickedProduct);
+
       // Ensure `filteredData` is populated
       if (!filteredData || filteredData.length === 0) {
-        console.error('Filtered data is empty or not available.');
+        console.error("Filtered data is empty or not available.");
         return;
       }
-  
+
       // Filter subproduct data based on the clicked product (case-insensitive comparison)
-      const filteredSubproductData = filteredData.filter(item => item.PRODUCT.toLowerCase() === clickedProduct.toLowerCase());
-      console.log('Filtered Subproduct Data:', filteredSubproductData);
-  
+      const filteredSubproductData = filteredData.filter(
+        (item) => item.PRODUCT.toLowerCase() === clickedProduct.toLowerCase()
+      );
+      console.log("Filtered Subproduct Data:", filteredSubproductData);
+
       // Check if any subproduct data was found
       if (filteredSubproductData.length === 0) {
-        console.warn('No subproduct data found for the selected product.');
+        console.warn("No subproduct data found for the selected product.");
         return;
       }
-  
+
       // Aggregate the filtered data for subproducts
       const subproductData = filteredSubproductData.reduce((acc, item) => {
         const subproduct = item["SUB PRODUCT"]; // Using exact case from your data
@@ -291,25 +343,24 @@ function Order_rev() {
         acc[subproduct] += item.WT || 0;
         return acc;
       }, {});
-  
-      console.log('Aggregated Subproduct Data:', subproductData);
-  
+
+      console.log("Aggregated Subproduct Data:", subproductData);
+
       // Now you can update the chart with the aggregated subproduct data
       setSubproduct({
         labels: Object.keys(subproductData),
         datasets: [
           {
-            label: 'KG Count by Sub Product',
-            data: Object.values(subproductData).map(value => value / 1000), // Adjust as per your data units
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: '#215e5e',
+            label: "KG Count by Sub Product",
+            data: Object.values(subproductData).map((value) => value / 1000), // Adjust as per your data units
+            backgroundColor: "rgba(75, 192, 192, 0.2)",
+            borderColor: "#215e5e",
             borderWidth: 1,
           },
         ],
       });
     }
   };
-  
 
   const getZoneData = (data) => {
     const zoneData = data.reduce((acc, item) => {
@@ -625,7 +676,7 @@ function Order_rev() {
       })
       .catch((error) => console.error("Error fetching data:", error))
       .finally(() => setIsLoading(false));
-  }, [theme, filter, isSorted, isSelected, isSelected_top15,individual_top15]);
+  }, [theme, filter, isSorted, isSelected, isSelected_top15, individual_top15]);
 
   const processFetchedData = (data) => {
     const allYears = new Set();
@@ -678,12 +729,20 @@ function Order_rev() {
     const monthData = filteredData.reduce((acc, item) => {
       const date = new Date(item.TRANSDATE);
       const year = date.getFullYear();
-      const monthIndex = date.getMonth() + 1;
-      const yearMonth = `${year}, ${getMonthName(monthIndex)}`;
+      const monthIndex = date.getMonth();
+      const monthName = getMonthName(monthIndex);
+      const yearMonth = `${year}, ${monthName}`;
+
+      console.log(
+        `Date: ${date.toISOString()}, Month Index: ${monthIndex}, YearMonth: ${yearMonth}`
+      );
+
       if (!acc[yearMonth]) acc[yearMonth] = 0;
       acc[yearMonth] += item.WT || 0;
       return acc;
     }, {});
+
+    // console.log('Month Data:', monthData);
 
     let sortedData = [...filteredData].sort((a, b) => b.WT - a.WT);
 
@@ -698,50 +757,49 @@ function Order_rev() {
     console.log("istop15:", istop15);
     console.log("istop_individual:", istop_individual);
 
-    
-
+    const currentZoneData = getZoneData(sortedData);
     const currentProjectData = getProject(sortedData);
     const currentProductData = getProduct(sortedData);
     const currentSubproductData = getsubproduct(sortedData);
-  
-   
+
     let sortedProjectData = [...currentProjectData].sort((a, b) => b.kg - a.kg);
     let sortedProductData = [...currentProductData].sort((a, b) => b.kg - a.kg);
-    let sortedSubproductData = [...currentSubproductData].sort((a, b) => b.kg - a.kg);
-  
- setIsLoading(false);
-    
+    let sortedSubproductData = [...currentSubproductData].sort(
+      (a, b) => b.kg - a.kg
+    );
+    let sortedZoneData = [...currentZoneData].sort((a, b) => b.kg - a.kg);
 
- if (istop15) {
-  if (isSorting) {
-    sortedProjectData = sortedProjectData.slice(0, 15);
-    sortedProductData = sortedProductData.slice(0, 15);
-    sortedSubproductData = sortedSubproductData.slice(0, 15);
-  } else {
-    sortedProjectData = currentProjectData.slice(0, 15);
-    sortedProductData = currentProductData.slice(0, 15);
-    sortedSubproductData = currentSubproductData.slice(0, 15);
-  }
-}
-if (!istop15 && istop_individual) {
+    setIsLoading(false);
 
-  const groupedData = groupByProject(filteredData, true);
-  sortedProjectData =  groupByProject(filteredData, true);
-  // setGroupedData(groupedData);
+    if (istop15) {
+      if (isSorting) {
+        sortedProjectData = sortedProjectData.slice(0, 15);
+        sortedProductData = sortedProductData.slice(0, 15);
+        sortedSubproductData = sortedSubproductData.slice(0, 15);
+      } else {
+        sortedProjectData = currentProjectData.slice(0, 15);
+        sortedProductData = currentProductData.slice(0, 15);
+        sortedSubproductData = currentSubproductData.slice(0, 15);
+      }
+    }
+    if (!istop15 && istop_individual) {
+      const groupedData = groupByProject(filteredData, true);
+      sortedProjectData = groupByProject(filteredData, true);
+      // setGroupedData(groupedData);
 
-  setChartData1({
-    labels: groupedData.map((item) => item.project),
-    datasets: [
-      {
-        label: "Top 15 Weight (WT)",
-        data: groupedData.map((item) => item.kg), 
-        backgroundColor: "rgba(75, 192, 192, 0.6)",
-        borderColor: "rgba(75, 192, 192, 1)",
-        borderWidth: 1,
-      },
-    ],
-  });
-} 
+      setChartData1({
+        labels: groupedData.map((item) => item.project),
+        datasets: [
+          {
+            label: "Top 15 Weight (WT)",
+            data: groupedData.map((item) => item.kg),
+            backgroundColor: "rgba(75, 192, 192, 0.6)",
+            borderColor: "rgba(75, 192, 192, 1)",
+            borderWidth: 1,
+          },
+        ],
+      });
+    }
 
     setChartData({
       labels: Object.keys(yearData),
@@ -786,6 +844,23 @@ if (!istop15 && istop_individual) {
       ],
     });
 
+    setPlainStone({
+      labels: getplainStone(filteredData).map((entry) => entry.purity),
+      datasets: [
+        {
+          label: "KG Count by Plain Stone",
+          data: getplainStone(filteredData).map((entry) => entry.kg),
+          backgroundColor: getplainStone(filteredData).map(
+            (entry) => entry.color
+          ),
+          borderColor: getplainStone(filteredData).map((entry) =>
+            entry.color.replace("0.3", "1")
+          ),
+          borderWidth: 1,
+        },
+      ],
+    });
+
     setTypeChartData({
       labels: getTypeData(filteredData).map((entry) => entry.type),
       datasets: [
@@ -800,11 +875,11 @@ if (!istop15 && istop_individual) {
     });
 
     setZoneChartData({
-      labels: getZoneData(filteredData).map((entry) => entry.zone),
+      labels: sortedZoneData.map((entry) => entry.zone),
       datasets: [
         {
           label: "KG Count by Zone",
-          data: getZoneData(filteredData).map((entry) => entry.kg),
+          data: sortedZoneData.map((entry) => entry.kg),
           backgroundColor: "rgba(255, 159, 64, 0.2)",
           borderColor: "rgba(255, 159, 64, 1)",
           borderWidth: 1,
@@ -812,23 +887,22 @@ if (!istop15 && istop_individual) {
       ],
     });
 
- 
-        const colorData = prepareColorData(filteredData);
+    const colorData = prepareColorData(filteredData);
 
-        setColorChartData({
-          labels: colorData.map((entry) => entry.color),
-          datasets: [
-            {
-              label: "KG Count by Color",
-              data: colorData.map((entry) => entry.kg),
-              backgroundColor: colorData.map((entry) => entry.backgroundColor),
-              borderColor: colorData.map((entry) =>
-                entry.backgroundColor.replace("0.4", "1")
-              ),
-              borderWidth: 1,
-            },
-          ],
-        });
+    setColorChartData({
+      labels: colorData.map((entry) => entry.color),
+      datasets: [
+        {
+          label: "KG Count by Color",
+          data: colorData.map((entry) => entry.kg),
+          backgroundColor: colorData.map((entry) => entry.backgroundColor),
+          borderColor: colorData.map((entry) =>
+            entry.backgroundColor.replace("0.4", "1")
+          ),
+          borderWidth: 1,
+        },
+      ],
+    });
 
     setProjectData({
       labels: sortedProjectData.map((entry) => entry.project),
@@ -856,33 +930,32 @@ if (!istop15 && istop_individual) {
       ],
     });
 
-           setSubproduct({
-          labels: sortedSubproductData.map((entry) => entry.sub_product),
-          datasets: [
-            {
-              label: "KG Count by Sub Product",
-              data: sortedSubproductData.map((entry) => entry.kg),
-              backgroundColor: "rgba(75, 192, 192, 0.2)",
-              borderColor: "#215e5e",
-              borderWidth: 1,
-            },
-          ],
-        });
+    setSubproduct({
+      labels: sortedSubproductData.map((entry) => entry.sub_product),
+      datasets: [
+        {
+          label: "KG Count by Sub Product",
+          data: sortedSubproductData.map((entry) => entry.kg),
+          backgroundColor: "rgba(75, 192, 192, 0.2)",
+          borderColor: "#215e5e",
+          borderWidth: 1,
+        },
+      ],
+    });
 
-              setGroupParty({
-          labels: Object.keys(groupedData), // X-axis labels
-    datasets: [
-      {
-        label: 'Total Weight',
-        data: Object.values(groupedData).map(weight => weight / 1000), 
-        fill: false,
-        borderColor: '#4caf50', // Line color
-        tension: 0.1,
-      }
-    ]
-        })
+    setGroupParty({
+      labels: Object.keys(groupedData), // X-axis labels
+      datasets: [
+        {
+          label: "Total Weight",
+          data: Object.values(groupedData).map((weight) => weight / 1000),
+          fill: false,
+          borderColor: "#4caf50", // Line color
+          tension: 0.1,
+        },
+      ],
+    });
 
-    
     setAllCharts([
       { data: chartData, title: "Yearly Weight Distribution" },
       { data: chartmonthData, title: "Monthly Weight Distribution" },
@@ -1381,7 +1454,31 @@ if (!istop15 && istop_individual) {
                   if (elements.length > 0) {
                     const elementIndex = elements[0].index;
                     const clickedZone = purityChartData.labels[elementIndex];
-                    navigate(`/purity-detail-order_receiving/${encodeURIComponent(clickedZone)}`);
+                    let purityDetailUrl = `/purity-detail-order_receiving/${encodeURIComponent(
+                      clickedZone
+                    )}`;
+
+                    if (years) {
+                      purityDetailUrl += `?year=${encodeURIComponent(
+                        selectedYear
+                      )}`;
+                    }
+                    if (months) {
+                      purityDetailUrl += `${
+                        years ? "&" : "?"
+                      }month=${encodeURIComponent(selectedMonth)}`;
+                    }
+                    if (dates) {
+                      purityDetailUrl += `${
+                        years ? "&" : "?"
+                      }date=${encodeURIComponent(selectedDate)}`;
+                    }
+                    if (totalWeight) {
+                      purityDetailUrl += `${
+                        years || months || dates ? "&" : "?"
+                      }totalweight=${encodeURIComponent(totalWeight)}`;
+                    }
+                    navigate(purityDetailUrl);
                   }
                 },
                 plugins: {
@@ -1442,8 +1539,7 @@ if (!istop15 && istop_individual) {
                         color: theme === "light" ? "#e5e7eb" : "#94a3b8",
                       },
                       grid: {
-                        color: theme === "light" ? "#e5e7eb" : "#4b5563", 
-                        borderDash: [5, 5], 
+                        color: theme === "light" ? "#e5e7eb" : "#374151",
                       },
                     },
                     y: {
@@ -1455,8 +1551,7 @@ if (!istop15 && istop_individual) {
                       beginAtZero: true,
                       grid: {
                         display: true,
-                        color: theme === "light" ? "#e5e7eb" : "#4b5563",
-                        borderDash: [5, 5], 
+                        color: theme === "light" ? "#e5e7eb" : "#374151",
                       },
                       ticks: {
                         color: theme === "light" ? "black" : "#94a3b8",
@@ -1464,7 +1559,6 @@ if (!istop15 && istop_individual) {
                       border: {
                         color: theme === "light" ? "#e5e7eb" : "#94a3b8",
                       },
-                     
                     },
                   },
                   datalabels: {
@@ -1523,7 +1617,34 @@ if (!istop15 && istop_individual) {
                 if (elements.length > 0) {
                   const elementIndex = elements[0].index;
                   const clickedZone = zoneChartData.labels[elementIndex];
-                  navigate(`/zone-detail-order_receiving/${encodeURIComponent(clickedZone)}`);
+
+                  let zoneDetailUrl = `/zone-detail-order_receiving/${encodeURIComponent(
+                    clickedZone
+                  )}`;
+
+                  if (years) {
+                    zoneDetailUrl += `?year=${encodeURIComponent(
+                      selectedYear
+                    )}`;
+                  }
+                  if (months) {
+                    zoneDetailUrl += `${
+                      years ? "&" : "?"
+                    }month=${encodeURIComponent(selectedMonth)}`;
+                  }
+
+                  if (dates) {
+                    zoneDetailUrl += `${
+                      years ? "&" : "?"
+                    }date=${encodeURIComponent(selectedDate)}`;
+                  }
+                  if (totalWeight) {
+                    zoneDetailUrl += `${
+                      years || months || dates ? "&" : "?"
+                    }totalweight=${encodeURIComponent(totalWeight)}`;
+                  }
+
+                  navigate(zoneDetailUrl);
                 }
               },
               plugins: {
@@ -1635,6 +1756,37 @@ if (!istop15 && istop_individual) {
             <Doughnut
               data={colorChartData}
               options={{
+                onClick: (event, elements) => {
+                  if (elements.length > 0) {
+                    const elementIndex = elements[0].index;
+                    const clickedZone = colorChartData.labels[elementIndex];
+                    let colorDetailUrl = `/color-detail-order_receiving/${encodeURIComponent(
+                      clickedZone
+                    )}`;
+
+                    if (years) {
+                      colorDetailUrl += `?year=${encodeURIComponent(
+                        selectedYear
+                      )}`;
+                    }
+                    if (months) {
+                      colorDetailUrl += `${
+                        years ? "&" : "?"
+                      }month=${encodeURIComponent(selectedMonth)}`;
+                    }
+                    if (dates) {
+                      colorDetailUrl += `${
+                        years ? "&" : "?"
+                      }date=${encodeURIComponent(selectedDate)}`;
+                    }
+                    if (totalWeight) {
+                      colorDetailUrl += `${
+                        years || months || dates ? "&" : "?"
+                      }totalweight=${encodeURIComponent(totalWeight)}`;
+                    }
+                    navigate(colorDetailUrl);
+                  }
+                },
                 responsive: true,
                 maintainAspectRatio: true,
                 plugins: {
@@ -1740,13 +1892,43 @@ if (!istop15 && istop_individual) {
         </h2>
 
         <Bar
-           data={projectData}
+          data={projectData}
           options={{
             onClick: (event, elements) => {
               if (elements.length > 0) {
                 const elementIndex = elements[0].index;
                 const clickedZone = projectData.labels[elementIndex];
-                navigate(`/project-detail-order_receiving/${encodeURIComponent(clickedZone)}`);
+
+                // Construct the base URL for project details
+                let projectDetailUrl = `/project-detail-order_receiving/${encodeURIComponent(
+                  clickedZone
+                )}`;
+
+                // Add year and month parameters to the URLs if they are defined
+                if (years) {
+                  projectDetailUrl += `?year=${encodeURIComponent(
+                    selectedYear
+                  )}`;
+                }
+                if (months) {
+                  projectDetailUrl += `${
+                    years ? "&" : "?"
+                  }month=${encodeURIComponent(selectedMonth)}`;
+                }
+                if (dates) {
+                  projectDetailUrl += `${
+                    years ? "&" : "?"
+                  }date=${encodeURIComponent(selectedDate)}`;
+                }
+                if (totalWeight) {
+                  projectDetailUrl += `${
+                    years || months || dates ? "&" : "?"
+                  }totalweight=${encodeURIComponent(totalWeight)}`;
+                }
+                navigate(projectDetailUrl);
+
+                // Optionally navigate to the zone detail URL as well
+                // navigate(zoneDetailUrl);
               }
             },
             responsive: true,
@@ -1813,7 +1995,7 @@ if (!istop15 && istop_individual) {
               y: {
                 title: {
                   display: true,
-                  text: "Project}",
+                  text: "Project",
                   color: theme === "light" ? "black" : "#94a3b8",
                 },
                 grid: {
@@ -1847,7 +2029,6 @@ if (!istop15 && istop_individual) {
         >
           Product Data
         </h2>
-   
 
         <Bar
           data={product}
@@ -1945,7 +2126,6 @@ if (!istop15 && istop_individual) {
                 },
               },
             },
-            
           }}
           type="bar"
           plugins={[ChartDataLabels]}
@@ -1959,16 +2139,20 @@ if (!istop15 && istop_individual) {
         } p-4 rounded shadow-md overflow-auto h-[790px] custom-scrollbar`}
       >
         <div className="flex flex-row justify-between">
-        <h2
-          className={`text-xl font-bold  mt-0 ${
-            theme === "light" ? "text-slate-800" : "text-slate-400"
-          }`}
-        >
-          Sub Product Distribution
-        </h2>
-        <button className="bg-blue-500 hover:bg-blue-800 p-2 text-white font-semibold rounded-md" onClick={!filter}>View all</button>
+          <h2
+            className={`text-xl font-bold  mt-0 ${
+              theme === "light" ? "text-slate-800" : "text-slate-400"
+            }`}
+          >
+            Sub Product Distribution
+          </h2>
+          <button
+            className="bg-blue-500 hover:bg-blue-800 p-2 text-white font-semibold rounded-md"
+            onClick={!filter}
+          >
+            View all
+          </button>
         </div>
-
 
         <Bar
           data={subproduct}
@@ -1977,7 +2161,24 @@ if (!istop15 && istop_individual) {
               if (elements.length > 0) {
                 const elementIndex = elements[0].index;
                 const clickedZone = subproduct.labels[elementIndex];
-                navigate(`/subproduct-detail-order_receiving/${encodeURIComponent(clickedZone)}`);
+                let subproductDetailUrl = `/subproduct-detail-order_receiving/${encodeURIComponent(
+                  clickedZone
+                )}`
+
+                if (years) {
+                  subproductDetailUrl += `?year=${encodeURIComponent(selectedYear)}`;
+                }
+                if (months) {
+                 
+                  subproductDetailUrl += `${years ? '&' : '?'}month=${encodeURIComponent(selectedMonth)}`;
+                }   
+                if(dates){
+                  subproductDetailUrl += `${years ? '&' : '?'}date=${encodeURIComponent(selectedDate)}`;
+                }            
+                if (totalWeight) {
+                  subproductDetailUrl += `${years || months || dates ? '&' : '?'}totalweight=${encodeURIComponent(totalWeight)}`;
+                }
+                navigate(subproductDetailUrl);
               }
             },
             responsive: true,
@@ -2070,7 +2271,40 @@ if (!istop15 && istop_individual) {
         {!isLoading && (
           <Line
             data={groupparty}
+            
             options={{
+              
+              onClick: (event, elements) => {
+                if (elements.length > 0) {
+                  const elementIndex = elements[0].index;
+                  const clickedZone = groupparty.labels[elementIndex];
+                  let grouppartyDetialURL = `/group_party-detail-order_receiving/${encodeURIComponent(
+                    clickedZone
+                  )}`;
+
+                  if (years) {
+                    grouppartyDetialURL += `?year=${encodeURIComponent(
+                      selectedYear
+                    )}`;
+                  }
+                  if (months) {
+                    grouppartyDetialURL += `${
+                      years ? "&" : "?"
+                    }month=${encodeURIComponent(selectedMonth)}`;
+                  }
+                  if (dates) {
+                    grouppartyDetialURL += `${
+                      years ? "&" : "?"
+                    }date=${encodeURIComponent(selectedDate)}`;
+                  }
+                  if (totalWeight) {
+                    grouppartyDetialURL += `${
+                      years || months || dates ? "&" : "?"
+                    }totalweight=${encodeURIComponent(totalWeight)}`;
+                  }
+                  navigate(grouppartyDetialURL);
+                }
+              },
               responsive: true,
               maintainAspectRatio: false,
               plugins: {
@@ -2103,6 +2337,124 @@ if (!istop15 && istop_individual) {
                   title: {
                     display: true,
                     text: "Group Party",
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
+                },
+                y: {
+                  title: {
+                    display: true,
+                    text: "KG Count",
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  beginAtZero: true,
+                  grid: {
+                    display: true,
+                    color: theme === "light" ? "#e5e7eb" : "#374151",
+                  },
+                  ticks: {
+                    color: theme === "light" ? "black" : "#94a3b8",
+                  },
+                  border: {
+                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                  },
+                },
+              },
+            }}
+            plugins={[ChartDataLabels]}
+          />
+        )}
+      </div>
+    </div>,
+
+    <div key="Plain-stone">
+      <div
+        className={`order-1 col-span-1 ${
+          theme === "light" ? "bg-white" : "bg-slate-900"
+        }  p-4 rounded shadow-md overflow-x-auto h-[450px]`}
+      >
+        {!isLoading && (
+          <Pie
+            data={plainStone}
+            options={{
+              onClick: (event, elements) => {
+                if (elements.length > 0) {
+                  const elementIndex = elements[0].index;
+                  const clickedZone = plainStone.labels[elementIndex];
+                  let plainstoneURL = `/plain-stone-detail-order_receiving/${encodeURIComponent(
+                    clickedZone
+                  )}`;
+
+                  if (years) {
+                    plainstoneURL += `?year=${encodeURIComponent(
+                      selectedYear
+                    )}`;
+                  }
+                  if (months) {
+                    plainstoneURL += `${
+                      years ? "&" : "?"
+                    }month=${encodeURIComponent(selectedMonth)}`;
+                  }
+                  if (dates) {
+                    plainstoneURL += `${
+                      years ? "&" : "?"
+                    }date=${encodeURIComponent(selectedDate)}`;
+                  }
+                  if (totalWeight) {
+                    plainstoneURL += `${
+                      years || months || dates ? "&" : "?"
+                    }totalweight=${encodeURIComponent(totalWeight)}`;
+                  }
+                  navigate(plainstoneURL);
+                }
+              },
+              responsive: true,
+              maintainAspectRatio: false,
+              layout: {
+                padding: {
+                  top: 20,
+                },
+              },
+
+              plugins: {
+                legend: {
+                  display: true,
+                  labels: {
+                    color: theme === "light" ? "black" : "white",
+                  },
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function (context) {
+                      return `KG: ${context.raw.toFixed(2)}`;
+                    },
+                  },
+                },
+                datalabels: {
+                  display: true,
+                  align: "end",
+                  anchor: "end",
+                  formatter: (value) => value.toFixed(2),
+                  color: theme === "light" ? "black" : "white",
+                  font: {
+                    weight: "normal",
+                  },
+                },
+              },
+              scales: {
+                x: {
+                  title: {
+                    display: true,
+                    text: "Plain Stone",
                     color: theme === "light" ? "black" : "#94a3b8",
                   },
                   grid: {
@@ -2228,28 +2580,30 @@ if (!istop15 && istop_individual) {
               )}
             </button> */}
 
-            <button
-              className={`p-2 rounded ${
-                isSelected_top15
-                  ? "bg-blue-500 text-white hover:bg-blue-600"
-                  : theme === "light"
-                  ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  : "bg-slate-700 text-white hover:bg-slate-600"
-              }`}
-              onClick={handleTop25Click}
-            >
-              {isSelected_top15 ? (
-                <span className="flex items-center justify-between">
-                  Top 15
-                  <span className="ml-2 border border-white rounded-full px-1">
-                    X
+            {currentPage == 2 && (
+              <button
+                className={`p-2 rounded ${
+                  isSelected_top15
+                    ? "bg-blue-500 text-white hover:bg-blue-600"
+                    : theme === "light"
+                    ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                    : "bg-slate-700 text-white hover:bg-slate-600"
+                }`}
+                onClick={handleTop25Click}
+              >
+                {isSelected_top15 ? (
+                  <span className="flex items-center justify-between">
+                    Top 15
+                    <span className="ml-2 border border-white rounded-full px-1">
+                      X
+                    </span>
                   </span>
-                </span>
-              ) : (
-                "Top 15"
-              )}
-            </button>
-{/* 
+                ) : (
+                  "Top 15"
+                )}
+              </button>
+            )}
+            {/* 
             <button
               className={`p-2 rounded ${
                 individual_top15

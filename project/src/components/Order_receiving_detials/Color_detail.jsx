@@ -9,7 +9,7 @@ import Sidebar from "../Sidebar";
 Chart.register(ChartDataLabels);
 
 const ProjectDetails = () => {
-  const { subproduct } = useParams();
+  const { color } = useParams();
   const [data, setData] = useState(null);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -155,7 +155,7 @@ const ProjectDetails = () => {
     };
   }
 
-  const validValues = Object.values(subproductAcc).filter(
+  const validValues = Object.values(colorAcc).filter(
     (value) => value != null && value !== 0
   );
   const total = validValues.reduce((sum, value) => sum + value, 0);
@@ -190,7 +190,7 @@ const ProjectDetails = () => {
           const itemDay = itemDate.getDate();
 
           return (
-            item["SUB PRODUCT"] === subproduct &&
+            item.Color === color &&
             (years.length === 0 || years.includes(itemYear)) &&
             (months.length === 0 || months.includes(itemMonth)) &&
             (dates.length === 0 || dates.includes(itemDay))
@@ -232,9 +232,9 @@ const ProjectDetails = () => {
     };
 
     fetchData();
-  }, [subproduct]);
+  }, [color]);
 
-  const grouppartyChartRef = useRef(null); // Create a ref for the subproduct chart div
+  const subproductChartRef = useRef(null); // Create a ref for the subproduct chart div
 
   const handleTop15Click = () => {
     if (!isSelected) {
@@ -268,8 +268,8 @@ const ProjectDetails = () => {
       );
     }
     setIsSelected(!isSelected);
-    if (grouppartyChartRef.current) {
-      grouppartyChartRef.current.scrollIntoView({
+    if (subproductChartRef.current) {
+      subproductChartRef.current.scrollIntoView({
         behavior: "smooth",
         block: "start",
       });
@@ -832,7 +832,7 @@ const ProjectDetails = () => {
                 </span>
               </span>
             ) : (
-              "Top 15 in " + subproduct
+              "Top 15 in " + color
             )}
           </button>
           <div className={`flex justify-center items-center p-4`}>
@@ -843,7 +843,7 @@ const ProjectDetails = () => {
                 }`}
               >
                 <h1 className="col-span-2">
-                  Details for Sub Product: {subproduct} in {formattedTotalWeight}
+                  Details for Color: {color} in {formattedTotalWeight}
                 </h1>
               </div>
 
@@ -935,7 +935,7 @@ const ProjectDetails = () => {
             <Bar data={zoneChartdata} options={chartOptions} />
           </div>
           {/* Project Chart */}
-          <div ref={grouppartyChartRef}
+          <div
             className={`order-5 col-span-1 ${
               theme === "light" ? "bg-white" : "bg-gray-900"
             } p-4 rounded shadow-md overflow-auto h-[650px] custom-scrollbar`}
@@ -968,7 +968,7 @@ const ProjectDetails = () => {
 
           {/* Sub Product Chart */}
           <div
-           
+            ref={subproductChartRef}
             className={`order-7 col-span-1 ${
               theme === "light" ? "bg-white" : "bg-gray-900"
             } p-4 rounded shadow-md overflow-auto h-[790px] custom-scrollbar`}
@@ -982,7 +982,7 @@ const ProjectDetails = () => {
         </main>
 
         {/* Full-Width Line Chart Below */}
-        <div 
+        <div
           className={`w-full ${
             theme === "light" ? "bg-white" : "bg-slate-900"
           } p-4 rounded shadow-md h-[450px] overflow-x-auto overflow-y-auto mb-20`}

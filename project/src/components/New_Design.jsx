@@ -11,6 +11,7 @@ import CustomMultiSelect from "./Custom/Mutliselect";
 import { IoFilterOutline } from "react-icons/io5";
 import { Pie } from "react-chartjs-2";
 import { Line } from 'react-chartjs-2';
+import { useNavigate } from "react-router-dom";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -30,6 +31,7 @@ ChartJS.register(
   Legend
 );
 function New_Design() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
@@ -137,6 +139,62 @@ const [currentPage1, setCurrentPage1] = useState(1);
     labels: [],
     datasets: [],
   });
+  const[plainStone,setPlainStone]=useState({
+    labels:[],
+    datasets:[],
+  });
+
+
+ 
+  const currentMonth = new Date().getMonth() + 1; // Note: Months are zero-indexed (0 = January)
+  
+  const handleClick_purity_detail = (event, chartElement) => {
+  
+    // Check if chartElement is defined and has at least one item
+    if (chartElement && chartElement.length > 0) {
+      try {
+        // Access the chart object and the clicked index
+        const chart = chartElement[0].element.$context.chart; // Update as per your chart.js version
+        const index = chartElement[0].index;
+        const purity = chart.data.labels[index];
+  
+        // Use current year and month if not selected
+        const year = selectedYear || currentYear;
+        const month = selectedMonth || currentMonth;
+  
+        // Navigate to the details page with parameters
+        navigate(`/purity-detail-new_design/${purity}?year=${year}&month=${month}`);
+      } catch (error) {
+        console.error('Error handling chart click:', error);
+      }
+    } else {
+      console.warn('No chart element clicked or chart element is empty');
+    }
+  };
+
+  const handleClick_zone_detail = (event, chartElement) => {
+  
+    // Check if chartElement is defined and has at least one item
+    if (chartElement && chartElement.length > 0) {
+      try {
+        // Access the chart object and the clicked index
+        const chart = chartElement[0].element.$context.chart; // Update as per your chart.js version
+        const index = chartElement[0].index;
+        const zone = chart.data.labels[index];
+  
+        // Use current year and month if not selected
+        const year = selectedYear || currentYear;
+        const month = selectedMonth || currentMonth;
+  
+        // Navigate to the details page with parameters
+        navigate(`/zone-detail-new_design/${zone}?year=${year}&month=${month}`);
+      } catch (error) {
+        console.error('Error handling chart click:', error);
+      }
+    } else {
+      console.warn('No chart element clicked or chart element is empty');
+    }
+  };
 
   const [showDatePickerModal, setShowDatePickerModal] = useState(false);
   const [totalWeight, setTotalWeight] = useState(0);
@@ -327,6 +385,42 @@ const [currentPage1, setCurrentPage1] = useState(1);
         kg: grams / 1000,
       }));
   };
+
+  const getplainStone = (data) => {
+    const purityData = data.reduce((acc, item) => {
+      const purity = item["PL-ST"] || "Unknown";
+      const wtKg = convertWtToKg(item.WT || 0);
+      if (!acc[purity]) {
+        acc[purity] = 0;
+      }
+      acc[purity] += wtKg;
+  
+      return acc;
+    }, {});
+  
+    const colors = [
+      "rgba(0, 123, 255, 0.3)",
+      "rgba(40, 167, 69, 0.3)",
+      "rgba(255, 193, 7, 0.3)",
+      "rgba(220, 53, 69, 0.3)",
+      "rgba(255, 87, 34, 0.3)",
+      "rgba(156, 39, 176, 0.3)",
+      "rgba(23, 162, 184, 0.3)",
+      "rgba(255, 99, 132, 0.3)",
+      "rgba(103, 58, 183, 0.3)",
+      "rgba(96, 125, 139, 0.3)",
+    ];
+  
+    return Object.entries(purityData)
+      .filter(([purity, kg]) => kg > 0)
+      .map(([purity, kg], index) => ({
+        purity,
+        kg,
+        color: colors[index % colors.length],
+      }));
+  };
+
+  
 const currentYear = new Date().getFullYear();
 const last4Years = Array.from({ length: 4 }, (_, i) => currentYear - i);
 
@@ -578,6 +672,23 @@ setChartmonthData({
             },
           ],
         });
+        setPlainStone({
+          labels: getplainStone(filteredData).map((entry) => entry.purity),
+          datasets: [
+            {
+              label: "KG Count by Plain Stone",
+              data: getplainStone(filteredData).map((entry) => entry.kg),
+              backgroundColor: getplainStone(filteredData).map(
+                (entry) => entry.color
+              ),
+              borderColor: getplainStone(filteredData).map((entry) =>
+                entry.color.replace("0.3", "1")
+              ),
+              borderWidth: 1,
+            },
+          ],
+        })
+    
   
         const sortedData = filteredData.sort((a, b) => b.WT - a.WT);
         const uniqueOrdersByWeight = calculateTotalWeight(sortedData);
@@ -1176,6 +1287,7 @@ setChartmonthData({
             {!isLoading && (
                <Bar
                data={purityChartData}
+               
                options={{
                  responsive: true,
                  maintainAspectRatio: false,
@@ -1237,6 +1349,8 @@ setChartmonthData({
                      },
                    },
                  },
+                 onClick: (event, chartElement) => handleClick_purity_detail(event, chartElement),
+
                }}
                plugins={[ChartDataLabels]}
              />
@@ -1323,6 +1437,7 @@ setChartmonthData({
                       },
                     },
                   },
+                  onClick: (event, chartElement) => handleClick_zone_detail(event, chartElement),
                 }}
                 plugins={[ChartDataLabels]}
               />
@@ -1415,6 +1530,91 @@ setChartmonthData({
               />
             
           </div>
+          <div
+  className={`order-6 col-span-1 ${
+    theme === "light" ? "bg-white" : "bg-slate-900"
+  }  p-4 rounded shadow-md overflow-x-auto h-[500px]`}
+>
+  {!isLoading && (
+    <Pie
+      data={plainStone}
+      options={{
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+          padding: {
+            top: 20,
+          },
+        },
+
+        plugins: {
+          legend: {
+            display: true,
+            labels: {
+              color: theme === "light" ? "black" : "white",
+            },
+            
+          },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                return `KG: ${context.raw.toFixed(2)}`;
+              },
+            },
+          },
+          datalabels: {
+            display: true,
+            align: "end",
+            anchor: "end",
+            formatter: (value) => value.toFixed(2),
+            color: theme === "light" ? "black" : "white",
+            font: {
+              weight: "normal",
+            },
+          },
+        },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: "Plain Stone",
+              color: theme === "light" ? "black" : "#94a3b8",
+            },
+            grid: {
+              display: true,
+              color: theme === "light" ? "#e5e7eb" : "#374151",
+            },
+            ticks: {
+              color: theme === "light" ? "black" : "#94a3b8",
+            },
+            border: {
+              color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+            },
+          },
+          y: {
+            title: {
+              display: true,
+              text: "KG Count",
+              color: theme === "light" ? "black" : "#94a3b8",
+            },
+            beginAtZero: true,
+            grid: {
+              display: true,
+              color: theme === "light" ? "#e5e7eb" : "#374151",
+            },
+            ticks: {
+              color: theme === "light" ? "black" : "#94a3b8",
+            },
+            border: {
+              color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+            },
+          },
+        },
+      }}
+      plugins={[ChartDataLabels]}
+    />
+  )}
+</div>
         </main>
       </div>
     </div>

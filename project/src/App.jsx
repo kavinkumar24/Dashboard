@@ -20,11 +20,16 @@ import PurityDetail from './components/Order_receiving_detials/Purity_detail';
 import Project_Detail from './components/Order_receiving_detials/Project_detail';
 import Product_Detail from './components/Order_receiving_detials/Product_detail';
 import Subproduct_Detail from './components/Order_receiving_detials/Subproduct_details';
+import Group_Detail from './components/Order_receiving_detials/Group_party_detail';
 import Department_AOP from './components/AOP/Department_AOP';
 import Brief_id from './components/Brief_id';
 import Problem_Arised from './components/Problem_Arised';
 import Des_Cen_Task from './components/Des_Cen_Task';
 import Detailed_task from './components/Detailed_task';
+import Color_Detail from './components/Order_receiving_detials/Color_detail';
+import Purity_detail from './components/New_Design_detials/Purity_detail';
+import Zone_Detail from './components/New_Design_detials/Zone_detail';
+import Plainstone_Detail from './components/Order_receiving_detials/Plainstone_detail';
 
 function App() {
 
@@ -52,6 +57,15 @@ function App() {
         <Route path="/project-detail-order_receiving/:project" element={<Project_Detail />} />
         <Route path="/product-detail-order_receiving/:product" element={<Product_Detail />} />
         <Route path="/subproduct-detail-order_receiving/:subproduct" element={<Subproduct_Detail />} />
+        <Route path="/color-detail-order_receiving/:color" element={<Color_Detail />} />
+
+        <Route path="/group_party-detail-order_receiving/:group_party" element={<Group_Detail />} />
+
+        <Route path="/plain-stone-detail-order_receiving/:plainstone" element={<Plainstone_Detail />} />
+
+        <Route path="/purity-detail-new_design/:purity" element={<Purity_detail />} />
+        <Route path="/zone-detail-new_design/:zone" element={<Zone_Detail />} />
+
         <Route path="/aop_schedule" element={<Department_AOP />} />
         <Route path='/rejections/problem_arised' element={<Problem_Arised/>}/>
         <Route path='/detailed_task/brief_id/:id' element={<Brief_id/>}/>

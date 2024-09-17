@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../Sidebar';
 import Header from '../Header';
 import axios from 'axios';
+import * as XLSX from 'xlsx'; 
+
 
 const DEFAULT_DEPARTMENTS = ['CAD', 'CAM', 'MFD', 'PD-TEXTURING', 'PHOTO'];
 
@@ -17,7 +19,7 @@ function Department_AOP() {
   const [targets, setTargets] = useState({});
   const [tableData, setTableData] = useState([]);
   const [popupCurrentPage, setPopupCurrentPage] = useState(1);
-  const itemsPerPage = 5; 
+  const itemsPerPage = 5;
 
   useEffect(() => {
     localStorage.setItem('theme', theme);
@@ -73,6 +75,7 @@ function Department_AOP() {
   }, []);
 
   const handleCardClick = (deptName) => {
+    // Normalize raw filtered data
     const normalizedData = pendingData.map(item => ({
       ...item,
       PLTCODE1: item.PLTCODE1?.toUpperCase() || '',
@@ -81,17 +84,23 @@ function Department_AOP() {
   
     const deptMapping = departmentMappings[deptName];
     if (deptMapping && deptMapping.to) {
-      const week1Counts = rawFilteredData.reduce((acc, item) => {
-        const pltcode = item.PLTCODE1?.toUpperCase() || '';
-        const deptFrom = item["From Dept"]?.toUpperCase() || '';
-        const deptTo = item["To Dept"]?.toUpperCase() || '';
+      const fromDeptSet = new Set(deptMapping.from.map(dept => dept.toLowerCase()));
+      const toDeptSet = new Set(deptMapping.to.map(dept => dept.toLowerCase()));
   
-        if (deptMapping.from.includes(deptFrom) && deptMapping.to.includes(deptTo)) {
-          if (!acc[pltcode]) {
-            acc[pltcode] = { count: 0 };
+      const projectTotals = rawFilteredData.reduce((acc, item) => {
+        const fromDept = item["From Dept"]?.toLowerCase() || '';
+        const toDept = item["To Dept"]?.toLowerCase() || '';
+  
+        if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
+          const project = item.Project || 'Unknown Project';
+          const cwQty = item["CW Qty"] || 0;
+  
+          if (!acc[project]) {
+            acc[project] = 0;
           }
-          acc[pltcode].count += 1;
+          acc[project] += cwQty;
         }
+  
         return acc;
       }, {});
   
@@ -105,31 +114,38 @@ function Department_AOP() {
           acc[item.PLTCODE1] = { count: 0, totalJCPDSCWQTY1: 0, totalWIP: 0 };
         }
         acc[item.PLTCODE1].count += 1;
-        acc[item.PLTCODE1].totalJCPDSCWQTY1 += item.JCPDSCWQTY1 || 0
+        acc[item.PLTCODE1].totalJCPDSCWQTY1 += item.JCPDSCWQTY1 || 0;
         acc[item.PLTCODE1].totalWIP = item.Wip;
         return acc;
       }, {});
   
+      const photoTotalQty = deptName.toUpperCase() === 'PHOTO'
+        ? filteredPendingData.reduce((sum, item) => sum + (item.JCPDSCWQTY1 || 0), 0)
+        : 0;
+  
       const uniqueData = Object.keys(pltcodeCounts).map(pltcode => {
         const totalJCPDSCWQTY1 = pltcodeCounts[pltcode].totalJCPDSCWQTY1;
-        const target = targets[pltcode] || '';
-        const achieved = totalJCPDSCWQTY1;
-        const pending = target - achieved; 
-        const percentageAchieved = target > 0 ? ((achieved / target) * 100).toFixed(2) : '0'; 
+        const target = targets[pltcode] || 0; 
+        const achieved = deptName.toUpperCase() === 'PHOTO'
+          ? photoTotalQty
+          :0; 
+        const pending = target - achieved;
+        const percentageAchieved = (achieved / target) * 100;
+        const week1Count = projectTotals[pltcode] || 0;
   
         return {
           PLTCODE1: pltcode,
-          Count: pltcodeCounts[pltcode].count,
           TotalJCPDSCWQTY1: totalJCPDSCWQTY1,
           Target: target,
+          Achieved: achieved,
+          Pending: pending,
           PercentageAchieved: percentageAchieved,
-          Wip: pltcodeCounts[pltcode].totalWIP, 
+          Wip: pltcodeCounts[pltcode].totalWIP,
           AOP: target,
-          Week1: week1Counts[pltcode]?.count || 0,
+          Week1: week1Count,
         };
       });
   
-      
       setTableData(uniqueData);
       setSelectedDeptName(deptName);
     } else {
@@ -180,6 +196,42 @@ function Department_AOP() {
       .catch(error => console.error('Error saving data:', error));
   };
 
+
+  const handleDownload = () => {
+    const headers = [
+      ["Project wise", "Target", "AOP Achieved", "", "Assignment AOP", "Weekly Achieved Production", "", "", "", "Department", "Percentage"],
+      ["", "", "", "", "", "Week1", "Week2", "Week3", "Week4", "", ""],
+      ["", "", "Achieved", "Pending", "Wip", "", "", "", "", "", "", ""]
+    ];
+  
+    const data = tableData.map(row => [
+      row.PLTCODE1,
+      row.Target,
+      row.Achieved || '-',
+      row.Pending || '-',
+      row.Wip || 'nil',
+      row.Week1,
+      row.Week2 || '-',
+      row.Week3 || '-',
+      row.Week4 || '-',
+      row.TotalJCPDSCWQTY1,
+      row.PercentageAchieved || '-',
+    ]);
+  
+    const allData = headers.flat().concat(data);
+  
+    const ws = XLSX.utils.aoa_to_sheet(headers.concat(data), {
+      header: headers[0] 
+    });
+  
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Table Data");
+  
+    XLSX.writeFile(wb,`${selectedDeptName}_AOP_data.xlsx`);
+  };
+  
+  
+
   const popupStartIndex = (popupCurrentPage - 1) * itemsPerPage;
   const popupEndIndex = popupStartIndex + itemsPerPage;
   const paginatedTargets = Object.keys(targets).slice(popupStartIndex, popupEndIndex);
@@ -197,7 +249,13 @@ function Department_AOP() {
               <div
                 key={index}
                 onClick={() => handleCardClick(dept.name)}
-                className={`border p-4 rounded-lg shadow-md transition duration-300 ease-in-out transform ${theme === 'light' ? 'bg-white border-gray-300' : 'bg-gray-700 border-gray-600'} cursor-pointer`}
+                className={`border p-4 rounded-lg shadow-md transition duration-300 ease-in-out transform cursor-pointer ${
+                  selectedDeptName === dept.name
+                    ? `scale-105 ${theme === 'light' ? 'bg-blue-100 border-blue-300' : 'bg-blue-900 border-blue-500'}`
+                    : theme === 'light'
+                    ? 'bg-white border-gray-300'
+                    : 'bg-gray-700 border-gray-600'
+                }`}
               >
                 <h2 className="text-lg font-semibold">{dept.name}</h2>
               </div>
@@ -205,6 +263,7 @@ function Department_AOP() {
           </div>
 
           {/* Target Button */}
+          <div className='flex flex-1 justify-end space-x-2'>
           <button
             className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
             onClick={handleTargetClick}
@@ -212,6 +271,16 @@ function Department_AOP() {
             Set Target
           </button>
 
+           {selectedDeptName && (
+            <button
+              className="mt-4 px-4 py-2 bg-green-500 text-white rounded-md"
+              onClick={handleDownload}
+            >
+              Download Table Data
+            </button>
+          )}
+</div>
+         
           {/* Display Table */}
           {selectedDeptName && (
             <>
@@ -221,8 +290,8 @@ function Department_AOP() {
                   <tr>
                     <th rowSpan="2" className={`px-6 py-3 border-b ${theme === 'light' ? 'text-gray-800' : 'text-gray-300'}`}>Project wise</th>
                     <th rowSpan="2" className={`px-6 py-3 border-b ${theme === 'light' ? 'text-gray-800' : 'text-gray-300'}`}>Target</th>
-                    <th colSpan="2" className={`px-6 py-3 border-b ${theme === 'light' ? 'text-gray-800' : 'text-gray-300'}`}>AOP Achieved</th>
-                    <th colSpan="1" className={`px-6 py-3 border-b ${theme === 'light' ? 'text-gray-800' : 'text-gray-300'}`}>Assignment AOP</th>
+                    <th colSpan="2" className={`px-6 py-3 border-b ${theme === 'light' ? 'text-gray-800 border-gray-400' : 'text-gray-300'}`}>AOP Achieved</th>
+                    <th colSpan="1" className={`px-6 py-3 border-b ${theme === 'light' ? 'text-gray-800 border-gray-400' : 'text-gray-300'}`}>Assignment AOP</th>
                     <th rowSpan="2" className={`px-6 py-3 border-b ${theme === 'light' ? 'text-gray-800' : 'text-gray-300'}`}>{selectedDeptName}</th>
                     <th rowSpan="2" className={`px-6 py-3 border-b ${theme === 'light' ? 'text-gray-800' : 'text-gray-300'}`}>Percentage</th>
                     <th rowSpan="2" className={`px-6 py-3 border-b ${theme === 'light' ? 'text-gray-800' : 'text-gray-300'}`}>Week1</th>
@@ -248,7 +317,7 @@ function Department_AOP() {
                       <td className="px-6 py-4 border-b">{row.Pending}</td>
                       <td className="px-6 py-4 border-b">{row.Wip}</td>
                       <td className="px-6 py-4 border-b">{row.TotalJCPDSCWQTY1}</td>
-                      <td className="px-6 py-4 border-b">nil</td>
+                      <td className="px-6 py-4 border-b">{row.PercentageAchieved}%</td>
                       <td className="px-6 py-4 border-b">{row.Week1}</td>
                       <td className="px-6 py-4 border-b">-</td>
                       <td className="px-6 py-4 border-b">-</td>
@@ -259,6 +328,7 @@ function Department_AOP() {
               </table>
             </>
           )}
+          
 
           {/* Target Popup */}
           {showTargetPopup && (

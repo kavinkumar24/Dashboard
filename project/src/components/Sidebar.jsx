@@ -46,7 +46,7 @@ function Sidebar({ theme }) {
         setActiveSubTask('create');
       } else if (path === '/task/view') {
         setActiveSubTask('view');
-      }else if('/task/design_center'){
+      }else if(path==='/task/design_center'){
         setActiveSubTask('design_center');
       }
     } else if (path === '/rejections') {
@@ -58,6 +58,12 @@ function Sidebar({ theme }) {
       ||/zone-detail-order_receiving/.test(path)
       ||/product-detail-order_receiving/.test(path)
       ||/subproduct-detail-order_receiving/.test(path)
+      ||
+      /color-detail-order_receiving/.test(path)
+      ||
+      /group_party-detail-order_receiving/.test(path)
+      ||
+      /plain-stone-detail-order_receiving/.test(path)
     ) {
         setActive('order_new_design');
       }

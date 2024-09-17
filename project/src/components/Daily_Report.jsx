@@ -233,7 +233,7 @@ function Daily_Report() {
             <>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50 dark:bg-gray-800">
+                  <thead className="bg-gray-50 ">
                     <tr>
                       <th
                         scope="col"
@@ -252,17 +252,17 @@ function Daily_Report() {
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-900 dark:divide-gray-700">
+                  <tbody className="bg-white divide-y divide-gray-200 ">
                     {Object.keys(searchedGroupedData).length > 0 ? (
                       Object.entries(searchedGroupedData).map(([department, data]) => (
                         <tr key={department}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 ">
                             {department}
                           </td>
                           {allRanges.map((range) => (
                             <td
                               key={range}
-                              className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300"
+                              className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 "
                             >
                               {data[range] || 0}
                             </td>
@@ -273,7 +273,7 @@ function Daily_Report() {
                       <tr>
                         <td
                           colSpan={allRanges.length + 1}
-                          className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-300"
+                          className="px-6 py-4 text-center text-sm text-gray-500 "
                         >
                           No data available
                         </td>
