@@ -77,7 +77,9 @@ function Sidebar({ theme }) {
     }else if(path == '/uploads'){
       setActive('uploads')
     }
-    else if(path == '/aop_schedule'){
+    else if(path == '/aop_schedule'||
+      /product-details/.test(path)
+    ){
       setActive('aop_schedule')
     }
     

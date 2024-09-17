@@ -30,7 +30,7 @@ import Color_Detail from './components/Order_receiving_detials/Color_detail';
 import Purity_detail from './components/New_Design_detials/Purity_detail';
 import Zone_Detail from './components/New_Design_detials/Zone_detail';
 import Plainstone_Detail from './components/Order_receiving_detials/Plainstone_detail';
-
+import ProductDetailsPage from './components/AOP/Product_details';
 function App() {
 
   return (
@@ -38,6 +38,7 @@ function App() {
       <div>
       <Routes>
         <Route path='/' element={<Exceldata />} />
+        <Route path="/product-details/:pltcode" element={<ProductDetailsPage />} />
         <Route path="/department/:deptId/:type" element={<DepartmentDetail />} />
         <Route path="/projects" element={<Projects />} />
         <Route path='/daily-report' element={<Daily_Report />} />
