@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import axios from "axios";
-import debounce from "lodash.debounce"; 
-
+import debounce from "lodash.debounce";
 
 function Projects() {
   const [productionData, setProductionData] = useState([]);
@@ -20,8 +19,12 @@ function Projects() {
   const [productDetails, setProductDetails] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-const[selected_project, setSelected_project] = useState(null);
+  const [selectedProject, setSelectedProject] = useState(null);
 
+  const handleProductSearch = (e) => {
+    setProductSearch(e.target.value);
+  };
+  const [productSearch, setProductSearch] = useState("");
   const sectionRef = useRef(null);
 
   useEffect(() => {
@@ -50,7 +53,6 @@ const[selected_project, setSelected_project] = useState(null);
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Fetch production and pending data simultaneously
         const [productionRes, pendingRes, jewelRes] = await Promise.all([
           fetch("http://localhost:8081/production_data"),
           fetch("http://localhost:8081/pending_data"),
@@ -100,16 +102,6 @@ const[selected_project, setSelected_project] = useState(null);
   }, [search, departmentsToShow]);
 
   useEffect(() => {
-    if (search !== "") {
-      setTimeout(() => {
-        if (sectionRef.current) {
-          sectionRef.current.scrollIntoView({ behavior: "smooth" });
-        }
-      }, 1000);
-    }
-  }, [search]);
-
-  useEffect(() => {
     const fetchPendingData = async () => {
       try {
         const response = await axios.get("http://localhost:8081/pending_data");
@@ -125,71 +117,69 @@ const[selected_project, setSelected_project] = useState(null);
 
     fetchPendingData();
   }, []);
+
   const countDepartments = (data, isPending = false) => {
     const departmentCounts = {};
     data.forEach((item) => {
       const department = isPending
-        ? item.PLTCODE1?.toUpperCase() 
-        : item.pltcode?.toUpperCase(); 
+        ? item.PLTCODE1?.toUpperCase()
+        : item.pltcode?.toUpperCase();
       if (department) {
         departmentCounts[department] = (departmentCounts[department] || 0) + 1;
       }
     });
     return departmentCounts;
   };
-  
+
   const handleSearch = (e) => {
     debouncedSearch(e.target.value);
   };
-
 
   useEffect(() => {
     console.log("Pending Data:", pendingData);
     console.log("Product Details:", productDetails);
   }, [pendingData, productDetails]);
-  
-  
+
   const handleTabClick = async (dept) => {
     setActiveTab(dept);
-    setSelected_project(dept);
-    setSpin(true); 
-    
+    setSelectedProject(dept);
+    setSpin(true);
+
     try {
       const [pendingResponse, jewelResponse] = await Promise.all([
         axios.get("http://localhost:8081/pending_data"),
         axios.get("http://localhost:8081/jewel-master"),
       ]);
-  
+
       const pendingData = pendingResponse.data;
       const allJewelData = jewelResponse.data;
-  
-    
+
       const filteredPendingData = pendingData.filter(
-        (item) => item.PLTCODE1 === dept 
+        (item) => item.PLTCODE1 === dept
       );
-  
-     
+
       const complexities = filteredPendingData.map((item) => item.COMPLEXITY1);
       const filteredJewelData = allJewelData.filter((item) =>
-        complexities.includes(item.JewelCode) 
+        complexities.includes(item.JewelCode)
       );
-  
-      setPendingData(filteredPendingData); 
-      setProductDetails(filteredJewelData); 
-      
+
+      const filteredProductDetails = filteredJewelData.filter((item) =>
+        item.Product?.toLowerCase().includes(search.toLowerCase()) ||
+        item["sub Product"]?.toLowerCase().includes(search.toLowerCase())
+      );
+
+      setPendingData(filteredPendingData);
+      setProductDetails(filteredProductDetails);
+
     } catch (error) {
       setError("Error fetching data");
     } finally {
-      setSpin(false); 
+      setSpin(false);
     }
   };
-  
-
-  
-  
   const groupByProduct = (data) => {
     return data.reduce((acc, item) => {
-      if (!item.Product) return acc; 
+      if (!item.Product) return acc;
       if (!acc[item.Product]) {
         acc[item.Product] = { count: 0, subProducts: {} };
       }
@@ -204,9 +194,33 @@ const[selected_project, setSelected_project] = useState(null);
       return acc;
     }, {});
   };
-  
+
+  const filteredGroupedProducts = () => {
+    const filteredProducts = Object.keys(groupByProduct(productDetails))
+      .filter(product =>
+        product.toLowerCase().includes(productSearch.toLowerCase())
+      )
+      .reduce((acc, product) => {
+        acc[product] = groupedProducts[product];
+        return acc;
+      }, {});
+
+    Object.keys(filteredProducts).forEach(product => {
+      filteredProducts[product].subProducts = Object.keys(filteredProducts[product].subProducts)
+        .filter(subProduct =>
+          subProduct.toLowerCase().includes(productSearch.toLowerCase())
+        )
+        .reduce((acc, subProduct) => {
+          acc[subProduct] = filteredProducts[product].subProducts[subProduct];
+          return acc;
+        }, {});
+    });
+
+    return filteredProducts;
+  };
 
   const groupedProducts = groupByProduct(productDetails);
+  const productsToShow = filteredGroupedProducts();
 
   if (error) {
     return <div className="p-6 text-red-500">{error}</div>;
@@ -273,20 +287,19 @@ const[selected_project, setSelected_project] = useState(null);
                           <tr
                             key={dept}
                             onClick={() => handleTabClick(dept)}
-                            className={`cursor-pointer
-          ${
-            activeTab === dept
-              ? theme === "dark"
-                ? "bg-gray-500 text-white"
-                : "bg-slate-300 text-black"
-              : index % 2 === 0
-              ? theme === "dark"
-                ? "bg-slate-700 text-gray-300"
-                : "bg-slate-100 text-gray-700"
-              : theme === "dark"
-              ? "bg-gray-800 text-gray-300"
-              : "bg-[#FFFFFF] text-gray-700"
-          }`}
+                            className={`cursor-pointer ${
+                              activeTab === dept
+                                ? theme === "dark"
+                                  ? "bg-gray-500 text-white"
+                                  : "bg-slate-300 text-black"
+                                : index % 2 === 0
+                                ? theme === "dark"
+                                  ? "bg-slate-700 text-gray-300"
+                                  : "bg-slate-100 text-gray-700"
+                                : theme === "dark"
+                                ? "bg-gray-800 text-gray-300"
+                                : "bg-[#FFFFFF] text-gray-700"
+                            }`}
                           >
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div
@@ -381,53 +394,64 @@ const[selected_project, setSelected_project] = useState(null);
                 })}
               </div>
             )}
-
+<br></br>
+          <div ref={sectionRef}>
+            <input
+              type="text"
+              placeholder="Search Products"
+              value={productSearch}
+              onChange={handleProductSearch}
+              className={`mb-4 p-2 rounded border ${
+                theme === "light" ? "border-gray-300" : "border-gray-600"
+              }`}
+            />
             {activeTab && (
-              <div className="mt-10">
-                <h1 className="text-lg mb-3">{selected_project}</h1>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.keys(groupedProducts).map((product) => {
-                const groupedProduct = groupedProducts[product];
-                return (
-                  <div
-                    key={product}
-                    className={`shadow-md rounded-lg p-4 border-t-2 border-blue-400 ${
-                      theme === "light"
-                        ? "text-gray-800 bg-white"
-                        : "text-gray-300 bg-slate-600 border-slate-500"
-                    }`}
-                  >
-                    <div className="text-xl font-semibold mb-2 flex justify-between">
+              <div className="mt-5">
+                <h1 className="text-lg mb-3">{selectedProject}</h1>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {Object.keys(productsToShow).map((product) => {
+                    const groupedProduct = productsToShow[product];
+                    return (
                       <div
-                        className={`p-1 rounded-md mb-6 font-normal text-md ${
+                        key={product}
+                        className={`shadow-md rounded-lg p-4 border-t-2 border-blue-400 ${
                           theme === "light"
-                            ? "bg-blue-200 text-gray-800"
-                            : "bg-blue-900 text-gray-300"
+                            ? "text-gray-800 bg-white"
+                            : "text-gray-300 bg-slate-600 border-slate-500"
                         }`}
                       >
-                        {product}
-                      </div>
-                      <span>Count: {groupedProduct.count}</span>
-                    </div>
-                    <div className="mt-2 grid grid-cols-1 gap-2">
-                      {Object.keys(groupedProduct.subProducts).map((subProduct) => (
-                        <div
-                          key={subProduct}
-                          className={`${
-                            theme === "light" ? "bg-slate-100" : "bg-slate-700"
-                          } p-2 rounded-md`}
-                        >
-                          <span className="font-medium">{subProduct}:</span>{" "}
-                          {groupedProduct.subProducts[subProduct]}
+                        <div className="text-xl font-semibold mb-2 flex justify-between">
+                          <div
+                            className={`p-1 rounded-md mb-6 font-normal text-md ${
+                              theme === "light"
+                                ? "bg-blue-200 text-gray-800"
+                                : "bg-blue-900 text-gray-300"
+                            }`}
+                          >
+                            {product}
+                          </div>
+                          <span>Count: {groupedProduct.count}</span>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            </div>
+                        <div className="mt-2 grid grid-cols-1 gap-2">
+                          {Object.keys(groupedProduct.subProducts).map((subProduct) => (
+                            <div
+                              key={subProduct}
+                              className={`${
+                                theme === "light" ? "bg-slate-100" : "bg-slate-700"
+                              } p-2 rounded-md`}
+                            >
+                              <span className="font-medium">{subProduct}:</span>{" "}
+                              {groupedProduct.subProducts[subProduct]}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
+          </div>
           </div>
         </main>
       </div>
