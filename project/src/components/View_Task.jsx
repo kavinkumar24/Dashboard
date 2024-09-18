@@ -134,7 +134,7 @@ function ViewTasks() {
               <table className="min-w-full table-auto text-sm">
                 <thead>
                   <tr className="bg-gray-300 text-gray-700">
-                    {['ID', 'Ax Brief', 'Collection Name', 'Project', 'Quantity', 'Assign Date', 'Target Date', 'Priority', 'Status','View'].map((header, index) => (
+                    {['ID', 'Ax Brief', 'Collection Name', 'Project', 'Quantity', 'Assign Date', 'Target Date', 'Priority', 'Status'].map((header, index) => (
                       <th key={index} className="px-6 py-3 text-center font-semibold text-base">
                         {header}
                       </th>
@@ -160,7 +160,7 @@ function ViewTasks() {
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         <span className={getStatusClass("Completed")}>{"Completed"}</span>
                       </td>
-                      <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                      {/* <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
                         <button  className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
                           theme === "light"
                             ? "bg-blue-500 hover:bg-blue-700"
@@ -168,7 +168,7 @@ function ViewTasks() {
                         }`} 
                         // onClick={() => handleTableClick(skch, overAllData, "Sketch")} disabled={!overAllData} 
                         > View </button>
-                      </td>
+                      </td> */}
                     </tr>
                   ))}
                 </tbody>

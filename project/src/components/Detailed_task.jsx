@@ -73,7 +73,7 @@ function Detailed_task() {
   };
 
   const handleTableClick = (id) => {
-    navigate(`/detailed_task/brief_id/${id}`);
+    navigate(`/task/detailed_task/brief_id/${id}`);
   };
 
   return (

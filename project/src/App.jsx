@@ -69,11 +69,10 @@ function App() {
 
         <Route path="/aop_schedule" element={<Department_AOP />} />
         <Route path='/rejections/problem_arised' element={<Problem_Arised/>}/>
-        <Route path='/detailed_task/brief_id/:id' element={<Brief_id/>}/>
-        <Route path='/detailed_task/brief_id' element={<Brief_id/>}/>
+        <Route path='/task/detailed_task/brief_id/:id' element={<Brief_id/>}/>
+        <Route path='/task/detailed_task/brief_id' element={<Brief_id/>}/>
         <Route path='/task/design_center' element={<Des_Cen_Task/>}/>
-        <Route path='/detailed_task' element = {<Detailed_task/>}/>
-
+        <Route path='/task/detailed_task' element = {<Detailed_task/>}/>
       </Routes>
       </div>
       

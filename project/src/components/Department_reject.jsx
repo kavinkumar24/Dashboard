@@ -40,15 +40,17 @@ function Department_reject() {
     useEffect(() => {
       window.scrollTo(0, 0);
     }, []);
-
+  const [per,setper] = useState();
   const location = useLocation();
-  const { clickedLabel,deptData } = location.state || {};
-
+  const { clickedLabel,deptData,percentage1 } = location.state || {};
+  
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
+
+  
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [uploads, setUploads] = useState([]);
@@ -59,6 +61,11 @@ function Department_reject() {
   const [tableData1, setTableData1] = useState([]);
   const [tableData2, setTableData2] = useState([]);
   const [tableData3, setTableData3] = useState([]);
+
+  const [chartOptions, setChartOptions] = useState(null);
+  const [chartOptions2, setChartOptions2] = useState(null);
+  const [chartOptions3, setChartOptions3] = useState(null);
+  const [chartOptions4, setChartOptions4] = useState(null);
 
   const [tableViewStatus, settableViewStatus]= useState('');
 
@@ -80,7 +87,11 @@ function Department_reject() {
   useEffect(() => {
     fetchUploads();
   }, []);
-
+  useEffect(() => {
+    if (percentage1) {
+      setper(percentage1);
+    }
+  }, [percentage1]);
 
   const colors = [
     "rgba(153, 102, 255, 0.2)",
@@ -108,7 +119,11 @@ function Department_reject() {
       const data = deptData;
       setoverAllData(data);
 
+
       if (data && data.length > 0) {
+
+        const totalDataCount = data.reduce((sum, item) => sum + item.COUNT, 0);
+
         const uniqueYears = [...new Set(data.map((item) => item.Yr))];
         const Yearcounts = uniqueYears.map((year) => {
           const yearData = data.filter((item) => item.Yr === year);
@@ -178,33 +193,75 @@ function Department_reject() {
             tension: 0.1,
           })),
         });
+
+        const uniquetypeOfReason = [...new Set(data.map((reason)=>reason.TypeOfReason.toLowerCase().trim()))]
+
+
+        const reasonCount = uniquetypeOfReason.map((reason)=>{
+          const filteredData = data.filter((item)=>item.TypeOfReason.toLowerCase().trim() === reason);
+          return filteredData.reduce((total,item)=>total+item.COUNT,0);
+        })
+  
+        // console.log(reasonCount);
+  
+           
+        setChartData4({
+          labels: uniquetypeOfReason,
+          datasets: [
+            {
+              label: "Based on the Rasied Departments",
+              data: reasonCount,
+              backgroundColor: colors.slice(0, uniquetypeOfReason.length),  
+              borderColor: borderColors.slice(0, uniquetypeOfReason.length), 
+              borderWidth: 1,
+            },
+          ],
+        });
+
+        const commonOptions = {
+          scales: {
+            y: {
+              ticks: {
+                beginAtZero: true,
+                precision: 0, // Ensure whole numbers on Y-axis
+              },
+            },
+            x: {
+              ticks: {
+                precision: 0, // Ensure whole numbers on X-axis
+              },
+            },
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function (tooltipItem) {
+                  const value = tooltipItem.raw;
+                  const percentage = ((value / totalDataCount) * 100).toFixed(2) + "%";
+                  return `${value} (${percentage})`;
+                },
+              },
+            },
+            datalabels: {
+              display: true,
+              formatter: (value, context) => {
+                const percentage = ((value / totalDataCount) * 100).toFixed(2);
+                return `${value} (${percentage}%)`;
+              },
+            },
+          },
+        };
+      
+        // Apply the common options to each chart
+        setChartOptions(commonOptions);
+        setChartOptions2(commonOptions);
+        setChartOptions3(commonOptions);
+        setChartOptions4(commonOptions);
       } else {
         console.warn("No data available");
       }
 
-      const uniquetypeOfReason = [...new Set(data.map((reason)=>reason.TypeOfReason.toLowerCase().trim()))]
 
-
-      const reasonCount = uniquetypeOfReason.map((reason)=>{
-        const filteredData = data.filter((item)=>item.TypeOfReason.toLowerCase().trim() === reason);
-        return filteredData.reduce((total,item)=>total+item.COUNT,0);
-      })
-
-      // console.log(reasonCount);
-
-      const borderColors = getBorderColors(colors);     
-      setChartData4({
-        labels: uniquetypeOfReason,
-        datasets: [
-          {
-            label: "Based on the Rasied Departments",
-            data: reasonCount,
-            backgroundColor: colors.slice(0, uniquetypeOfReason.length),  
-            borderColor: borderColors.slice(0, uniquetypeOfReason.length), 
-            borderWidth: 1,
-          },
-        ],
-      });
 
       /// Sketch table data
       const skchTableData = [...new Set(data.map((skch)=>skch.SketchNo))]
@@ -427,7 +484,7 @@ function Department_reject() {
         <Header onSearch={setSearch} theme={theme} dark={setTheme} />
         
         <div className="flex justify-between mx-4 mt-4">
-          <h1 className="font-bold text-xl">Rejected Details of <span className='text-[#879FFF] text-2xl'>{clickedLabel}</span> Department</h1>
+          <h1 className="font-bold text-xl">Rejected Details of <span className='text-[#879FFF] text-2xl'>{clickedLabel}</span> Department </h1>
           <button
             className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
               theme === "light"
@@ -438,6 +495,8 @@ function Department_reject() {
             Export the Data
           </button>
         </div>
+        <h1 className="font-bold text-xl text-gray-500 mx-4 mt-4">Percentage for the {clickedLabel} Department from the overall Data - <span className='text-green-400 text-2xl'>{per}</span></h1>
+
 
         {/* Main content */}
         {/* <div className="p-4">
@@ -449,7 +508,7 @@ function Department_reject() {
           <h1 className="text-lg font-semibold p-2 pl-10">Rejection Counts Based on Year</h1>
             <div className=" px-10">
               {chartData ? (
-                <Bar data={chartData} />
+                <Bar data={chartData} options={chartOptions}/>
               ) : (
                 <p className="text-center text-gray-500">
                   Loading chart data...
@@ -462,7 +521,7 @@ function Department_reject() {
           <h1 className="text-lg font-semibold p-2 pl-10">Rejections Count by Department</h1>
             <div className="px-10">
               {chartData2 ? (
-                <Bar data={chartData2} options={optionschart2}/>
+                <Bar data={chartData2} />
               ) : (
                 <p className="text-center text-gray-500">
                   Loading chart data...

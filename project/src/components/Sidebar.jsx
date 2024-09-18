@@ -48,6 +48,8 @@ function Sidebar({ theme }) {
         setActiveSubTask('view');
       }else if(path==='/task/design_center'){
         setActiveSubTask('design_center');
+      }else if(path==='/task/detailed_task' || path==='/task/detailed_task/brief_id/:id'){
+        setActiveSubTask('detailed_task');
       }
     } else if (path === '/rejections') {
       setActive('rejections');
@@ -257,6 +259,18 @@ function Sidebar({ theme }) {
                     <BsEye />
                   </div>
                   Design Center
+                </div>
+              </a>
+              <a
+                href="#"
+                className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('detailed_task')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
+                onClick={() => handleNavigation('/task/detailed_task', 'task')}
+              >
+                <div className='flex flex-row p-0'>
+                  <div className='mt-1 px-2'>
+                    <BsEye />
+                  </div>
+                  Detailed Task
                 </div>
               </a>
 
