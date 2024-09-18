@@ -203,6 +203,149 @@ app.get('/api/user-only', authorize(['user']), (req, res) => {
 
 // login page api end
 
+// Convert Excel serial date to JavaScript Date
+function excelSerialDateToDate(serial) {
+  if (!serial || isNaN(serial)) {
+    return null;
+  }
+  const excelEpoch = new Date(1899, 11, 30); // Excel epoch starts from 1899-12-30
+  const days = Math.floor(serial); // Get the whole part of the serial date
+  const timeFraction = serial - days; // Get the time fraction of the day
+  const date = new Date(excelEpoch.getTime() + days * 86400000); // Convert days to milliseconds
+  date.setMinutes(date.getMinutes() + Math.round(timeFraction * 1440)); // Add time portion
+  return date;
+}
+
+// Format date for MySQL
+function formatDateForMySQL(date) {
+  if (!date) return null;
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+
+const createDesignTable = "CREATE TABLE if not exists `design_center_task_sample` ( \
+`Brief number` varchar(255) DEFAULT NULL, \
+`Pre-Brief` varchar(255) DEFAULT NULL, \
+`Employe id` varchar(255) DEFAULT NULL, \
+`Employe Name` varchar(255) DEFAULT NULL, \
+`Design center` varchar(255) DEFAULT NULL, \
+`Design specification` varchar(255) DEFAULT NULL, \
+`Jewel sub type` varchar(255) DEFAULT NULL, \
+`Sub category` varchar(255) DEFAULT NULL, \
+`Jewel type` varchar(255) DEFAULT NULL, \
+`Document date` timestamp(6) NULL DEFAULT NULL, \
+`Design type` varchar(255) DEFAULT NULL, \
+`Minimum Weight` double DEFAULT NULL, \
+`Maximum Weight` double DEFAULT NULL, \
+`No Of Design` int(11) DEFAULT NULL, \
+`Deadline date` timestamp(6) NULL DEFAULT NULL, \
+`Confirmed` varchar(255) DEFAULT NULL, \
+`Received` varchar(255) DEFAULT NULL, \
+`Received by` varchar(255) DEFAULT NULL, \
+`Received date` timestamp(6) NULL DEFAULT NULL, \
+`Completed` timestamp(6) NULL DEFAULT NULL, \
+`Created by` varchar(255) DEFAULT NULL, \
+`Created date and time` varchar(255) DEFAULT NULL \
+)";
+
+
+db.query(createDesignTable, (err) => {
+  if (err) {
+    console.error('Error creating table:', err);
+    return;
+  }
+  console.log("table created")
+});
+
+app.post('/api/design_center/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+
+  const fileBuffer = req.file.buffer;
+  const fileName = req.file.originalname;
+
+  try {
+    const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(worksheet);
+
+    if (jsonData.length > 0) {
+      const values = jsonData.map(row => {
+        // Convert Excel serial date to JavaScript Date
+        const documentDate = excelSerialDateToDate(row['Document date']);
+        const deadlineDate = excelSerialDateToDate(row['Deadline date']);
+        const receivedDate = excelSerialDateToDate(row['Received date']);
+        const completedDate = excelSerialDateToDate(row['Completed']);
+        
+        // Format dates for MySQL
+        const formattedDocumentDate = formatDateForMySQL(documentDate);
+        const formattedDeadlineDate = formatDateForMySQL(deadlineDate);
+        const formattedReceivedDate = formatDateForMySQL(receivedDate);
+        const formattedCompletedDate = formatDateForMySQL(completedDate);
+
+
+        return [
+          row['Brief number'],
+          row['Pre-Brief'],
+          row['Employe id'],
+          row['Employe Name'],
+          row['Design center'],
+          row['Design specification'],
+          row['Jewel sub type'],
+          row['Sub category'],
+          row['Jewel type'],
+          formattedDocumentDate,
+          row['Design type'],
+          row['Minimum Weight'],
+          row['Maximum Weight'],
+          row['No Of Design'],
+          formattedDeadlineDate,
+          row['Confirmed'],
+          row['Received'],
+          row['Received by'],
+          formattedReceivedDate,
+          formattedCompletedDate,
+          row['Created by'],
+          row['Created date and time']
+        ];
+      });
+
+      const query = `
+      INSERT INTO design_center_task_sample 
+      (\`Brief number\`, \`Pre-Brief\`, \`Employe id\`, \`Employe Name\`, 
+       \`Design center\`, \`Design specification\`, \`Jewel sub type\`, 
+       \`Sub category\`, \`Jewel type\`, \`Document date\`, \`Design type\`, 
+       \`Minimum Weight\`, \`Maximum Weight\`, \`No Of Design\`, 
+       \`Deadline date\`, \`Confirmed\`, \`Received\`, \`Received by\`, 
+       \`Received date\`, \`Completed\`, \`Created by\`, \`Created date and time\`)
+      VALUES ?
+    `;
+
+      db.query(query, [values], function (error, results, fields) {
+        if (error) {
+          console.error('Database error:', error);
+          return res.status(500).send('Database error');
+        }
+        res.send('File uploaded and data inserted successfully.');
+      });
+    } else {
+      res.status(400).send('No data found in Excel file');
+    }
+  } catch (error) {
+    console.error('Error processing file:', error);
+    res.status(500).send('Error processing file');
+  }
+});
+
+
 // ************ Production Data endpoints ******************* //
 
 const createProductionTableQuery = `CREATE TABLE IF NOT EXISTS \`Production_sample_data\` (
@@ -243,30 +386,6 @@ db.query(createProductionTableQuery, (err) => {
 });
 
 
-// Convert Excel serial date to JavaScript Date
-function excelSerialDateToDate(serial) {
-  if (!serial || isNaN(serial)) {
-    return null;
-  }
-  const excelEpoch = new Date(1899, 11, 30); // Excel epoch starts from 1899-12-30
-  const days = Math.floor(serial); // Get the whole part of the serial date
-  const timeFraction = serial - days; // Get the time fraction of the day
-  const date = new Date(excelEpoch.getTime() + days * 86400000); // Convert days to milliseconds
-  date.setMinutes(date.getMinutes() + Math.round(timeFraction * 1440)); // Add time portion
-  return date;
-}
-
-// Format date for MySQL
-function formatDateForMySQL(date) {
-  if (!date) return null;
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  const seconds = date.getSeconds().toString().padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
 
 
 

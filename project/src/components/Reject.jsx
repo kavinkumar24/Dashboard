@@ -44,6 +44,11 @@ function Reject() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [chartData, setChartData] = useState(null);
+  const [chartOptions, setChartOptions] = useState(null);
+  const [chartOptions2, setChartOptions2] = useState(null);
+  const [chartOptions3, setChartOptions3] = useState(null);
+  const [chartOptions4, setChartOptions4] = useState(null);
+
   const [chartData2, setChartData2] = useState(null);
   const [chartData3, setChartData3] = useState(null);
   const [chartData4, setChartData4] = useState(null);
@@ -229,14 +234,18 @@ function Reject() {
       setoverAllData(data);
 
       if (data && data.length > 0) {
+        // Calculate total counts for percentage calculations
+        const totalDataCount = data.reduce((sum, item) => sum + item.COUNT, 0);
+      
+        // Unique Years and their counts
         const uniqueYears = [...new Set(data.map((item) => item.Yr))];
         const Yearcounts = uniqueYears.map((year) => {
           const yearData = data.filter((item) => item.Yr === year);
           return yearData.reduce((total, item) => total + item.COUNT, 0);
         });
-
+      
         const borderColors = getBorderColors(colors);
-
+      
         setChartData({
           labels: uniqueYears,
           datasets: [
@@ -249,20 +258,19 @@ function Reject() {
             },
           ],
         });
-
+      
+        // Departments and their counts
         const uniqueskch = [...new Set(data.map((item) => item.ToDept))];
-        const counts2 = uniqueskch.map((year) => {
-          const yearData = data.filter((item) => item.ToDept === year);
-          return yearData.reduce((total, item) => total + item.COUNT, 0);
+        const counts2 = uniqueskch.map((dept) => {
+          const deptData = data.filter((item) => item.ToDept === dept);
+          return deptData.reduce((total, item) => total + item.COUNT, 0);
         });
-
-
-        
+      
         setChartData2({
           labels: uniqueskch,
           datasets: [
             {
-              label: "Based on the Rasied Departments",
+              label: "Based on the Raised Departments",
               data: counts2,
               backgroundColor: colors.slice(0, counts2.length),
               borderColor: borderColors.slice(0, counts2.length),
@@ -270,10 +278,9 @@ function Reject() {
             },
           ],
         });
-
-        // const uniqueYears = [...new Set(data.map(item => item.Yr))];
+      
+        // Months and their counts by year
         const uniqueMonths = [...new Set(data.map((item) => item.MONTH))];
-
         const counts = uniqueYears.map((year) => {
           return uniqueMonths.map((month) => {
             const filteredData = data.filter(
@@ -282,9 +289,7 @@ function Reject() {
             return filteredData.reduce((total, item) => total + item.COUNT, 0);
           });
         });
-        
-        
-
+      
         setChartData3({
           labels: uniqueYears, // X-axis labels
           datasets: uniqueMonths.map((month, index) => ({
@@ -297,39 +302,78 @@ function Reject() {
             tension: 0.1,
           })),
         });
+      
+        // Type of Reason and their counts
+        const uniquetypeOfReason = [
+          ...new Set(data.map((reason) => reason.TypeOfReason.toLowerCase().trim())),
+        ];
+      
+        const reasonCount = uniquetypeOfReason.map((reason) => {
+          const filteredData = data.filter(
+            (item) => item.TypeOfReason.toLowerCase().trim() === reason
+          );
+          return filteredData.reduce((total, item) => total + item.COUNT, 0);
+        });
+      
+        setChartData4({
+          labels: uniquetypeOfReason,
+          datasets: [
+            {
+              label: "Based on the Raised Departments",
+              data: reasonCount,
+              backgroundColor: colors.slice(0, uniquetypeOfReason.length), // Assign background colors
+              borderColor: borderColors.slice(0, uniquetypeOfReason.length), // Assign border colors
+              borderWidth: 1,
+            },
+          ],
+        });
+      
+        // Common chart options with percentage and whole number ticks
+        const commonOptions = {
+          scales: {
+            // y: {
+            //   ticks: {
+            //     beginAtZero: true,
+            //     precision: 0, // Ensure whole numbers on Y-axis
+            //   },
+            // },
+            // x: {
+            //   ticks: {
+            //     precision: 0, // Ensure whole numbers on X-axis
+            //   },
+            // },
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function (tooltipItem) {
+                  const value = tooltipItem.raw;
+                  const percentage = ((value / totalDataCount) * 100).toFixed(2) + "%";
+                  return `${value} (${percentage})`;
+                },
+              },
+            },
+            datalabels: {
+              display: true,
+              formatter: (value, context) => {
+                const percentage = ((value / totalDataCount) * 100).toFixed(2);
+                return `${value} (${percentage}%)`;
+              },
+            },
+          },
+        };
+      
+        // Apply the common options to each chart
+        setChartOptions(commonOptions);
+        setChartOptions2(commonOptions);
+        setChartOptions3(commonOptions);
+        setChartOptions4(commonOptions);
       } else {
         console.warn("No data available");
       }
+      
 
-      const uniquetypeOfReason = [
-        ...new Set(
-          data.map((reason) => reason.TypeOfReason.toLowerCase().trim())
-        ),
-      ];
 
-      const reasonCount = uniquetypeOfReason.map((reason) => {
-        const filteredData = data.filter(
-          (item) => item.TypeOfReason.toLowerCase().trim() === reason
-        );
-        return filteredData.reduce((total, item) => total + item.COUNT, 0);
-      });
-
-      // console.log(reasonCount);
-
-      const borderColors = getBorderColors(colors);
-
-      setChartData4({
-        labels: uniquetypeOfReason,
-        datasets: [
-          {
-            label: "Based on the Raised Departments",
-            data: reasonCount,
-            backgroundColor: colors.slice(0, uniquetypeOfReason.length), // Assign background colors
-            borderColor: borderColors.slice(0, uniquetypeOfReason.length), // Assign border colors
-            borderWidth: 1,
-          },
-        ],
-      });
 
       /// Sketch table data
       const skchTableData = [...new Set(data.map((skch) => skch.SketchNo))];
@@ -495,10 +539,16 @@ function Reject() {
       const deptData = overAllData.filter(
         (data) => data.ToDept === clickedLabel
       );
-  
+
+      const totalDataCount = overAllData.reduce((sum, item) => sum + item.COUNT, 0);
+      const deptDataPer = deptData.reduce((sum, item) => sum + item.COUNT, 0);
+
+      const percentage1 = ((deptDataPer / totalDataCount) * 100).toFixed(2) + "%";
+
+      console.log(percentage1);
       // Navigate to the desired route with state
       navigate("/rejections/dept_rejections", {
-        state: { clickedLabel, deptData },
+        state: { clickedLabel, deptData , percentage1},
       });
     } else {
       console.warn("No elements were clicked");
@@ -803,7 +853,7 @@ function Reject() {
             </h1>
             <div className=" px-10">
               {chartData ? (
-                <Bar data={chartData} />
+                <Bar data={chartData} options={chartOptions}/>
               ) : (
                 <p className="text-center text-gray-500">
                   Loading chart data...
@@ -821,6 +871,7 @@ function Reject() {
               <div style={{ height: "300px",marginBottom: "20px"}}> {/* Set your desired dimensions */}
                 <Pie data={chartData2} options={{ 
                   ...optionschartPie, 
+                  ...chartOptions2,
                   maintainAspectRatio: false // Disable aspect ratio for custom size
                 }} />
               </div>
@@ -851,14 +902,19 @@ function Reject() {
                     plugins: {
                       datalabels: {
                         display: true,
-                        align: "end",
-                        anchor: "end",
-                        formatter: (value) => `${value.toFixed(2)}`,
+                        // align: "end",
+                        // anchor: "end",
+                        formatter: (value, context) => {
+                          const totalDataCount = overAllData.reduce((sum, item) => sum + item.COUNT, 0);
+                          const percentage = ((value / totalDataCount) * 100).toFixed(2);
+                          return `${value} (${percentage}%)`;
+                        },
                         color: "black",
                         font: {
                           weight: "normal",
                         },
                       },
+                      
                       legend: {
                         display: true,
                         position: "top", // Position the legend at the top
@@ -870,7 +926,11 @@ function Reject() {
                       tooltip: {
                         callbacks: {
                           label: function (context) {
-                            return `${context.raw.toFixed(2)}`;
+                          const totalDataCount = overAllData.reduce((sum, item) => sum + item.COUNT, 0);
+                            // const percentage = ((value / totalDataCount) * 100).toFixed(2) + "%";
+                            const value = context.raw;
+                            const percentage = ((value / totalDataCount) * 100).toFixed(2) + "%";
+                            return `${context.raw.toFixed(2)} ${percentage}`;
                           },
                         },
                       },
@@ -927,7 +987,7 @@ function Reject() {
 
             <div className="chart-container">
               {chartData4 ? (
-                <Bar data={chartData4} />
+                <Bar data={chartData4} options={chartOptions4}/>
               ) : (
                 <p>Loading chart data...</p>
               )}
