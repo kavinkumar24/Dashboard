@@ -69,9 +69,12 @@ function Sidebar({ theme }) {
     ) {
         setActive('order_new_design');
       }
-    else if (path === '/new_design') {
-      setActive('new_design');
-    }
+      else if (path === '/new_design' || /purity-detail-new_design/.test(path) || /zone-detail-new_design/.test(path) || /product-detail-new_design/.test(path) || /PL-ST-detail-new_design/.test(path) || /color-detail-new_design/.test(path) || /project-detail-new_design/.test(path)
+  
+
+      ) {
+        setActive('new_design');
+      }
     else if(path==='/rejections/dept_rejections'){
       setActive('rejections')
     }else if(path==='/rejections/detailed_rejections' || path==='/rejections/problem_arised'){
