@@ -13,7 +13,7 @@ function Daily_Report() {
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
-
+  
     Promise.all([
       fetch("http://localhost:8081/department-mappings").then((response) =>
         response.json()
@@ -23,6 +23,8 @@ function Daily_Report() {
       ),
     ])
       .then(([deptMappings, pending]) => {
+        console.log("Pending data:", pending); // Log the response to check its structure
+  
         const normalizedMappings = Object.entries(deptMappings).reduce(
           (acc, [key, value]) => {
             if (value.to) {
@@ -34,13 +36,14 @@ function Daily_Report() {
           },
           {}
         );
-
+  
         setDepartmentMappings(normalizedMappings);
-        setPendingData(pending);
+        setPendingData(Array.isArray(pending) ? pending : []); // Ensure pending is an array
         setIsDataLoaded(true);
       })
       .catch((error) => console.error("Error fetching data:", error));
   }, [theme]);
+  
 
   const isValidDate = (dateString) => {
     const date = new Date(dateString);
@@ -101,6 +104,7 @@ function Daily_Report() {
   const searchLower = search.toLowerCase();
   const searchedGroupedData = Object.keys(filteredGroupedData)
     .filter((dept) => dept.toLowerCase().includes(searchLower))
+    .sort((a, b) => a.localeCompare(b))
     .reduce((acc, dept) => {
       acc[dept] = filteredGroupedData[dept];
       return acc;
@@ -133,14 +137,14 @@ function Daily_Report() {
           {!isDataLoaded ? (
             <div className="text-center text-lg font-semibold">
               <div
-                className={`border fixed shadow rounded-md p-4 max-w-full min-h-full inset-0 z-50 w-full md:w-[86%]  ml-0 md:ml-52 mx-auto ${
+                className={`border fixed shadow rounded-md p-4 max-w-full min-h-full inset-0 z-50 w-full md:w-[90%]  ml-0 md:ml-52 mx-auto ${
                   theme === "dark"
-                    ? "bg-gray-800 border-blue-300 "
+                    ? "bg-gray-900 border-gray-800 "
                     : "bg-white border-gray-200"
                 } sm:ml-0`}
               >
                 <div className="animate-pulse flex space-x-4 mt-16">
-                  <div className={`rounded-full h-10 w-10`}></div>
+                  <div className={`rounded-fullh-10 w-10`}></div>
                   <div className="flex-1 space-y-6 py-10 md:py-1">
                     <div
                       className={`h-2 w-[90%] ${
@@ -187,7 +191,72 @@ function Daily_Report() {
                           } rounded`}
                         ></div>
                         <div
+                          className={`h-2  ${
+                            theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                          } rounded`}
+                        ></div>
+                      </div>
+
+                      <div
+                        className={`h-2 w-[90%] ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                      <div
+                        className={`h-2 w-[90%] ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                      <div
+                        className={`h-2 w-[90%] ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div
+                          className={`h-2  ${
+                            theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                          } rounded`}
+                        ></div>
+                        <div
                           className={`h-2 ${
+                            theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                          } rounded`}
+                        ></div>
+                      </div>
+                      <div
+                        className={`h-2 w-[90%] ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                      <div
+                        className={`h-2 w-[90%] ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                      <div
+                        className={`h-2 w-[90%] ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                      <div
+                        className={`h-2 w-[90%] ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                      <div
+                        className={`h-2 w-[90%] ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div
+                          className={`h-2 ${
+                            theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                          } rounded`}
+                        ></div>
+                        <div
+                          className={`h-2  ${
                             theme === "dark" ? "bg-slate-700" : "bg-slate-200"
                           } rounded`}
                         ></div>
@@ -219,7 +288,7 @@ function Daily_Report() {
                           } rounded`}
                         ></div>
                         <div
-                          className={`h-2 ${
+                          className={`h-2  ${
                             theme === "dark" ? "bg-slate-700" : "bg-slate-200"
                           } rounded`}
                         ></div>
@@ -233,11 +302,17 @@ function Daily_Report() {
             <>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50 ">
+                  <thead
+                    className={` ${
+                      theme === "light"
+                        ? "bg-gray-200 text-gray-800"
+                        : "bg-gray-700 text-gray-200"
+                    }`}
+                  >
                     <tr>
                       <th
                         scope="col"
-                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider"
                       >
                         Department
                       </th>
@@ -245,35 +320,54 @@ function Daily_Report() {
                         <th
                           key={range}
                           scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-6 py-3 text-left text-xs font-medium  uppercase tracking-wider"
                         >
                           {range}
                         </th>
                       ))}
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200 ">
+                  <tbody
+                    className={` ${
+                      theme === "light"
+                        ? "bg-white divide-gray-200 text-gray-900"
+                        : "bg-gray-700 divide-gray-600"
+                    } divide-y`}
+                  >
                     {Object.keys(searchedGroupedData).length > 0 ? (
-                      Object.entries(searchedGroupedData).map(([department, data]) => (
-                        <tr key={department}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 ">
-                            {department}
-                          </td>
-                          {allRanges.map((range) => (
-                            <td
-                              key={range}
-                              className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 "
-                            >
-                              {data[range] || 0}
+                      Object.entries(searchedGroupedData).map(
+                        ([department, data], index) => (
+                          <tr
+                            key={department}
+                            className={`${
+                              index % 2 === 0
+                                ? theme === "light"
+                                  ? "bg-gray-100"
+                                  : "bg-gray-600"
+                                : theme === "light"
+                                ? "bg-white"
+                                : "bg-gray-700"
+                            }`}
+                          >
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              {department}
                             </td>
-                          ))}
-                        </tr>
-                      ))
+                            {allRanges.map((range) => (
+                              <td
+                                key={range}
+                                className="px-6 py-4 whitespace-nowrap text-sm"
+                              >
+                                {data[range] || 0}
+                              </td>
+                            ))}
+                          </tr>
+                        )
+                      )
                     ) : (
                       <tr>
                         <td
                           colSpan={allRanges.length + 1}
-                          className="px-6 py-4 text-center text-sm text-gray-500 "
+                          className="px-6 py-4 text-center"
                         >
                           No data available
                         </td>

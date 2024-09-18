@@ -225,7 +225,7 @@ const ProjectDetails = () => {
         setYearAcc(yearAcc);
         setMonthAcc(monthAcc);
 
-        console.log(yearAcc, monthAcc);
+        
       } catch (error) {
         console.error("Error fetching data:", error);
       }

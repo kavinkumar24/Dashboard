@@ -9,7 +9,7 @@ import Sidebar from "../Sidebar";
 Chart.register(ChartDataLabels);
 
 const ProjectDetails = () => {
-  const { zone } = useParams();
+  const { product } = useParams();
   const [data, setData] = useState(null);
   const [search, setSearch] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -196,10 +196,10 @@ const monthAcc = aggregate(enhancedData, "DD&month");
       .sort((a, b) => b[1] - a[1]) // Sort by weight descending
       .slice(0, 4); // Take top 4
   
-    return Object.fromEntries(sortedMonths); 
+    return Object.fromEntries(sortedMonths); // Convert back to an object
   };
 
-  const validValues = Object.values(zoneAcc).filter(
+  const validValues = Object.values(productAcc).filter(
     (value) => value != null && value !== 0
   );
   const total = validValues.reduce((sum, value) => sum + value, 0);
@@ -230,7 +230,7 @@ const monthAcc = aggregate(enhancedData, "DD&month");
           const itemYear = item.Dyr;
           const itemMonth = new Date(item['DD&month']).getMonth() + 1;
 
-          return item.ZONE === zone &&
+          return item.PRODUCT === product &&
         
 
             (year.length === 0 || years.includes(itemYear)) &&
@@ -279,7 +279,7 @@ const monthAcc = aggregate(enhancedData, "DD&month");
     };
 
     fetchData();
-  }, [zone]);
+  }, [product]);
 
   const subproductChartRef = useRef(null); // Create a ref for the subproduct chart div
 
@@ -895,7 +895,7 @@ const monthAcc = aggregate(enhancedData, "DD&month");
                 </span>
               </span>
             ) : (
-              "Top 15 in " + zone
+              "Top 15 in " + product
             )}
           </button>
           <div className={`flex justify-center items-center p-4`}>
@@ -906,7 +906,7 @@ const monthAcc = aggregate(enhancedData, "DD&month");
                 }`}
               >
                 <h1 className="col-span-2">
-                  Details for zone: {zone} in {formattedTotalWeight}
+                  Details for Product: {product} in {formattedTotalWeight}
                 </h1>
               </div>
 

@@ -31,6 +31,9 @@ import Purity_detail from './components/New_Design_detials/Purity_detail';
 import Zone_Detail from './components/New_Design_detials/Zone_detail';
 import Plainstone_Detail from './components/Order_receiving_detials/Plainstone_detail';
 import ProductDetailsPage from './components/AOP/Product_details';
+import Color_detai_new_design from './components/New_Design_detials/Color_detail';
+import Product_detail_new_design from './components/New_Design_detials/Product_detail';
+import Plain_stone_detail_new_design from './components/New_Design_detials/Plain_stone_details'
 function App() {
 
   return (
@@ -66,6 +69,8 @@ function App() {
 
         <Route path="/purity-detail-new_design/:purity" element={<Purity_detail />} />
         <Route path="/zone-detail-new_design/:zone" element={<Zone_Detail />} />
+        <Route path="/color-detail-new_design/:color" element={<Color_detai_new_design />} />
+        <Route path="/PL-ST-detail-new_design/:plstone" element = {< Plain_stone_detail_new_design/>} />
 
         <Route path="/aop_schedule" element={<Department_AOP />} />
         <Route path='/rejections/problem_arised' element={<Problem_Arised/>}/>
@@ -73,6 +78,7 @@ function App() {
         <Route path='/detailed_task/brief_id' element={<Brief_id/>}/>
         <Route path='/task/design_center' element={<Des_Cen_Task/>}/>
         <Route path='/detailed_task' element = {<Detailed_task/>}/>
+        <Route path="/product-detail-new_design/:product" element={<Product_detail_new_design />} />
 
       </Routes>
       </div>

@@ -12,7 +12,9 @@ function Projects() {
   const [spin, setSpin] = useState(false);
   const [skeleton, setSkeleton] = useState(true);
   const [search, setSearch] = useState("");
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "light"
+  );
   const [departmentsToShow, setDepartmentsToShow] = useState([]);
   const [viewData, setviewData] = useState(false);
   const [jewelData, setJewelData] = useState([]);
@@ -52,7 +54,6 @@ function Projects() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
         const [productionRes, pendingRes, jewelRes] = await Promise.all([
           fetch("http://localhost:8081/production_data"),
           fetch("http://localhost:8081/pending_data"),
@@ -80,21 +81,21 @@ function Projects() {
         });
         setDepartmentCounts(combinedCounts);
 
-        const filteredProductDetails = allJewelData.filter((item) =>
-          item.Product?.toLowerCase().includes(search.toLowerCase()) ||
-          item["sub Product"]?.toLowerCase().includes(search.toLowerCase())
+        const filteredProductDetails = allJewelData.filter(
+          (item) =>
+            item.Product?.toLowerCase().includes(search.toLowerCase()) ||
+            item["sub Product"]?.toLowerCase().includes(search.toLowerCase())
         );
         setProductDetails(filteredProductDetails);
 
         if (!activeTab && !search) {
-          const initialTab = departmentsToShow.find((dept) => combinedCounts[dept]?.total > 0) || "";
-          setActiveTab(initialTab);
+          const initialTab =
+            departmentsToShow.find((dept) => combinedCounts[dept]?.total > 0) ||
+            "";
         }
       } catch (error) {
         console.error("Error fetching data:", error);
         setError("Error fetching data");
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -103,6 +104,7 @@ function Projects() {
 
   useEffect(() => {
     const fetchPendingData = async () => {
+      setLoading(true);
       try {
         const response = await axios.get("http://localhost:8081/pending_data");
         const pendingData = response.data;
@@ -110,6 +112,7 @@ function Projects() {
           ...new Set(pendingData.map((item) => item.PLTCODE1)),
         ];
         setDepartmentsToShow(uniquePLTCodes);
+        setLoading(false);
       } catch (error) {
         console.error("Error fetching pending data:", error);
       }
@@ -163,14 +166,14 @@ function Projects() {
         complexities.includes(item.JewelCode)
       );
 
-      const filteredProductDetails = filteredJewelData.filter((item) =>
-        item.Product?.toLowerCase().includes(search.toLowerCase()) ||
-        item["sub Product"]?.toLowerCase().includes(search.toLowerCase())
+      const filteredProductDetails = filteredJewelData.filter(
+        (item) =>
+          item.Product?.toLowerCase().includes(search.toLowerCase()) ||
+          item["sub Product"]?.toLowerCase().includes(search.toLowerCase())
       );
 
       setPendingData(filteredPendingData);
       setProductDetails(filteredProductDetails);
-
     } catch (error) {
       setError("Error fetching data");
     } finally {
@@ -197,7 +200,7 @@ function Projects() {
 
   const filteredGroupedProducts = () => {
     const filteredProducts = Object.keys(groupByProduct(productDetails))
-      .filter(product =>
+      .filter((product) =>
         product.toLowerCase().includes(productSearch.toLowerCase())
       )
       .reduce((acc, product) => {
@@ -205,9 +208,11 @@ function Projects() {
         return acc;
       }, {});
 
-    Object.keys(filteredProducts).forEach(product => {
-      filteredProducts[product].subProducts = Object.keys(filteredProducts[product].subProducts)
-        .filter(subProduct =>
+    Object.keys(filteredProducts).forEach((product) => {
+      filteredProducts[product].subProducts = Object.keys(
+        filteredProducts[product].subProducts
+      )
+        .filter((subProduct) =>
           subProduct.toLowerCase().includes(productSearch.toLowerCase())
         )
         .reduce((acc, subProduct) => {
@@ -256,6 +261,170 @@ function Projects() {
           view={viewData}
         />
         <main className="flex-1 p-6 overflow-y-auto">
+          {loading && (
+            <div
+              className={`border fixed shadow rounded-md p-4 max-w-full min-h-full inset-0 z-50 w-full md:w-[90%]  ml-0 md:ml-52 mx-auto ${
+                theme === "dark"
+                  ? "bg-gray-900 border-gray-800 "
+                  : "bg-white border-gray-200"
+              } sm:ml-0`}
+            >
+              <div className="animate-pulse flex space-x-4 mt-16">
+                <div className={`rounded-fullh-10 w-10`}></div>
+                <div className="flex-1 space-y-6 py-10 md:py-1">
+                  <div
+                    className={`h-2 w-[90%] ${
+                      theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                    } rounded`}
+                  ></div>
+                  <div className="space-y-5 md:space-y-3">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div
+                        className={`h-2 ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded col-span-2`}
+                      ></div>
+                      <div
+                        className={`h-2 w-[70%] ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded col-span-1`}
+                      ></div>
+                    </div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div
+                        className={`h-2 ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                      <div
+                        className={`h-2  ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                    </div>
+
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div
+                        className={`h-2  ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                      <div
+                        className={`h-2 ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                    </div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div
+                        className={`h-2 ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                      <div
+                        className={`h-2  ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                    </div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div
+                      className={`h-2 w-[90%] ${
+                        theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                      } rounded`}
+                    ></div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div
+                        className={`h-2 ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                      <div
+                        className={`h-2  ${
+                          theme === "dark" ? "bg-slate-700" : "bg-slate-200"
+                        } rounded`}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-col flex-grow p-4">
             {viewData ? (
               <div className="overflow-x-auto">
@@ -394,64 +563,70 @@ function Projects() {
                 })}
               </div>
             )}
-<br></br>
-          <div ref={sectionRef}>
-            <input
-              type="text"
-              placeholder="Search Products"
-              value={productSearch}
-              onChange={handleProductSearch}
-              className={`mb-4 p-2 rounded border ${
-                theme === "light" ? "border-gray-300" : "border-gray-600"
-              }`}
-            />
-            {activeTab && (
-              <div className="mt-5">
-                <h1 className="text-lg mb-3">{selectedProject}</h1>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Object.keys(productsToShow).map((product) => {
-                    const groupedProduct = productsToShow[product];
-                    return (
-                      <div
-                        key={product}
-                        className={`shadow-md rounded-lg p-4 border-t-2 border-blue-400 ${
-                          theme === "light"
-                            ? "text-gray-800 bg-white"
-                            : "text-gray-300 bg-slate-600 border-slate-500"
-                        }`}
-                      >
-                        <div className="text-xl font-semibold mb-2 flex justify-between">
-                          <div
-                            className={`p-1 rounded-md mb-6 font-normal text-md ${
-                              theme === "light"
-                                ? "bg-blue-200 text-gray-800"
-                                : "bg-blue-900 text-gray-300"
-                            }`}
-                          >
-                            {product}
-                          </div>
-                          <span>Count: {groupedProduct.count}</span>
-                        </div>
-                        <div className="mt-2 grid grid-cols-1 gap-2">
-                          {Object.keys(groupedProduct.subProducts).map((subProduct) => (
+            <br></br>
+            <div ref={sectionRef}>
+              <input
+                type="text"
+                placeholder="Search Products"
+                value={productSearch}
+                onChange={handleProductSearch}
+                className={`mb-4 p-2 rounded border ${
+                  theme === "light" ? "border-gray-300" : "border-gray-600"
+                }`}
+              />
+              {activeTab && (
+                <div className="mt-5">
+                  <h1 className="text-lg mb-3">{selectedProject}</h1>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Object.keys(productsToShow).map((product) => {
+                      const groupedProduct = productsToShow[product];
+                      return (
+                        <div
+                          key={product}
+                          className={`shadow-md rounded-lg p-4 border-t-2 border-blue-400 ${
+                            theme === "light"
+                              ? "text-gray-800 bg-white"
+                              : "text-gray-300 bg-slate-600 border-slate-500"
+                          }`}
+                        >
+                          <div className="text-xl font-semibold mb-2 flex justify-between">
                             <div
-                              key={subProduct}
-                              className={`${
-                                theme === "light" ? "bg-slate-100" : "bg-slate-700"
-                              } p-2 rounded-md`}
+                              className={`p-1 rounded-md mb-6 font-normal text-md ${
+                                theme === "light"
+                                  ? "bg-blue-200 text-gray-800"
+                                  : "bg-blue-900 text-gray-300"
+                              }`}
                             >
-                              <span className="font-medium">{subProduct}:</span>{" "}
-                              {groupedProduct.subProducts[subProduct]}
+                              {product}
                             </div>
-                          ))}
+                            <span>Count: {groupedProduct.count}</span>
+                          </div>
+                          <div className="mt-2 grid grid-cols-1 gap-2">
+                            {Object.keys(groupedProduct.subProducts).map(
+                              (subProduct) => (
+                                <div
+                                  key={subProduct}
+                                  className={`${
+                                    theme === "light"
+                                      ? "bg-slate-100"
+                                      : "bg-slate-700"
+                                  } p-2 rounded-md`}
+                                >
+                                  <span className="font-medium">
+                                    {subProduct}:
+                                  </span>{" "}
+                                  {groupedProduct.subProducts[subProduct]}
+                                </div>
+                              )
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
           </div>
         </main>
       </div>
