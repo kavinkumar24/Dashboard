@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import axios from "axios";
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar, Pie,Line } from "react-chartjs-2";
+import * as XLSX from "xlsx";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -71,6 +72,40 @@ function Department_reject() {
 
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleString());
   const [overAllData, setoverAllData] = useState(null)
+
+  const downloadExcel = (worksheet) => {
+    const workbook = XLSX.utils.book_new();
+    if(worksheet === "Top Rejected Sketches"){
+      const worksheet1 = XLSX.utils.json_to_sheet(tableData1.map(([skch, count], index) => ({
+        'SI no.': (currentPage1 - 1) * itemsPerPage + index + 1,
+        'Sketch IDs': skch,
+        'Number of Rejections': count,
+      })), { header: ['SI no.', 'Sketch IDs', 'Number of Rejections'] });
+      XLSX.utils.book_append_sheet(workbook, worksheet1, "Top Rejected Sketches");
+      XLSX.writeFile(workbook, `Top_Rejected_Sketches.xlsx`);
+    }
+  else if(worksheet === "Type of Reasons Rejections"){
+    const worksheet2 = XLSX.utils.json_to_sheet(tableData2.map(([skch, count], index) => ({
+      'SI no.': (currentPage2 - 1) * itemsPerPage2 + index + 1,
+      'Reasons': skch.charAt(0).toUpperCase() + skch.slice(1).toLowerCase(),
+      'Number of Rejections': count,
+  
+    })), { header: ['SI no.', 'Reasons', 'Number of Rejections'] });
+    XLSX.utils.book_append_sheet(workbook, worksheet2, "Type of Reasons Rejections");
+    XLSX.writeFile(workbook, `Type_of_Reasons_Rejections.xlsx`);
+  }
+  else if(worksheet === "Problems Arised Rejections"){
+    const worksheet3 = XLSX.utils.json_to_sheet(tableData3.map(([skch, count], index) => ({
+      'SI no.': (currentPage3 - 1) * itemsPerPage3 + index + 1,
+      'Problem Arised': skch.charAt(0).toUpperCase() + skch.slice(1).toLowerCase(),
+      'Number of Rejections': count,
+  
+    })), { header: ['SI no.', 'Problem Arised', 'Number of Rejections'] });
+    XLSX.utils.book_append_sheet(workbook, worksheet3, "Problems Arised Rejections");
+    XLSX.writeFile(workbook, `Problems_Arised_Rejections.xlsx`);
+  }
+    
+  };
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -143,80 +178,104 @@ function Department_reject() {
           ],
         });
 
-              // Setting unique Raised Departments and their counts
-        const uniqueskch = [...new Set(data.map((item) => item.RaisedDept))];
+// Setting unique Raised Departments and their counts
+const uniqueskch = [...new Set(data.map((item) => item.RaisedDept))];
 
-        // Summing up the COUNT for each Raised Department
-        const counts2 = uniqueskch.map((dept) => {
-          const deptData = data.filter((item) => item.RaisedDept === dept);
-          return deptData.reduce((total, item) => total + item.COUNT, 0);
-        });
+// Summing up the COUNT for each Raised Department
+const counts2 = uniqueskch.map((dept) => {
+  const deptData = data.filter((item) => item.RaisedDept === dept);
+  return deptData.reduce((total, item) => total + item.COUNT, 0);
+});
 
-        // Setting the chart data
-        setChartData2({
-          labels: uniqueskch, // Labels for Raised Departments
-          datasets: [
-            {
-              label: "Based on the Raised Departments",
-              data: counts2, // Data for each department
-              backgroundColor: colors.slice(0, counts2.length), // Dynamically set colors
-              borderColor: borderColors.slice(0, counts2.length), // Dynamically set border colors
-              borderWidth: 1,
-            },
-          ],
-        });
+// Combine departments and counts into an array of objects and sort by count
+const sortedDeptData = uniqueskch
+  .map((dept, index) => ({
+    dept,
+    count: counts2[index],
+  }))
+  .sort((a, b) => b.count - a.count); // Sort in descending order of count
+
+// Extract sorted departments and counts
+const sortedDepts = sortedDeptData.map((item) => item.dept);
+const sorteddeptCounts = sortedDeptData.map((item) => item.count);
+
+// Setting the chart data
+setChartData2({
+  labels: sortedDepts, // Sorted labels for Raised Departments
+  datasets: [
+    {
+      label: "Based on the Raised Departments",
+      data: sorteddeptCounts, // Sorted data for each department
+      backgroundColor: colors.slice(0, sorteddeptCounts.length), // Dynamically set colors
+      borderColor: borderColors.slice(0, sorteddeptCounts.length), // Dynamically set border colors
+      borderWidth: 1,
+    },
+  ],
+});
+
 
 
         
 
-        // const uniqueYears = [...new Set(data.map(item => item.Yr))];
-        const uniqueMonths = [...new Set(data.map((item) => item.MONTH))];
 
-        const counts = uniqueYears.map((year) => {
-          return uniqueMonths.map((month) => {
-            const filteredData = data.filter(
-              (item) => item.Yr === year && item.MONTH === month
-            );
-            return filteredData.reduce((total, item) => total + item.COUNT, 0);
-          });
+      const uniqueMonths = [...new Set(data.map((item) => item.MONTH))];
+      const counts = uniqueMonths.map((month) => {
+        return uniqueYears.map((year) => {
+          const filteredData = data.filter(
+            (item) => item.Yr === year && item.MONTH === month
+          );
+          return filteredData.reduce((total, item) => total + item.COUNT, 0);
         });
+      });
 
-        setChartData3({
-          labels: uniqueYears, // X-axis labels
-          datasets: uniqueMonths.map((month, index) => ({
-            label: month,
-            data: counts.map((countArr) => countArr[index]),
-            fill: false,
-            backgroundColor: colors.slice(0, uniqueMonths.length)[index],
-              borderColor: borderColors.slice(0, uniqueMonths.length)[index],
-              borderWidth: 1,
-            tension: 0.1,
-          })),
-        });
+      setChartData3({
+        labels: uniqueMonths, // X-axis labels (Months)
+        datasets: uniqueYears.map((year, index) => ({
+          label: year,
+          data: counts.map((countArr) => countArr[index]),
+          fill: false,
+          backgroundColor: colors.slice(0, uniqueYears.length)[index], // Colors for each year
+          borderColor: borderColors.slice(0, uniqueYears.length)[index], // Borders for each year
+          borderWidth: 1,
+          tension: 0.1,
+        })),
+      });
 
-        const uniquetypeOfReason = [...new Set(data.map((reason)=>reason.TypeOfReason.toLowerCase().trim()))]
-
-
-        const reasonCount = uniquetypeOfReason.map((reason)=>{
-          const filteredData = data.filter((item)=>item.TypeOfReason.toLowerCase().trim() === reason);
-          return filteredData.reduce((total,item)=>total+item.COUNT,0);
-        })
-  
-        // console.log(reasonCount);
-  
-           
-        setChartData4({
-          labels: uniquetypeOfReason,
-          datasets: [
-            {
-              label: "Based on the Rasied Departments",
-              data: reasonCount,
-              backgroundColor: colors.slice(0, uniquetypeOfReason.length),  
-              borderColor: borderColors.slice(0, uniquetypeOfReason.length), 
-              borderWidth: 1,
-            },
-          ],
-        });
+      const uniquetypeOfReason = [
+        ...new Set(data.map((reason) => reason.TypeOfReason.toLowerCase().trim())),
+      ];
+      
+      const reasonCount = uniquetypeOfReason.map((reason) => {
+        const filteredData = data.filter(
+          (item) => item.TypeOfReason.toLowerCase().trim() === reason
+        );
+        return filteredData.reduce((total, item) => total + item.COUNT, 0);
+      });
+      
+      // Combine reasons and counts into an array of objects and sort by count
+      const sortedData = uniquetypeOfReason
+        .map((reason, index) => ({
+          reason,
+          count: reasonCount[index],
+        }))
+        .sort((a, b) => b.count - a.count); // Sort in descending order of count
+      
+      // Extract sorted reasons and counts
+      const sortedReasons = sortedData.map((item) => item.reason);
+      const sortedCounts = sortedData.map((item) => item.count);
+      
+      setChartData4({
+        labels: sortedReasons, // Sorted labels (Type of Reason)
+        datasets: [
+          {
+            label: "Based on the Raised Departments",
+            data: sortedCounts, // Sorted counts
+            backgroundColor: colors.slice(0, sortedReasons.length), // Assign background colors
+            borderColor: borderColors.slice(0, sortedReasons.length), // Assign border colors
+            borderWidth: 1,
+          },
+        ],
+      });
 
         const commonOptions = {
           scales: {
@@ -496,7 +555,7 @@ function Department_reject() {
           </button>
         </div>
         <h1 className="font-bold text-xl text-gray-500 mx-4 mt-4">Percentage for the {clickedLabel} Department from the overall Data - <span className='text-green-400 text-2xl'>{per}</span></h1>
-
+        
 
         {/* Main content */}
         {/* <div className="p-4">
@@ -537,12 +596,11 @@ function Department_reject() {
             
             <div className="chart-container "style={{ height: '300px' }}>
             {chartData3 ? (
-    <Bar
+    <Line
       data={chartData3}
       options={{
         responsive: true,
-        maintainAspectRatio: false,
-        indexAxis: 'y', 
+        maintainAspectRatio: false, 
         plugins: {
           datalabels: {
             display: true,
@@ -648,7 +706,19 @@ function Department_reject() {
 
 
           <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
-        <h1 className="text-xl font-semibold p-2 pl-10 py-5">Top <span className="text-red-500">25</span> Rejected Sketches</h1>
+          <div className="flex justify-between">
+                <h1 className="text-xl font-semibold p-2 pl-10 py-5">
+                  Top <span className="text-red-500">25</span> Rejected Sketches
+                </h1>
+                <div className="m-4">
+                  <button
+                    className="px-5 py-3 bg-blue-500 text-white rounded-lg font-semibold"
+                    onClick={() => downloadExcel("Top Rejected Sketches")}
+                  >
+                    Download as Excel
+                  </button>
+                </div>
+                </div>
 
   <table className="w-full table-auto text-sm ">
     <thead >
@@ -735,7 +805,20 @@ function Department_reject() {
           {/* Table View */}
 
           <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
-        <h1 className="text-xl font-semibold p-2 pl-10 py-5">Top <span className="text-red-500"> Type of Reasons</span> Rejections</h1>
+          <div className="flex justify-between">
+                <h1 className="text-xl font-semibold p-2 pl-10 py-5">
+                  Top <span className="text-red-500"> Type of Reasons</span>{" "}
+                  Rejections
+                </h1>
+                <div className="m-4">
+            <button
+              className="px-5 py-3 bg-blue-500 text-white rounded-lg font-semibold"
+              onClick={() => downloadExcel("Type of Reasons Rejections")}
+            >
+              Download as Excel
+            </button>
+            </div>
+                </div>
 
   <table className="w-full table-auto text-sm ">
     <thead >
@@ -825,7 +908,20 @@ function Department_reject() {
           </div> */}
 
 <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
-        <h1 className="text-xl font-semibold p-2 pl-10 py-5">Top <span className="text-red-500">Problems Arised</span> for Rejection</h1>
+<div className="flex justify-between">
+               <h1 className="text-xl font-semibold p-2 pl-10 py-5">
+                  Top <span className="text-red-500">Problems Arised</span> for
+                  Rejection
+                </h1>
+                <div className="m-4">
+            <button
+              className="px-5 py-3 bg-blue-500 text-white rounded-lg font-semibold"
+              onClick={() => downloadExcel("Problems Arised Rejections")}
+            >
+              Download as Excel
+            </button>
+            </div>
+               </div>
 
   <table className="w-full table-auto text-sm ">
     <thead >

@@ -1565,7 +1565,17 @@ app.post('/api/rejection/upload', upload.single('file'), (req, res) => {
       res.json(results);
     });
   });
-
+  app.get('/api/cellmaster', (req, res) => {
+    const query = 'SELECT * FROM Cell_Master';
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error('Error fetching uploads:', err);
+        res.status(500).send('Error fetching uploads');
+        return;
+      }
+      res.json(results);
+    });
+  });
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });

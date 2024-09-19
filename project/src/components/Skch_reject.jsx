@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import axios from "axios";
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar, Pie, Line } from "react-chartjs-2";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import {
@@ -133,25 +133,29 @@ function Skch_reject() {
       }],
     });
 
-    const uniqueMonths = [...new Set(data.map(item => item.MONTH))];
-    const countsByMonth = uniqueYears.map(year => {
-      return uniqueMonths.map(month => {
-        const filteredData = data.filter(item => item.Yr === year && item.MONTH === month);
+    // Months and their counts by year
+    const uniqueMonths = [...new Set(data.map((item) => item.MONTH))];
+    const counts = uniqueMonths.map((month) => {
+      return uniqueYears.map((year) => {
+        const filteredData = data.filter(
+          (item) => item.Yr === year && item.MONTH === month
+        );
         return filteredData.reduce((total, item) => total + item.COUNT, 0);
       });
     });
 
     setChartData3({
-      labels: uniqueYears,
-      datasets: uniqueMonths.map((month, index) => ({
-        label: month,
-        data: countsByMonth.map(countArr => countArr[index]),
-        backgroundColor: colors.slice(0, uniqueMonths.length)[index],
-        borderColor: borderColors.slice(0, uniqueMonths.length)[index],
+      labels: uniqueMonths, // X-axis labels (Months)
+      datasets: uniqueYears.map((year, index) => ({
+        label: year,
+        data: counts.map((countArr) => countArr[index]),
+        fill: false,
+        backgroundColor: colors.slice(0, uniqueYears.length)[index], // Colors for each year
+        borderColor: borderColors.slice(0, uniqueYears.length)[index], // Borders for each year
         borderWidth: 1,
+        tension: 0.1,
       })),
     });
-
     const uniqueReasons = [...new Set(data.map(item => item.TypeOfReason.toLowerCase().trim()))];
     const reasonCounts = uniqueReasons.map(reason => {
       const filteredData = data.filter(item => item.TypeOfReason.toLowerCase().trim() === reason);
@@ -174,34 +178,50 @@ function Skch_reject() {
       const filteredData = data.filter(item => item.RaisedDept === dept);
       return filteredData.reduce((total, item) => total + item.COUNT, 0);
     });
-
+    
     setChartData5({
-      labels: uniqueRaisedDept,
+      labels: uniqueRaisedDept, // X-axis labels (Raised Departments)
       datasets: [{
         label: "Counts by Raised Dept",
-        data: raisedDeptCounts,
-        backgroundColor: colors.slice(0, uniqueRaisedDept.length),  
-        borderColor: borderColors.slice(0, uniqueRaisedDept.length),
-        borderWidth: 1,
+        data: raisedDeptCounts, // Y-axis data (Counts)
+        fill: false, // No fill under the line
+        backgroundColor: "rgba(54, 162, 235, 0.2)",  
+        borderColor: "rgba(54, 162, 235, 1)",
+        borderWidth: 2, // Line width
+        tension: 0.1, // Curved line for smoothness
       }],
     });
+    
 
     const uniqueProblemArised = [...new Set(data.map(item => item.ProblemArised2))];
     const problemArisedCounts = uniqueProblemArised.map(problem => {
       const filteredData = data.filter(item => item.ProblemArised2 === problem);
       return filteredData.reduce((total, item) => total + item.COUNT, 0);
     });
-
+    
+    // Combine problems and counts into an array of objects and sort by count
+    const sortedProblemData = uniqueProblemArised
+      .map((problem, index) => ({
+        problem,
+        count: problemArisedCounts[index],
+      }))
+      .sort((a, b) => b.count - a.count); // Sort in descending order
+    
+    // Extract sorted problems and counts
+    const sortedProblems = sortedProblemData.map(item => item.problem);
+    const sortedCounts = sortedProblemData.map(item => item.count);
+    
     setChartData6({
-      labels: uniqueProblemArised,
+      labels: sortedProblems, // Sorted labels for Problem Arised
       datasets: [{
         label: "Counts by Problem Arised",
-        data: problemArisedCounts,
-        backgroundColor: colors.slice(0, uniqueProblemArised.length),  
-        borderColor: borderColors.slice(0, uniqueProblemArised.length),
+        data: sortedCounts, // Sorted counts
+        backgroundColor: colors.slice(0, sortedProblems.length),  
+        borderColor: borderColors.slice(0, sortedProblems.length),
         borderWidth: 1,
       }],
     });
+    
   };
 
   const handleExportPDF = async () => {
@@ -376,12 +396,12 @@ function Skch_reject() {
   
   <div className="px-6 " style={{ height: '300px' }}>
     {chartData3 ? (
-      <Bar
+      <Line
         data={chartData3}
         options={{
           responsive: true,
           maintainAspectRatio: false,
-          indexAxis: 'y',
+          
           plugins: {
             datalabels: {
               display: true,
@@ -467,16 +487,9 @@ function Skch_reject() {
           </div>
           <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
           <h1 className="text-lg font-semibold p-2">Rejections Count by Raised Department </h1>
-          {/* <div className="chart-container">
-              {chartData4 ? (
-                <Pie data={chartData4}  />
-              ) : (
-                <p>Loading chart data...</p>
-              )}
-            </div> */}
             <div className="chart-container">
               {chartData5 ? (
-                <Bar data={chartData5}  />
+                <Line data={chartData5}  />
               ) : (
                 <p>Loading chart data...</p>
               )}
@@ -485,7 +498,7 @@ function Skch_reject() {
         </div>
 
         <div className="flex">
-          <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
+          {/* <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
           <h1 className="text-lg font-semibold p-2">Reasons for Rejection </h1>
             
             <div className="chart-container">
@@ -495,7 +508,7 @@ function Skch_reject() {
                 <p>Loading chart data...</p>
               )}
             </div>
-          </div>
+          </div> */}
           <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
           <h1 className="text-lg font-semibold p-2">Problem Arised for Rejections</h1>
           {/* <div className="chart-container">

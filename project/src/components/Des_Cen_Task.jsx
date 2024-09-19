@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import axios from "axios";
-
+import * as XLSX from "xlsx";
 function Des_Cen_Task() {
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
   const [search, setSearch] = useState("");
@@ -118,6 +118,20 @@ function Des_Cen_Task() {
 
   const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
 
+
+
+  const downloadExcel = () => {
+    // Convert modalData into a sheet
+    const worksheet = XLSX.utils.json_to_sheet(modalData);
+  
+    // Create a new workbook and append the worksheet
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+  
+    // Generate the Excel file and download it
+    XLSX.writeFile(workbook, `Design_Center_Details_of_${currentCenter}.xlsx`);
+  };
+  
   return (
     <>
       <div className={`min-h-screen w-full flex ${theme === "light" ? "bg-gray-100 text-gray-800" : "bg-gray-900 text-gray-200"}`}>
@@ -228,10 +242,19 @@ function Des_Cen_Task() {
 
                 <div className="p-6 text-center">
                   <div className={`border rounded-lg pb-1 ${theme === "light" ? "border-gray-300 bg-white" : "border-gray-600 bg-gray-500"}  shadow-lg`}>
+                    <div className="flex justify-between">
                     <h1 className={`text-xl font-semibold p-2 pl-10 py-5 ${theme === "light" ? "text-gray-800" : "text-gray-200"}`}>
                       Details for <span className="text-[#879FFF]">{currentCenter}</span>
                     </h1>
-
+                  <div className="m-4">
+                  <button
+                    className="px-5 py-3 bg-blue-500 text-white rounded-lg font-semibold"
+                    onClick={downloadExcel}
+                  >
+                    Download as Excel
+                  </button>
+                  </div>
+                    </div>
                     <div className="overflow-x-auto">
                       <table className={`w-full table-auto text-sm ${theme === "light" ? "text-gray-800" : "text-gray-200"}`}>
                         <thead>

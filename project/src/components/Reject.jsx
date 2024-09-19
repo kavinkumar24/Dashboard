@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import axios from "axios";
 import { IoCardOutline, IoFilterOutline } from "react-icons/io5";
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar, Pie, Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -17,7 +17,7 @@ import {
   LineElement,
   ArcElement,
 } from "chart.js";
-import CustomMultiSelect from "./Custom/Mutliselect";
+import * as XLSX from "xlsx";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
 // Register Chart.js components and plugin once
@@ -33,7 +33,8 @@ ChartJS.register(
   Legend,
   ChartDataLabels // Register the plugin here
 );
-import { useRef } from "react";
+
+import RangeSlider from "./Range_Slider/RangeSlider";
 
 function Reject() {
   const navigate = useNavigate();
@@ -56,127 +57,14 @@ function Reject() {
   const [tableData2, setTableData2] = useState([]);
   const [tableData3, setTableData3] = useState([]);
 
-  const [tableViewStatus, settableViewStatus] = useState("");
+  // const [tableViewStatus, settableViewStatus] = useState("");
 
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleString());
   const [overAllData, setoverAllData] = useState(null);
 
-  const [startYear, setStartYear] = useState([]);
-  const [startMonth, setStartMonth] = useState([]);
-  const [startDay, setStartDay] = useState([]);
+  // const[filter,setfilter]=useState(false)
 
-  const [endYear, setEndYear] = useState([]);
-  const [endMonth, setEndMonth] = useState([]);
-  const [endDay, setEndDay] = useState([]);
-  const[filter,setfilter]=useState(false)
 
-  const handleStartYearChange = (e) => setStartYear(e.target.value);
-  const handleStartMonthChange = (e) => setStartMonth(e.target.value);
-  const handleStartDayChange = (e) => setStartDay(e.target.value);
-
-  const handleEndYearChange = (e) => setEndYear(e.target.value);
-  const handleEndMonthChange = (e) => setEndMonth(e.target.value);
-  const handleEndDayChange = (e) => setEndDay(e.target.value);
-  const currentYear = new Date().getFullYear();
-
-  const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
-  const months = Array.from({ length: 12 }, (_, i) => i + 1);
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
-
-  const CustomInputDropdown = ({
-    id,
-    name,
-    year,
-    month,
-    day,
-    onYearChange,
-    onMonthChange,
-    onDayChange,
-    onClose,
-  }) => {
-    const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 100 }, (_, i) => currentYear - i);
-    const months = Array.from({ length: 12 }, (_, i) => i + 1);
-    const days = Array.from({ length: 31 }, (_, i) => i + 1);
-
-    // State to manage dropdown visibility
-    const [isOpen, setIsOpen] = useState(false);
-
-    // Toggle dropdown visibility
-    const toggleDropdown = () => setIsOpen((prev) => !prev);
-
-    // Close dropdown when clicking outside
-    useEffect(() => {
-      const handleClickOutside = (event) => {
-        if (!event.target.closest(".custom-multi-select")) {
-          setIsOpen(false);
-          if (onClose) onClose();
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-      return () =>
-        document.removeEventListener("mousedown", handleClickOutside);
-    }, [onClose]);
-
-    return (
-      <div className="relative">
-        <button
-          onClick={toggleDropdown}
-          className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
-        >
-          Select Date
-        </button>
-
-        {isOpen && (
-          <div className="absolute bg-white shadow-md rounded-lg mt-2 p-4">
-            <div className="flex flex-col gap-2">
-              {/* Year Dropdown */}
-              <select
-                value={year}
-                onChange={onYearChange}
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Year</option>
-                {years.map((y) => (
-                  <option key={y} value={y}>
-                    {y}
-                  </option>
-                ))}
-              </select>
-
-              {/* Month Dropdown */}
-              <select
-                value={month}
-                onChange={onMonthChange}
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Month</option>
-                {months.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-
-              {/* Day Dropdown */}
-              <select
-                value={day}
-                onChange={onDayChange}
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Day</option>
-                {days.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -192,7 +80,9 @@ function Reject() {
 
   useEffect(() => {
     fetchUploads();
-  }, [filter]);
+  }, []);
+
+
 
   const colors = [
     "rgba(153, 102, 255, 0.2)",
@@ -218,23 +108,30 @@ function Reject() {
       );
       let data = response.data;
 
-      // Filter data based on selected date range (startDate and endDate should be state variables)
+      // Apply the filter only if both startDate and endDate are set
       if (startDate && endDate) {
         const parsedStartDate = new Date(startDate);
         const parsedEndDate = new Date(endDate);
+    
         console.log(parsedStartDate, parsedEndDate);
-
+    
         data = data.filter((item) => {
           const itemDate = new Date(item.Date); // Parse item.Date in MM/DD/YY format
           return itemDate >= parsedStartDate && itemDate <= parsedEndDate;
         });
-        setoverAllData(data);
+
+        console.log(data);
+        if(data.length <=0) {
+          setMessage("No data Available For the Selected range");
+        }
       }
-
+    
       setoverAllData(data);
-
-      if (data && data.length > 0) {
+      setFilterApplied(false);  
+      
+      if (data) {
         // Calculate total counts for percentage calculations
+        setMessage("");
         const totalDataCount = data.reduce((sum, item) => sum + item.COUNT, 0);
       
         // Unique Years and their counts
@@ -279,54 +176,86 @@ function Reject() {
           ],
         });
       
-        // Months and their counts by year
-        const uniqueMonths = [...new Set(data.map((item) => item.MONTH))];
-        const counts = uniqueYears.map((year) => {
-          return uniqueMonths.map((month) => {
-            const filteredData = data.filter(
-              (item) => item.Yr === year && item.MONTH === month
-            );
-            return filteredData.reduce((total, item) => total + item.COUNT, 0);
-          });
-        });
-      
-        setChartData3({
-          labels: uniqueYears, // X-axis labels
-          datasets: uniqueMonths.map((month, index) => ({
-            label: month,
-            data: counts.map((countArr) => countArr[index]),
-            fill: false,
-            backgroundColor: colors.slice(0, uniqueMonths.length)[index], // Colors for each month
-            borderColor: borderColors.slice(0, uniqueMonths.length)[index], // Borders for each month
-            borderWidth: 1,
-            tension: 0.1,
-          })),
-        });
-      
-        // Type of Reason and their counts
-        const uniquetypeOfReason = [
-          ...new Set(data.map((reason) => reason.TypeOfReason.toLowerCase().trim())),
-        ];
-      
-        const reasonCount = uniquetypeOfReason.map((reason) => {
-          const filteredData = data.filter(
-            (item) => item.TypeOfReason.toLowerCase().trim() === reason
-          );
-          return filteredData.reduce((total, item) => total + item.COUNT, 0);
-        });
-      
-        setChartData4({
-          labels: uniquetypeOfReason,
-          datasets: [
-            {
-              label: "Based on the Raised Departments",
-              data: reasonCount,
-              backgroundColor: colors.slice(0, uniquetypeOfReason.length), // Assign background colors
-              borderColor: borderColors.slice(0, uniquetypeOfReason.length), // Assign border colors
-              borderWidth: 1,
-            },
-          ],
-        });
+// Months and their counts by year
+const uniqueMonths = [...new Set(data.map((item) => item.MONTH))];
+const counts = uniqueMonths.map((month) => {
+  return uniqueYears.map((year) => {
+    const filteredData = data.filter(
+      (item) => item.Yr === year && item.MONTH === month
+    );
+    return filteredData.reduce((total, item) => total + item.COUNT, 0);
+  });
+});
+
+// Calculate total count for each month across all years
+const monthlyTotals = uniqueMonths.map((month) => {
+  return uniqueYears.reduce((total, year) => {
+    const filteredData = data.filter(
+      (item) => item.Yr === year && item.MONTH === month
+    );
+    return total + filteredData.reduce((sum, item) => sum + item.COUNT, 0);
+  }, 0);
+});
+
+// Calculate total data count across all months and years
+const totalMonthDataCount = data.reduce((sum, item) => sum + item.COUNT, 0);
+
+// Calculate percentages for each month
+const percentages = monthlyTotals.map(monthTotal => {
+  return ((monthTotal / totalMonthDataCount) * 100).toFixed(2);
+});
+
+console.log("Monthly Totals:", percentages);
+
+setChartData3({
+  labels: uniqueMonths, // X-axis labels (Months)
+  datasets: uniqueYears.map((year, index) => ({
+    label: year,
+    data: counts.map((countArr) => countArr[index]),
+    fill: false,
+    backgroundColor: colors.slice(0, uniqueYears.length)[index], // Colors for each year
+    borderColor: borderColors.slice(0, uniqueYears.length)[index], // Borders for each year
+    borderWidth: 1,
+    tension: 0.1,
+  })),
+});
+
+const uniquetypeOfReason = [
+  ...new Set(data.map((reason) => reason.TypeOfReason.toLowerCase().trim())),
+];
+
+const reasonCount = uniquetypeOfReason.map((reason) => {
+  const filteredData = data.filter(
+    (item) => item.TypeOfReason.toLowerCase().trim() === reason
+  );
+  return filteredData.reduce((total, item) => total + item.COUNT, 0);
+});
+
+// Combine reasons and counts into an array of objects and sort by count
+const sortedData = uniquetypeOfReason
+  .map((reason, index) => ({
+    reason,
+    count: reasonCount[index],
+  }))
+  .sort((a, b) => b.count - a.count); // Sort in descending order of count
+
+// Extract sorted reasons and counts
+const sortedReasons = sortedData.map((item) => item.reason);
+const sortedCounts = sortedData.map((item) => item.count);
+
+setChartData4({
+  labels: sortedReasons, // Sorted labels (Type of Reason)
+  datasets: [
+    {
+      label: "Based on the Raised Departments",
+      data: sortedCounts, // Sorted counts
+      backgroundColor: colors.slice(0, sortedReasons.length), // Assign background colors
+      borderColor: borderColors.slice(0, sortedReasons.length), // Assign border colors
+      borderWidth: 1,
+    },
+  ],
+});
+
       
         // Common chart options with percentage and whole number ticks
         const commonOptions = {
@@ -420,7 +349,7 @@ function Reject() {
       // const reasonTablefinalvalue = reasonTablesortedEntries.slice(0, 25);
 
       setTableData2(reasonTablesortedEntries);
-      console.log("Top Entries:", reasonTablesortedEntries);
+     
 
       // Problem Arised Table
       const probTableData = [
@@ -451,82 +380,43 @@ function Reject() {
       console.error("Error fetching uploads:", error);
     }
   };
-  const options = {
-    scales: {
-      x: {
-        title: {
-          display: true,
-          text: "Year",
-        },
-      },
-      y: {
-        type: "linear",
-        beginAtZero: true,
-        suggestedMin: 0,
-        suggestedMax: 10, // Adjust as per your data
-        title: {
-          display: true,
-          text: "Count by Month",
-        },
-      },
-    },
-    plugins: {
-      title: {
-        display: true,
-        text: "Rejections Count by Year and Month",
-      },
-    },
-  };
-  const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0];
-    setFile(selectedFile);
-    handleUpload(selectedFile);
-  };
+  
+ 
 
-  const handleUpload = async (selectedFile) => {
-    if (!selectedFile) {
-      setMessage("Please select a file first.");
-      return;
-    }
+const downloadExcel = (worksheet) => {
+  const workbook = XLSX.utils.book_new();
+  if(worksheet === "Top Rejected Sketches"){
+    const worksheet1 = XLSX.utils.json_to_sheet(tableData1.map(([skch, count], index) => ({
+      'SI no.': (currentPage1 - 1) * itemsPerPage + index + 1,
+      'Sketch IDs': skch,
+      'Number of Rejections': count,
+    })), { header: ['SI no.', 'Sketch IDs', 'Number of Rejections'] });
+    XLSX.utils.book_append_sheet(workbook, worksheet1, "Top Rejected Sketches");
+    XLSX.writeFile(workbook, `Top_Rejected_Sketches.xlsx`);
+  }
+else if(worksheet === "Type of Reasons Rejections"){
+  const worksheet2 = XLSX.utils.json_to_sheet(tableData2.map(([skch, count], index) => ({
+    'SI no.': (currentPage2 - 1) * itemsPerPage2 + index + 1,
+    'Reasons': skch.charAt(0).toUpperCase() + skch.slice(1).toLowerCase(),
+    'Number of Rejections': count,
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-    formData.append("file_ID", currentTime);
+  })), { header: ['SI no.', 'Reasons', 'Number of Rejections'] });
+  XLSX.utils.book_append_sheet(workbook, worksheet2, "Type of Reasons Rejections");
+  XLSX.writeFile(workbook, `Type_of_Reasons_Rejections.xlsx`);
+}
+else if(worksheet === "Problems Arised Rejections"){
+  const worksheet3 = XLSX.utils.json_to_sheet(tableData3.map(([skch, count], index) => ({
+    'SI no.': (currentPage3 - 1) * itemsPerPage3 + index + 1,
+    'Problem Arised': skch.charAt(0).toUpperCase() + skch.slice(1).toLowerCase(),
+    'Number of Rejections': count,
 
-    try {
-      const response = await axios.post(
-        "http://localhost:5000/api/rejection/upload",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      setMessage(response.data.message || "File uploaded successfully!");
-      fetchUploads();
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      setMessage("Failed to upload file");
-    }
-  };
+  })), { header: ['SI no.', 'Problem Arised', 'Number of Rejections'] });
+  XLSX.utils.book_append_sheet(workbook, worksheet3, "Problems Arised Rejections");
+  XLSX.writeFile(workbook, `Problems_Arised_Rejections.xlsx`);
+}
+  
+};
 
-  // const handleBarchange = (event, elements) => {
-  //   if (elements.length > 0) {
-  //     const clickedElementIndex = elements[0].index;
-  //     const clickedLabel = chartData2.labels[clickedElementIndex];
-
-  //     console.log("Clicked Label:", clickedLabel);
-  //     const deptData = overAllData.filter(
-  //       (data) => data.ToDept === clickedLabel
-  //     );
-  //     navigate("/rejections/dept_rejections", {
-  //       state: { clickedLabel, deptData },
-  //     });
-  //   } else {
-  //     console.warn("No elements were clicked");
-  //   }
-  // };
 
   const handlePieChange = (event, elements) => {
     if (elements.length > 0) {
@@ -556,26 +446,6 @@ function Reject() {
   };
   
 
-  const optionschart2 = {
-    onClick: (event, elements) => handleBarchange(event, elements),
-    scales: {
-      x: {
-        title: {
-          display: true,
-          text: "Department",
-        },
-      },
-      y: {
-        type: "linear",
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: "Count",
-        },
-      },
-    },
-  };
-
   const optionschartPie = {
     plugins: {
       tooltip: {
@@ -590,8 +460,6 @@ function Reject() {
     onClick: (event, elements) => handlePieChange(event, elements),
     maintainAspectRatio: false,
   };
-
-  
 
   const [currentPage1, setCurrentPage1] = useState(1);
   const itemsPerPage = 6;
@@ -669,44 +537,53 @@ function Reject() {
   const [showDatePickerModal, setShowDatePickerModal] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-
+  const [dateRange, setDateRange] = useState({ from: 1, to: 31 });
+  const [monthRange, setMonthRange] = useState({ from: 1, to: 12 });
+  const [yearRange, setYearRange] = useState({ from: 2000, to: 2024 });
+  const [filterApplied, setFilterApplied] = useState(false);
+  
+  useEffect(() => {
+    if (filterApplied) {
+      fetchUploads(); // Only fetch when filter is applied
+    }
+  }, [filterApplied]);
+  
   const handleFilterClick = () => {
     setShowDatePickerModal(true); // Show the date picker modal
   };
-
+  
   const handleCancelFilter = () => {
+    setStartDate("");
+    setEndDate("");
+    setFilterApplied(false);
     setShowDatePickerModal(false);
+    
   };
+  
 
+  const handleRangeChange = useCallback((rangeType, fromValue, toValue) => {
+    if (rangeType === 'date') {
+      setDateRange({from: fromValue, to: toValue });
+    } else if (rangeType === 'month') {
+      setMonthRange({from: fromValue, to: toValue });
+    } else if (rangeType === 'year') {
+      setYearRange({ from: fromValue, to: toValue });
+    }
+  }, []);
+  
+  
   const handleApplyFilter = () => {
-    const newStartDate = `${startYear}-${startMonth}-${startDay}`;
-    const newEndDate = `${endYear}-${endMonth}-${endDay}`;
-     setfilter(!filter)
+    const newStartDate = `${yearRange.from}-${monthRange.from}-${dateRange.from}`;
+    const newEndDate = `${yearRange.to}-${monthRange.to}-${dateRange.to}`;
+  
     setStartDate(newStartDate);
     setEndDate(newEndDate);
   
+    setFilterApplied(true); // Mark filter as applied
     console.log("Start Date:", newStartDate, "End Date:", newEndDate);
-  
+    
     setShowDatePickerModal(false);
-  
-    fetchUploads();
   };
-  
-
-  const handleStartDateChange = (e) => {
-    setStartDate(e.target.value);
-  };
-
-  const handleEndDateChange = (e) => {
-    setEndDate(e.target.value); // Update end date state
-  };
-
-  const [openDropdown, setOpenDropdown] = useState(null);
-
-  const handleDropdownToggle = (dropdownType) => {
-    setOpenDropdown(openDropdown === dropdownType ? null : dropdownType);
-  };
-
   return (
     <div
       className={`min-h-screen w-full flex ${
@@ -716,6 +593,8 @@ function Reject() {
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <Header onSearch={setSearch} theme={theme} dark={setTheme} />
+
+
 
         <div className="flex justify-between mx-4 mt-4">
           <h1 className="font-bold text-xl">Rejections Overview</h1>
@@ -742,84 +621,32 @@ function Reject() {
           {/* Date Picker Modal */}
           {showDatePickerModal && (
             <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-[50%]">
-                <h2 className="text-lg font-bold mb-4 text-center">
-                  Select Date Range
-                </h2>
-                <div className="flex items-center justify-center mb-4">
-                  {/* Custom Multi-Select Dropdown for Start Date */}
+              <div className="bg-white w-96 mx-auto pl-10 py-4 rounded-xl">
+                <p className="font-bold">Date range</p>
+                <RangeSlider
+                  min={0}
+                  max={31}
+                  onRangeChange={(from, to) => handleRangeChange("date", from, to)}
+                />
+                <p className="font-bold">Month range</p>
+                <RangeSlider
+                  min={0}
+                  max={12}
+                  onRangeChange={(from, to) => handleRangeChange("month", from, to)}
+                />
+                <p className="font-bold">Year range</p>
+                <RangeSlider
+                  min={1999}
+                  max={2024}
+                  onRangeChange={(from, to) => handleRangeChange("year", from, to)}
+                />
 
-                  <CustomMultiSelect
-                    theme={theme}
-                    options={years}
-                    selectedOptions={startYear}
-                    setSelectedOptions={setStartYear}
-                    label="Select Year"
-                    isOpen={openDropdown === "year"}
-                    onToggle={() => handleDropdownToggle("year")}
-                    onClose={() => setOpenDropdown(null)}
-                  />
-
-                  <CustomMultiSelect
-                    theme={theme}
-                    options={months}
-                    selectedOptions={startMonth}
-                    setSelectedOptions={setStartMonth}
-                    label="Select month"
-                    isOpen={openDropdown === "month"}
-                    onToggle={() => handleDropdownToggle("month")}
-                    onClose={() => setOpenDropdown(null)}
-                  />
-
-                  <CustomMultiSelect
-                    theme={theme}
-                    options={days}
-                    selectedOptions={startDay}
-                    setSelectedOptions={setStartDay}
-                    label="Select day"
-                    isOpen={openDropdown === "day"}
-                    onToggle={() => handleDropdownToggle("day")}
-                    onClose={() => setOpenDropdown(null)}
-                  />
-
-                  <span className="mx-4 text-gray-500">to</span>
-
-                  {/* Custom Multi-Select Dropdown for End Date */}
-                  
-                  <CustomMultiSelect
-                    theme={theme}
-                    options={years}
-                    selectedOptions={endYear}
-                    setSelectedOptions={setEndYear}
-                    label="Select Year"
-                    isOpen={openDropdown === "end_year"}
-                    onToggle={() => handleDropdownToggle("end_year")}
-                    onClose={() => setOpenDropdown(null)}
-                  />
-
-                  <CustomMultiSelect
-                    theme={theme}
-                    options={months}
-                    selectedOptions={endMonth}
-                    setSelectedOptions={setEndMonth}
-                    label="Select month"
-                    isOpen={openDropdown === "end_month"}
-                    onToggle={() => handleDropdownToggle("end_month")}
-                    onClose={() => setOpenDropdown(null)}
-                  />
-                  
-                  <CustomMultiSelect
-                    theme={theme}
-                    options={days}
-                    selectedOptions={endDay}
-                    setSelectedOptions={setEndDay}
-                    label="Select day"
-                    isOpen={openDropdown === "end_day"}
-                    onToggle={() => handleDropdownToggle("end_day")}
-                    onClose={() => setOpenDropdown(null)}
-                  />
+                <div>
+                  <h4 className="font-bold">Selected Ranges:</h4>
+                  <p>{dateRange.from}/{monthRange.from}/{yearRange.from} - {dateRange.to}/{monthRange.to}/{yearRange.to}</p>
                 </div>
-                <div className="flex justify-between mt-4">
+
+                <div className="flex justify-between mt-4 mr-10">
                   <button
                     onClick={handleCancelFilter}
                     className={`py-2 px-4 font-bold text-sm text-white rounded-lg ${
@@ -842,10 +669,12 @@ function Reject() {
                   </button>
                 </div>
               </div>
+              
             </div>
           )}
         </div>
-
+        {message !=="" ?<p>{message}</p>: 
+        <div>
         <div className="flex">
           <div className="bg-white w-1/2 m-6 border rounded-lg border-gray-300 shadow-lg">
             <h1 className="text-lg font-semibold p-2 pl-10">
@@ -891,19 +720,19 @@ function Reject() {
 
             <div className="chart-container" style={{ height: "310px" }}>
               {" "}
-              {/* Add specific height for the chart container */}
+              
               {chartData3 ? (
-                <Bar
+                <Line
                   data={chartData3}
                   options={{
                     responsive: true,
                     maintainAspectRatio: false,
-                    indexAxis: "y",
+                  
                     plugins: {
                       datalabels: {
                         display: true,
-                        // align: "end",
-                        // anchor: "end",
+                        align: "end",
+                        anchor: "end",
                         formatter: (value, context) => {
                           const totalDataCount = overAllData.reduce((sum, item) => sum + item.COUNT, 0);
                           const percentage = ((value / totalDataCount) * 100).toFixed(2);
@@ -939,7 +768,7 @@ function Reject() {
                       x: {
                         title: {
                           display: true,
-                          text: "Count By Months",
+                          text: "Months",
                           color: "#555", // X-axis title color
                           font: {
                             size: 14, // X-axis title font size
@@ -954,7 +783,7 @@ function Reject() {
                       y: {
                         title: {
                           display: true,
-                          text: "Year",
+                          text: "Count",
                           color: "#555", // Y-axis title color
                           font: {
                             size: 14, // Y-axis title font size
@@ -1038,10 +867,19 @@ function Reject() {
           </div> */}
 
               <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
+                <div className="flex justify-between">
                 <h1 className="text-xl font-semibold p-2 pl-10 py-5">
                   Top <span className="text-red-500">25</span> Rejected Sketches
                 </h1>
-
+                <div className="m-4">
+                  <button
+                    className="px-5 py-3 bg-blue-500 text-white rounded-lg font-semibold"
+                    onClick={() => downloadExcel("Top Rejected Sketches")}
+                  >
+                    Download as Excel
+                  </button>
+                </div>
+                </div>
                 <table className="w-full table-auto text-sm ">
                   <thead>
                     <tr className="bg-gray-300 text-gray-700 ">
@@ -1168,10 +1006,20 @@ function Reject() {
               {/* Table View */}
 
               <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
+                <div className="flex justify-between">
                 <h1 className="text-xl font-semibold p-2 pl-10 py-5">
                   Top <span className="text-red-500"> Type of Reasons</span>{" "}
                   Rejections
                 </h1>
+                <div className="m-4">
+            <button
+              className="px-5 py-3 bg-blue-500 text-white rounded-lg font-semibold"
+              onClick={() => downloadExcel("Type of Reasons Rejections")}
+            >
+              Download as Excel
+            </button>
+            </div>
+                </div>
 
                 <table className="w-full table-auto text-sm ">
                   <thead>
@@ -1303,10 +1151,7 @@ function Reject() {
           </div> */}
 
               <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
-                <h1 className="text-xl font-semibold p-2 pl-10 py-5">
-                  Top <span className="text-red-500">Problems Arised</span> for
-                  Rejection
-                </h1>
+               
 
                 <table className="w-full table-auto text-sm ">
                   <thead>
@@ -1384,8 +1229,9 @@ function Reject() {
             </div>
           </div>
         </div>
+        </div> 
+      }
 
-        {/* //////////////////////////////// */}
       </div>
     </div>
   );
