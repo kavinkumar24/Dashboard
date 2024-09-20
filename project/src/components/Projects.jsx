@@ -161,17 +161,14 @@ function Projects() {
         (item) => item.PLTCODE1 === dept
       );
   
-      // Map complexities to lowercase
       const complexities = filteredPendingData.map((item) =>
         item.COMPLEXITY1.toLowerCase()
       );
   
-      // Filter jewel data where JewelCode matches any of the complexities, ignoring case
       const filteredJewelData = allJewelData.filter((item) =>
         complexities.includes(item.JewelCode.toLowerCase())
       );
   
-      // Count occurrences of each complexity
       const complexityCountMap = filteredPendingData.reduce((acc, item) => {
         const complexity = item.COMPLEXITY1.toLowerCase();
         acc[complexity] = (acc[complexity] || 0) + 1;
@@ -180,7 +177,7 @@ function Projects() {
   
       console.log("Complexity Count Map:", complexityCountMap);
   
-      // Filter product details based on search term (case-insensitive)
+      // Filter product details based on   search term (case-insensitive)
       const filteredProductDetails = filteredJewelData.filter(
         (item) =>
           item.Product?.toLowerCase().includes(search.toLowerCase()) ||

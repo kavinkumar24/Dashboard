@@ -44,7 +44,7 @@ function App() {
       <div>
       <Routes>
         <Route path='/' element={<Exceldata />} />
-        <Route path="/product-details/:pltcode" element={<ProductDetailsPage />} />
+        <Route path="/product-details/:pltcode/:dept" element={<ProductDetailsPage />} />
         <Route path="/department/:deptId/:type" element={<DepartmentDetail />} />
         <Route path="/projects" element={<Projects />} />
         <Route path='/daily-report' element={<Daily_Report />} />

@@ -466,7 +466,7 @@ function Department_AOP() {
   // );
 
   const handleRowClick = (pltcode) => {
-    navigate(`/product-details/${pltcode}`);
+    navigate(`/product-details/${pltcode}/${selectedDeptName}`);
   };
   const paginatedTargets = sortedAllowedTargets.slice(
     popupStartIndex,
