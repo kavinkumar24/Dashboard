@@ -8,6 +8,10 @@ function Projects() {
   const [productionData, setProductionData] = useState([]);
   const [pendingData, setPendingData] = useState([]);
   const [departmentCounts, setDepartmentCounts] = useState({});
+  const [popupData, setPopupData] = useState([]);
+const [showPopup, setShowPopup] = useState(false);
+
+
   const [activeTab, setActiveTab] = useState("");
   const [spin, setSpin] = useState(false);
   const [skeleton, setSkeleton] = useState(true);
@@ -22,6 +26,60 @@ function Projects() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
+
+  let clickTimeout = null;
+
+
+  const handleDeptDoubleClick = (dept) => {
+    // Clear any existing timeout to avoid triggering single click action
+    clearTimeout(clickTimeout);
+
+
+    // Filter pendingData based on PLTCODE1
+    const selectedPendingDetails = pendingData.filter(
+      (item) => item.PLTCODE1 === dept
+    );
+
+    // Create an object to count occurrences of each unique TODEPT
+    const toDeptCounts = selectedPendingDetails.reduce((acc, item) => {
+      const toDept = item.TODEPT;
+      acc[toDept] = (acc[toDept] || 0) + 1; // Increment count
+      return acc;
+    }, {});
+
+    // Set the popup data to show the counts
+    setPopupData(Object.entries(toDeptCounts).map(([key, value]) => ({ toDept: key, count: value })));
+    setShowPopup(true); // Show the popup
+
+    handleTabClick(dept);
+  };
+
+  const handleDeptClick = (dept) => {
+    // Single click action (optional, if needed)
+    clickTimeout = setTimeout(() => {
+      handleTabClick(dept);
+    }, 200); // Delay to determine if it's a double click
+  };
+
+
+    const handleProductCardClick = (product) => {
+      // Filter pendingData based on a relevant property, like ITEMID
+      const selectedPendingDetails = pendingData.filter(
+        (item) => item.PLTCODE1 === product // Use the appropriate property to match
+      );
+    
+      // Count occurrences of each unique TODEPT
+      const toDeptCounts = selectedPendingDetails.reduce((acc, item) => {
+        const toDept = item.TODEPT;
+        acc[toDept] = (acc[toDept] || 0) + 1;
+        return acc;
+      }, {});
+    
+      // Set the popup data to show the counts
+      setPopupData(Object.entries(toDeptCounts)); // Converts to [key, value] format
+      setShowPopup(true); // Assuming this opens a modal or popup
+    };
+    
 
   const handleProductSearch = (e) => {
     setProductSearch(e.target.value);
@@ -479,7 +537,8 @@ function Projects() {
                         departmentCounts[dept] && (
                           <tr
                             key={dept}
-                            onClick={() => handleTabClick(dept)}
+                            onClick={handleDeptDoubleClick(dept)}
+                         
                             className={`cursor-pointer ${
                               activeTab === dept
                                 ? theme === "dark"
@@ -598,15 +657,43 @@ function Projects() {
                   theme === "light" ? "border-gray-300" : "border-gray-600"
                 }`}
               />
+
+
+{showPopup && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg">
+      <h2 className="text-xl font-bold mb-4">TODEPT Counts</h2>
+      <ul>
+        {popupData.map(([toDept, count]) => (
+          <li key={toDept} className="flex justify-between">
+            <span>{toDept}</span>
+            <span>{count}</span>
+          </li>
+        ))}
+      </ul>
+      <button
+        onClick={() => setShowPopup(false)}
+        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
               {activeTab && (
-                <div className="mt-5">
+                <div className="mt-5" 
+                
+                >
                   <h1 className="text-lg mb-3">{selectedProject}</h1>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Object.keys(productsToShow).map((product) => {
                       const groupedProduct = productsToShow[product];
                       return (
                         <div
+                         
                           key={product}
+                onClick={() => handleProductCardClick(product)}
                           className={`shadow-md rounded-lg p-4 border-t-2 border-blue-400 ${
                             theme === "light"
                               ? "text-gray-800 bg-white"

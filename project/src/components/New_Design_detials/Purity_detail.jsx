@@ -254,18 +254,8 @@ const ProjectDetails = () => {
           monthAcc,
         } = aggregateData(filteredData);
         let displayedMonthAcc = monthAcc;
-        const currentYear = new Date().getFullYear();
-
-        // If month parameter is not provided, filter months for the current year
         if (!month) {
-          displayedMonthAcc = Object.entries(monthAcc)
-            .filter(([key]) => key.startsWith(`${currentYear}-`)) // Filter for the current year
-            .reduce((acc, [key, value]) => {
-              acc[key] = value;
-              return acc;
-            }, {});
-        } else {
-          displayedMonthAcc = getTopMonths(monthAcc); // Get top 4 months if month is declared
+          displayedMonthAcc = getTopMonths(monthAcc); // Get top 4 months if month is not declared
         }
         setPurityAcc(purityAcc);
         setProjectAcc(projectAcc);
@@ -287,10 +277,9 @@ const ProjectDetails = () => {
 
   const subproductChartRef = useRef(null); // Create a ref for the subproduct chart div
 
-  
-  // const handleYearClick = (year) => {
-  //   setSelectedYear(year);
-  // };
+  const handleYearClick = (year) => {
+    setSelectedYear(year);
+  };
 
   const handleTop15Click = () => {
     if (!isSelected) {
@@ -347,20 +336,6 @@ const ProjectDetails = () => {
       }, {});
   }
 
-  const handleYearClick = (year) => {
-    setSelectedYear(year);
-  
-    // Update monthAcc to reflect months for the selected year
-    const filteredMonthAcc = Object.entries(monthAcc)
-      .filter(([key]) => key.startsWith(`${year}-`)) // Filter for the selected year
-      .reduce((acc, [key, value]) => {
-        acc[key] = value;
-        return acc;
-      }, {});
-  
-    setMonthAcc(filteredMonthAcc); // Update month chart data
-  };
-  
   const [minrotaion, setMinRotation] = useState(20);
   function limittotop15_group(data) {
     setMinRotation(0);
@@ -980,7 +955,13 @@ const ProjectDetails = () => {
               data={yearChartData}
               options={{
                 ...chartOptions,
-                onclick: (event, elements) => {  if (elements.length > 0) {    const index = elements[0].index;    const year = Object.keys(yearAcc)[index];    handleYearClick(year);  }},
+                onClick: (event, elements) => {
+                  if (elements.length) {
+                    const index = elements[0].index;
+                    const year = Object.keys(yearAcc)[index];
+                    handleYearClick(year);
+                  }
+                },
               }}
             />
           </div>

@@ -28,7 +28,6 @@ const CustomMultiSelect = ({
 
   const handleOptionChange = (event, value) => {
     event.stopPropagation();
-
     if (selectedOptions.includes(value)) {
       setSelectedOptions(selectedOptions.filter((option) => option !== value));
     } else {
@@ -49,11 +48,11 @@ const CustomMultiSelect = ({
       {/* Dropdown Button */}
       <button
         onClick={onToggle}
-        className={`p-2 border rounded w-48 ${
+        className={`p-2 border rounded w-48 flex justify-between items-center transition-all duration-300 ease-in-out ${
           theme === "light"
             ? "bg-white text-black border-gray-300"
             : "bg-slate-900 text-gray-300 border-gray-700"
-        } flex justify-between items-center`}
+        }`}
       >
         {label}
         <span>{isOpen ? "▲" : "▼"}</span>
@@ -62,27 +61,28 @@ const CustomMultiSelect = ({
       {/* Dropdown List */}
       {isOpen && (
         <div
-          className={`absolute mt-2 z-10 w-48 max-h-52 overflow-y-auto rounded-lg shadow-lg ${
+          className={`absolute bottom-full mb-2 z-10 w-48 max-h-52 overflow-y-auto rounded-lg shadow-lg transition-all duration-300 ease-in-out ${
             theme === "light"
               ? "bg-white text-black border-gray-300"
               : "bg-slate-900 text-gray-300 border-gray-700"
           }`}
+          style={{ backdropFilter: 'blur(10px)' }} // Adds a nice blur effect
         >
           {/* Select All / Deselect All */}
           <div className="flex justify-between p-2 border-b border-gray-300">
             <button
               onClick={handleSelectAll}
-              className="p-2 text-blue-500 hover:bg-gray-100 w-1/2 text-left"
+              className="p-2 text-blue-500 hover:bg-gray-200 rounded transition duration-200 ease-in-out w-1/2 text-left"
             >
               <IoMdCheckbox className="inline mr-2" />
-              <span className="text-sm">Select</span>
+              <span className="text-sm">Select All</span>
             </button>
             <button
               onClick={handleDeselectAll}
-              className="p-2 text-red-500 hover:bg-gray-100 w-1/2 text-left"
+              className="p-2 text-red-500 hover:bg-gray-200 rounded transition duration-200 ease-in-out w-1/2 text-left"
             >
-              <RiCheckboxBlankLine className="inline mr-2 text-sm" />
-              <span className="text-sm">Deselect</span>
+              <RiCheckboxBlankLine className="inline mr-2" />
+              <span className="text-sm">Deselect All</span>
             </button>
           </div>
 
@@ -90,7 +90,9 @@ const CustomMultiSelect = ({
           {options.map((option) => (
             <div
               key={option}
-              className={`flex items-center p-2 cursor-pointer ${theme==='light'?'hover:bg-gray-200':'hover:bg-gray-600'}  hover:text-blue-500`}
+              className={`flex items-center p-2 cursor-pointer transition-colors duration-200 ease-in-out ${
+                theme === 'light' ? 'hover:bg-gray-200' : 'hover:bg-gray-600'
+              } hover:text-blue-500`}
               onClick={(e) => handleOptionChange(e, option)}
             >
               <input

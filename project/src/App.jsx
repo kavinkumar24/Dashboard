@@ -36,6 +36,7 @@ import Product_detail_new_design from './components/New_Design_detials/Product_d
 import Plain_stone_detail_new_design from './components/New_Design_detials/Plain_stone_details'
 import Project_detail_new_design from './components/New_Design_detials/Product_detail'
 // import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
+import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
 
 function App() {
 
@@ -76,6 +77,7 @@ function App() {
         <Route path="/PL-ST-detail-new_design/:plstone" element = {< Plain_stone_detail_new_design/>} />
         <Route path="/project-detail-new_design/:project" element={<Project_detail_new_design />} />
         {/* <Route path="/subproduct-detail-new_design/:subproduct" element={<Subproduct_detail_new_design />} /> */}
+        <Route path="/subproduct-detail-new_design/:subproduct" element={<Subproduct_detail_new_design />} />
 
         <Route path="/aop_schedule" element={<Department_AOP />} />
         <Route path='/rejections/problem_arised' element={<Problem_Arised/>}/>
