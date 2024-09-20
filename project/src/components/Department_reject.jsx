@@ -17,6 +17,7 @@ import {
   LineElement,
   ArcElement,
 } from "chart.js";
+import { Card, CardContent, Typography } from '@mui/material';
 
 import ChartDataLabels from "chartjs-plugin-datalabels";
 
@@ -72,6 +73,17 @@ function Department_reject() {
 
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleString());
   const [overAllData, setoverAllData] = useState(null)
+
+  const [uniqueMonths, setUniqueMonths] = useState([]);
+  const [monthPercentage, setMonthPercentage] = useState([]);
+  const [activeIndex1, setActiveIndex1] = useState(null);
+
+  // const [message, setMessage] = useState("");
+
+  const toggleAccordion1 = (index) => {
+    setActiveIndex1(activeIndex1 === index ? null : index);
+  };
+
 
   const downloadExcel = (worksheet) => {
     const workbook = XLSX.utils.book_new();
@@ -151,6 +163,7 @@ function Department_reject() {
       // const response = await axios.get(
       //   "http://localhost:5000/api/rejection/uploads"
       // );
+      find_dept_percengtage();
       const data = deptData;
       setoverAllData(data);
 
@@ -214,10 +227,6 @@ setChartData2({
 });
 
 
-
-        
-
-
       const uniqueMonths = [...new Set(data.map((item) => item.MONTH))];
       const counts = uniqueMonths.map((month) => {
         return uniqueYears.map((year) => {
@@ -227,6 +236,15 @@ setChartData2({
           return filteredData.reduce((total, item) => total + item.COUNT, 0);
         });
       });
+      // console.log("Counts:", counts);
+      // console.log("Unique Months:", uniqueMonths);
+
+      // const percentage = counts.map((countArr) =>{
+      //       return ((countArr / totalDataCount) * 100).toFixed(2);
+      // });
+      // console.log("Percentage:", percentage);
+      // setUniqueMonths(uniqueMonths);
+      // setMonthPercentage(percentage);
 
       setChartData3({
         labels: uniqueMonths, // X-axis labels (Months)
@@ -376,88 +394,37 @@ setChartData2({
       console.error("Error fetching uploads:", error);
     }
   };
-  const options = {
-    scales: {
-      x: {
-        title: {
-          display: true,
-          text: "Year",
-        },
-      },
-      y: {
-        type: "linear",
-        beginAtZero: true,
-        suggestedMin: 0,
-        suggestedMax: 10, // Adjust as per your data
-        title: {
-          display: true,
-          text: "Count by Month",
-        },
-      },
-    },
-    plugins: {
-      title: {
-        display: true,
-        text: "Rejections Count by Year and Month",
-      },
-    },
-  };
-  const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0];
-    setFile(selectedFile);
-    handleUpload(selectedFile);
-  };
 
-  const handleUpload = async (selectedFile) => {
-    if (!selectedFile) {
-      setMessage("Please select a file first.");
-      return;
-    }
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-    formData.append("file_ID", currentTime);
-
-    try {
-      const response = await axios.post(
-        "http://localhost:5000/api/rejection/upload",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+  const find_dept_percengtage = async() => {
+      const response = await axios.get(
+        "http://localhost:8081/api/rejection/uploads"
       );
-      setMessage(response.data.message || "File uploaded successfully!");
-      fetchUploads();
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      setMessage("Failed to upload file");
-    }
-  };
+      let response_data = response.data.filter((item) => item.ToDept === clickedLabel);
+      const totalDataCount = response_data.reduce((sum, item) => sum + item.COUNT, 0);
+      const uniqueMonths = [...new Set(response_data.map((item) => item.MONTH))];
+      const uniqueYears = [...new Set(response_data.map((item) => item.Yr))];
 
- 
-  const optionschart2 = {
-    
-    scales: {
-      x: {
-        title: {
-          display: true,
-          text: "Department",
-        },
-      },
-      y: {
-        type: "linear",
-        beginAtZero: true,
-        title: {
-          display: true,
-          text: "Count",
-        },
-      },
-    },
-   
-  };
+      
+      const counts = uniqueMonths.map((month) => {
+        return uniqueYears.map((year) => {
+          const filteredData = response_data.filter(
+            (item) => item.Yr === year && item.MONTH === month
+          );
+          return filteredData.reduce((total, item) => total + item.COUNT, 0);
+        });
+      });
 
+      console.log("Counts:", counts);
+      console.log("Unique Months:", uniqueMonths);
+
+      const percentage = counts.map((countArr) =>{
+            return ((countArr / totalDataCount) * 100).toFixed(2);
+      });
+      console.log("Percentage:", percentage);
+      setUniqueMonths(uniqueMonths);
+      setMonthPercentage(percentage);
+  }
   // Sketch table data
   const [currentPage1, setCurrentPage1] = useState(1);
   const itemsPerPage = 6;
@@ -544,18 +511,68 @@ setChartData2({
         
         <div className="flex justify-between mx-4 mt-4">
           <h1 className="font-bold text-xl">Rejected Details of <span className='text-[#879FFF] text-2xl'>{clickedLabel}</span> Department </h1>
-          <button
-            className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
-              theme === "light"
-                ? "bg-blue-500 hover:bg-blue-700"
-                : "bg-blue-600 hover:bg-blue-800"
-            }`}
-          >
-            Export the Data
-          </button>
         </div>
-        <h1 className="font-bold text-xl text-gray-500 mx-4 mt-4">Percentage for the {clickedLabel} Department from the overall Data - <span className='text-green-400 text-2xl'>{per}</span></h1>
         
+
+    <div className="m-6 px-10 border rounded-lg border-gray-300 bg-white shadow-lg">
+
+<div className="border-b border-slate-200">
+  <button
+    onClick={() => toggleAccordion1(1)}
+    className="w-full flex justify-between items-center py-5 text-slate-800"
+  >
+    <span className="text-lg font-semibold">Rejection Percentage of {clickedLabel} Department Based on Months</span>
+    <span className="text-slate-800 transition-transform duration-300">
+      {activeIndex1 === 1 ? (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          className="w-4 h-4"
+        >
+          <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
+        </svg>
+      ) : (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          className="w-4 h-4"
+        >
+          <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
+        </svg>
+      )}
+    </span>
+  </button>
+  <div
+    className={`${
+      activeIndex1 === 1 ? "max-h-screen" : "max-h-0"
+    } overflow-hidden transition-all duration-300 ease-in-out`}
+  >
+    {/* <div className="pb-5 text-sm text-slate-500">
+  Material Tailwind is a framework that enhances Tailwind CSS with additional styles and components.
+</div> */}
+            <div className="p-6 grid grid-cols-1 md:grid-cols-6 gap-4">
+      {uniqueMonths.length > 0 ? (
+        uniqueMonths.map((month, index) => (
+          <div
+            key={index}
+            className={`shadow-md rounded-lg p-6 cursor-pointer bg-blue-100 border-2 border-blue-300`}
+          >
+            <h2 className="text-xl font-semibold mb-2">{month}</h2>
+            <p className="text-gray-500 font-bold text-xl">
+              {monthPercentage[index]}%
+            </p>
+          </div>
+        ))
+      ) : (
+        <p className="text-red-500 text-lg font-bold">No data available</p>
+      )}
+    </div>
+    
+  </div>
+</div>
+</div>
 
         {/* Main content */}
         {/* <div className="p-4">

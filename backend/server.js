@@ -252,6 +252,8 @@ const createDesignTable = "CREATE TABLE if not exists `design_center_task_sample
 `Completed` timestamp(6) NULL DEFAULT NULL, \
 `Created by` varchar(255) DEFAULT NULL, \
 `Created date and time` varchar(255) DEFAULT NULL \
+`fileID Varchar(255)` DEFAULT NULL \
+`uploadedDateTime` timestamp NULL DEFAULT NULL \
 )";
 
 
@@ -372,7 +374,9 @@ const createProductionTableQuery = `CREATE TABLE IF NOT EXISTS \`Production_samp
   \`Description\` varchar(255) DEFAULT NULL,
   \`Design specification\` varchar(255) DEFAULT NULL,
   \`PRODUNITID\` varchar(255) DEFAULT NULL,
-  \`Remarks\` varchar(255) DEFAULT NULL
+  \`Remarks\` varchar(255) DEFAULT NULL,
+  \`fileID\` varchar(255) DEFAULT NULL,
+  \`uploadedDateTime\` timestamp NULL DEFAULT NULL
 )`;
 
 
@@ -498,7 +502,9 @@ const createPendingTableQuery = `CREATE TABLE IF NOT EXISTS \`Pending_sample_dat
   \`RECEIVED1\` varchar(255) DEFAULT NULL,
   \`RECVDATE1\` timestamp(6) NULL DEFAULT NULL,
   \`REMARKS1\` varchar(255) DEFAULT NULL,
-  \`HALLMARKINCERTCODE1\` varchar(255) DEFAULT NULL
+  \`HALLMARKINCERTCODE1\` varchar(255) DEFAULT NULL,
+  \`fileID\` varchar(255) DEFAULT NULL,
+  \`uploadedDateTime\` timestamp NULL DEFAULT NULL
 )`;
 
 db.query(createPendingTableQuery, (err) => {
@@ -638,7 +644,9 @@ const createOrderReceivingTableQuery = `CREATE TABLE IF NOT EXISTS \`Order_recei
   \`Maketype\` varchar(255) DEFAULT NULL,
   \`collection\` double DEFAULT NULL,
   \`Collection_1\` varchar(255) DEFAULT NULL,
-  \`Collection_2\` varchar(255) DEFAULT NULL
+  \`Collection_2\` varchar(255) DEFAULT NULL,
+  \`fileID\` varchar(255) DEFAULT NULL,
+  \`uploadedDateTime\` timestamp NULL DEFAULT NULL
 );`;
 
 
@@ -1476,6 +1484,8 @@ const createTableQuery = `CREATE TABLE IF NOT EXISTS rejection (
   ProblemArised2 VARCHAR(255),
   COUNT INT,
   OperatorNameID VARCHAR(50)
+  file_ID VARCHAR(100),
+  uploadedDateTime TIMESTAMP,
 );`;
 
 db.query(createTableQuery, (err) => {

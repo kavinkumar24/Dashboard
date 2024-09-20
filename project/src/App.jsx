@@ -34,8 +34,8 @@ import ProductDetailsPage from './components/AOP/Product_details';
 import Color_detai_new_design from './components/New_Design_detials/Color_detail';
 import Product_detail_new_design from './components/New_Design_detials/Product_detail';
 import Plain_stone_detail_new_design from './components/New_Design_detials/Plain_stone_details'
-import Project_detail_new_design from './components/New_Design_detials/Project_detail'
-import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
+import Project_detail_new_design from './components/New_Design_detials/Product_detail'
+// import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
 
 function App() {
 
@@ -75,7 +75,7 @@ function App() {
         <Route path="/color-detail-new_design/:color" element={<Color_detai_new_design />} />
         <Route path="/PL-ST-detail-new_design/:plstone" element = {< Plain_stone_detail_new_design/>} />
         <Route path="/project-detail-new_design/:project" element={<Project_detail_new_design />} />
-        <Route path="/subproduct-detail-new_design/:subproduct" element={<Subproduct_detail_new_design />} />
+        {/* <Route path="/subproduct-detail-new_design/:subproduct" element={<Subproduct_detail_new_design />} /> */}
 
         <Route path="/aop_schedule" element={<Department_AOP />} />
         <Route path='/rejections/problem_arised' element={<Problem_Arised/>}/>

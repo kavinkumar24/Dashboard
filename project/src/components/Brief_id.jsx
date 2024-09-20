@@ -487,7 +487,7 @@ function Detailed_task() {
       )}
     </div>
           {whSketchData.length > 0 && <p className="ml-6 font-semibold text-xl text-gray-700">Sketch Details of the Warehouse </p>}
-          {whSketchData.length > 0 && <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
+          {whSketchData.length > 0  && <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
           <div className="flex justify-between">
             <h1 className="text-xl font-semibold p-2 pl-10 py-5">
               Sketch details for <span className="text-[#879FFF]">{selectedWhCard.toUpperCase()}</span>

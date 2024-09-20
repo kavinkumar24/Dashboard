@@ -4,7 +4,7 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
-import RangeSlider from "./Range_Slider/RangeSlider";
+
 
 function Uploads() {
   const [search, setSearch] = useState("");
@@ -17,9 +17,67 @@ function Uploads() {
   const [detailedData, setDetailedData] = useState([]);
   const [api, setApi] = useState("");
   const [mismatchData, setMismatchData] = useState([]); // New state for mismatch data
-  const currentTime = new Date().toISOString(); 
+  const currentTime = new Date().toLocaleString(); 
+  const [fileID, setFileID] = useState("");
 
-  const handleFileType = (event) => {
+  // Function to fetch the previous fileID from the API
+const fetchPreviousFileID = async (fapi) => {
+  try {
+    const response = await fetch(fapi);
+    const data = await response.json();
+
+    if (data.length === 0) {
+      return null; 
+    }
+    const latestRecord = data[data.length - 1];
+    const previousID = latestRecord.fileID;
+
+    return previousID;
+  } catch (error) {
+    console.error("Error fetching data from API:", error);
+    return null;
+  }
+};
+
+const generateFileID = async (fileType) => {
+  const currentDate = new Date();
+  const day = String(currentDate.getDate()).padStart(2, '0');
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const year = String(currentDate.getFullYear()).slice(-2);
+  const dateFormatted = `${day}${month}${year}`;
+  let prefix;
+  let fapi;
+
+  if(fileType === "rejection") {
+    prefix = "RE";
+    fapi = "http://localhost:8081/api/rejection/upload";
+  }
+
+
+
+  const previousID = await fetchPreviousFileID(fapi);
+  if (!previousID) {
+    const newFileID = `${dateFormatted}${prefix}01`;
+    return newFileID;
+  }
+
+  const dateAndPrefixLength = 6 + 2; 
+  const previousCount = parseInt(previousID.slice(dateAndPrefixLength), 10);
+
+  const newCount = previousCount + 1;
+
+  const newFileID = `${dateFormatted}${prefix}${String(newCount).padStart(2, '0')}`; 
+
+  return newFileID;
+  };
+
+  generateFileID().then(newFileID => {
+    console.log(newFileID); 
+  });
+
+  
+
+  const handleFileType = async (event) => {
     const selectedFileType = event.target.value;
     setFileType(selectedFileType);
     if (selectedFileType) {
@@ -32,7 +90,9 @@ function Uploads() {
         "CW Qty", "Qty", "From Dept", "To Dept", "In Date", "Out Date",
         "Hours", "Days", "Description", "Design specification", "PRODUNITID", "Remarks"
       ]);
+      
       setApi("http://localhost:8081/api/production/upload")
+      
     } else if (selectedFileType === "pending") {
       setDetailedData([
         "TODEPT", "JCID1", "BRIEFNUM1", "MERCHANDISERBRIEF1", "SKETCHNUM1", "ITEMID", 
@@ -49,6 +109,7 @@ function Uploads() {
         "Problem arised", "Problem - 1", "Problem arised -2", "COUNT", 
         "Operator Name/ID"
       ]);
+      await generateFileID("rejection");
       setApi("http://localhost:8081/api/rejection/upload")
     } else if (selectedFileType === "orderRece_newDesi") {
       setDetailedData([
@@ -60,6 +121,7 @@ function Uploads() {
         "NIM_PROCATEGORY", "TOPSUBCATEGORY", "GENDER", "NAMEALIAS", 
         "PERSONNELNUMBER", "DesignerName2", "Itemcwqty", "Itemqty"
       ]);
+      
       setApi("http://localhost:8081/api/order/upload")
     } else if (selectedFileType === "task") {
       setDetailedData([
@@ -109,23 +171,17 @@ function Uploads() {
       const sheet = workbook.Sheets[sheetName];
       const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
       
-      // Extract the first row (column names) from the uploaded file
       const uploadedColumns = jsonData[0];
       
-
-      // Find mismatches where columns are in detailedData but not in uploadedColumns
       const mismatches = detailedData.filter((col) => !uploadedColumns.includes(col));
       
-      // Find mismatches where columns are in uploadedColumns but not in detailedData
       const mismatchedColumns = uploadedColumns.filter((col) => !detailedData.includes(col));
       
-      // Combine both sets of mismatches
       const combinedMismatches = mismatches.map((col, index) => ({
         original: col,
-        mismatched: mismatchedColumns[index] || "" // Add a matching column from mismatchedColumns if available
+        mismatched: mismatchedColumns[index] || "" 
       }));
       
-      // If mismatchedColumns has more items, add the remaining mismatched columns
       if (mismatchedColumns.length > mismatches.length) {
         for (let i = mismatches.length; i < mismatchedColumns.length; i++) {
           combinedMismatches.push({
@@ -142,11 +198,11 @@ function Uploads() {
       }
       
   
-      // If columns match, proceed with the file upload
       const formData = new FormData();
       formData.append("file", selectedFile);
       formData.append("file_ID", currentTime);
-  
+      formData.append("file_type", fileType);
+
       try {
         const response = await axios.post(api, formData, {
           headers: {
@@ -165,7 +221,6 @@ function Uploads() {
   };
 
 
-  // ////////////////////////
 
   
 
