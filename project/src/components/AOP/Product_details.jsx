@@ -24,11 +24,9 @@ function ProductDetailsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch pending data
         const pendingResponse = await axios.get('http://localhost:8081/pending_data');
         setPendingData(pendingResponse.data);
 
-        // Fetch jewel data
         const jewelResponse = await axios.get('http://localhost:8081/jewel-master');
         setJewelData(jewelResponse.data);
 
@@ -37,6 +35,8 @@ function ProductDetailsPage() {
         const complexities = filteredPendingData.map(item => item.COMPLEXITY1);
 
         const filteredJewelData = jewelResponse.data.filter(item => complexities.includes(item.JewelCode));
+
+        console.log("filtered",filteredJewelData);
         setProductDetails(filteredJewelData);
       } catch (error) {
         setError('Error fetching data');

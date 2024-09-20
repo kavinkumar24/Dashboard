@@ -147,39 +147,66 @@ function Projects() {
     setActiveTab(dept);
     setSelectedProject(dept);
     setSpin(true);
-
+  
     try {
       const [pendingResponse, jewelResponse] = await Promise.all([
         axios.get("http://localhost:8081/pending_data"),
         axios.get("http://localhost:8081/jewel-master"),
       ]);
-
+  
       const pendingData = pendingResponse.data;
       const allJewelData = jewelResponse.data;
-
+  
       const filteredPendingData = pendingData.filter(
         (item) => item.PLTCODE1 === dept
       );
-
-      const complexities = filteredPendingData.map((item) => item.COMPLEXITY1);
-      const filteredJewelData = allJewelData.filter((item) =>
-        complexities.includes(item.JewelCode)
+  
+      // Map complexities to lowercase
+      const complexities = filteredPendingData.map((item) =>
+        item.COMPLEXITY1.toLowerCase()
       );
-
+  
+      // Filter jewel data where JewelCode matches any of the complexities, ignoring case
+      const filteredJewelData = allJewelData.filter((item) =>
+        complexities.includes(item.JewelCode.toLowerCase())
+      );
+  
+      // Count occurrences of each complexity
+      const complexityCountMap = filteredPendingData.reduce((acc, item) => {
+        const complexity = item.COMPLEXITY1.toLowerCase();
+        acc[complexity] = (acc[complexity] || 0) + 1;
+        return acc;
+      }, {});
+  
+      console.log("Complexity Count Map:", complexityCountMap);
+  
+      // Filter product details based on search term (case-insensitive)
       const filteredProductDetails = filteredJewelData.filter(
         (item) =>
           item.Product?.toLowerCase().includes(search.toLowerCase()) ||
           item["sub Product"]?.toLowerCase().includes(search.toLowerCase())
       );
-
+  
+      // Map complexity counts to corresponding products and sub-products
+      const productDetailsWithComplexityCount = filteredProductDetails.map(
+        (product) => ({
+          ...product,
+          complexityCount: complexityCountMap[product.JewelCode.toLowerCase()] || 0,
+        })
+      );
+  
+      // Log the product details with their associated complexity count
+      console.log("Product Details with Complexity Count:", productDetailsWithComplexityCount);
+  
       setPendingData(filteredPendingData);
-      setProductDetails(filteredProductDetails);
+      setProductDetails(productDetailsWithComplexityCount);
     } catch (error) {
       setError("Error fetching data");
     } finally {
       setSpin(false);
     }
   };
+  
   const groupByProduct = (data) => {
     return data.reduce((acc, item) => {
       if (!item.Product) return acc;

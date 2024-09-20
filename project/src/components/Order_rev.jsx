@@ -656,6 +656,11 @@ function Order_rev() {
     return top15;
   };
 
+
+
+  const handleview = () =>{
+    setfilter(!filter)
+  }
   const fetchedDataRef = useRef(null);
 
   useEffect(() => {
@@ -970,9 +975,18 @@ function Order_rev() {
       <div
         className={`order-1 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
-        }  p-4 rounded shadow-md overflow-x-auto h-[450px]`}
+        }  p-4 rounded shadow-md  h-[450px]`}
       >
+        <h2
+          className={`text-md font-bold ${
+            theme === "light" ? "text-slate-800" : "text-slate-400"
+          }`}
+        >
+          Year
+        </h2>
         {!isLoading && (
+        <div className="w-full h-[98%]">
+
           <Bar
             data={chartData}
             options={{
@@ -1046,6 +1060,7 @@ function Order_rev() {
             }}
             plugins={[ChartDataLabels]}
           />
+          </div>
         )}
       </div>
     </div>,
@@ -1053,9 +1068,17 @@ function Order_rev() {
       <div
         className={`order-1 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
-        }  p-4 rounded shadow-md overflow-x-auto h-[450px]`}
+        }  p-4 rounded shadow-md h-[450px]`}
       >
+            <h2
+          className={`text-md font-bold ${
+            theme === "light" ? "text-slate-800" : "text-slate-400"
+          }`}
+        >
+          Month
+        </h2>
         {!isLoading && (
+          <div className="w-full h-[98%]"> 
           <Bar
             data={chartmonthData}
             options={{
@@ -1129,6 +1152,7 @@ function Order_rev() {
             }}
             plugins={[ChartDataLabels]}
           />
+          </div>
         )}
       </div>
     </div>,
@@ -1140,14 +1164,14 @@ function Order_rev() {
         } p-4 rounded shadow-md h-[450px] flex flex-col`}
       >
         <h2
-          className={`text-sm font-thin text-center ${
+          className={`text-md font-bold ${
             theme === "light" ? "text-slate-800" : "text-slate-400"
           }`}
         >
           Purity
         </h2>
         {!isLoading && (
-          <div className="flex-1 w-full h-full overflow-hidden">
+          <div className="flex-1 w-full h-full">
             <Bar
               data={purityChartData}
               options={{
@@ -1227,43 +1251,8 @@ function Order_rev() {
                       },
                     },
                   },
-                  scales: {
-                    x: {
-                      title: {
-                        display: true,
-                        text: "Purity",
-                        color: theme === "light" ? "black" : "#94a3b8",
-                      },
-                      color: theme === "light" ? "#e5e7eb" : "#4b5563",
-                      ticks: {
-                        color: theme === "light" ? "black" : "#94a3b8",
-                      },
-                      border: {
-                        color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                      },
-                      grid: {
-                        color: theme === "light" ? "#e5e7eb" : "#374151",
-                      },
-                    },
-                    y: {
-                      title: {
-                        display: true,
-                        text: "KG Count",
-                        color: theme === "light" ? "black" : "#94a3b8",
-                      },
-                      beginAtZero: true,
-                      grid: {
-                        display: true,
-                        color: theme === "light" ? "#e5e7eb" : "#374151",
-                      },
-                      ticks: {
-                        color: theme === "light" ? "black" : "#94a3b8",
-                      },
-                      border: {
-                        color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                      },
-                    },
-                  },
+                 
+                  
                   datalabels: {
                     display: true,
                     align: "end",
@@ -1290,6 +1279,35 @@ function Order_rev() {
                     },
                   },
                 },
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+                      text: "Purity",
+                      color: theme === "light" ? "black" : "#94a3b8", // Ensure color is visible
+                    },
+                    ticks: {
+                      color: theme === "light" ? "black" : "#94a3b8", // Ensure tick labels are visible
+                    },
+                    grid: {
+                      color: theme === "light" ? "#e5e7eb" : "#374151", // Grid color contrast
+                    },
+                  },
+                  y: {
+                    title: {
+                      display: true,
+                      text: "KG Count",
+                      color: theme === "light" ? "black" : "#94a3b8", // Ensure color is visible
+                    },
+                    beginAtZero: true,
+                    ticks: {
+                      color: theme === "light" ? "black" : "#94a3b8", // Ensure tick labels are visible
+                    },
+                    grid: {
+                      color: theme === "light" ? "#e5e7eb" : "#374151", // Grid color contrast
+                    },
+                  },
+                },
               }}
               plugins={[ChartDataLabels]}
             />
@@ -1304,13 +1322,13 @@ function Order_rev() {
         }  p-4 rounded shadow-md   h-[450px]`}
       >
         <h2
-          className={`text-sm font-thin ${
+          className={`text-md font-bold ${
             theme === "light" ? "text-slate-800" : "text-slate-400"
           }`}
         >
           Order Weight by Zone
         </h2>
-        <div className="w-full h-full">
+        <div className="w-full h-[95%] flex-1">
           <Bar
             data={zoneChartData}
             options={{
@@ -1447,8 +1465,8 @@ function Order_rev() {
           theme === "light" ? "bg-white" : "bg-slate-900"
         } p-4 rounded shadow-md h-[700px] flex flex-col`}
       >
-        <h2
-          className={`text-sm font-thin ${
+       <h2
+          className={`text-md font-bold ${
             theme === "light" ? "text-slate-800" : "text-slate-400"
           }`}
         >
@@ -1586,8 +1604,8 @@ function Order_rev() {
           theme === "light" ? "bg-white " : "bg-slate-900"
         } p-4 rounded shadow-md overflow-auto h-[700px] custom-scrollbar`}
       >
-        <h2
-          className={`text-xl font-bold mb-4 mt-8 ${
+         <h2
+          className={`text-md font-bold ${
             theme === "light" ? "text-slate-800" : "text-slate-400"
           }`}
         >
@@ -1725,8 +1743,8 @@ function Order_rev() {
           theme === "light" ? "bg-white" : "bg-slate-900"
         }`}
       >
-        <h2
-          className={`text-xl font-bold mb-4 mt-8 ${
+         <h2
+          className={`text-md font-bold ${
             theme === "light" ? "text-slate-800" : "text-slate-400"
           }`}
         >
@@ -1841,16 +1859,16 @@ function Order_rev() {
         } p-4 rounded shadow-md overflow-auto h-[790px] custom-scrollbar`}
       >
         <div className="flex flex-row justify-between">
-          <h2
-            className={`text-xl font-bold  mt-0 ${
-              theme === "light" ? "text-slate-800" : "text-slate-400"
-            }`}
-          >
+        <h2
+          className={`text-md font-bold ${
+            theme === "light" ? "text-slate-800" : "text-slate-400"
+          }`}
+        >
             Sub Product Distribution
           </h2>
           <button
             className="bg-blue-500 hover:bg-blue-800 p-2 text-white font-semibold rounded-md"
-            onClick={!filter}
+            onClick={handleview}
           >
             View all
           </button>
@@ -1970,6 +1988,7 @@ function Order_rev() {
           theme === "light" ? "bg-white" : "bg-slate-900"
         }  p-4 rounded shadow-md overflow-x-auto h-[450px]`}
       >
+        
         {!isLoading && (
           <Line
             data={groupparty}
@@ -2620,27 +2639,29 @@ function Order_rev() {
 
           {currentPageCharts}
 
-          <div className="col-span-1 lg:col-span-2 flex justify-center mt-6">
-            <button
-              onClick={() =>
-                setCurrentPage((prevPage) => Math.max(prevPage - 1, 1))
-              }
-              disabled={currentPage === 1}
-              className="px-4 py-2 bg-blue-500 text-white rounded mr-2"
-            >
-              Previous
-            </button>
-            <button
-              onClick={() =>
-                setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages))
-              }
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 bg-blue-500 text-white rounded"
-            >
-              Next
-            </button>
-          </div>
+   
         </main>
+        <div className="col-span-1 lg:col-span-2 flex justify-center mt-6 mb-10">
+  <button
+    onClick={() =>
+      setCurrentPage((prevPage) => Math.max(prevPage - 1, 1))
+    }
+    disabled={currentPage === 1}
+    className="px-2 py-2 bg-blue-500 text-white text-sm rounded mr-2"
+  >
+    Previous
+  </button>
+  <button
+    onClick={() =>
+      setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages))
+    }
+    disabled={currentPage === totalPages}
+    className="px-2 py-1 bg-blue-500 text-white text-sm rounded"
+  >
+    Next
+  </button>
+</div>
+
       </div>
     </div>
   );

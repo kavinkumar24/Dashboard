@@ -260,7 +260,7 @@ function Department_AOP() {
         const fromDept = item["From Dept"]?.toUpperCase() || "";
         const toDept = item["To Dept"]?.toUpperCase() || "";
 
-        if (fromDeptSet.has(fromDept) || toDeptSet.has(toDept)) {
+        if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
           const project = item.Project || "Unknown Project";
           const cwQty = item["CW Qty"] || 0;
 

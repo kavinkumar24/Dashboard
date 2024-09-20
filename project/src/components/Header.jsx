@@ -55,7 +55,7 @@ function Header({ onSearch, onView, view, theme, dark, on_filter, filter, onDate
           </div>
         </div>
 
-        <div className="relative">
+        {/* <div className="relative">
           <button
             onClick={() => setShowFilter(!showFilter)}
             className={`p-2 rounded-md ${theme === 'light' ? 'bg-white' : 'bg-gray-700'}`}
@@ -90,14 +90,14 @@ function Header({ onSearch, onView, view, theme, dark, on_filter, filter, onDate
               </div>
             </div>
           )}
-        </div>
+        </div> */}
 
         <button
           onClick={handleTheme}
           className={`p-2 rounded-md ${theme === 'light' ? 'bg-white' : 'bg-gray-700'}`}
           aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
         >
-          {theme === 'light' ? <BsMoon size={20} /> : <BsSun size={20} />}
+          {theme === 'light' ? <BsMoon size={20}  className='text-blue-800' /> : <BsSun size={20} className='text-yellow-400' />}
         </button>
 
         <button
