@@ -17,9 +17,12 @@ import {
   PointElement,
   LineElement,
   ArcElement,
+  plugins,
 } from "chart.js";
 
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import 'chartjs-plugin-datalabels';
+
 
 ChartJS.register(
   CategoryScale,
@@ -179,11 +182,24 @@ function Skch_reject() {
       return filteredData.reduce((total, item) => total + item.COUNT, 0);
     });
     
+    // Combine the departments and their counts into an array of objects
+    const deptWithCounts = uniqueRaisedDept.map((dept, index) => ({
+      dept,
+      count: raisedDeptCounts[index],
+    }));
+    
+    // Sort the array based on the counts
+    deptWithCounts.sort((a, b) => a.count - b.count);
+    
+    // Separate the sorted departments and counts back into arrays
+    const sortedDepts = deptWithCounts.map(item => item.dept);
+    const sorteddeptCounts = deptWithCounts.map(item => item.count);
+    
     setChartData5({
-      labels: uniqueRaisedDept, // X-axis labels (Raised Departments)
+      labels: sortedDepts, // X-axis labels (Sorted Raised Departments)
       datasets: [{
         label: "Counts by Raised Dept",
-        data: raisedDeptCounts, // Y-axis data (Counts)
+        data: sorteddeptCounts, // Y-axis data (Sorted Counts)
         fill: false, // No fill under the line
         backgroundColor: "rgba(54, 162, 235, 0.2)",  
         borderColor: "rgba(54, 162, 235, 1)",
@@ -487,13 +503,54 @@ function Skch_reject() {
           </div>
           <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
           <h1 className="text-lg font-semibold p-2">Rejections Count by Raised Department </h1>
-            <div className="chart-container">
-              {chartData5 ? (
-                <Line data={chartData5}  />
-              ) : (
-                <p>Loading chart data...</p>
-              )}
-            </div>
+          <div className="chart-container">
+            {chartData5 ? (
+              <Line
+              data={chartData5}
+              options={{
+                legend: {
+                  display: true,
+                  position: "top",
+                  labels: {
+                    boxWidth: 15,
+                    padding: 10,
+                  },
+                },
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: "top",
+                    labels: {
+                      boxWidth: 15,
+                      padding: 10,
+                    },
+                  },
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        return `${context.raw}`;
+                      },
+                    },
+                  },
+                  datalabels: {
+                    display: true,
+                    align: 'top',
+                    formatter: function (value) {
+                      return value;
+                    },
+                    font: {
+                      weight: 'bold',
+                    },
+                  },
+                },
+              }}
+            />
+            
+            ) : (
+              <p>Loading chart data...</p>
+            )}
+          </div>
+
           </div>
         </div>
 

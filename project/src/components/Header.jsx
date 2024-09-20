@@ -25,7 +25,7 @@ function Header({ onSearch, onView, view, theme, dark, on_filter, filter, onDate
     if (fromDate && toDate && new Date(fromDate) <= new Date(toDate)) {
       onDateRangeChange(fromDate, toDate);
     } else {
-      // Optionally handle invalid date range (e.g., show a message)
+      // Optionally handle invalid date range (e.g., show a message)  
     }
     on_filter(!filter);
   };

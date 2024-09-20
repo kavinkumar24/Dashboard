@@ -62,7 +62,10 @@ function Reject() {
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleString());
   const [overAllData, setoverAllData] = useState(null);
 
-  // const[filter,setfilter]=useState(false)
+  const [uniqueDepartments, setUniqueDepartments] = useState([]);
+  const [deptPercentage, setDeptPercentage] = useState([]);
+
+
 
 
 
@@ -100,7 +103,11 @@ function Reject() {
   const getBorderColors = (colors) => {
     return colors.map((color) => color.replace(/0\.\d+\)/, "1)"));
   };
+  const [activeIndex1, setActiveIndex1] = useState(null);
 
+  const toggleAccordion1 = (index) => {
+    setActiveIndex1(activeIndex1 === index ? null : index);
+  };
   const fetchUploads = async () => {
     try {
       const response = await axios.get(
@@ -126,15 +133,36 @@ function Reject() {
         }
       }
     
+
+
+
       setoverAllData(data);
       setFilterApplied(false);  
       
       if (data) {
         // Calculate total counts for percentage calculations
-        setMessage("");
+        const uniquedept = [...new Set(data.map((item) => item.ToDept))];
+        const countsDept = uniquedept.map((dept) => {
+          const deptData = data.filter((item) => item.ToDept === dept);
+          return deptData.reduce((total, item) => total + item.COUNT, 0);
+        });
+  
+        console.log("Counts2:", countsDept);
+        console.log("Unique Departments:", uniquedept);
+  
+    
+  
         const totalDataCount = data.reduce((sum, item) => sum + item.COUNT, 0);
-      
-        // Unique Years and their counts
+        const percentage = countsDept.map((countArr) =>{
+              return ((countArr / totalDataCount) * 100).toFixed(2);
+        });
+        
+        // console.log("Percentage:", percentage);
+        setUniqueDepartments(uniquedept);
+        setDeptPercentage(percentage);
+
+        setMessage("");
+       
         const uniqueYears = [...new Set(data.map((item) => item.Yr))];
         const Yearcounts = uniqueYears.map((year) => {
           const yearData = data.filter((item) => item.Yr === year);
@@ -444,6 +472,16 @@ else if(worksheet === "Problems Arised Rejections"){
       console.warn("No elements were clicked");
     }
   };
+
+  const handleDeptChange = (dept) => {
+    const clickedLabel = dept; // Get the label of the clicked slice
+    const deptData = overAllData.filter(
+      (data) => data.ToDept === clickedLabel
+    );
+    navigate("/rejections/dept_rejections", {
+      state: { clickedLabel ,deptData},
+    });
+  }
   
 
   const optionschartPie = {
@@ -583,7 +621,12 @@ else if(worksheet === "Problems Arised Rejections"){
     console.log("Start Date:", newStartDate, "End Date:", newEndDate);
     
     setShowDatePickerModal(false);
+
+
   };
+
+
+
   return (
     <div
       className={`min-h-screen w-full flex ${
@@ -593,8 +636,6 @@ else if(worksheet === "Problems Arised Rejections"){
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <Header onSearch={setSearch} theme={theme} dark={setTheme} />
-
-
 
         <div className="flex justify-between mx-4 mt-4">
           <h1 className="font-bold text-xl">Rejections Overview</h1>
@@ -617,6 +658,8 @@ else if(worksheet === "Problems Arised Rejections"){
             </button>
 
           </div>
+
+
 
           {/* Date Picker Modal */}
           {showDatePickerModal && (
@@ -673,6 +716,68 @@ else if(worksheet === "Problems Arised Rejections"){
             </div>
           )}
         </div>
+
+        <div className="m-6 px-10 border rounded-lg border-gray-300 bg-white shadow-lg">
+
+<div className="border-b border-slate-200">
+  <button
+    onClick={() => toggleAccordion1(1)}
+    className="w-full flex justify-between items-center py-5 text-slate-800"
+  >
+    <span className="text-lg font-semibold">Rejection Percentage of  Departments</span>
+    <span className="text-slate-800 transition-transform duration-300">
+      {activeIndex1 === 1 ? (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          className="w-4 h-4"
+        >
+          <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
+        </svg>
+      ) : (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          className="w-4 h-4"
+        >
+          <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
+        </svg>
+      )}
+    </span>
+  </button>
+  <div
+    className={`${
+      activeIndex1 === 1 ? "max-h-screen" : "max-h-0"
+    } overflow-hidden transition-all duration-300 ease-in-out`}
+  >
+    {/* <div className="pb-5 text-sm text-slate-500">
+  Material Tailwind is a framework that enhances Tailwind CSS with additional styles and components.
+</div> */}
+            <div className="p-6 grid grid-cols-1 md:grid-cols-6 gap-4">
+      {uniqueDepartments.length > 0 ? (
+        uniqueDepartments.map((month, index) => (
+          <div
+            key={index}
+            className={`shadow-md rounded-lg p-6 cursor-pointer bg-blue-100 border-2 border-blue-300`}
+            onClick={()=>handleDeptChange(month)}
+          >
+            <h2 className="text-xl font-semibold mb-2">{month}</h2>
+            <p className="text-gray-500 font-bold text-xl">
+              {deptPercentage[index]}%
+            </p>
+          </div>
+        ))
+      ) : (
+        <p className="text-red-500 text-lg font-bold">No data available</p>
+      )}
+    </div>
+    
+  </div>
+</div>
+</div>
+
         {message !=="" ?<p>{message}</p>: 
         <div>
         <div className="flex">
