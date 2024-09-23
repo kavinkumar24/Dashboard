@@ -182,7 +182,7 @@ const ProjectDetails = () => {
     };
   }
 
-  const validValues = Object.values(projectAcc).filter(
+  const validValues = Object.values(productAcc).filter(
     (value) => value != null && value !== 0
   );
   const total = validValues.reduce((sum, value) => sum + value, 0);
@@ -276,7 +276,7 @@ const ProjectDetails = () => {
         } = aggregateData(filteredData);
         let displayedMonthAcc = monthAcc;
         if (!month) {
-          displayedMonthAcc = getTopMonths(monthAcc); // Get top 4 months if month is not declared
+          displayedMonthAcc = getTopMonths(monthAcc); 
         }
         setPurityAcc(purityAcc);
         setProjectAcc(projectAcc);
@@ -296,8 +296,7 @@ const ProjectDetails = () => {
     fetchData();
   }, [product]);
 
-  const subproductChartRef = useRef(null); // Create a ref for the subproduct chart div
-
+  const subproductChartRef = useRef(null); 
   const handleYearClick = (year) => {
     setSelectedYear(year);
   };

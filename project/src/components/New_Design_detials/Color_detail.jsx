@@ -182,7 +182,7 @@ const ProjectDetails = () => {
     };
   }
 
-  const validValues = Object.values(projectAcc).filter(
+  const validValues = Object.values(colorAcc).filter(
     (value) => value != null && value !== 0
   );
   const total = validValues.reduce((sum, value) => sum + value, 0);

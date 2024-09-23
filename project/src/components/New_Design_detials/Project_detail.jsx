@@ -22,10 +22,6 @@ const ProjectDetails = () => {
   const [isSelected, setIsSelected] = useState(false);
   const [selectedYear, setSelectedYear] = useState(null);
 
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
   const urlParams = new URLSearchParams(window.location.search);
 
   const year = urlParams.get("year");
@@ -100,10 +96,6 @@ const ProjectDetails = () => {
     }));
 
     // Aggregate function
-<<<<<<< Updated upstream
- 
-=======
->>>>>>> Stashed changes
 
     // Format and sort data
     const formatAndSortData = (data, limit = Infinity) => {
@@ -116,54 +108,6 @@ const ProjectDetails = () => {
         }, {});
     };
 
-<<<<<<< Updated upstream
-// Helper function to extract month and year from "DD&month"
-// Helper function to extract and format month and year from "DD&month"
-const extractMonthYear = (dateString) => {
-  const date = new Date(dateString);
-  const month = date.getMonth() + 1; // Months are 0-indexed in JS, so +1
-  const year = date.getFullYear();
-
-  // Return in "YYYY-MM" format
-  return `${year}-${month}`;
-};
-
-// Modified aggregate function to handle different fields, including "DD&month"
-const aggregate = (items, key) => {
-  return items.reduce((acc, item) => {
-    let value;
-
-    if (key === "DD&month") {
-      // Extract month and year from date string
-      value = extractMonthYear(item[key]);
-    } else {
-      value = item[key];
-    }
-
-    const weight = item.WT || 0; // Default to 0 if no weight
-
-    // Sum weights for each unique value (month-year combination)
-    acc[value] = (acc[value] || 0) + weight;
-    return acc;
-  }, {});
-};
-
-// Example usage
-
-
-// Example usage with enhancedData
-const purityAcc = aggregate(enhancedData, "Purity");
-const projectAcc = aggregate(enhancedData, "PROJECT");
-const productAcc = aggregate(enhancedData, "PRODUCT");
-const subproductAcc = aggregate(enhancedData, "SUB PRODUCT");
-const colorAcc = aggregate(enhancedData, "Color");
-const groupPartyAcc = aggregate(enhancedData, "Group party");
-const zoneAcc = aggregate(enhancedData, "ZONE");
-const plainAcc = aggregate(enhancedData, "PL-ST");
-const yearAcc = aggregate(enhancedData, "Dyr");
-const monthAcc = aggregate(enhancedData, "DD&month");
-
-=======
     // Helper function to extract month and year from "DD&month"
     // Helper function to extract and format month and year from "DD&month"
     const extractMonthYear = (dateString) => {
@@ -211,7 +155,6 @@ const monthAcc = aggregate(enhancedData, "DD&month");
     // Aggregating "DD&month" by month and year, summing weights
     const monthAcc = aggregate(enhancedData, "DD&month");
     console.log(monthAcc);
->>>>>>> Stashed changes
 
     // Format and sort data
     const formattedPurityAcc = formatAndSortData(purityAcc);
@@ -238,33 +181,12 @@ const monthAcc = aggregate(enhancedData, "DD&month");
       monthAcc: formattedMonthAcc,
     };
   }
-<<<<<<< Updated upstream
-  const getTopMonths = (monthAcc) => {
-    const currentYear = new Date().getFullYear();
-    
-    // Filter monthAcc for the current year
-    const filteredMonths = Object.entries(monthAcc).filter(([key]) => {
-      const [year] = key.split('-'); // Extract year from "YYYY-MM"
-      return parseInt(year, 10) === currentYear;
-    });
-  
-    // Sort by weight descending and take top 4
-    const sortedMonths = filteredMonths
-      .sort((a, b) => b[1] - a[1]) // Sort by weight descending
-      .slice(0, 4); // Take top 4
-  
-    return Object.fromEntries(sortedMonths); // Convert back to an object
-  };
-=======
->>>>>>> Stashed changes
 
   const validValues = Object.values(projectAcc).filter(
     (value) => value != null && value !== 0
   );
   const total = validValues.reduce((sum, value) => sum + value, 0);
   console.log("Valid total:", total);
-<<<<<<< Updated upstream
-=======
   const getTopMonths = (monthAcc) => {
     const currentYear = new Date().getFullYear();
   
@@ -303,7 +225,6 @@ const monthAcc = aggregate(enhancedData, "DD&month");
     return Object.fromEntries(sortedMonths); // Convert back to an object
   };
   
->>>>>>> Stashed changes
 
   useEffect(() => {
     const fetchData = async () => {
@@ -328,16 +249,6 @@ const monthAcc = aggregate(enhancedData, "DD&month");
           const months = parseParam(month);
 
           const itemYear = item.Dyr;
-<<<<<<< Updated upstream
-          const itemMonth = new Date(item['DD&month']).getMonth() + 1;
-
-          return item.PROJECT === project &&
-        
-
-            (year.length === 0 || years.includes(itemYear)) &&
-            (month.length === 0 || months.includes(itemMonth)) 
-          
-=======
           const itemMonth = new Date(item["DD&month"]).getMonth() + 1;
 
           return (
@@ -345,7 +256,6 @@ const monthAcc = aggregate(enhancedData, "DD&month");
             (year.length === 0 || years.includes(itemYear)) &&
             (month.length === 0 || months.includes(itemMonth))
           );
->>>>>>> Stashed changes
         });
         setData(filteredData);
         setFilteredData(filteredData);
@@ -368,10 +278,6 @@ const monthAcc = aggregate(enhancedData, "DD&month");
         if (!month) {
           displayedMonthAcc = getTopMonths(monthAcc); // Get top 4 months if month is not declared
         }
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
         setPurityAcc(purityAcc);
         setProjectAcc(projectAcc);
         setProductAcc(productAcc);
@@ -381,15 +287,7 @@ const monthAcc = aggregate(enhancedData, "DD&month");
         setPlainAcc(plainAcc);
         setGroupPartyAcc(groupPartyAcc);
         setYearAcc(yearAcc);
-<<<<<<< Updated upstream
-
-        
-     setMonthAcc(displayedMonthAcc);
-
-        
-=======
         setMonthAcc(displayedMonthAcc);
->>>>>>> Stashed changes
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -400,10 +298,6 @@ const monthAcc = aggregate(enhancedData, "DD&month");
 
   const subproductChartRef = useRef(null); // Create a ref for the subproduct chart div
 
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
   const handleYearClick = (year) => {
     setSelectedYear(year);
   };
@@ -533,20 +427,12 @@ const monthAcc = aggregate(enhancedData, "DD&month");
         callbacks: {
           label: function (context) {
             const value = context.raw;
-<<<<<<< Updated upstream
-            console.log(value)
-=======
             console.log(value);
->>>>>>> Stashed changes
             if (total === 0) return `Percent: 0%`;
             const percentage = ((value / total) * 100).toFixed(0);
             return `KG: ${value} Percent: ${percentage}%`;
           },
-<<<<<<< Updated upstream
-        },  
-=======
         },
->>>>>>> Stashed changes
       },
     },
     scales: {
@@ -635,18 +521,10 @@ const monthAcc = aggregate(enhancedData, "DD&month");
       },
     ],
   };
-<<<<<<< Updated upstream
-  
-  console.log();
-  const monthChartData = {
-    labels: Object.keys(monthAcc).map((monthYear) => {
-      const [year, month] = monthYear.split('-');
-=======
 
   const monthChartData = {
     labels: Object.keys(monthAcc).map((monthYear) => {
       const [year, month] = monthYear.split("-");
->>>>>>> Stashed changes
       const monthName = monthNames[parseInt(month, 10) - 1];
       return `${monthName} ${year}`;
     }),
@@ -657,37 +535,22 @@ const monthAcc = aggregate(enhancedData, "DD&month");
         backgroundColor: (context) => {
           const index = context.dataIndex;
           const monthYear = Object.keys(monthAcc)[index];
-<<<<<<< Updated upstream
-          const [year] = monthYear.split('-');
-          return year === selectedYear ? 'rgba(240, 128, 128, 0.3)' : 'rgba(240, 128, 128, 0.1)';
-=======
           const [year] = monthYear.split("-");
           return year === selectedYear
             ? "rgba(240, 128, 128, 0.3)"
             : "rgba(240, 128, 128, 0.1)";
->>>>>>> Stashed changes
         },
         borderColor: (context) => {
           const index = context.dataIndex;
           const monthYear = Object.keys(monthAcc)[index];
-<<<<<<< Updated upstream
-          const [year] = monthYear.split('-');
-          return year === selectedYear ? '#ec5f5f' : 'rgba(240, 128, 128, 0.1)';
-=======
           const [year] = monthYear.split("-");
           return year === selectedYear ? "#ec5f5f" : "rgba(240, 128, 128, 0.1)";
->>>>>>> Stashed changes
         },
         borderWidth: 1,
       },
     ],
   };
 
-<<<<<<< Updated upstream
-
-
-=======
->>>>>>> Stashed changes
   const projectChartData = {
     labels: Object.keys(projectAcc),
     datasets: [
@@ -1060,11 +923,6 @@ const monthAcc = aggregate(enhancedData, "DD&month");
                 </h1>
               </div>
 
-<<<<<<< Updated upstream
-            
-
-=======
->>>>>>> Stashed changes
               <div
                 className={`rounded-lg shadow-md p-3 flex items-center ${
                   theme === "dark" ? "bg-gray-900" : "bg-white"
@@ -1100,15 +958,10 @@ const monthAcc = aggregate(enhancedData, "DD&month");
               theme === "light" ? "bg-white" : "bg-gray-900"
             } p-4 rounded shadow-lg h-[400px] overflow-auto`}
           >
-<<<<<<< Updated upstream
-            <Pie data={plainstone} options={chartOptions} 
-            plugins={[ChartDataLabels]}
-=======
             <Pie
               data={plainstone}
               options={chartOptions}
               plugins={[ChartDataLabels]}
->>>>>>> Stashed changes
             />
           </div>
 
@@ -1119,19 +972,6 @@ const monthAcc = aggregate(enhancedData, "DD&month");
               theme === "light" ? "bg-white" : "bg-gray-900"
             } p-4 rounded shadow-lg h-[400px] overflow-auto`}
           >
-<<<<<<< Updated upstream
-            <Bar data={yearChartData} 
-             options={{
-              ...chartOptions,
-              onClick: (event, elements) => {
-                if (elements.length) {
-                  const index = elements[0].index;
-                  const year = Object.keys(yearAcc)[index];
-                  handleYearClick(year);
-                }
-              }
-            }} />
-=======
             <Bar
               data={yearChartData}
               options={{
@@ -1145,7 +985,6 @@ const monthAcc = aggregate(enhancedData, "DD&month");
                 },
               }}
             />
->>>>>>> Stashed changes
           </div>
 
           <div

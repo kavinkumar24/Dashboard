@@ -196,89 +196,110 @@ const [showPopup, setShowPopup] = useState(false);
     debouncedSearch(e.target.value);
   };
 
+  const [groupedProducts, setGroupedProducts] = useState({});
+
   useEffect(() => {
     console.log("Pending Data:", pendingData);
     console.log("Product Details:", productDetails);
   }, [pendingData, productDetails]);
-
+  
   const handleTabClick = async (dept) => {
     setActiveTab(dept);
     setSelectedProject(dept);
     setSpin(true);
-  
+
     try {
-      const [pendingResponse, jewelResponse] = await Promise.all([
-        axios.get("http://localhost:8081/pending_data"),
-        axios.get("http://localhost:8081/jewel-master"),
-      ]);
-  
-      const pendingData = pendingResponse.data;
-      const allJewelData = jewelResponse.data;
-  
-      const filteredPendingData = pendingData.filter(
-        (item) => item.PLTCODE1 === dept
+        // Fetch both pending_data and department mappings
+        const [pendingResponse, departmentMappingResponse, jewelResponse] = await Promise.all([
+            axios.get("http://localhost:8081/pending_data"),
+            axios.get("http://localhost:8081/department-mappings"),
+            axios.get("http://localhost:8081/jewel-master"),
+        ]);
+
+        const pendingData = pendingResponse.data;
+        const allJewelData = jewelResponse.data;
+
+        const filteredPendingData = pendingData.filter((item) => 
+          item.PLTCODE1.toLowerCase() === dept.toLowerCase()
       );
+      
+
+      // Get department mappings
+      const departmentMappings = departmentMappingResponse.data;
+      
+      // Extract all "to" departments across the department mappings
+      const allToDepartments = Object.values(departmentMappings)
+      .flatMap(mapping => mapping.to)
+            .map(dept => dept.trim().toLowerCase());
+
+          console.log("All To Departments:", allToDepartments);
+
+          // Filter pending data based on all "to" departments
+          const filtered_pending_department = filteredPendingData.filter(item =>
+            allToDepartments.includes(item.TODEPT.toLowerCase())
+          );
+          
+          console.log("Filtered Pendkkking dept:", filtered_pending_department);
+        const complexities = filtered_pending_department.map(item => item.COMPLEXITY1.toLowerCase());
+
+        // Filter jewel data based on complexities
+        const filteredJewelData = allJewelData.filter(item =>
+            complexities.includes(item.JewelCode.toLowerCase())
+        );
+
+     
+        setProductDetails(filteredJewelData);
   
-      const complexities = filteredPendingData.map((item) =>
-        item.COMPLEXITY1.toLowerCase()
-      );
-  
-      const filteredJewelData = allJewelData.filter((item) =>
-        complexities.includes(item.JewelCode.toLowerCase())
-      );
-  
-      const complexityCountMap = filteredPendingData.reduce((acc, item) => {
-        const complexity = item.COMPLEXITY1.toLowerCase();
-        acc[complexity] = (acc[complexity] || 0) + 1;
-        return acc;
-      }, {});
-  
-      console.log("Complexity Count Map:", complexityCountMap);
-  
-      // Filter product details based on   search term (case-insensitive)
-      const filteredProductDetails = filteredJewelData.filter(
-        (item) =>
-          item.Product?.toLowerCase().includes(search.toLowerCase()) ||
-          item["sub Product"]?.toLowerCase().includes(search.toLowerCase())
-      );
-  
-      // Map complexity counts to corresponding products and sub-products
-      const productDetailsWithComplexityCount = filteredProductDetails.map(
-        (product) => ({
-          ...product,
-          complexityCount: complexityCountMap[product.JewelCode.toLowerCase()] || 0,
-        })
-      );
-  
-      // Log the product details with their associated complexity count
-      console.log("Product Details with Complexity Count:", productDetailsWithComplexityCount);
-  
-      setPendingData(filteredPendingData);
-      setProductDetails(productDetailsWithComplexityCount);
+        // Group by product and count
+        const groupedProducts = groupByProduct(filteredJewelData, filtered_pending_department);
+        setGroupedProducts(groupedProducts);
+
+        setJewelData(filteredJewelData);
+
+        // console.log("Filtered Pending Data:", filteredPendingByDept);
+        console.log("Filtered Jewel Data:", filteredJewelData);
     } catch (error) {
-      setError("Error fetching data");
+        console.error('Error fetching data:', error);
+        setError('Error fetching data');
     } finally {
-      setSpin(false);
+        setSpin(false);
     }
-  };
+};
+
+
   
-  const groupByProduct = (data) => {
-    return data.reduce((acc, item) => {
-      if (!item.Product) return acc;
-      if (!acc[item.Product]) {
-        acc[item.Product] = { count: 0, subProducts: {} };
+const groupByProduct = (jewelData = [], pendingData = []) => {
+  if (!jewelData || !pendingData) {
+    console.log("jewelData", jewelData);
+    console.error("jewelData or pendingData is undefined");
+    return {};  
+  }
+
+  return jewelData.reduce((acc, jewelItem) => {
+    const matchingPendingData = pendingData?.filter(pendingItem => pendingItem.COMPLEXITY1 === jewelItem.JewelCode) || [];
+
+    if (!jewelItem.Product || matchingPendingData.length === 0) return acc;
+
+    if (!acc[jewelItem.Product]) {
+      acc[jewelItem.Product] = { count: 0, subProducts: {} };
+    }
+
+    // Increment product count based on matched pending data
+    acc[jewelItem.Product].count += matchingPendingData.length;
+
+    // Handle sub-products, default to 'Unknown' if not present
+    const subProduct = jewelItem['sub Product'] || 'Unknown';
+    if (subProduct) {
+      if (!acc[jewelItem.Product].subProducts[subProduct]) {
+        acc[jewelItem.Product].subProducts[subProduct] = 0;
       }
-      acc[item.Product].count += 1;
-      const subProduct = item["sub Product"] || "Unknown";
-      if (subProduct) {
-        if (!acc[item.Product].subProducts[subProduct]) {
-          acc[item.Product].subProducts[subProduct] = 0;
-        }
-        acc[item.Product].subProducts[subProduct] += 1;
-      }
-      return acc;
-    }, {});
-  };
+      // Increment sub-product count based on matched pending data
+      acc[jewelItem.Product].subProducts[subProduct] += matchingPendingData.length;
+    }
+
+    return acc;
+  }, {});
+};
 
   const filteredGroupedProducts = () => {
     const filteredProducts = Object.keys(groupByProduct(productDetails))
@@ -306,8 +327,8 @@ const [showPopup, setShowPopup] = useState(false);
     return filteredProducts;
   };
 
-  const groupedProducts = groupByProduct(productDetails);
-  const productsToShow = filteredGroupedProducts();
+  // const groupedProducts = groupByProduct(productDetails);
+  // const productsToShow = filteredGroupedProducts();
 
   if (error) {
     return <div className="p-6 text-red-500">{error}</div>;
@@ -687,53 +708,39 @@ const [showPopup, setShowPopup] = useState(false);
                 >
                   <h1 className="text-lg mb-3">{selectedProject}</h1>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Object.keys(productsToShow).map((product) => {
-                      const groupedProduct = productsToShow[product];
-                      return (
-                        <div
-                         
-                          key={product}
-                onClick={() => handleProductCardClick(product)}
-                          className={`shadow-md rounded-lg p-4 border-t-2 border-blue-400 ${
-                            theme === "light"
-                              ? "text-gray-800 bg-white"
-                              : "text-gray-300 bg-slate-600 border-slate-500"
-                          }`}
-                        >
-                          <div className="text-xl font-semibold mb-2 flex justify-between">
-                            <div
-                              className={`p-1 rounded-md mb-6 font-normal text-md ${
-                                theme === "light"
-                                  ? "bg-blue-200 text-gray-800"
-                                  : "bg-blue-900 text-gray-300"
-                              }`}
-                            >
-                              {product}
-                            </div>
-                            <span>Count: {groupedProduct.count}</span>
-                          </div>
-                          <div className="mt-2 grid grid-cols-1 gap-2">
-                            {Object.keys(groupedProduct.subProducts).map(
-                              (subProduct) => (
-                                <div
-                                  key={subProduct}
-                                  className={`${
-                                    theme === "light"
-                                      ? "bg-slate-100"
-                                      : "bg-slate-700"
-                                  } p-2 rounded-md`}
-                                >
-                                  <span className="font-medium">
-                                    {subProduct}:
-                                  </span>{" "}
-                                  {groupedProduct.subProducts[subProduct]}
-                                </div>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                  {Object.keys(groupedProducts).map(product => (
+        <div key={product} className={`p-4 rounded-lg shadow-md border-t-4 border-indigo-300 relative ${theme === 'light' ? 'text-gray-800 bg-white' : 'text-gray-300 bg-slate-600'}`}>
+            {/* <div className="text-xl font-semibold mb-2 flex justify-between flex-col">
+              <div className={`p-1 rounded-md mb-6 font-normal text-md ${theme==='light'?'bg-blue-200 text-gray-800':'bg-blue-900 text-gray-300'}`}>
+                {product}
+              </div>
+              <span className="bg-purple-200 text-black p-1 h-10">Count: {groupedProducts[product].count}</span>
+            </div> */}
+        
+
+
+          <div className={`p-2 mt-2 rounded-lg ${theme === 'light' ? 'bg-slate-100' : 'bg-slate-500'}`}>
+              <h3 className="font-bold text-lg">{product}</h3>
+              <p>Count : <mark className={` rounded-md  px-1 py-0.5  ${theme==='light'?'bg-purple-200 text-black':'bg-purple-900 text-slate-50'}`}>
+              {groupedProducts[product].count}
+                </mark></p>
+
+             
+            </div>
+           
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {groupedProducts[product]?.subProducts && Object.keys(groupedProducts[product].subProducts).length > 0 ? (
+              Object.keys(groupedProducts[product].subProducts).map(subProduct => (
+                <div key={subProduct} className={`flex items-center justify-between shadow-md p-1 rounded-md border ${theme==='light'?'bg-slate-100 border-slate-300':'bg-slate-700 border-slate-500 '} `}>
+                  <span className="font-medium">{subProduct}:</span> {groupedProducts[product].subProducts[subProduct]}
+                </div>
+              ))
+            ) : (
+              <div className="text-sm text-gray-500">No sub-products available</div>
+            )}
+          </div>
+        </div>
+      ))}
                   </div>
                 </div>
               )}

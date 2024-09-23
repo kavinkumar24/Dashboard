@@ -719,63 +719,44 @@ function Department_AOP() {
           {/* Target Popup */}
           {/* Target Popup */}
           {showTargetPopup && (
-            <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-              <div className={`${theme==='light'?'bg-white':'bg-slate-900'}  p-6 rounded-lg shadow-lg w-11/12 max-w-lg max-h-[80vh] overflow-auto`}>
-              <button onClick={() => setShowTargetPopup(false)} className="mr-0 float-right relative">X</button>
-                <h3 className="text-xl font-semibold mb-4">Edit Targets</h3>
-                <div>
-                  {sortedAllowedTargets.map((item, index) => (
-                    <div key={index} className="mb-4">
-                      <label className="block text-sm font-medium mb-1">
-                        
-                        <div className="flex flex-1 justify-between">
-                        {item === selectedDeptName ? selectedDeptName : item}
-                        <input
-                          type="text"
-                          value={targets[item.PLTCODE1] || ""}
-                          onChange={(e) =>
-                            handleEditChange(item.PLTCODE1, e.target.value)
-                          }
-                          className={`ml-2 p-2 border ${theme==='light'?'bg-white border-gray-300':'bg-slate-700 border-gray-500'}  rounded`}
-                        />
-                        </div>
-                      </label>
-                    </div>
-                  ))}
-                </div>
-                <div className="flex justify-between items-center mt-4">
-                  <button
-                    className="px-4 py-2 bg-blue-500 text-white rounded-md"
-                    onClick={handleSave}
-                  >
-                    Save
-                  </button>
-                  <div className="flex items-center">
-                    {/* <button
-                      className="px-4 py-2 bg-gray-500 text-white rounded-md mr-2"
-                      disabled={popupCurrentPage === 1}
-                      onClick={() => setPopupCurrentPage(popupCurrentPage - 1)}
-                    >
-                      Previous
-                    </button>
-                    <button
-                      className="px-4 py-2 bg-gray-500 text-white rounded-md mr-2"
-                      disabled={
-                        popupCurrentPage * itemsPerPage >= tableData.length
-                      }
-                      onClick={() => setPopupCurrentPage(popupCurrentPage + 1)}
-                    >
-                      Next
-                    </button> */}
-                    <button  className="px-4 py-2 bg-red-500 text-white rounded-md mr-2"
-                    onClick={() => setShowTargetPopup(false)}>
-                      Close
-                    </button>
-                  </div>
-                </div>
+  <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+    <div className={`${theme==='light'?'bg-white':'bg-slate-900'}  p-6 rounded-lg shadow-lg w-11/12 max-w-lg max-h-[80vh] overflow-auto`}>
+      <button onClick={() => setShowTargetPopup(false)} className="mr-0 float-right relative">X</button>
+      <h3 className="text-xl font-semibold mb-4">Edit Targets</h3>
+      <div>
+        {sortedAllowedTargets.map((item, index) => (
+          <div key={index} className="mb-4">
+            <label className="block text-sm font-medium mb-1">
+              <div className="flex flex-1 justify-between">
+                {item === selectedDeptName ? selectedDeptName : item}
+                <input
+                  type="text"
+                  value={targets[item] || ""} // Ensure that you use the department `item` directly
+                  onChange={(e) => handleEditChange(item, e.target.value)} // Pass the department `item` directly to handleEditChange
+                  className={`ml-2 p-2 border ${theme==='light'?'bg-white border-gray-300':'bg-slate-700 border-gray-500'} rounded`}
+                />
               </div>
-            </div>
-          )}
+            </label>
+          </div>
+        ))}
+      </div>
+      <div className="flex justify-between items-center mt-4">
+        <button
+          className="px-4 py-2 bg-blue-500 text-white rounded-md"
+          onClick={handleSave}
+        >
+          Save
+        </button>
+        <div className="flex items-center">
+          <button className="px-4 py-2 bg-red-500 text-white rounded-md mr-2" onClick={() => setShowTargetPopup(false)}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
         </main>
       </div>
     </div>

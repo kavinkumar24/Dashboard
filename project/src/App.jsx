@@ -34,7 +34,7 @@ import ProductDetailsPage from './components/AOP/Product_details';
 import Color_detai_new_design from './components/New_Design_detials/Color_detail';
 import Product_detail_new_design from './components/New_Design_detials/Product_detail';
 import Plain_stone_detail_new_design from './components/New_Design_detials/Plain_stone_details'
-import Project_detail_new_design from './components/New_Design_detials/Product_detail'
+import Project_detail_new_design from './components/New_Design_detials/Project_detail'
 // import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
 import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
 
