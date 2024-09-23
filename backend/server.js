@@ -28,13 +28,7 @@ app.post('/save-targets', (req, res) => {
   }
 
   // Check if the table exists, and create it if it doesn't
-  const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS projects_targets (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      project VARCHAR(255) NOT NULL UNIQUE,
-      target INT NOT NULL
-    )
-  `;
+
 
   db.query(createTableQuery, (err) => {
     if (err) {
@@ -252,8 +246,6 @@ const createDesignTable = "CREATE TABLE if not exists `design_center_task_sample
 `Completed` timestamp(6) NULL DEFAULT NULL, \
 `Created by` varchar(255) DEFAULT NULL, \
 `Created date and time` varchar(255) DEFAULT NULL \
-`fileID Varchar(255)` DEFAULT NULL \
-`uploadedDateTime` timestamp NULL DEFAULT NULL \
 )";
 
 
@@ -317,8 +309,7 @@ app.post('/api/target/upload', upload.single('file'), (req, res) => {
           Project VARCHAR(255),
           Product VARCHAR(255),
           SubProduct VARCHAR(255),
-          Total INT,
-          
+          Total INT
         )
       `;
 
@@ -484,9 +475,7 @@ const createProductionTableQuery = `CREATE TABLE IF NOT EXISTS \`Production_samp
   \`Description\` varchar(255) DEFAULT NULL,
   \`Design specification\` varchar(255) DEFAULT NULL,
   \`PRODUNITID\` varchar(255) DEFAULT NULL,
-  \`Remarks\` varchar(255) DEFAULT NULL,
-  \`fileID\` varchar(255) DEFAULT NULL,
-  \`uploadedDateTime\` timestamp NULL DEFAULT NULL
+  \`Remarks\` varchar(255) DEFAULT NULL
 )`;
 
 
@@ -951,7 +940,7 @@ function insertData(tableName, data, res) {
 
 
 
-//  app.get('/filtered_production_data', (req, res) => {
+
 //    const deptFilter = ['WBKOL-CAD', 'U4PD-CAD'];
 //    const toDeptFilter = ['U4PD-PRBOM', 'U1MMD', 'U1TOOL', 'U1CAM', 'U4PD-CAM'];
 
@@ -1593,10 +1582,10 @@ const createTableQuery = `CREATE TABLE IF NOT EXISTS rejection (
   Problem1 VARCHAR(255),
   ProblemArised2 VARCHAR(255),
   COUNT INT,
-  OperatorNameID VARCHAR(50)
-  file_ID VARCHAR(100),
-  uploadedDateTime TIMESTAMP,
+  OperatorNameID VARCHAR(50),
+  uploadedDateTime TIMESTAMP
 );`;
+
 
 db.query(createTableQuery, (err) => {
   if (err) {
