@@ -1414,6 +1414,43 @@ app.post('/api/target/upload', upload.single('file'), (req, res) => {
   }
 });
 
+app.get("/api/pending", (req, res) => {
+  const sql = "SELECT BRIEFNUM1, DESIGNSPEC1, PLTCODE1, SKETCHNUM1 FROM pending";
+  
+  db.query(sql, (err, data) => {
+    if (err) return res.json(err);
+
+    const groupedData = data.reduce((result, current) => {
+      const { BRIEFNUM1, DESIGNSPEC1, PLTCODE1, SKETCHNUM1 } = current;
+      
+      if (!result[BRIEFNUM1]) {
+        result[BRIEFNUM1] = {
+          BRIEFNUM1,
+          designspecs: new Set(),
+          pltcodes: new Set(),
+          sketchnums: new Set()
+        };
+      }
+
+      // Add unique design specs, PLTCODE1, and SKETCHNUM1
+      result[BRIEFNUM1].designspecs.add(DESIGNSPEC1);
+      result[BRIEFNUM1].pltcodes.add(PLTCODE1);
+      if (SKETCHNUM1) result[BRIEFNUM1].sketchnums.add(SKETCHNUM1);  // Only add if it exists
+      
+      return result;
+    }, {});
+
+    const formattedData = Object.values(groupedData).map(item => ({
+      BRIEFNUM1: item.BRIEFNUM1,
+      designspecs: Array.from(item.designspecs),  // Convert sets to arrays
+      pltcodes: Array.from(item.pltcodes),
+      sketchnums: Array.from(item.sketchnums)  // Convert SKETCHNUM1 set to array
+    }));
+
+    return res.json(formattedData);
+  });
+});
+
 
 
 app.get("/filtered_production_data", async (req, res) => {
