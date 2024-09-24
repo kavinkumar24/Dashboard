@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import Select from 'react-select';
 
 function CreateTask() {
   const axBriefMapping = {
@@ -38,8 +39,8 @@ function CreateTask() {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const handleAxBriefIdChange = (e) => {
-    const value = e.target.value;
+  const handleAxBriefIdChange = (a) => {
+    const value = a;
     setAx_brief(value);
   
     if (axBriefMapping[value]) {
@@ -99,6 +100,9 @@ function CreateTask() {
       setError('An error occurred while creating the task');
     }
   };
+  const deptOptions = [ { value: 'cad', label: 'CAD' }, { value: 'cam', label: 'CAM' }, { value: 'casting', label: 'CASTING' }, { value: 'upstream', label: 'UPSTREAM' } ,{ value: 'downstream', label: 'DOWNSTREAM' } ];
+  const priorityOptions = [ { value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' } ];
+  const briefOptions = [ { value: 'BF-900001390', label: 'BF-900001390' }, { value: 'BF-900001393', label: 'BF-900001393' }, { value: 'BF-900001395', label: 'BF-900001395' } ];
   
   return (
     <div className={`min-h-screen lg:min-h-screen min-w-screen w-[110%] md:w-[100%] lg:w-[100%] flex ${theme === 'light' ? 'bg-gray-100' : 'bg-gray-800'}`}>
@@ -106,65 +110,44 @@ function CreateTask() {
       <div className="flex-1 flex flex-col">
         <main className="flex-1 overflow-y-auto">
           <Header onSearch={setSearch} theme={theme} dark={setTheme} />
-          <div className={`p-5 relative shadow-xl rounded-lg left-0 md:left-28 w-full mb-20 md:w-[80%] ${theme === 'light' ? 'bg-white' : 'bg-gray-900'}`}>
+          <div className={`p-5 relative shadow-xl rounded-lg mx-10 mb-20 ${theme === 'light' ? 'bg-white' : 'bg-gray-900'}`}>
             <h2 className={`text-2xl font-semibold mb-6 ${theme === 'light' ? 'text-gray-800' : 'text-gray-100'}`}>
               Create a New Task
             </h2>
             <div className="scrollbar-hide">
-              <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="mb-4">
-                  <label className={`block text-sm font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`} htmlFor="axBriefId">
-                    Ax Brief
-                  </label>
-                  <input
-                    type="text"
-                    id="axBriefId"
-                    value={ax_brief}
-                    onChange={handleAxBriefIdChange}
-                    onBlur={handleAxBriefIdBlur}
-                    className={`appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
-                    placeholder="Enter AX Brief ID" 
-                    required
-                  />
-                   {error && (
-                    <p className="text-red-500 text-xs italic">{error}</p>
-                  )}
+              <form onSubmit={handleSubmit}>
+              <div className="space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
+                <label
+                  className={`block text-base font-bold ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'} w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`}
+                  htmlFor="axBriefId"
+                >
+                  Ax Brief
+                </label>
+                <Select
+                  className={`appearance-none rounded w-full ml-10 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'} w-full @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
+                  isClearable
+                  options={briefOptions}
+                  value={briefOptions.find(option => option.value === ax_brief)}
+                  onChange={(selectedOption) => {
+                    setAx_brief(selectedOption ? selectedOption.value : '');
+                    handleAxBriefIdChange(selectedOption ? selectedOption.value : '');
+                  }}
+                  // onBlur={handleAxBriefIdBlur} // You can remove this
+                  required
+                />
+              </div>
+              {error && (
+                <p className="text-red-500 text-xs italic">{error}</p>
+              )}
+              {isAutoFilled && (
+                <div>
+                  <p className='text-sm ml-7 '><span className='font-bold mr-4 '>Collection Name: </span>{collection_name}</p>
+                  <p className='text-sm ml-7 mb-6'><span className='font-bold mr-20'>Project: </span>{project}</p>
                 </div>
+              )}
 
-                <div className="mb-4">
-                  <label className={`block text-sm font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`} htmlFor="collectionName">
-                    Collection Name
-                  </label>
-                  <input
-                    type="text"
-                    id="collectionName"
-                    value={collection_name}
-                    readOnly={true}
-                    onChange={(e) => setCollection_name(e.target.value)}
-                    className={`appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
-                    placeholder="Enter Collection Name"
-                    required
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className={`block text-sm font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`} htmlFor="project">
-                    Project
-                  </label>
-                  <input
-                    type="text"
-                    id="project"
-                    value={project}
-                    readOnly={true}
-                    onChange={(e) => setProject(e.target.value)}
-                    className={`appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
-                    placeholder="Enter Project Name"
-                    required
-                  />
-                </div>
-
-                <div className="mb-4">
-                  <label className={`block text-sm font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`} htmlFor="qty">
+                <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
+                  <label className={`block text-base font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'} w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`} htmlFor="qty">
                     No. of Qty
                   </label>
                   <input
@@ -172,14 +155,14 @@ function CreateTask() {
                     id="qty"
                     value={no_of_qty}
                     onChange={(e) => setNo_of_qty(e.target.value)}
-                    className={` appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
+                    className={` appearance-none border-2 rounded ml-10 w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
                     placeholder="Enter Quantity"
                     required
                   />
                 </div>
 
-                <div className="mb-4">
-                  <label className={`block text-sm font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`} htmlFor="assignDate">
+                <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
+                  <label className={`block text-base font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'} w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`} htmlFor="assignDate">
                     Assign Date
                   </label>
                   <input
@@ -187,13 +170,13 @@ function CreateTask() {
                     id="assignDate"
                     value={assign_date}
                     onChange={(e) => setAssign_date(e.target.value)}
-                    className={`  appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
+                    className={`  appearance-none border rounded ml-10 w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
                     required
                   />
                 </div>
 
-                <div className="mb-4">
-                  <label className={`block text-sm font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`} htmlFor="targetDate">
+                <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
+                  <label className={`block text-base font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'} w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`} htmlFor="targetDate">
                     Target Date
                   </label>
                   <input
@@ -201,51 +184,93 @@ function CreateTask() {
                     id="targetDate"
                     value={target_date}
                     onChange={(e) => setTarget_date(e.target.value)}
-                    className={`  appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
+                    className={`  appearance-none border rounded ml-10 w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
                     required
                   />
                 </div>
 
-                <div className="mb-4">
-                  <label className={`block text-sm font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`} htmlFor="targetDate">
-                    Assign To
+                <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
+                  <label className={`block text-base font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'} w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`} htmlFor="targetDate">
+                   Departmemt
                   </label>
-                  <select
-                    id="priority"
-                    value={priority}
-                    onChange={(e) => setassignTo(e.target.value)}
-                    className={` appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
+                  <Select
+                    className={`appearance-none rounded w-full ml-10 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'} w-full @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
+                    isClearable
+                    options={deptOptions}
+                    value={deptOptions.find(option => option.value === assignTo)}
+                    onChange={(selectedOption) => setassignTo(selectedOption?.value || '')}
                     required
-                  >
-                    <option value="cad">E00346</option>
-                    <option value="cam">E18763</option>
-                  </select>
+                  />
                 </div>
-                
 
-                <div className="mb-4">
-                  <label className={`block text-sm font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`} htmlFor="priority">
+                <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
+                  <label className={`block text-base font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'} w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`} htmlFor="targetDate">
+                   Asignee Email
+                  </label>
+                  <input
+                    type="email"
+                    id="assigneeEmail"
+                    // value={target_date}
+                    // onChange={(e) => setTarget_date(e.target.value)}
+                    className={`  appearance-none border rounded ml-10 w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
+                    placeholder="Enter valid email ID"
+                    required
+                  />
+                </div>
+
+                <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
+                  <label className={`block text-base font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'} w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`} htmlFor="targetDate">
+                   Person Email
+                  </label>
+                  <input
+                    type="email"
+                    id="personemail"
+                    // value={target_date}
+                    // onChange={(e) => setTarget_date(e.target.value)}
+                    className={`  appearance-none border rounded ml-10 w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
+                    placeholder="Enter valid email ID"
+                    required
+                  />
+                </div>
+
+                <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
+                  <label className={`block text-base font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'} w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`} htmlFor="targetDate">
+                   HOD Email
+                  </label>
+                  <input
+                    type="email"
+                    id="hodemail"
+                    // value={target_date}
+                    // onChange={(e) => setTarget_date(e.target.value)}
+                    className={`  appearance-none border rounded ml-10 w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
+                    placeholder="Enter valid email ID"
+                    required
+                  />
+                </div>
+
+
+                <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
+                  <label className={`block text-base font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'} w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`} htmlFor="priority">
                     Priority
                   </label>
-                  <select
-                    id="priority"
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value)}
-                    className={` appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}`}
+                 
+                  <Select
+                    className={`appearance-none rounded w-full ml-10 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'} w-full @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
+                    isClearable
+                    options={priorityOptions}
+                    value={priorityOptions.find(option => option.value === priority)}
+                    onChange={(selectedOption) => setPriority(selectedOption?.value || 'medium')}
                     required
-                  >
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                  </select>
+                  />
+                  
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="md:col-span-2 flex justify-center">
                   <button
                     type="submit"
-                    className={`w-full py-3 px-4 font-bold text-white rounded-lg ${theme === 'light' ? 'bg-blue-500 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-800'}`}
+                    className={`w-1/3 py-3 px-4 font-bold text-white rounded-lg ${theme === 'light' ? 'bg-blue-500 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-800'}`}
                   >
-                    Create Task
+                    Create New Task
                   </button>
                 </div>
               </form>
