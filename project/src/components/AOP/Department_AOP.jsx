@@ -187,47 +187,6 @@ function Department_AOP() {
     targets,
   ]);
 
-  const [uniqueData, setUniqueData] = useState([]);
-
-  // useEffect(() => {
-  //   if (rawFilteredData.length && productionData.length && departmentMappings.length) {
-  //     // Map production data to determine achieved quantities
-  //     const achievedQuantities = productionData.reduce((acc, item) => {
-  //       const project = item.Project;
-  //       const fromDept = item["From Dept"];
-  //       const toDept = item["To Dept"];
-  //       const achievedQty = item.Qty;
-
-  //       // Determine if the project should be included based on department mappings
-  //       const mapping = departmentMappings.find((map) =>
-  //         map.from.includes(fromDept) && map.to.includes(toDept)
-  //       );
-
-  //       if (mapping) {
-  //         if (!acc[project]) {
-  //           acc[project] = 0;
-  //         }
-  //         acc[project] += achievedQty; // Sum achieved quantities
-  //       }
-
-  //       return acc;
-  //     }, {});
-
-  //     console.log("Achieved Quantities:", achievedQuantities);
-
-  //     // Update uniqueData to include achieved quantities
-  //     const updatedUniqueData = uniqueData.map((data) => {
-  //       const achievedQty = achievedQuantities[data.PLTCODE1] || 0;
-  //       return {
-  //         ...data,
-  //         Achieved: achievedQty
-  //       };
-  //     });
-
-  //     setUniqueData(updatedUniqueData);
-  //   }
-  // }, [rawFilteredData, productionData, departmentMappings]);
-
   const departmentOptions = ALLOWED_PROJECTS.map((dept) => ({
     value: dept.toUpperCase(),
     label: dept,
@@ -235,65 +194,61 @@ function Department_AOP() {
 
   const updateTableData = () => {
     const normalizedData = pendingData.map((item) => ({
-      ...item,
-      PLTCODE1: item.PLTCODE1?.toUpperCase() || "",
-      Wip:
-        pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)
-          ?.total_quantity || 0,
+        ...item,
+        PLTCODE1: item.PLTCODE1?.toUpperCase() || "",
+        Wip: pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)?.total_quantity || 0,
     }));
 
     if (!selectedDeptName) {
-      setTableData([]);
-      return;
+        setTableData([]);
+        return;
     }
 
     const deptMapping = departmentMappings[selectedDeptName];
     if (deptMapping && deptMapping.to) {
-      const fromDeptSet = new Set(
-        deptMapping.from.map((dept) => dept.toUpperCase())
-      );
-      const toDeptSet = new Set(
-        deptMapping.to.map((dept) => dept.toUpperCase())
-      );
+        const fromDeptSet = new Set(deptMapping.from.map((dept) => dept.toUpperCase()));
+        const toDeptSet = new Set(deptMapping.to.map((dept) => dept.toUpperCase()));
 
-      const projectTotals = rawFilteredData.reduce((acc, item) => {
-        const fromDept = item["From Dept"]?.toUpperCase() || "";
-        const toDept = item["To Dept"]?.toUpperCase() || "";
+        const projectTotals = rawFilteredData.reduce((acc, item) => {
+            const fromDept = item["From Dept"]?.toUpperCase() || "";
+            const toDept = item["To Dept"]?.toUpperCase() || "";
 
-        if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
-          const project = item.Project || "Unknown Project";
-          const cwQty = item["CW Qty"] || 0;
+            if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
+                const project = item.Project || "Unknown Project";
+                const cwQty = item["CW Qty"] || 0;
 
-          if (!acc[project]) {
-            acc[project] = 0;
-          }
-          acc[project] += cwQty;
-        }
+                if (!acc[project]) {
+                    acc[project] = 0;
+                }
+                acc[project] += cwQty;
+            }
 
-        return acc;
-      }, {});
+            return acc;
+        }, {});
+        
 
-      const filteredPendingData = normalizedData.filter((item) => {
-        return (
-          deptMapping.to
-            .map((dept) => dept.toUpperCase())
-            .includes(item.TODEPT?.toUpperCase() || "") &&
-          (selectedDepartments.length === 0 ||
-            selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
-        );
-      });
+        const filteredPendingData = normalizedData.filter((item) => {
+            return (
+                deptMapping.to
+                    .map((dept) => dept.toUpperCase())
+                    .includes(item.TODEPT?.toUpperCase() || "") &&
+                (selectedDepartments.length === 0 ||
+                    selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
+            );
+        });
 
-      const pltcodeCounts = filteredPendingData.reduce((acc, item) => {
-        if (!acc[item.PLTCODE1]) {
-          acc[item.PLTCODE1] = { count: 0, totalJCPDSCWQTY1: 0, totalWIP: 0 };
-        }
-        acc[item.PLTCODE1].count += 1;
-        acc[item.PLTCODE1].totalJCPDSCWQTY1 += item.JCPDSCWQTY1 || 0;
-        acc[item.PLTCODE1].totalWIP = item.Wip;
-        return acc;
-      }, {});
+        const pltcodeCounts = filteredPendingData.reduce((acc, item) => {
+            if (!acc[item.PLTCODE1]) {
+                acc[item.PLTCODE1] = { count: 0, totalJCPDSCWQTY1: 0, totalWIP: 0 };
+            }
+            acc[item.PLTCODE1].count += 1;
+            acc[item.PLTCODE1].totalJCPDSCWQTY1 += item.JCPDSCWQTY1 || 0;
+            acc[item.PLTCODE1].totalWIP = item.Wip;
+            return acc;
+        }, {});
 
-      const photoTotalQty =
+        // Use groupedData for targets
+        const photoTotalQty =
         selectedDeptName.toUpperCase() === "PHOTO"
           ? filteredPendingData.reduce(
               (sum, item) => sum + (item.JCPDSCWQTY1 || 0),
@@ -301,50 +256,45 @@ function Department_AOP() {
             )
           : 0;
 
-      const uniqueData = Object.keys(pltcodeCounts)
-        .filter((pltcode) => ALLOWED_PROJECTS.includes(pltcode))
-        .map((pltcode) => {
-          const totalJCPDSCWQTY1 = pltcodeCounts[pltcode].totalJCPDSCWQTY1;
-          const target = targets[pltcode] || 0;
-          const achieved =
-            selectedDeptName.toUpperCase() === "PHOTO" ? photoTotalQty : 0;
-          const pending = target - achieved;
-          const percentageAchieved = (achieved / target) * 100;
-          const week1Count = projectTotals[pltcode] || 0;
+        const updatedTableData = Object.keys(pltcodeCounts).map((pltcode) => {
+            const totalJCPDSCWQTY1 = pltcodeCounts[pltcode].totalJCPDSCWQTY1;
+            const target = groupedData[pltcode]?.total || 0; // Get target from groupedData
+            const achieved = selectedDeptName.toUpperCase() === "PHOTO" ? photoTotalQty : 0;
+            const pending = target - achieved;
+            const percentageAchieved = target > 0 ? (achieved / target) * 100 : 0;
+            const week1Count = projectTotals[pltcode] || 0;
 
-          return {
-            PLTCODE1: pltcode,
-            TotalJCPDSCWQTY1: totalJCPDSCWQTY1,
-            Target: target,
-            Achieved: achieved,
-            Pending: pending,
-            PercentageAchieved: percentageAchieved,
-            Wip: pltcodeCounts[pltcode].totalWIP,
-            AOP: target,
-            Week1: week1Count,
-          };
-        })
-        .sort(
-          (a, b) =>
-            ALLOWED_PROJECTS.indexOf(a.PLTCODE1) -
-            ALLOWED_PROJECTS.indexOf(b.PLTCODE1)
-        );
+            return {
+                PLTCODE1: pltcode,
+                TotalJCPDSCWQTY1: totalJCPDSCWQTY1,
+                Target: target,
+                Achieved: achieved,
+                Pending: pending,
+                PercentageAchieved: percentageAchieved,
+                Wip: pltcodeCounts[pltcode].totalWIP,
+                AOP: target,
+                Week1: week1Count,
+            };
+        }).sort((a, b) => {
+            return a.PLTCODE1.localeCompare(b.PLTCODE1);// Change to ascending if you want: a.PercentageAchieved - b.PercentageAchieved
+        });
 
-      // Calculate total percentage for "PHOTO" department
-      const totalPercentage = uniqueData
-        .filter((data) => data.PLTCODE1 === selectedDeptName)
-        .reduce(
-          (acc, item) => acc + parseFloat(item.PercentageAchieved || 0),
-          0
-        );
+        // Calculate total percentage for "PHOTO" department
+        const totalPercentage = updatedTableData
+            .filter((data) => data.PLTCODE1 === selectedDeptName)
+            .reduce(
+                (acc, item) => acc + parseFloat(item.PercentageAchieved || 0),
+                0
+            );
 
-      console.log("Total Percentage Achieved:", totalPercentage);
+        console.log("Total Percentage Achieved:", totalPercentage);
 
-      setTableData(uniqueData);
+        setTableData(updatedTableData);
     } else {
-      setTableData([]);
+        setTableData([]);
     }
-  };
+};
+
 
   const handleDepartmentChange = (selectedOptions) => {
     if(selectedOptions.length === 0){
@@ -379,33 +329,70 @@ function Department_AOP() {
     }));
   };
 
-  const handleSave = () => {
-    const dataToSave = Object.keys(targets).map((pltcode) => ({
-      project: pltcode,
-      target: targets[pltcode],
-    }));
 
-    fetch("http://localhost:8081/save-targets", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ targets: dataToSave }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Data saved successfully:", data);
-        setShowTargetPopup(false);
 
-        setTableData((prevTableData) =>
-          prevTableData.map((row) => ({
-            ...row,
-            Target: targets[row.PLTCODE1] || "",
-          }))
-        );
-      })
-      .catch((error) => console.error("Error saving data:", error));
-  };
+    const [groupedData, setGroupedData] = useState({});
+
+      useEffect(() => {
+        fetch("http://localhost:8081/api/target")
+            .then((response) => response.json())
+            .then((data) => {
+                console.log("Data fetched successfully:", data);  
+                const grouped = data.reduce((acc, item) => {
+                    const project = item.Project;
+                    const total = item["Total"];
+    
+                    if (!acc[project]) {
+                        acc[project] = { total: 0, products: [] };
+                    }
+                    
+                    acc[project].total += total;
+                    acc[project].products.push(item);
+                    return acc;
+                }, {});
+    
+                for (const project in grouped) {
+                    grouped[project].total = Math.round(grouped[project].total * 100) / 100;
+                }
+    
+                setGroupedData(grouped);
+            })
+            .catch((error) => {
+                console.error("Error fetching data:", error);
+            });
+    
+    }, []);
+    
+
+
+
+  // const handleSave = () => {
+  //   const dataToSave = Object.keys(targets).map((pltcode) => ({
+  //     project: pltcode,
+  //     target: targets[pltcode],
+  //   }));
+
+  //   fetch("http://localhost:8081/api/save-targets", {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //     body: JSON.stringify({ targets: dataToSave }),
+  //   })
+  //     .then((response) => response.json())
+  //     .then((data) => {
+  //       console.log("Data saved successfully:", data);
+  //       setShowTargetPopup(false);
+
+  //       setTableData((prevTableData) =>
+  //         prevTableData.map((row) => ({
+  //           ...row,
+  //           Target: targets[row.PLTCODE1] || "",
+  //         }))
+  //       );
+  //     })
+  //     .catch((error) => console.error("Error saving data:", error));
+  // };
 
   const handleDownload = () => {
     const headers = [
@@ -535,12 +522,12 @@ function Department_AOP() {
 
           {/* Target Button */}
           <div className="flex flex-1 justify-end space-x-2">
-            <button
+            {/* <button
               className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
               onClick={handleTargetClick}
             >
               Set Target
-            </button>
+            </button> */}
 
             {selectedDeptName && (
               <button
@@ -718,7 +705,7 @@ function Department_AOP() {
 
           {/* Target Popup */}
           {/* Target Popup */}
-          {showTargetPopup && (
+          {/* {showTargetPopup && (
   <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
     <div className={`${theme==='light'?'bg-white':'bg-slate-900'}  p-6 rounded-lg shadow-lg w-11/12 max-w-lg max-h-[80vh] overflow-auto`}>
       <button onClick={() => setShowTargetPopup(false)} className="mr-0 float-right relative">X</button>
@@ -755,7 +742,7 @@ function Department_AOP() {
       </div>
     </div>
   </div>
-)}
+)} */}
 
         </main>
       </div>
@@ -764,3 +751,4 @@ function Department_AOP() {
 }
 
 export default Department_AOP;
+
