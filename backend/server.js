@@ -145,13 +145,13 @@ app.post('/api/login', (req, res) => {
   const { emp_id, password } = req.body;
 
   if (!emp_id || !password) {
-    return res.status(400).json({ message: 'Employee ID and password are required' });
+    return res.status(400).json({ message: 'Employee ID or Email and password are required' });
   }
 
-  // Query to fetch the user based on emp_id
-  const query = 'SELECT * FROM users WHERE emp_id = ?';
+  // Check for both emp_id or Email
+  const query = 'SELECT * FROM users WHERE emp_id = ? OR Email = ?';
 
-  db.query(query, [emp_id], (err, results) => {
+  db.query(query, [emp_id, emp_id], (err, results) => {  // Using emp_id for both emp_id and Email
     if (err) return res.status(500).json({ message: 'Database error', error: err });
 
     if (results.length === 0) {
@@ -185,6 +185,7 @@ app.post('/api/login', (req, res) => {
   });
 });
 
+
 // Protected route for admin
 app.use('/api/admin-only', authorize(['admin']), (req, res) => {
   res.status(200).json({ message: 'Welcome, admin!' });
@@ -194,6 +195,7 @@ app.use('/api/admin-only', authorize(['admin']), (req, res) => {
 app.get('/api/user-only', authorize(['user']), (req, res) => {
   res.status(200).json({ message: 'Welcome, user!' });
 });
+
 
 // login page api end
 
@@ -1617,6 +1619,26 @@ app.get("/create-task", (req, res) => {
       res.json(data);
    });
 });
+
+app.put('/update-task/:id', (req, res) => {
+  const taskId = req.params.id;
+  const { Completed_Status } = req.body;
+
+  const sql = "UPDATE Created_task SET Completed_Status = ? WHERE Task_ID = ?";
+  db.query(sql, [Completed_Status, taskId], (err, results) => {
+    if (err) {
+      console.error('Error updating task status:', err);
+      return res.status(500).send('Error updating task status');
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).send('Task not found');
+    }
+
+    res.send('Task updated successfully');
+  });
+});
+
 app.post("/create-task", (req, res) => {
   console.log("Request Body:", req.body);
   const {
