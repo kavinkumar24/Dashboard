@@ -37,6 +37,7 @@ import Plain_stone_detail_new_design from './components/New_Design_detials/Plain
 import Project_detail_new_design from './components/New_Design_detials/Project_detail'
 // import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
 import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
+import Mail from './components/Email'
 
 function App() {
 
@@ -45,6 +46,7 @@ function App() {
       <div>
       <Routes>
         <Route path='/' element={<Exceldata />} />
+        <Route path='/mail' element={<Mail />} />
         <Route path="/product-details/:pltcode/:dept" element={<ProductDetailsPage />} />
         <Route path="/department/:deptId/:type" element={<DepartmentDetail />} />
         <Route path="/projects" element={<Projects />} />

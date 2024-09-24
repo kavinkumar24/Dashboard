@@ -1608,7 +1608,7 @@ app.get("/raw_filtered_pending_data", async (req, res) => {
 });
 
 app.get("/create-task", (req, res) => {
-   const sql = "SELECT * FROM task";
+   const sql = "SELECT * FROM Created_task";
    db.query(sql, (err, data) => {
       if (err) {
          console.error(err);
@@ -1617,30 +1617,81 @@ app.get("/create-task", (req, res) => {
       res.json(data);
    });
 });
-
 app.post("/create-task", (req, res) => {
-   console.log("Request Body:", req.body);
-   const { ax_brief, collection_name, project, no_of_qty, assign_date, target_date, priority } = req.body;
- 
-   if (!ax_brief || !collection_name || !project || !no_of_qty || !assign_date || !target_date || !priority) {
-     console.error("Missing required fields");
-     return res.status(400).json({ message: "Missing required fields" });
-   }
- 
-   const sql = `
-     INSERT INTO task (ax_brief, collection_name, project, no_of_qty, assign_date, target_date, priority)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`;
- 
-   const values = [ax_brief, collection_name, project, no_of_qty, assign_date, target_date, priority];
- 
-   db.query(sql, values, (err, result) => {
-     if (err) {
-       console.error("Database Error:", err); 
-       return res.status(500).json({ message: "Failed to create task", error: err });
-     }
-     res.json({ message: "Task created successfully", taskId: result.insertId });
-   });
- });
+  console.log("Request Body:", req.body);
+  const {
+    ax_brief,
+      collection_name,
+      project,
+      no_of_qty,
+      assign_date,
+      target_date,
+      priority,
+      sketch,
+      depart,
+      assignTo,
+      person,
+      hodemail,
+      ref_images,
+      isChecked
+  } = req.body;
+
+  if (!ax_brief || !collection_name || !project || !no_of_qty || !assign_date || !target_date || !priority) {
+      console.error("Missing required fields");
+      return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  const sql = `
+INSERT INTO Created_task (
+    Ax_Brief, Sketch, Collection_Name, References_Image, Project, Assign_Name,
+    Person, OWNER, No_of_Qty, Dept, Complete_Qty, Pending_Qty,
+    Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks
+) 
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+`;
+
+const calculateRemainingDays = (targetDate) => {
+  const now = new Date();
+  const target = new Date(targetDate);
+  const diffTime = Math.abs(target - now);
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+};
+const remainingDays = calculateRemainingDays(target_date);
+
+
+const values = [
+  ax_brief,          // Ax_Brief
+  sketch,            // Sketch
+  collection_name,   // Collection_Name
+  ref_images,        // References_Image
+  project,           // Project
+  assignTo,          // Assign_Name
+  person,            // Person
+  hodemail,          // OWNER
+  no_of_qty,         // No_of_Qty
+  depart,            // Dept
+  0,                 // Complete_Qty (default to 0)
+  0,                 // Pending_Qty (default to 0)
+  assign_date,       // Assign_Date
+  target_date,       // Target_Date
+  remainingDays,                 // Remaining_Days (you can calculate this if needed)
+  isChecked ? 'Yes' : 'No',  // Project_View
+  'In Progress',     // Completed_Status
+  'null pointer'     // Remarks (or provide actual remarks if needed)
+];
+
+
+
+  db.query(sql, values, (err, result) => {
+      if (err) {
+          console.error("Database Error:", err);
+          return res.status(500).json({ message: "Failed to create task", error: err });
+      }
+      res.json({ message: "Task created successfully", taskId: result.insertId });
+  });
+});
+
  
 app.get("/tasks", (req, res) => {
    const sql = "SELECT * FROM task";
@@ -1841,8 +1892,48 @@ app.post('/api/rejection/upload', upload.single('file'), (req, res) => {
       res.json(results);
     });
   });
+
+
+
+
+
+
+const nodemailer = require('nodemailer');
+const bodyParser = require('body-parser');
+
+const transporter = nodemailer.createTransport({
+  service: 'Gmail', // Use your email provider
+  auth: {
+    user: 'kavinmpm24@gmail.com', // Your email
+    pass: 'K@vinkumar242003', // Your email password
+  },
+});
+
+app.post('/api/send-email', (req, res) => {
+  const { from, to, subject, body } = req.body;
+
+  const mailOptions = {
+    from,
+    to,
+    subject,
+    text: body,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      return res.status(500).send(error.toString());
+    }
+    res.status(200).send('Email sent: ' + info.response);
+  });
+});
+
+
+
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
+
+
+
 
 
