@@ -35,11 +35,13 @@ import Color_detai_new_design from './components/New_Design_detials/Color_detail
 import Product_detail_new_design from './components/New_Design_detials/Product_detail';
 import Plain_stone_detail_new_design from './components/New_Design_detials/Plain_stone_details'
 import Project_detail_new_design from './components/New_Design_detials/Project_detail'
-// import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
 import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
 import PrivateRoute from './PrivateRoute';
 import Mail from './components/Email'
 import Image from './components/Imageupload'
+import Operational_task from './components/Operational_Task/Operational_task';
+import Phase_view from './components/Operational_Task/Phase_view';
+
 
 function App() {
 
@@ -239,6 +241,8 @@ function App() {
           <Detailed_task/>
           </PrivateRoute>
         }/>
+        <Route path='/task/operational_task' element = {<Operational_task/>}/>
+        <Route path='/task/operational_task/phase_view' element = {<Phase_view/>}/>
       </Routes>
       </div>
       
@@ -248,7 +252,6 @@ function App() {
 
 export default App
 
-// import './App.css';
 // import Exceldata from './components/Excel_read_Admin';
 // import { Route, Routes, Navigate } from 'react-router';
 // import DepartmentDetail from './components/Depart_Card';
