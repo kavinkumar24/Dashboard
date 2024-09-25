@@ -3,11 +3,22 @@ import { BsSun, BsMoon } from "react-icons/bs";
 import { ImSearch } from 'react-icons/im';
 import { IoCardOutline, IoFilterOutline } from "react-icons/io5";
 import { ImTable2 } from 'react-icons/im';
+import { FiLogOut } from "react-icons/fi";
+
+
 function Header({ onSearch, onView, view, theme, dark, on_filter, filter, onDateRangeChange }) {
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleString());
   const [showFilter, setShowFilter] = useState(false); 
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+
+
+  const handleLogout = () => {
+    // Remove JWT token from localStorage
+    localStorage.removeItem('token'); 
+    // Optionally redirect the user to the login page or home
+    window.location.href = '/login'; // Change this to the appropriate route
+  };
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -100,6 +111,7 @@ function Header({ onSearch, onView, view, theme, dark, on_filter, filter, onDate
           {theme === 'light' ? <BsMoon size={20}  className='text-blue-800' /> : <BsSun size={20} className='text-yellow-400' />}
         </button>
 
+  
         <button
           onClick={() => onView(!view)}
           className={`p-2 rounded-md ${theme === 'light' ? 'bg-white' : 'bg-gray-700'}`}
@@ -107,6 +119,19 @@ function Header({ onSearch, onView, view, theme, dark, on_filter, filter, onDate
         >
           {view ? <ImTable2 size={20} className={`${theme === 'light' ? 'text-gray-700' : 'text-gray-400'}`} /> : <IoCardOutline size={20} className={`${theme === 'light' ? 'text-gray-700' : 'text-gray-400'}`} />}
         </button>
+
+        <button
+          onClick={handleLogout}
+          className={`p-2 rounded-md ${theme === 'light' ? 'bg-white' : 'bg-gray-700'}`}
+          aria-label={`Switch to ${view ? 'card' : 'table'} view`}
+          title='Logout'
+        >
+          <FiLogOut className={`${theme === 'light' ? 'text-gray-700' : 'text-red-300'}`} />
+        </button>
+
+
+
+
       </div>
     </header>
   );

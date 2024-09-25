@@ -145,13 +145,13 @@ app.post('/api/login', (req, res) => {
   const { emp_id, password } = req.body;
 
   if (!emp_id || !password) {
-    return res.status(400).json({ message: 'Employee ID and password are required' });
+    return res.status(400).json({ message: 'Employee ID or Email and password are required' });
   }
 
-  // Query to fetch the user based on emp_id
-  const query = 'SELECT * FROM users WHERE emp_id = ?';
+  // Check for both emp_id or Email
+  const query = 'SELECT * FROM users WHERE emp_id = ? OR Email = ?';
 
-  db.query(query, [emp_id], (err, results) => {
+  db.query(query, [emp_id, emp_id], (err, results) => {  // Using emp_id for both emp_id and Email
     if (err) return res.status(500).json({ message: 'Database error', error: err });
 
     if (results.length === 0) {
@@ -185,6 +185,7 @@ app.post('/api/login', (req, res) => {
   });
 });
 
+
 // Protected route for admin
 app.use('/api/admin-only', authorize(['admin']), (req, res) => {
   res.status(200).json({ message: 'Welcome, admin!' });
@@ -194,6 +195,7 @@ app.use('/api/admin-only', authorize(['admin']), (req, res) => {
 app.get('/api/user-only', authorize(['user']), (req, res) => {
   res.status(200).json({ message: 'Welcome, user!' });
 });
+
 
 // login page api end
 
@@ -1297,6 +1299,162 @@ app.get("/raw_filtered_production_data",async(req, res) => {
     }
   );
 });
+
+app.get('/api/target', (req, res) => {
+  const sql = 'SELECT * FROM target';
+  db.query(sql, (err, data) => {
+    if (err) return res.json(err);
+    return res.json(data);
+  });
+});
+
+app.post('/api/target/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+
+  const fileBuffer = req.file.buffer;
+
+  try {
+    const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+
+    // Expected column names (in the order they should appear)
+    const expectedColumns = ['PROJECT-1', 'Product', 'Sub_Product', 'Total'];
+
+    // Get the first row (header row) from the Excel file
+    const fileHeaders = jsonData[0];
+
+    // Check if all required headers are present and match
+    const headerMismatch = expectedColumns.filter(col => !fileHeaders.includes(col));
+
+    if (headerMismatch.length > 0) {
+      // If there's a mismatch in headers, return an error message to the user
+      return res.status(400).send(`
+        Attention Please!!! : The following columns are missing or mismatched: 
+        ${headerMismatch.join(', ')}. 
+        Please correct the column names and try re-uploading the file after refreshing or reloading the current page.
+      `);
+    }
+
+    // Remove the header row and process the data
+    const values = jsonData.slice(1).map(row => [
+      row[fileHeaders.indexOf('PROJECT-1')],
+      row[fileHeaders.indexOf('Product')],
+      row[fileHeaders.indexOf('Sub_Product')],
+      row[fileHeaders.indexOf('Total')],
+    ]);
+
+    db.beginTransaction((transactionErr) => {
+      if (transactionErr) {
+        console.error('Transaction error:', transactionErr);
+        return res.status(500).send('Transaction failed');
+      }
+
+      // Create the 'target' table if it doesn't exist
+      const createTableQuery = `
+        CREATE TABLE IF NOT EXISTS target (
+          Project VARCHAR(255),
+          Product VARCHAR(255),
+          SubProduct VARCHAR(255),
+          Total FLOAT
+          
+        )
+      `;
+
+      db.query(createTableQuery, (createTableErr) => {
+        if (createTableErr) {
+          db.rollback(() => {
+            console.error('Create table error:', createTableErr);
+            return res.status(500).send('Error creating target table');
+          });
+        }
+
+        // Delete existing data in the 'target' table
+        const deleteQuery = 'DELETE FROM target';
+        db.query(deleteQuery, (deleteErr) => {
+          if (deleteErr) {
+            db.rollback(() => {
+              console.error('Delete error:', deleteErr);
+              return res.status(500).send('Error deleting old target data');
+            });
+          }
+
+          // Insert new data into the 'target' table
+          const insertQuery = `
+            INSERT INTO target (Project, Product, SubProduct, Total)
+            VALUES ?
+          `;
+
+          db.query(insertQuery, [values], (insertErr, results) => {
+            if (insertErr) {
+              db.rollback(() => {
+                console.error('Insert error:', insertErr);
+                return res.status(500).send('Error inserting new target data');
+              });
+            }
+
+            db.commit((commitErr) => {
+              if (commitErr) {
+                db.rollback(() => {
+                  console.error('Commit error:', commitErr);
+                  return res.status(500).send('Error committing transaction');
+                });
+              }
+
+              res.send('Target data uploaded and inserted successfully.');
+            });
+          });
+        });
+      });
+    });
+  } catch (error) {
+    console.error('Error processing file:', error);
+    res.status(500).send('Error processing file');
+  }
+});
+
+app.get("/api/pending", (req, res) => {
+  const sql = "SELECT BRIEFNUM1, DESIGNSPEC1, PLTCODE1, SKETCHNUM1 FROM pending";
+  
+  db.query(sql, (err, data) => {
+    if (err) return res.json(err);
+
+    const groupedData = data.reduce((result, current) => {
+      const { BRIEFNUM1, DESIGNSPEC1, PLTCODE1, SKETCHNUM1 } = current;
+      
+      if (!result[BRIEFNUM1]) {
+        result[BRIEFNUM1] = {
+          BRIEFNUM1,
+          designspecs: new Set(),
+          pltcodes: new Set(),
+          sketchnums: new Set()
+        };
+      }
+
+      // Add unique design specs, PLTCODE1, and SKETCHNUM1
+      result[BRIEFNUM1].designspecs.add(DESIGNSPEC1);
+      result[BRIEFNUM1].pltcodes.add(PLTCODE1);
+      if (SKETCHNUM1) result[BRIEFNUM1].sketchnums.add(SKETCHNUM1);  // Only add if it exists
+      
+      return result;
+    }, {});
+
+    const formattedData = Object.values(groupedData).map(item => ({
+      BRIEFNUM1: item.BRIEFNUM1,
+      designspecs: Array.from(item.designspecs),  // Convert sets to arrays
+      pltcodes: Array.from(item.pltcodes),
+      sketchnums: Array.from(item.sketchnums)  // Convert SKETCHNUM1 set to array
+    }));
+
+    return res.json(formattedData);
+  });
+});
+
+
+
 app.get("/filtered_production_data", async (req, res) => {
   const response = await axios.get("http://localhost:8081/department-mappings");
   const departmentMappings = response.data;
@@ -1452,7 +1610,7 @@ app.get("/raw_filtered_pending_data", async (req, res) => {
 });
 
 app.get("/create-task", (req, res) => {
-   const sql = "SELECT * FROM task";
+   const sql = "SELECT * FROM Created_task";
    db.query(sql, (err, data) => {
       if (err) {
          console.error(err);
@@ -1462,29 +1620,100 @@ app.get("/create-task", (req, res) => {
    });
 });
 
+app.put('/update-task/:id', (req, res) => {
+  const taskId = req.params.id;
+  const { Completed_Status } = req.body;
+
+  const sql = "UPDATE Created_task SET Completed_Status = ? WHERE Task_ID = ?";
+  db.query(sql, [Completed_Status, taskId], (err, results) => {
+    if (err) {
+      console.error('Error updating task status:', err);
+      return res.status(500).send('Error updating task status');
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).send('Task not found');
+    }
+
+    res.send('Task updated successfully');
+  });
+});
+
 app.post("/create-task", (req, res) => {
-   console.log("Request Body:", req.body);
-   const { ax_brief, collection_name, project, no_of_qty, assign_date, target_date, priority } = req.body;
- 
-   if (!ax_brief || !collection_name || !project || !no_of_qty || !assign_date || !target_date || !priority) {
-     console.error("Missing required fields");
-     return res.status(400).json({ message: "Missing required fields" });
-   }
- 
-   const sql = `
-     INSERT INTO task (ax_brief, collection_name, project, no_of_qty, assign_date, target_date, priority)
-     VALUES (?, ?, ?, ?, ?, ?, ?)`;
- 
-   const values = [ax_brief, collection_name, project, no_of_qty, assign_date, target_date, priority];
- 
-   db.query(sql, values, (err, result) => {
-     if (err) {
-       console.error("Database Error:", err); 
-       return res.status(500).json({ message: "Failed to create task", error: err });
-     }
-     res.json({ message: "Task created successfully", taskId: result.insertId });
-   });
- });
+  console.log("Request Body:", req.body);
+  const {
+    ax_brief,
+      collection_name,
+      project,
+      no_of_qty,
+      assign_date,
+      target_date,
+      priority,
+      sketch,
+      depart,
+      assignTo,
+      person,
+      hodemail,
+      ref_images,
+      isChecked
+  } = req.body;
+
+  if (!ax_brief || !collection_name || !project || !no_of_qty || !assign_date || !target_date || !priority) {
+      console.error("Missing required fields");
+      return res.status(400).json({ message: "Missing required fields" });
+  }
+
+  const sql = `
+INSERT INTO Created_task (
+    Ax_Brief, Sketch, Collection_Name, References_Image, Project, Assign_Name,
+    Person, OWNER, No_of_Qty, Dept, Complete_Qty, Pending_Qty,
+    Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks
+) 
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+`;
+
+const calculateRemainingDays = (targetDate) => {
+  const now = new Date();
+  const target = new Date(targetDate);
+  const diffTime = Math.abs(target - now);
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+};
+const remainingDays = calculateRemainingDays(target_date);
+
+
+const values = [
+  ax_brief,          // Ax_Brief
+  sketch,            // Sketch
+  collection_name,   // Collection_Name
+  ref_images,        // References_Image
+  project,           // Project
+  assignTo,          // Assign_Name
+  person,            // Person
+  hodemail,          // OWNER
+  no_of_qty,         // No_of_Qty
+  depart,            // Dept
+  0,                 // Complete_Qty (default to 0)
+  0,                 // Pending_Qty (default to 0)
+  assign_date,       // Assign_Date
+  target_date,       // Target_Date
+  remainingDays,                 // Remaining_Days (you can calculate this if needed)
+  isChecked ? 'Yes' : 'No',  // Project_View
+  'In Progress',     // Completed_Status
+  'null pointer'     // Remarks (or provide actual remarks if needed)
+];
+
+
+
+  db.query(sql, values, (err, result) => {
+      if (err) {
+          console.error("Database Error:", err);
+          return res.status(500).json({ message: "Failed to create task", error: err });
+      }
+      res.json({ message: "Task created successfully", taskId: result.insertId });
+  });
+});
+
  
 app.get("/tasks", (req, res) => {
    const sql = "SELECT * FROM task";
@@ -1685,8 +1914,48 @@ app.post('/api/rejection/upload', upload.single('file'), (req, res) => {
       res.json(results);
     });
   });
+
+
+
+
+
+
+const nodemailer = require('nodemailer');
+const bodyParser = require('body-parser');
+
+const transporter = nodemailer.createTransport({
+  service: 'Gmail', // Use your email provider
+  auth: {
+    user: 'kavinmpm24@gmail.com', // Your email
+    pass: 'K@vinkumar242003', // Your email password
+  },
+});
+
+app.post('/api/send-email', (req, res) => {
+  const { from, to, subject, body } = req.body;
+
+  const mailOptions = {
+    from,
+    to,
+    subject,
+    text: body,
+  };
+
+  transporter.sendMail(mailOptions, (error, info) => {
+    if (error) {
+      return res.status(500).send(error.toString());
+    }
+    res.status(200).send('Email sent: ' + info.response);
+  });
+});
+
+
+
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
+
+
+
 
 

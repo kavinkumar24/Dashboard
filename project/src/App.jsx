@@ -36,8 +36,11 @@ import Product_detail_new_design from './components/New_Design_detials/Product_d
 import Plain_stone_detail_new_design from './components/New_Design_detials/Plain_stone_details'
 import Project_detail_new_design from './components/New_Design_detials/Project_detail'
 import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
+import PrivateRoute from './PrivateRoute';
+import Mail from './components/Email'
 import Operational_task from './components/Operational_Task/Operational_task';
 import Phase_view from './components/Operational_Task/Phase_view';
+
 
 function App() {
 
@@ -45,44 +48,197 @@ function App() {
     <>
       <div>
       <Routes>
-        <Route path='/' element={<Exceldata />} />
-        <Route path="/product-details/:pltcode/:dept" element={<ProductDetailsPage />} />
-        <Route path="/department/:deptId/:type" element={<DepartmentDetail />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path='/daily-report' element={<Daily_Report />} />
-        <Route path='/task/create' element={<CreateTask />} />
-        <Route path='/task/view' element={<ViewTasks />} />
-        <Route path = '/rejections' element={<Reject />} />
-        <Route path = '/order_receiving&new_design' element={<Order_rev />} />
-        <Route path = '/rejections/detailed_rejections' element={<Skch_reject />} />
-        <Route path = '/rejections/dept_rejections' element={<Department_reject />} />
-        <Route path = '/uploads' element={<Upload />} />
-        <Route path = '/new_design' element={<New_Design />} />
+      <Route 
+            path='/' 
+            element={
+              <PrivateRoute>
+                <Exceldata />
+              </PrivateRoute>
+            } 
+          />
+        <Route path='/mail' element={<Mail />} />
+        <Route path="/product-details/:pltcode/:dept" element={
+          <PrivateRoute>
+          <ProductDetailsPage />
+          </PrivateRoute>
+          } />
+        <Route path="/department/:deptId/:type" element={
+          <PrivateRoute>
+          <DepartmentDetail />
+          </PrivateRoute>
+          } />
+        <Route path="/projects" element={
+          <PrivateRoute>
+          <Projects />
+          </PrivateRoute>
+          } />
+        <Route path='/daily-report' element={
+          <PrivateRoute>
+          <Daily_Report />
+          </PrivateRoute>
+          } />
+        <Route path='/task/create' element={
+          <PrivateRoute>
+          <CreateTask />
+          </PrivateRoute>
+          } />
+        <Route path='/task/view' element={
+          <PrivateRoute>
+          <ViewTasks />
+          </PrivateRoute>
+          } />
+        <Route path = '/rejections' element={
+          <PrivateRoute>
+          <Reject />
+          </PrivateRoute>
+          } />
+        <Route path = '/order_receiving&new_design' element={
+          <PrivateRoute>
+          <Order_rev />
+          </PrivateRoute>
+          } />
+        <Route path = '/rejections/detailed_rejections' element=
+        {
+          <PrivateRoute>
+        <Skch_reject />
+        </PrivateRoute>
+        } />
+        <Route path = '/rejections/dept_rejections' element={
+          <PrivateRoute>
+          <Department_reject />
+          </PrivateRoute>
+          } />
+        <Route path = '/uploads' element={
+          <PrivateRoute>
+          <Upload />
+          </PrivateRoute>
+          } />
+        <Route path = '/new_design' element={
+          <PrivateRoute>
+          <New_Design />
+          </PrivateRoute>
+          } />
         <Route path='/login' element={<Login/>} />
         <Route path = '/demo' element={<Demo />} />
-        <Route path="/zone-detail-order_receiving/:zone" element={<ZoneDetail />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/purity-detail-order_receiving/:purity" element={<PurityDetail />} />
-        <Route path="/project-detail-order_receiving/:project" element={<Project_Detail />} />
-        <Route path="/product-detail-order_receiving/:product" element={<Product_Detail />} />
-        <Route path="/subproduct-detail-order_receiving/:subproduct" element={<Subproduct_Detail />} />
-        <Route path="/color-detail-order_receiving/:color" element={<Color_Detail />} />
-        <Route path="/group_party-detail-order_receiving/:group_party" element={<Group_Detail />} />
-        <Route path="/plain-stone-detail-order_receiving/:plainstone" element={<Plainstone_Detail />} />
-        <Route path="/purity-detail-new_design/:purity" element={<Purity_detail />} />
-        <Route path="/zone-detail-new_design/:zone" element={<Zone_Detail />} />
-        <Route path="/color-detail-new_design/:color" element={<Color_detai_new_design />} />
-        <Route path="/PL-ST-detail-new_design/:plstone" element = {< Plain_stone_detail_new_design/>} />
-        <Route path="/project-detail-new_design/:project" element={<Project_detail_new_design />} />
-        <Route path="/subproduct-detail-new_design/:subproduct" element={<Subproduct_detail_new_design />} />
-        <Route path="/aop_schedule" element={<Department_AOP />} />
-        <Route path='/rejections/problem_arised' element={<Problem_Arised/>}/>
-        <Route path='/task/detailed_task/brief_id/:id' element={<Brief_id/>}/>
-        <Route path='/task/detailed_task/brief_id' element={<Brief_id/>}/>
-        <Route path='/task/design_center' element={<Des_Cen_Task/>}/>
-        <Route path='/detailed_task' element = {<Detailed_task/>}/>
-        <Route path="/product-detail-new_design/:product" element={<Product_detail_new_design />} />
-        <Route path='/task/detailed_task' element = {<Detailed_task/>}/>
+        <Route path="/zone-detail-order_receiving/:zone" element={
+          <PrivateRoute>
+          <ZoneDetail />
+          </PrivateRoute>
+          } />
+        <Route path="/purity-detail-order_receiving/:purity" element={
+          <PrivateRoute>
+          <PurityDetail />
+          </PrivateRoute>
+          } />
+        <Route path="/project-detail-order_receiving/:project" element={
+          <PrivateRoute>
+          <Project_Detail />
+          </PrivateRoute>
+          } />
+        <Route path="/product-detail-order_receiving/:product" element={
+          <PrivateRoute>
+          <Product_Detail />
+          </PrivateRoute>
+          } />
+        <Route path="/subproduct-detail-order_receiving/:subproduct" element={
+          <PrivateRoute>
+          <Subproduct_Detail />
+          </PrivateRoute>
+          } />
+        <Route path="/color-detail-order_receiving/:color" element={
+          <PrivateRoute>
+          <Color_Detail />
+          </PrivateRoute>
+          } />
+
+        <Route path="/group_party-detail-order_receiving/:group_party" element={
+          <PrivateRoute>
+          <Group_Detail />
+          </PrivateRoute>
+          } />
+
+        <Route path="/plain-stone-detail-order_receiving/:plainstone" element={
+          <PrivateRoute>
+          <Plainstone_Detail />
+          </PrivateRoute>
+          } />
+
+        <Route path="/purity-detail-new_design/:purity" element={
+          <PrivateRoute>
+          <Purity_detail />
+          </PrivateRoute>
+          } />
+        <Route path="/zone-detail-new_design/:zone" element={
+          <PrivateRoute>
+          <Zone_Detail />
+          </PrivateRoute>
+          } />
+        <Route path="/color-detail-new_design/:color" element={
+          <PrivateRoute>
+          <Color_detai_new_design />
+          </PrivateRoute>
+          } />
+        <Route path="/PL-ST-detail-new_design/:plstone" element = {
+          <PrivateRoute>
+          <Plain_stone_detail_new_design/>
+          </PrivateRoute>
+          } />
+        <Route path="/project-detail-new_design/:project" element={
+          <PrivateRoute>
+          <Project_detail_new_design />
+          </PrivateRoute>
+          } />
+        {/* <Route path="/subproduct-detail-new_design/:subproduct" element={<Subproduct_detail_new_design />} /> */}
+        <Route path="/subproduct-detail-new_design/:subproduct" element={
+          <PrivateRoute>
+          <Subproduct_detail_new_design />
+          </PrivateRoute>
+          } />
+
+        <Route path="/aop_schedule" element={
+          <PrivateRoute>
+          <Department_AOP />
+          </PrivateRoute>
+          } />
+        <Route path='/rejections/problem_arised' element=
+        {
+          <PrivateRoute>
+        <Problem_Arised/>
+        </PrivateRoute>
+        }/>
+        <Route path='/task/detailed_task/brief_id/:id' element={
+          <PrivateRoute>
+          <Brief_id/>
+          </PrivateRoute>
+          }/>
+        <Route path='/task/detailed_task/brief_id' element={
+          <PrivateRoute>
+          <Brief_id/>
+          </PrivateRoute>
+          }/>
+        <Route path='/task/design_center' element={
+          <PrivateRoute>
+          <Des_Cen_Task/>
+          </PrivateRoute>
+          }/>
+        <Route path='/detailed_task' element = {
+          <PrivateRoute>
+          <Detailed_task/>
+          </PrivateRoute>
+          }/>
+        <Route path="/product-detail-new_design/:product" element={
+          <PrivateRoute>
+          <Product_detail_new_design />
+          </PrivateRoute>
+          } />
+
+        <Route path='/task/detailed_task' 
+
+        element = {
+          <PrivateRoute>
+          <Detailed_task/>
+          </PrivateRoute>
+        }/>
         <Route path='/task/operational_task' element = {<Operational_task/>}/>
         <Route path='/task/operational_task/phase_view' element = {<Phase_view/>}/>
       </Routes>
