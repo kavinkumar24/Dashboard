@@ -241,7 +241,6 @@ function ViewTasks() {
                     {[
                       "ID",
                       "Ax Brief",
-                      "Sketch Id",
                       "Collection Name",
                       "References_Image",
                       "Project",
@@ -282,9 +281,7 @@ function ViewTasks() {
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {task.Ax_Brief}
                       </td>
-                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
-                        {task.Sketch}
-                      </td>
+                     
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {task.Collection_Name}
                       </td>

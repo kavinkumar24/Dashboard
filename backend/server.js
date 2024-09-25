@@ -1659,7 +1659,6 @@ app.post("/create-task", (req, res) => {
       assign_date,
       target_date,
       priority,
-      sketch,
       depart,
       assignTo,
       person,
@@ -1675,11 +1674,11 @@ app.post("/create-task", (req, res) => {
 
   const sql = `
 INSERT INTO Created_task (
-    Ax_Brief, Sketch, Collection_Name, References_Image, Project, Assign_Name,
+    Ax_Brief, Collection_Name, References_Image, Project, Assign_Name,
     Person, OWNER, No_of_Qty, Dept, Complete_Qty, Pending_Qty,
     Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks,image_data
 ) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?);
 
 `;
 
@@ -1693,8 +1692,7 @@ const remainingDays = calculateRemainingDays(target_date);
 
 
 const values = [
-  ax_brief,          // Ax_Brief
-  sketch,            // Sketch
+  ax_brief,          // Ax_Brief            // Sketch
   collection_name,   // Collection_Name
   ref_images,        // References_Image
   project,           // Project
@@ -1951,34 +1949,34 @@ app.post('/api/rejection/upload', upload.single('file'), (req, res) => {
 
 
 
-const nodemailer = require('nodemailer');
-const bodyParser = require('body-parser');
+// const nodemailer = require('nodemailer');
+// const bodyParser = require('body-parser');
 
-const transporter = nodemailer.createTransport({
-  service: 'Gmail', // Use your email provider
-  auth: {
-    user: 'kavinmpm24@gmail.com', // Your email
-    pass: 'K@vinkumar242003', // Your email password
-  },
-});
+// const transporter = nodemailer.createTransport({
+//   service: 'Gmail', // Use your email provider
+//   auth: {
+//     user: 'kavinmpm24@gmail.com', // Your email
+//     pass: 'K@vinkumar242003', // Your email password
+//   },
+// });
 
-app.post('/api/send-email', (req, res) => {
-  const { from, to, subject, body } = req.body;
+// app.post('/api/send-email', (req, res) => {
+//   const { from, to, subject, body } = req.body;
 
-  const mailOptions = {
-    from,
-    to,
-    subject,
-    text: body,
-  };
+//   const mailOptions = {
+//     from,
+//     to,
+//     subject,
+//     text: body,
+//   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      return res.status(500).send(error.toString());
-    }
-    res.status(200).send('Email sent: ' + info.response);
-  });
-});
+//   transporter.sendMail(mailOptions, (error, info) => {
+//     if (error) {
+//       return res.status(500).send(error.toString());
+//     }
+//     res.status(200).send('Email sent: ' + info.response);
+//   });
+// });
 
 
 

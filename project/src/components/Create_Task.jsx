@@ -67,7 +67,7 @@ function CreateTask() {
   }, [theme]);
 
 
-  const [sketchOptions, setSketchOptions] = useState([]);
+  // const [sketchOptions, setSketchOptions] = useState([]);
   const [image_upload, setImage_upload] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
   const [uploadedImage, setUploadedImage] = useState(null); 
@@ -121,16 +121,16 @@ function CreateTask() {
       console.log("brief", briefDetails);
 
       // Set the sketch options from sketchnums
-      setSketchOptions(
-        briefDetails.sketchnums.map((num) => ({ value: num, label: num }))
-      );
+      // setSketchOptions(
+      //   briefDetails.sketchnums.map((num) => ({ value: num, label: num }))
+      // );
       setIsAutoFilled(true);
       setError("");
     } else {
       setCollection_name("");
       setProject("");
       setIsAutoFilled(false);
-      setSketchOptions([]);
+      // setSketchOptions([]);
     }
   };
   const handleSketch = (selectedOption) => {
@@ -178,7 +178,6 @@ function CreateTask() {
       ax_brief,
       collection_name,
       project,
-      sketch,
       no_of_qty,
       assign_date,
       target_date,
@@ -335,7 +334,7 @@ function CreateTask() {
                       </label>
                       <p className="ml-10 text-blue-700 font-bold">{project}</p>
                     </div>
-                    <div className="space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
+                    {/* <div className="space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
                       <label
                         className={`block text-base font-bold ${
                           theme === "light" ? "text-gray-700" : "text-gray-200"
@@ -355,7 +354,7 @@ function CreateTask() {
                         } w-full md:w-3/5`}
                         required
                       />
-                    </div>
+                    </div> */}
                   </>
                 )}
 
