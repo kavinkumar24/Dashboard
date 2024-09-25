@@ -364,7 +364,7 @@ function Detailed_task() {
               {/* <div className="pb-5 text-sm text-slate-500">
             Material Tailwind is a framework that enhances Tailwind CSS with additional styles and components.
           </div> */}
-<div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
+          <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
            <div className="flex justify-between">
            <h1 className="text-xl font-semibold p-2 pl-10 py-5">
               Sketch details for <span className="text-[#879FFF]">{id}</span>

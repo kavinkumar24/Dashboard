@@ -22,8 +22,6 @@ function Sidebar({ theme }) {
 
   const [role, setRole] = useState('');
   
-  
-
 
   useEffect(() => {
     const path = location.pathname;
@@ -50,6 +48,8 @@ function Sidebar({ theme }) {
         setActiveSubTask('design_center');
       }else if(path==='/task/detailed_task' || path==='/task/detailed_task/brief_id/:id'){
         setActiveSubTask('detailed_task');
+      }else if(path==='/task/operational_task' || path==='/task/operational_task/phase_view'){
+        setActiveSubTask('operational_task');
       }
     } else if (path === '/rejections') {
       setActive('rejections');
@@ -70,8 +70,6 @@ function Sidebar({ theme }) {
         setActive('order_new_design');
       }
       else if (path === '/new_design' || /purity-detail-new_design/.test(path) || /zone-detail-new_design/.test(path) || /product-detail-new_design/.test(path) || /PL-ST-detail-new_design/.test(path) || /color-detail-new_design/.test(path) || /project-detail-new_design/.test(path)
-  
-
       ) {
         setActive('new_design');
       }
@@ -299,6 +297,18 @@ function Sidebar({ theme }) {
                     <BsEye />
                   </div>
                   View
+                </div>
+              </a>
+              <a
+                href="#"
+                className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('operational_task')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
+                onClick={() => handleNavigation('/task/operational_task', 'task')}
+              >
+                <div className='flex flex-row p-0'>
+                  <div className='mt-1 px-2'>
+                    <BsEye />
+                  </div>
+                  Operational Task
                 </div>
               </a>
               

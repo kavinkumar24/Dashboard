@@ -35,8 +35,9 @@ import Color_detai_new_design from './components/New_Design_detials/Color_detail
 import Product_detail_new_design from './components/New_Design_detials/Product_detail';
 import Plain_stone_detail_new_design from './components/New_Design_detials/Plain_stone_details'
 import Project_detail_new_design from './components/New_Design_detials/Project_detail'
-// import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
 import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
+import Operational_task from './components/Operational_Task/Operational_task';
+import Phase_view from './components/Operational_Task/Phase_view';
 
 function App() {
 
@@ -66,19 +67,14 @@ function App() {
         <Route path="/product-detail-order_receiving/:product" element={<Product_Detail />} />
         <Route path="/subproduct-detail-order_receiving/:subproduct" element={<Subproduct_Detail />} />
         <Route path="/color-detail-order_receiving/:color" element={<Color_Detail />} />
-
         <Route path="/group_party-detail-order_receiving/:group_party" element={<Group_Detail />} />
-
         <Route path="/plain-stone-detail-order_receiving/:plainstone" element={<Plainstone_Detail />} />
-
         <Route path="/purity-detail-new_design/:purity" element={<Purity_detail />} />
         <Route path="/zone-detail-new_design/:zone" element={<Zone_Detail />} />
         <Route path="/color-detail-new_design/:color" element={<Color_detai_new_design />} />
         <Route path="/PL-ST-detail-new_design/:plstone" element = {< Plain_stone_detail_new_design/>} />
         <Route path="/project-detail-new_design/:project" element={<Project_detail_new_design />} />
-        {/* <Route path="/subproduct-detail-new_design/:subproduct" element={<Subproduct_detail_new_design />} /> */}
         <Route path="/subproduct-detail-new_design/:subproduct" element={<Subproduct_detail_new_design />} />
-
         <Route path="/aop_schedule" element={<Department_AOP />} />
         <Route path='/rejections/problem_arised' element={<Problem_Arised/>}/>
         <Route path='/task/detailed_task/brief_id/:id' element={<Brief_id/>}/>
@@ -86,8 +82,9 @@ function App() {
         <Route path='/task/design_center' element={<Des_Cen_Task/>}/>
         <Route path='/detailed_task' element = {<Detailed_task/>}/>
         <Route path="/product-detail-new_design/:product" element={<Product_detail_new_design />} />
-
         <Route path='/task/detailed_task' element = {<Detailed_task/>}/>
+        <Route path='/task/operational_task' element = {<Operational_task/>}/>
+        <Route path='/task/operational_task/phase_view' element = {<Phase_view/>}/>
       </Routes>
       </div>
       

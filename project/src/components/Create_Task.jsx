@@ -3,6 +3,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import Select from 'react-select';
 
+
 function CreateTask() {
   const axBriefMapping = {
     "BF-900001390": {
@@ -173,6 +174,7 @@ function CreateTask() {
                     className={`  appearance-none border rounded ml-10 w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'}  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
                     required
                   />
+                  
                 </div>
 
                 <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
