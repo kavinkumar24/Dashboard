@@ -17,8 +17,16 @@ const db = mysql.createConnection({
   host: "172.16.5.233",
   user: "emerald",
   password: "emerald",
-  database: "emerald",
+  database: "Emerald",
 });
+
+// const db = mysql.createConnection({
+//   host: "10.70.251.52",
+//   user: "root",
+//   password: "",
+//   database: "emerald_backup",
+//   port: 3306,
+// });
 
 app.post('/save-targets', (req, res) => {
   const targets = req.body.targets; // Expecting an array of objects with project and target values
@@ -1949,6 +1957,109 @@ app.post('/api/send-email', (req, res) => {
   });
 });
 
+
+
+const createOperationalTaskTableQuery = `CREATE TABLE IF NOT EXISTS operational_task (
+    task_id VARCHAR(10) PRIMARY KEY,
+    project_name VARCHAR(255),
+    STATUS VARCHAR(50) DEFAULT 'In Progress',
+    assignee VARCHAR(255),
+    starting_date DATE,
+    target_date DATE,
+    priority VARCHAR(50),
+    last_edited DATE,
+    attachment VARCHAR(50) DEFAULT 'Not Yet Received'
+);
+`;
+db.query(createOperationalTaskTableQuery, (err) => {
+  if (err) {
+    console.error('Error creating operational_task table:', err);
+    return;
+  }
+});
+
+
+app.post('/operational-task', (req, res) => {
+  const { task_id, project_name, assignee, starting_date, target_date, priority, last_edited, attachment } = req.body;
+
+  const insertTaskQuery = `INSERT INTO operational_task (task_id, project_name, assignee, starting_date, target_date, priority, last_edited, attachment) 
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+
+  db.query(insertTaskQuery, [task_id, project_name, assignee, starting_date, target_date, priority, last_edited, attachment || 'Not Yet Received'], 
+  (err, result) => {
+      if (err) {
+          console.error('Error inserting task:', err);
+          return res.status(500).json({ error: 'Failed to insert task' });
+      }
+      res.status(201).json({ message: 'Task created successfully' });
+  });
+});
+
+app.get('/operational-task', (req, res) => {
+  const query = 'SELECT * FROM operational_task';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching tasks:', err);
+      res.status(500).send('Error fetching tasks');
+      return;
+    }
+    res.json(results);
+  });
+});
+
+
+const createTeamDetailsTableQuery = `
+  CREATE TABLE IF NOT EXISTS team_member_details (
+    member_id VARCHAR(20),
+    task_id VARCHAR(20),
+    name VARCHAR(255),
+    mail_id VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'In Progress',
+    attachment_file VARCHAR(50) DEFAULT 'Not Yet Received',
+    FOREIGN KEY (task_id) REFERENCES operational_task(task_id) ON DELETE CASCADE,
+    PRIMARY KEY (member_id)
+  );
+`;
+
+db.query(createTeamDetailsTableQuery, (err) => {
+  if (err) {
+    console.error('Error creating team_member_details table:', err);
+    return;
+  }
+
+});
+
+app.post('/team-member', (req, res) => {
+  const { member_id, task_id, name, email, status, attachment_file } = req.body;
+
+  const insertMemberQuery = `
+    INSERT INTO team_member_details (member_id, task_id, name, mail_id, status, attachment_file)
+    VALUES (?, ?, ?, ?, ?, ?)`;
+
+  db.query(
+    insertMemberQuery, 
+    [member_id, task_id, name, email, status || 'In Progress', attachment_file || 'Not Yet Received'], 
+    (err, result) => {
+      if (err) {
+        console.error('Error inserting team member:', err);
+        return res.status(500).json({ error: 'Failed to insert team member' });
+      }
+      res.status(201).json({ message: 'Team member created successfully' });
+    }
+  );
+});
+
+app.get('/team-member', (req, res) => {
+  const query = 'SELECT * FROM team_member_details';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching team members:', err);
+      res.status(500).send('Error fetching team members');
+      return;
+    }
+    res.json(results);
+  });
+});
 
 
 app.listen(PORT, () => {
