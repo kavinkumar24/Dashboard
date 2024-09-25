@@ -250,7 +250,6 @@ function App() {
 
 export default App
 
-// import './App.css';
 // import Exceldata from './components/Excel_read_Admin';
 // import { Route, Routes, Navigate } from 'react-router';
 // import DepartmentDetail from './components/Depart_Card';
