@@ -4,13 +4,17 @@ import Header from "./Header";
 import * as XLSX from "xlsx";
 
 function ViewTasks() {
-  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "light");
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "light"
+  );
   const [search, setSearch] = useState("");
   const [tasks, setTasks] = useState([]);
   const [sortOrder, setSortOrder] = useState(0);
   const [error, setError] = useState("");
 
   const loggedInEmail = localStorage.getItem("Email");
+  const [uploadedImage, setUploadedImage] = useState(null);
+  
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -19,13 +23,30 @@ function ViewTasks() {
   const fetch_task_data = async () => {
     try {
       const response = await fetch("http://localhost:8081/create-task");
-      const data = await response.json();
-      setTasks(data);
+      const tasks = await response.json(); // Now tasks is an array
+  
+      // Assuming you want to set the uploaded image for the first task
+      if (tasks.length > 0) {
+        const firstTask = tasks[0]; // Get the first task for demonstration
+        if (firstTask.image_data && Array.isArray(firstTask.image_data.data)) {
+          const byteArray = new Uint8Array(firstTask.image_data.data);
+          const blob = new Blob([byteArray], { type: 'image/jpeg' }); // Adjust type as necessary
+          const imageUrl = URL.createObjectURL(blob);
+          
+          setUploadedImage(imageUrl); 
+        } else {
+          console.warn("No image data found for the first task.");
+        }
+      }
+  
+      setTasks(tasks); // Store all tasks in the state
     } catch (error) {
       console.error("Error fetching task data:", error);
       setError("Failed to load tasks. Please try again later.");
     }
   };
+  
+  
 
   useEffect(() => {
     fetch_task_data();
@@ -39,10 +60,21 @@ function ViewTasks() {
     ];
 
     const currentOrder = priorityOrders[sortOrder % 3];
-    const sortedTasks = [...tasks].sort((a, b) => currentOrder[a.priority] - currentOrder[b.priority]);
+    const sortedTasks = [...tasks].sort(
+      (a, b) => currentOrder[a.priority] - currentOrder[b.priority]
+    );
 
     setTasks(sortedTasks);
     setSortOrder((prevOrder) => prevOrder + 1);
+  };
+
+  const [showimage, setshowimage] = useState(false);
+  const handle_show_image = ()=>{
+    setshowimage(true);
+  }
+
+  const closeModal = () => {
+    setshowimage(false);
   };
 
   const escapeRegExp = (string) => {
@@ -57,19 +89,19 @@ function ViewTasks() {
   const filteredTasks = tasks.filter((task) => {
     const escapedSearch = escapeRegExp(search.toLowerCase());
     const searchRegex = new RegExp(escapedSearch);
-    const emailMatch = [task.Assign_Name, task.Person, task.OWNER].includes(loggedInEmail);
+    const emailMatch = [task.Assign_Name, task.Person, task.OWNER].includes(
+      loggedInEmail
+    );
 
     return (
       emailMatch &&
-      (
-        searchRegex.test(task.Ax_Brief.toLowerCase()) ||
+      (searchRegex.test(task.Ax_Brief.toLowerCase()) ||
         searchRegex.test(task.Collection_Name.toLowerCase()) ||
         searchRegex.test(task.Project.toLowerCase()) ||
         searchRegex.test(task.No_of_Qty.toString()) ||
         searchRegex.test(formatDate(task.Assign_Date).toLowerCase()) ||
         searchRegex.test(formatDate(task.Target_Date).toLowerCase()) ||
-        searchRegex.test(task.Completed_Status.toLowerCase())
-      )
+        searchRegex.test(task.Completed_Status.toLowerCase()))
     );
   });
 
@@ -104,13 +136,16 @@ function ViewTasks() {
 
   const updateTaskStatus = async (taskId, newStatus) => {
     try {
-      const response = await fetch(`http://localhost:8081/update-task/${taskId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ Completed_Status: newStatus }),
-      });
+      const response = await fetch(
+        `http://localhost:8081/update-task/${taskId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ Completed_Status: newStatus }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to update task status");
@@ -142,16 +177,50 @@ function ViewTasks() {
   };
 
   return (
-    <div className={`min-h-screen flex ${theme === "light" ? "bg-gray-100" : "bg-gray-800"}`}>
+    <div
+      className={`min-h-screen flex ${
+        theme === "light" ? "bg-gray-100" : "bg-gray-800"
+      }`}
+    >
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <Header onSearch={setSearch} theme={theme} dark={setTheme} />
-        <main className="flex-1 overflow-y-auto overflow-x-auto p-4 ml-20 w-full md:px-8 lg:px-4 max-w-full md:max-w-screen-xl xl:max-w-screen-[90%]">
+        <main className="flex-1 overflow-y-auto overflow-x-auto p-4 ml-20 w-full md:px-8 lg:px-4 max-w-full md:max-w-screen-xl xl:max-w-screen-2xl">
+        {showimage && uploadedImage && (
+  <div
+    id="modelConfirm"
+    className={`fixed z-50 inset-0 ${theme === "light" ? "bg-gray-900 bg-opacity-60" : "bg-gray-900 bg-opacity-80"} overflow-auto h-full w-full px-4`}
+  >
+    <div className={`relative top-20 mx-auto shadow-xl rounded-md ${theme === "light" ? "bg-white" : "bg-gray-800"} max-w-4xl p-4`}>
+      <div className="flex justify-end p-2">
+        <button onClick={closeModal} type="button" className={`text-gray-400 ${theme === "light" ? "bg-transparent hover:bg-gray-200 hover:text-gray-900" : "bg-transparent hover:bg-gray-600 hover:text-gray-300"} rounded-lg text-sm p-1.5 ml-auto inline-flex items-center`}>
+          X
+        </button>
+      </div>
+      <div className="flex justify-center items-center p-6 border border-emerald-400">
+        <img src={uploadedImage} alt="Uploaded" style={{ maxWidth: '600px', maxHeight: '600px' }} />
+      </div>
+      <div className="flex justify-center">
+        <a
+          href={uploadedImage}
+          download="downloaded_image.jpg"
+          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
+        >
+          Download Image
+        </a>
+      </div>
+    </div>
+  </div>
+)}
 
           {error && <p className="text-red-500">{error}</p>}
 
           <div className="flex justify-between items-center mb-4">
-            <h1 className={`text-xl font-bold ${theme === "light" ? "text-gray-800" : "text-white"}`}>
+            <h1
+              className={`text-xl font-bold ${
+                theme === "light" ? "text-gray-800" : "text-white"
+              }`}
+            >
               Task List
             </h1>
             <button
@@ -170,59 +239,125 @@ function ViewTasks() {
                 <thead>
                   <tr className="bg-gray-300 text-gray-700">
                     {[
-                      "ID", "Ax Brief", "Sketch Id", "Collection Name", "References_Image",
-                      "Project", "Assignee", "Person", "OWNER", "Quantity", "Dept",
-                      "Complete_Qty", "Pending_Qty", "Assign Date", "Target Date", 
-                      "Remaining_Days", "Project_View", "Status", "Remarks"
+                      "ID",
+                      "Ax Brief",
+                      "Sketch Id",
+                      "Collection Name",
+                      "References_Image",
+                      "Project",
+                      "Assignee",
+                      "Person",
+                      "OWNER",
+                      "Quantity",
+                      "Dept",
+                      "Complete_Qty",
+                      "Pending_Qty",
+                      "Assign Date",
+                      "Target Date",
+                      "Remaining_Days",
+                      "Project_View",
+                      "Status",
+                      "Remarks",
                     ].map((header, index) => (
-                      <th key={index} className="px-6 py-3 text-center font-semibold text-base">
+                      <th
+                        key={index}
+                        className="px-6 py-3 text-center font-semibold text-base"
+                      >
                         {header}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-  {filteredTasks.map((task, index) => (
-    <tr key={`${task.Task_ID}-${index}`} className={`transition-colors duration-200 ${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}>
-      <td className="px-6 py-6 text-center whitespace-nowrap text-base">{task.Task_ID}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.Ax_Brief}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.Sketch}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.Collection_Name}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.References_Image}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.Project}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.Assign_Name}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.Person}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.OWNER}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.No_of_Qty}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.Dept}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.Complete_Qty}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.Pending_Qty}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{formatDate(task.Assign_Date)}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{formatDate(task.Target_Date)}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.Remaining_Days}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.Project_View}</td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
-        <select
-          value={task.Completed_Status}
-          onChange={(e) => handleStatusChange(task, e.target.value)}
-          className={`border rounded px-2 py-1 ${task.Completed_Status === 'In Progress' ? 'bg-yellow-200' : 'bg-green-200'}`}
-          disabled={task.Completed_Status === 'Completed'}
-        >
-          {task.Completed_Status === 'In Progress' ? (
-            <>
-              <option value="In Progress">In Progress</option>
-              <option value="Completed">Completed</option>
-            </>
-          ) : (
-            <option value="Completed">Completed</option>
-          )}
-        </select>
-      </td>
-      <td className="px-6 py-4 text-center whitespace-nowrap text-base">{task.Remarks}</td>
-    </tr>
-  ))}
-</tbody>
-
+                  {filteredTasks.map((task, index) => (
+                    <tr
+                      key={`${task.Task_ID}-${index}`}
+                      className={`transition-colors duration-200 ${
+                        index % 2 === 0 ? "bg-gray-100" : "bg-white"
+                      }`}
+                    >
+                      <td className="px-6 py-6 text-center whitespace-nowrap text-base">
+                        {task.Task_ID}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.Ax_Brief}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.Sketch}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.Collection_Name}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.References_Image == 'yes' ? 
+                        <button onClick={handle_show_image} className="mt-2 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">show</button>: task.References_Image
+                        }
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.Project}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.Assign_Name}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.Person}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.OWNER}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.No_of_Qty}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.Dept}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.Complete_Qty}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.Pending_Qty}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {formatDate(task.Assign_Date)}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {formatDate(task.Target_Date)}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.Remaining_Days}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.Project_View}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        <select
+                          value={task.Completed_Status}
+                          onChange={(e) =>
+                            handleStatusChange(task, e.target.value)
+                          }
+                          className={`border rounded px-2 py-1 ${
+                            task.Completed_Status === "In Progress"
+                              ? "bg-yellow-200"
+                              : "bg-green-200"
+                          }`}
+                          disabled={task.Completed_Status === "Completed"}
+                        >
+                          {task.Completed_Status === "In Progress" ? (
+                            <>
+                              <option value="In Progress">In Progress</option>
+                              <option value="Completed">Completed</option>
+                            </>
+                          ) : (
+                            <option value="Completed">Completed</option>
+                          )}
+                        </select>
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {task.Remarks}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
           </div>

@@ -11,13 +11,13 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); 
 
 const db = mysql.createConnection({
   host: "172.16.5.233",
   user: "emerald",
   password: "emerald",
-  database: "emerald",
+  database: "Emerald",
 });
 
 app.post('/save-targets', (req, res) => {
@@ -1641,6 +1641,8 @@ app.put('/update-task/:id', (req, res) => {
 
 app.post("/create-task", (req, res) => {
   console.log("Request Body:", req.body);
+  const imageBuf = Buffer.from(req.body.image);
+  
   const {
     ax_brief,
       collection_name,
@@ -1655,7 +1657,7 @@ app.post("/create-task", (req, res) => {
       person,
       hodemail,
       ref_images,
-      isChecked
+      isChecked,
   } = req.body;
 
   if (!ax_brief || !collection_name || !project || !no_of_qty || !assign_date || !target_date || !priority) {
@@ -1667,9 +1669,9 @@ app.post("/create-task", (req, res) => {
 INSERT INTO Created_task (
     Ax_Brief, Sketch, Collection_Name, References_Image, Project, Assign_Name,
     Person, OWNER, No_of_Qty, Dept, Complete_Qty, Pending_Qty,
-    Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks
+    Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks,image_data
 ) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?);
 
 `;
 
@@ -1700,7 +1702,8 @@ const values = [
   remainingDays,                 // Remaining_Days (you can calculate this if needed)
   isChecked ? 'Yes' : 'No',  // Project_View
   'In Progress',     // Completed_Status
-  'null pointer'     // Remarks (or provide actual remarks if needed)
+  'null pointer',
+  imageBuf || null
 ];
 
 
@@ -1715,17 +1718,37 @@ const values = [
 });
 
  
-app.get("/tasks", (req, res) => {
-   const sql = "SELECT * FROM task";
-   db.query(sql, (err, data) => {
-      if (err) {
-         console.error(err);
-         return res.status(500).json({ message: "Failed to fetch tasks", error: err });
-      }
-      res.json(data);
-   });
-   }
-);
+app.post('/upload-image', (req, res) => {
+  const imageBuffer = Buffer.from(req.body.image);
+
+  const sql = "INSERT INTO images (image_data) VALUES (?)"; 
+
+  db.query(sql, [imageBuffer], (err, result) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+    res.send("Image uploaded successfully");
+  });
+});
+
+
+app.get('/get-image', (req, res) => {
+  const sql = "SELECT image_data FROM images ORDER BY id DESC LIMIT 1"; 
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+    if (results.length > 0) {
+      const imageData = results[0].image_data;
+      res.json({ image: Array.from(new Uint8Array(imageData)) }); // Send the image data as an array
+    } else {
+      res.status(404).send("No image found");
+    }
+  });
+});
+
+
 
 const axios = require("axios");
 
