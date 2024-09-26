@@ -2,8 +2,12 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../Sidebar";
 import Header from "../Header";
 import Select from 'react-select';
+import { useLocation, useNavigate } from 'react-router-dom';
+
 
 function Phase_view() {
+  const location = useLocation();
+  const { taskId, project_name, assignee } = location.state || {};
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
@@ -13,34 +17,136 @@ function Phase_view() {
   const openPhaseModal = () => setIsPhaseModalOpen(true);
   const closePhaseModal = () => setIsPhaseModalOpen(false);
 
-  const handlePhaseSubmit = (e) => {
-    e.preventDefault();
-    // Handle form submission logic here
-    closePhaseModal(); // Optionally close the modal after submission
-  };
-
-  const [tasks, setTasks] = useState([{ taskName: '', description: '', startDate: '', endDate: '', assignee: '', owner: '' }]);
+  const [tasks, setTasks] = useState([
+    { taskName: '', description: '', startDate: '', endDate: '', assignee: '', owner: '' }
+  ]);
   const [submittedTasks, setSubmittedTasks] = useState([]);
   const [phase, setPhase] = useState("");
-  // Handle task input change
+
+  // Handle input change for tasks
   const handleInputChange = (index, field, value) => {
     const updatedTasks = [...tasks];
     updatedTasks[index][field] = value;
     setTasks(updatedTasks);
   };
 
-  // Add new task
+  // Add a new task
   const handleAddTask = () => {
-    setTasks([...tasks, {taskName: '', description: '', startDate: '', endDate: '', assignee: '', owner: '' }]);
+    setTasks([
+      ...tasks,
+      { taskName: '', description: '', startDate: '', endDate: '', assignee: '', owner: '' }
+    ]);
   };
 
-  // Handle form submission
-  const handleTaskSubmit = (e) => {
+  // Handle the phase and task form submission
+  const handleTaskSubmit  = async (e) => {
     e.preventDefault();
-    setSubmittedTasks(tasks); // Set the submitted tasks
-    console.log('Tasks submitted:', tasks);
-    closePhaseModal();
+
+    // Collect the submitted tasks and phase
+    const data = {
+      phase,
+      tasks,
+    };
+
+    const phaseData = {
+      phase_id: 1,
+      task_id:taskId,
+      phase_name: phase,
+    };
+    console.log('Phase Data:', phaseData);
+    
+
+    try {
+      // Assuming you want to submit this to the backend
+      const response = await fetch('http://localhost:8081/phase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(phaseData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit tasks');
+      }
+
+      const result = await response.json();
+      console.log('Tasks and phase submitted:', result);
+
+      // Store submitted tasks if necessary
+      // setSubmittedTasks(tasks);
+
+      // Close the modal or handle success state
+      closePhaseModal();
+
+      // Optionally reset the form
+      // setTasks([{ taskName: '', description: '', startDate: '', endDate: '', assignee: '', owner: '' }]);
+      // setPhase('');
+    } catch (error) {
+      console.error('Error submitting tasks:', error);
+    }
+
+    // try {
+    //   // Assuming you want to submit this to the backend
+    //   const response = await fetch('http://localhost:8081/phase-task', {
+    //     method: 'POST',
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //     },
+    //     body: JSON.stringify(data),
+    //   });
+
+    //   if (!response.ok) {
+    //     throw new Error('Failed to submit tasks');
+    //   }
+
+    //   const result = await response.json();
+    //   console.log('Tasks and phase submitted:', result);
+
+    //   // Store submitted tasks if necessary
+    //   setSubmittedTasks(tasks);
+
+    //   // Close the modal or handle success state
+    //   closePhaseModal();
+
+    //   // Optionally reset the form
+    //   setTasks([{ taskName: '', description: '', startDate: '', endDate: '', assignee: '', owner: '' }]);
+    //   setPhase('');
+    // } catch (error) {
+    //   console.error('Error submitting tasks:', error);
+    // }
+
+    try {
+      // Assuming you want to submit this to the backend
+      const response = await fetch('http://localhost:8081/phase-task', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit tasks');
+      }
+
+      const result = await response.json();
+      console.log('Tasks and phase submitted:', result);
+
+      // Store submitted tasks if necessary
+      setSubmittedTasks(tasks);
+
+      // Close the modal or handle success state
+      closePhaseModal();
+
+      // Optionally reset the form
+      setTasks([{ taskName: '', description: '', startDate: '', endDate: '', assignee: '', owner: '' }]);
+      setPhase('');
+    } catch (error) {
+      console.error('Error submitting tasks:', error);
+    }
   };
+
 
 
   return (
@@ -112,24 +218,24 @@ function Phase_view() {
                   <form onSubmit={handleTaskSubmit} className="mx-10">
                   <div className="space-y-6 ">
   {/* Phase Input Outside of the Task Mapping */}
-  <div className="py-5 space-y-5 ">
-    <div className="md:flex md:flex-row">
-      <label className={`block text-base font-bold w-full md:w-1/5 ${theme === "light" ? "text-gray-700" : "text-gray-200"}`}>
-        Phase
-      </label>
-      <input
-        type="text"
-        className={`appearance-none border rounded ml-10 w-full py-2 px-3 ${theme === "light" ? "bg-gray-100 text-gray-700 border-gray-300" : "bg-gray-700 text-gray-100 border-gray-600"}`}
-        placeholder="Enter Phase"
-        value={phase} // Assume you have a phase state
-        onChange={(e) => setPhase(e.target.value)} // Update accordingly
-        required
-      />
-    </div>
-  </div>
+                  <div className="py-5 space-y-5 ">
+                    <div className="md:flex md:flex-row">
+                      <label className={`block text-base font-bold w-full md:w-1/5 ${theme === "light" ? "text-gray-700" : "text-gray-200"}`}>
+                        Phase
+                      </label>
+                      <input
+                        type="text"
+                        className={`appearance-none border rounded ml-10 w-full py-2 px-3 ${theme === "light" ? "bg-gray-100 text-gray-700 border-gray-300" : "bg-gray-700 text-gray-100 border-gray-600"}`}
+                        placeholder="Enter Phase"
+                        value={phase} // Assume you have a phase state
+                        onChange={(e) => setPhase(e.target.value)} // Update accordingly
+                        required
+                      />
+                    </div>
+                  </div>
 
   {/* Task Mapping */}
-  {tasks.map((task, index) => (
+  {/* {tasks.map((task, index) => (
     <div key={index} className="py-5 space-y-5">
       <div className="md:flex md:flex-row">
         <label className={`block text-base font-bold w-full md:w-1/5 ${theme === "light" ? "text-gray-700" : "text-gray-200"}`}>
@@ -212,7 +318,7 @@ function Phase_view() {
         />
       </div>
     </div>
-  ))}
+  ))} */}
 </div>
 
 
@@ -239,7 +345,7 @@ function Phase_view() {
             </div>
           )}
 
-          <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
+          {/* <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
             <div className="flex justify-between">
               <h1 className="text-xl font-semibold p-2 pl-10 py-5">
                 Phase 1 - Planning
@@ -250,7 +356,7 @@ function Phase_view() {
                 <thead>
                   <tr className="bg-gray-300 text-gray-700">
                     <th className="py-3 text-center font-semibold text-base">
-                      Phase/Task
+                      Task
                     </th>
                     <th className="py-3 text-center font-semibold text-base">
                       Description
@@ -396,7 +502,7 @@ function Phase_view() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </div> */}
           {submittedTasks.length > 0 && (
         <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
           <div className="flex justify-between">
