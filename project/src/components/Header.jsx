@@ -4,6 +4,10 @@ import { ImSearch } from 'react-icons/im';
 import { IoCardOutline, IoFilterOutline } from "react-icons/io5";
 import { ImTable2 } from 'react-icons/im';
 import { FiLogOut } from "react-icons/fi";
+import { FaRegUser } from "react-icons/fa";
+import { CiGrid41 } from "react-icons/ci";
+
+
 
 
 function Header({ onSearch, onView, view, theme, dark, on_filter, filter, onDateRangeChange }) {
@@ -40,6 +44,13 @@ function Header({ onSearch, onView, view, theme, dark, on_filter, filter, onDate
     }
     on_filter(!filter);
   };
+
+  
+  const [dropdown, setdropdown] = useState(false)
+  const handleprofile = () =>{
+    setdropdown(!dropdown)
+    on_filter(!filter);
+  }
 
   return (
     <header className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 p-4 relative ">
@@ -121,13 +132,35 @@ function Header({ onSearch, onView, view, theme, dark, on_filter, filter, onDate
         </button>
 
         <button
-          onClick={handleLogout}
+        onClick={handleprofile}
           className={`p-2 rounded-md ${theme === 'light' ? 'bg-white' : 'bg-gray-700'}`}
-          aria-label={`Switch to ${view ? 'card' : 'table'} view`}
-          title='Logout'
+          aria-label="Logout"
         >
-          <FiLogOut className={`${theme === 'light' ? 'text-gray-700' : 'text-red-300'}`} />
+          <FaRegUser  size={20} className={`${theme === 'light' ? 'text-gray-700' : 'text-gray-400'}`} />
         </button>
+        {dropdown && (
+  <div className={`absolute top-20 md:top-16 right-5 ${theme === 'light' ? 'bg-white' : 'bg-gray-700'} shadow-md rounded-lg p-2 transition-transform transform scale-95 origin-top-right w-40 z-10`}>
+    
+    <button className={`flex items-center gap-2 w-full text-left p-2 rounded-md
+      ${theme === 'light' ? 'text-black bg-gray-100 hover:bg-gray-200' : 'text-white bg-gray-900 hover:bg-blue-950'}`} 
+      // onClick={handleProfile}
+      >
+        <CiGrid41 size={20} className='text-blue-500' />
+      <p className={`${theme === 'light' ? 'text-black' : 'text-white'}`}>Profile</p>
+    </button>
+
+    <button className={`flex items-center mt-2 gap-2 w-full text-left cursor-pointer p-2 rounded-md
+      ${theme === 'light' ? 'text-black bg-gray-100 hover:bg-gray-200' : 'text-white bg-gray-900 hover:bg-red-900'}`}
+      onClick={handleLogout}>
+      <FiLogOut size={20} className='text-red-500' />
+      <p>Logout</p>
+    </button>
+  
+  </div>
+)}
+
+
+          
 
 
 
@@ -138,3 +171,5 @@ function Header({ onSearch, onView, view, theme, dark, on_filter, filter, onDate
 }
 
 export default Header;
+
+

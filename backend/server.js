@@ -1616,17 +1616,30 @@ app.get("/raw_filtered_pending_data", async (req, res) => {
     res.json(data);
   });
 });
-
 app.get("/create-task", (req, res) => {
-   const sql = "SELECT * FROM Created_task";
-   db.query(sql, (err, data) => {
-      if (err) {
-         console.error(err);
-         return res.status(500).json({ message: "Failed to fetch tasks", error: err });
-      }
-      res.json(data);
-   });
+  const sql = "SELECT * FROM Created_task";
+  db.query(sql, (err, data) => {
+     if (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Failed to fetch tasks", error: err });
+     }
+
+     const currentDate = new Date();
+     const updatedTasks = data.map(task => {
+        const targetDate = new Date(task.Target_Date);
+        const diffTime = targetDate - currentDate; 
+        const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+        return {
+           ...task,
+           Remaining_Days: remainingDays < 0 ? 0 : remainingDays 
+        };
+     });
+
+     res.json(updatedTasks);
+  });
 });
+
 
 app.put('/update-task/:id', (req, res) => {
   const taskId = req.params.id;
@@ -1649,22 +1662,22 @@ app.put('/update-task/:id', (req, res) => {
 
 app.post("/create-task", (req, res) => {
   console.log("Request Body:", req.body);
-  const imageBuf = Buffer.from(req.body.image);
-  
+  const imageBuf = Buffer.from(req.body.image) || [];
+
   const {
     ax_brief,
-      collection_name,
-      project,
-      no_of_qty,
-      assign_date,
-      target_date,
-      priority,
-      depart,
-      assignTo,
-      person,
-      hodemail,
-      ref_images,
-      isChecked,
+    collection_name,
+    project,
+    no_of_qty,
+    assign_date,
+    target_date,
+    priority,
+    depart,
+    assignTo,
+    person,
+    hodemail,
+    ref_images,
+    isChecked,
   } = req.body;
 
   if (!ax_brief || !collection_name || !project || !no_of_qty || !assign_date || !target_date || !priority) {
@@ -1672,47 +1685,44 @@ app.post("/create-task", (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
   }
 
+  const calculateRemainingDays = (targetDate) => {
+    const now = new Date();
+    const target = new Date(targetDate);
+    const diffTime = target - now; 
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert to days
+  };
+
+  const remainingDays = calculateRemainingDays(target_date); // Calculate remaining days
+
   const sql = `
-INSERT INTO Created_task (
-    Ax_Brief, Collection_Name, References_Image, Project, Assign_Name,
-    Person, OWNER, No_of_Qty, Dept, Complete_Qty, Pending_Qty,
-    Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks,image_data
-) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?);
+    INSERT INTO Created_task (
+      Ax_Brief, Collection_Name, References_Image, Project, Assign_Name,
+      Person, OWNER, No_of_Qty, Dept, Complete_Qty, Pending_Qty,
+      Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks, image_data
+    ) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+  `;
 
-`;
-
-const calculateRemainingDays = (targetDate) => {
-  const now = new Date();
-  const target = new Date(targetDate);
-  const diffTime = Math.abs(target - now);
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-};
-const remainingDays = calculateRemainingDays(target_date);
-
-
-const values = [
-  ax_brief,          // Ax_Brief            // Sketch
-  collection_name,   // Collection_Name
-  ref_images,        // References_Image
-  project,           // Project
-  assignTo,          // Assign_Name
-  person,            // Person
-  hodemail,          // OWNER
-  no_of_qty,         // No_of_Qty
-  depart,            // Dept
-  0,                 // Complete_Qty (default to 0)
-  0,                 // Pending_Qty (default to 0)
-  assign_date,       // Assign_Date
-  target_date,       // Target_Date
-  remainingDays,                 // Remaining_Days (you can calculate this if needed)
-  isChecked ? 'Yes' : 'No',  // Project_View
-  'In Progress',     // Completed_Status
-  'null pointer',
-  imageBuf || null
-];
-
-
+  const values = [
+    ax_brief,          // Ax_Brief
+    collection_name,   // Collection_Name
+    ref_images,        // References_Image
+    project,           // Project
+    assignTo,          // Assign_Name
+    person,            // Person
+    hodemail,          // OWNER
+    no_of_qty,         // No_of_Qty
+    depart,            // Dept
+    0,                 // Complete_Qty (default to 0)
+    0,                 // Pending_Qty (default to 0)
+    assign_date,       // Assign_Date
+    target_date,       // Target_Date
+    remainingDays,     // Remaining_Days (calculated dynamically)
+    isChecked ? 'Yes' : 'No',  // Project_View
+    'In Progress',     // Completed_Status
+    'null pointer',    // Remarks
+    imageBuf || null   // image_data
+  ];
 
   db.query(sql, values, (err, result) => {
       if (err) {
