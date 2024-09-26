@@ -2093,6 +2093,130 @@ app.get('/team-member', (req, res) => {
 });
 
 
+const createPhaseTableQuery = `
+CREATE TABLE IF NOT EXISTS phase_tasks (
+  task_id VARCHAR(10),
+  phase_id VARCHAR(10),
+  task_name VARCHAR(255),
+  description TEXT,
+  start_date DATE,
+  end_date DATE,
+  assignee VARCHAR(255),
+  owner_email VARCHAR(255),
+  grace_period DATE,
+  STATUS VARCHAR(50) DEFAULT 'In Progress',
+  notes VARCHAR(50) DEFAULT 'Not Yet Received'
+);
+`;
+
+db.query(createPhaseTableQuery, (err) => {
+  if (err) {
+    console.error('Error creating team_member_details table:', err);
+    return;
+  }
+
+});
+
+app.post('/phase-task', (req, res) => {
+  const { task_id, phase_id, task_name, description, start_date, end_date, assignee, owner_email, grace_period, status, notes } = req.body;
+
+  const insertTaskQuery = `
+    INSERT INTO phase_tasks (task_id, phase_id, task_name, description, start_date, end_date, assignee, owner_email, grace_period, status, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+  `;
+
+  db.query(
+    insertTaskQuery, 
+    [task_id, phase_id, task_name, description, start_date, end_date, assignee, owner_email, grace_period, status || 'In Progress', notes || 'Not Yet Received'], 
+    (err, result) => {
+      if (err) {
+        console.error('Error inserting task:', err);
+        return res.status(500).json({ error: 'Failed to insert task' });
+      }
+      res.status(201).json({ message: 'Task created successfully' });
+    }
+  );
+});
+
+app.post('/phase', (req, res) => {
+  const { task_id, phase_id, phase_name} = req.body;
+
+  const insertTaskQuery = `
+    INSERT INTO phases ( phase_id,task_id, phase_name)
+    VALUES (?, ?, ?);
+  `;
+
+  db.query(
+    insertTaskQuery, 
+    [ phase_id, task_id, phase_name], 
+    (err, result) => {
+      if (err) {
+        console.error('Error inserting task:', err);
+        return res.status(500).json({ error: 'Failed to insert task' });
+      }
+      res.status(201).json({ message: 'Task created successfully' });
+    }
+  );
+});
+
+
+app.get('/phases', (req, res) => { 
+  const query = 'SELECT * FROM phases';
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching phases:', err);
+      return res.status(500).send('Error fetching phases');
+    }
+    res.json(results);
+  });
+});
+
+
+app.get('/phase-tasks', (req, res) => {
+  const query = 'SELECT * FROM phase_tasks';
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching tasks:', err);
+      return res.status(500).send('Error fetching tasks');
+    }
+    res.json(results);
+  });
+});
+
+
+app.put('/phase-task/:task_id', (req, res) => {
+  const { task_id } = req.params;
+  const { phase_id, task_name, description, start_date, end_date, assignee, owner_email, grace_period, status, notes } = req.body;
+
+  const updateTaskQuery = `
+    UPDATE phase_tasks
+    SET phase_id = ?, task_name = ?, description = ?, start_date = ?, end_date = ?, assignee = ?, owner_email = ?, grace_period = ?, status = ?, notes = ?
+    WHERE task_id = ?;
+  `;
+
+  db.query(
+    updateTaskQuery, 
+    [phase_id, task_name, description, start_date, end_date, assignee, owner_email, grace_period, status, notes, task_id], 
+    (err, result) => {
+      if (err) {
+        console.error('Error updating task:', err);
+        return res.status(500).json({ error: 'Failed to update task' });
+      }
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: 'Task not found' });
+      }
+      res.status(200).json({ message: 'Task updated successfully' });
+    }
+  );
+});
+
+
+
+
+
+
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
