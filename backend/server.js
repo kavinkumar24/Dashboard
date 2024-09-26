@@ -11,7 +11,7 @@ const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' })); 
 
 const db = mysql.createConnection({
   host: "172.16.5.233",
@@ -1649,6 +1649,8 @@ app.put('/update-task/:id', (req, res) => {
 
 app.post("/create-task", (req, res) => {
   console.log("Request Body:", req.body);
+  const imageBuf = Buffer.from(req.body.image);
+  
   const {
     ax_brief,
       collection_name,
@@ -1657,13 +1659,12 @@ app.post("/create-task", (req, res) => {
       assign_date,
       target_date,
       priority,
-      sketch,
       depart,
       assignTo,
       person,
       hodemail,
       ref_images,
-      isChecked
+      isChecked,
   } = req.body;
 
   if (!ax_brief || !collection_name || !project || !no_of_qty || !assign_date || !target_date || !priority) {
@@ -1673,11 +1674,11 @@ app.post("/create-task", (req, res) => {
 
   const sql = `
 INSERT INTO Created_task (
-    Ax_Brief, Sketch, Collection_Name, References_Image, Project, Assign_Name,
+    Ax_Brief, Collection_Name, References_Image, Project, Assign_Name,
     Person, OWNER, No_of_Qty, Dept, Complete_Qty, Pending_Qty,
-    Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks
+    Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks,image_data
 ) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?);
 
 `;
 
@@ -1691,8 +1692,7 @@ const remainingDays = calculateRemainingDays(target_date);
 
 
 const values = [
-  ax_brief,          // Ax_Brief
-  sketch,            // Sketch
+  ax_brief,          // Ax_Brief            // Sketch
   collection_name,   // Collection_Name
   ref_images,        // References_Image
   project,           // Project
@@ -1708,7 +1708,8 @@ const values = [
   remainingDays,                 // Remaining_Days (you can calculate this if needed)
   isChecked ? 'Yes' : 'No',  // Project_View
   'In Progress',     // Completed_Status
-  'null pointer'     // Remarks (or provide actual remarks if needed)
+  'null pointer',
+  imageBuf || null
 ];
 
 
@@ -1723,17 +1724,37 @@ const values = [
 });
 
  
-app.get("/tasks", (req, res) => {
-   const sql = "SELECT * FROM task";
-   db.query(sql, (err, data) => {
-      if (err) {
-         console.error(err);
-         return res.status(500).json({ message: "Failed to fetch tasks", error: err });
-      }
-      res.json(data);
-   });
-   }
-);
+app.post('/upload-image', (req, res) => {
+  const imageBuffer = Buffer.from(req.body.image);
+
+  const sql = "INSERT INTO images (image_data) VALUES (?)"; 
+
+  db.query(sql, [imageBuffer], (err, result) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+    res.send("Image uploaded successfully");
+  });
+});
+
+
+app.get('/get-image', (req, res) => {
+  const sql = "SELECT image_data FROM images ORDER BY id DESC LIMIT 1"; 
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      return res.status(500).send(err);
+    }
+    if (results.length > 0) {
+      const imageData = results[0].image_data;
+      res.json({ image: Array.from(new Uint8Array(imageData)) }); // Send the image data as an array
+    } else {
+      res.status(404).send("No image found");
+    }
+  });
+});
+
+
 
 const axios = require("axios");
 
@@ -1928,34 +1949,34 @@ app.post('/api/rejection/upload', upload.single('file'), (req, res) => {
 
 
 
-const nodemailer = require('nodemailer');
-const bodyParser = require('body-parser');
+// const nodemailer = require('nodemailer');
+// const bodyParser = require('body-parser');
 
-const transporter = nodemailer.createTransport({
-  service: 'Gmail', // Use your email provider
-  auth: {
-    user: 'kavinmpm24@gmail.com', // Your email
-    pass: 'K@vinkumar242003', // Your email password
-  },
-});
+// const transporter = nodemailer.createTransport({
+//   service: 'Gmail', // Use your email provider
+//   auth: {
+//     user: 'kavinmpm24@gmail.com', // Your email
+//     pass: 'K@vinkumar242003', // Your email password
+//   },
+// });
 
-app.post('/api/send-email', (req, res) => {
-  const { from, to, subject, body } = req.body;
+// app.post('/api/send-email', (req, res) => {
+//   const { from, to, subject, body } = req.body;
 
-  const mailOptions = {
-    from,
-    to,
-    subject,
-    text: body,
-  };
+//   const mailOptions = {
+//     from,
+//     to,
+//     subject,
+//     text: body,
+//   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      return res.status(500).send(error.toString());
-    }
-    res.status(200).send('Email sent: ' + info.response);
-  });
-});
+//   transporter.sendMail(mailOptions, (error, info) => {
+//     if (error) {
+//       return res.status(500).send(error.toString());
+//     }
+//     res.status(200).send('Email sent: ' + info.response);
+//   });
+// });
 
 
 

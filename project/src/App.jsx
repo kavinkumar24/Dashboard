@@ -38,6 +38,7 @@ import Project_detail_new_design from './components/New_Design_detials/Project_d
 import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
 import PrivateRoute from './PrivateRoute';
 import Mail from './components/Email'
+import Image from './components/Imageupload'
 import Operational_task from './components/Operational_Task/Operational_task';
 import Phase_view from './components/Operational_Task/Phase_view';
 
@@ -57,6 +58,7 @@ function App() {
             } 
           />
         <Route path='/mail' element={<Mail />} />
+        <Route path='/image' element={<Image />} />
         <Route path="/product-details/:pltcode/:dept" element={
           <PrivateRoute>
           <ProductDetailsPage />

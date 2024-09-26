@@ -67,8 +67,10 @@ function CreateTask() {
   }, [theme]);
 
 
-  const [sketchOptions, setSketchOptions] = useState([]);
+  // const [sketchOptions, setSketchOptions] = useState([]);
   const [image_upload, setImage_upload] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [uploadedImage, setUploadedImage] = useState(null); 
   
   const handleCheckboxChange = (event) => {
     if (!event.target.checked) {
@@ -76,6 +78,25 @@ function CreateTask() {
     }
     setIsChecked(event.target.checked);
   };
+
+  
+  const handleImageChange = (event) => {
+    setSelectedImage(event.target.files[0]);
+    const file = event.target.files[0];
+
+    // Check if a file is selected
+    if (file) {
+      // Check if file size is less than or equal to 10KB (10 * 1024 bytes)
+      if (file.size <= 20 * 1024) {
+        // Proceed with the file (like setting it to state, or previewing the image)
+        console.log('Image selected:', file);
+      } else {
+        // Display an error message
+        alert('File size must be 10KB or less');
+        event.target.value = null; // Clear the input
+      }
+  };
+  }
 
   const handle_images_upload = (selectedOption) => {
     const value = selectedOption ? selectedOption.value : "";
@@ -100,16 +121,16 @@ function CreateTask() {
       console.log("brief", briefDetails);
 
       // Set the sketch options from sketchnums
-      setSketchOptions(
-        briefDetails.sketchnums.map((num) => ({ value: num, label: num }))
-      );
+      // setSketchOptions(
+      //   briefDetails.sketchnums.map((num) => ({ value: num, label: num }))
+      // );
       setIsAutoFilled(true);
       setError("");
     } else {
       setCollection_name("");
       setProject("");
       setIsAutoFilled(false);
-      setSketchOptions([]);
+      // setSketchOptions([]);
     }
   };
   const handleSketch = (selectedOption) => {
@@ -148,12 +169,15 @@ function CreateTask() {
       setError("Please enter a correct AX Brief ID");
       return;
     }
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(selectedImage);
 
+    reader.onloadend = async () => {
+      const imageData = new Uint8Array(reader.result);
     const taskData = {
       ax_brief,
       collection_name,
       project,
-      sketch,
       no_of_qty,
       assign_date,
       target_date,
@@ -163,7 +187,9 @@ function CreateTask() {
       hodemail,
       priority,
       ref_images,
-      isChecked
+      isChecked,
+      image: Array.from(imageData) ||[]
+      
     };
 
     console.log("Task Data:", taskData);
@@ -186,7 +212,6 @@ function CreateTask() {
       const result = await response.json();
       console.log(result);
       alert("Task created successfully");
-
       setAx_brief('');
       setCollection_name('');
       setProject('');
@@ -206,7 +231,7 @@ function CreateTask() {
       console.error(error);
       setError("An error occurred while creating the task");
     }
-  };
+  }}
   const deptOptions = [
     { value: "cad", label: "CAD" },
     { value: "cam", label: "CAM" },
@@ -309,7 +334,7 @@ function CreateTask() {
                       </label>
                       <p className="ml-10 text-blue-700 font-bold">{project}</p>
                     </div>
-                    <div className="space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
+                    {/* <div className="space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
                       <label
                         className={`block text-base font-bold ${
                           theme === "light" ? "text-gray-700" : "text-gray-200"
@@ -329,7 +354,7 @@ function CreateTask() {
                         } w-full md:w-3/5`}
                         required
                       />
-                    </div>
+                    </div> */}
                   </>
                 )}
 
@@ -572,7 +597,8 @@ function CreateTask() {
                         type="file"
                         id="uploadFile1"
                         className="hidden"
-                        accept=".xlsx"
+                       accept="image/*"
+                       onChange={handleImageChange}
                         // onChange={handleFileChange}
                         // disabled={fileType === ""}
                       />
