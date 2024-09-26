@@ -57,8 +57,8 @@ function DepartmentDetail() {
   
         } else if (type === 'pending') {
           filteredData = dataToRender.filter(item => 
-            item.todept && from.includes(item.todept.toUpperCase()) &&
-            (search.toLowerCase() === '' || item.todept.toLowerCase().includes(search.toLowerCase()))
+            item.TODEPT && from.includes(item.TODEPT.toUpperCase()) &&
+            (search.toLowerCase() === '' || item.TODEPT.toLowerCase().includes(search.toLowerCase()))
           );
   
           console.log("Filtered Pending Data:", filteredData);
@@ -109,13 +109,13 @@ function DepartmentDetail() {
     if (Array.isArray(data)) {
       return data.reduce((acc, item) => {
         const dept = (item["From Dept"] || item["To Dept"] || 'Unknown').toUpperCase();
-        const pltcode = item.Project ||item.pltcoded1|| 'Unknown';
+        const pltcode = item.Project ||item.PLTCODE1|| 'Unknown';
   
         if (!acc[dept]) {
           acc[dept] = { quantity: 0, pltcodes: {} };
         }
   
-        acc[dept].quantity += Number(item["CW Qty"] || item.jcpdscwqty1) || 0;
+        acc[dept].quantity += Number(item["CW Qty"] || item.JCPDSCWQTY1) || 0;
   
         if (!acc[dept].pltcodes[pltcode]) {
           acc[dept].pltcodes[pltcode] = 0;
@@ -132,29 +132,29 @@ function DepartmentDetail() {
 
   const groupDataByDept = (data) => {
     if (Array.isArray(data)) {
-      return data.reduce((acc, item) => {
-        const dept = (item.fromdept1 || item.todept || 'Unknown').toUpperCase();
-        const pltcode = item.pltcode ||item.pltcoded1|| 'Unknown';
-  
-        if (!acc[dept]) {
-          acc[dept] = { quantity: 0, pltcodes: {} };
-        }
-  
-        acc[dept].quantity += Number(item.pdscwqty1 || item.jcpdscwqty1) || 0;
-  
-        if (!acc[dept].pltcodes[pltcode]) {
-          acc[dept].pltcodes[pltcode] = 0;
-        }
-        acc[dept].pltcodes[pltcode] += 1;
-  
-        return acc;
-      }, {});
+        return data.reduce((acc, item) => {
+            const dept = (item.fromdept1 || item.TODEPT || 'Unknown').toUpperCase();
+            const pltcode = item.pltcode || item.PLTCODE1 || 'Unknown';
+
+            if (!acc[dept]) {
+                acc[dept] = { quantity: 0, pltcodes: {} };
+            }
+
+            acc[dept].quantity += Number(item.JCPDSCWQTY1) || 0;
+
+            if (!acc[dept].pltcodes[pltcode]) {
+                acc[dept].pltcodes[pltcode] = 0;
+            }
+            acc[dept].pltcodes[pltcode] += 1;
+
+            return acc;
+        }, {});
     } else {
-      console.error('Invalid data format for grouping:', data);
-      return {};
+        console.error('Invalid data format for grouping:', data);
+        return {};
     }
-  };
-  
+};
+
   
 
   const toTitleCase = (str) => {

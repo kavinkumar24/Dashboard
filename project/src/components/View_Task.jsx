@@ -3,6 +3,8 @@ import Sidebar from "./Sidebar";
 import Header from "./Header";
 import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
+import { IoIosCloseCircleOutline } from "react-icons/io";
+
 
 function ViewTasks() {
   const navigate = useNavigate();
@@ -13,10 +15,9 @@ function ViewTasks() {
   const [tasks, setTasks] = useState([]);
   const [sortOrder, setSortOrder] = useState(0);
   const [error, setError] = useState("");
-  const userRole = localStorage.getItem("role"); 
+  const userRole = localStorage.getItem("role");
   const loggedInEmail = localStorage.getItem("Email");
   const [uploadedImage, setUploadedImage] = useState(null);
-  
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -26,30 +27,27 @@ function ViewTasks() {
     try {
       const response = await fetch("http://localhost:8081/create-task");
       const tasks = await response.json(); // Now tasks is an array
-  
+
       // Assuming you want to set the uploaded image for the first task
       if (tasks.length > 0) {
         const firstTask = tasks[0]; // Get the first task for demonstration
         if (firstTask.image_data && Array.isArray(firstTask.image_data.data)) {
           const byteArray = new Uint8Array(firstTask.image_data.data);
-          const blob = new Blob([byteArray], { type: 'image/jpeg' }); // Adjust type as necessary
+          const blob = new Blob([byteArray], { type: "image/jpeg" }); // Adjust type as necessary
           const imageUrl = URL.createObjectURL(blob);
-          
-          setUploadedImage(imageUrl); 
+
+          setUploadedImage(imageUrl);
         } else {
           console.warn("No image data found for the first task.");
         }
       }
-  
+
       setTasks(tasks); // Store all tasks in the state
     } catch (error) {
       console.error("Error fetching task data:", error);
       setError("Failed to load tasks. Please try again later.");
     }
   };
-  
-
-  
 
   useEffect(() => {
     fetch_task_data();
@@ -72,9 +70,9 @@ function ViewTasks() {
   };
 
   const [showimage, setshowimage] = useState(false);
-  const handle_show_image = ()=>{
+  const handle_show_image = () => {
     setshowimage(true);
-  }
+  };
 
   const closeModal = () => {
     setshowimage(false);
@@ -162,9 +160,8 @@ function ViewTasks() {
     }
   };
 
-   
   const handleStatusChange = (task, newStatus) => {
-    if (userRole !== 'admin') {
+    if (userRole !== "admin") {
       updateTaskStatus(task.Task_ID, newStatus);
       setTasks((prevTasks) =>
         prevTasks.map((t) =>
@@ -195,32 +192,53 @@ function ViewTasks() {
       <div className="flex-1 flex flex-col">
         <Header onSearch={setSearch} theme={theme} dark={setTheme} />
         <main className="flex-1 overflow-y-auto overflow-x-auto p-4 ml-20 w-full md:px-8 lg:px-4 max-w-full md:max-w-screen-xl xl:max-w-screen-2xl">
-        {showimage && uploadedImage && (
-  <div
-    id="modelConfirm"
-    className={`fixed z-50 inset-0 ${theme === "light" ? "bg-gray-900 bg-opacity-60" : "bg-gray-900 bg-opacity-80"} overflow-auto h-full w-full px-4`}
-  >
-    <div className={`relative top-20 mx-auto shadow-xl rounded-md ${theme === "light" ? "bg-white" : "bg-gray-800"} max-w-4xl p-4`}>
-      <div className="flex justify-end p-2">
-        <button onClick={closeModal} type="button" className={`text-gray-400 ${theme === "light" ? "bg-transparent hover:bg-gray-200 hover:text-gray-900" : "bg-transparent hover:bg-gray-600 hover:text-gray-300"} rounded-lg text-sm p-1.5 ml-auto inline-flex items-center`}>
-          X
-        </button>
-      </div>
-      <div className="flex justify-center items-center p-6 border border-emerald-400">
-        <img src={uploadedImage} alt="Uploaded" style={{ maxWidth: '600px', maxHeight: '600px' }} />
-      </div>
-      <div className="flex justify-center">
-        <a
-          href={uploadedImage}
-          download="downloaded_image.jpg"
-          className="mt-4 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
-        >
-          Download Image
-        </a>
-      </div>
-    </div>
-  </div>
-)}
+          {showimage && uploadedImage && (
+            <div
+              id="modelConfirm"
+              className={`fixed z-50 inset-0 ${
+                theme === "light"
+                  ? "bg-gray-900 bg-opacity-60"
+                  : "bg-gray-900 bg-opacity-80"
+              } overflow-auto h-full w-full px-4`}
+            >
+              <div
+                className={`relative top-20 mx-auto shadow-xl rounded-md ${
+                  theme === "light" ? "bg-white" : "bg-gray-800"
+                } max-w-4xl p-4`}
+              >
+                <div className="flex justify-end p-2">
+                  <button
+                    onClick={closeModal}
+                    type="button"
+                    className={`text-gray-400 ${
+                      theme === "light"
+                        ? "bg-transparent hover:bg-gray-200 hover:text-gray-900"
+                        : "bg-transparent hover:bg-gray-600 hover:text-gray-300"
+                    } rounded-lg text-sm p-1.5 ml-auto inline-flex items-center`}
+                  >
+                    <IoIosCloseCircleOutline size={25}/>
+                  </button>
+                </div>
+                <div className="flex justify-center items-center p-2 border border-emerald-400">
+                  <img
+                    src={uploadedImage}
+                    alt="Uploaded"
+                    style={{ maxWidth: "100%", maxHeight: "600px" }}
+                  />
+                </div>
+
+                <div className="flex justify-center">
+                  <a
+                    href={uploadedImage}
+                    download="downloaded_image.jpg"
+                    className="mt-4 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
+                  >
+                    Download Image
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
 
           {error && <p className="text-red-500">{error}</p>}
 
@@ -240,13 +258,34 @@ function ViewTasks() {
             </button>
           </div>
 
-          <div className="max-w-[100%] overflow-x-auto border rounded-lg border-gray-300 bg-white shadow-lg">
+          <div
+            className={`max-w-full overflow-x-auto border rounded-lg shadow-lg 
+  ${
+    theme === "light"
+      ? "border-gray-300 bg-white"
+      : "border-gray-700 bg-gray-800 text-white"
+  }`}
+          >
             <h1 className="text-xl font-semibold p-2 pl-10 py-5">Task List</h1>
 
-            <div className="min-w-full overflow-x-auto">
-              <table className="w-full table-auto text-sm">
+            <div
+              className={`min-w-full overflow-x-auto ${
+                theme === "light" ? "bg-white" : "bg-gray-800"
+              }`}
+            >
+              <table
+                className={`w-full table-auto text-sm ${
+                  theme === "light" ? "text-gray-800" : "text-gray-200"
+                }`}
+              >
                 <thead>
-                  <tr className="bg-gray-300 text-gray-700">
+                  <tr
+                    className={`font-semibold text-base ${
+                      theme === "light"
+                        ? "bg-gray-300 text-gray-700"
+                        : "bg-gray-900 text-gray-200"
+                    }`}
+                  >
                     {[
                       "ID",
                       "Ax Brief",
@@ -268,10 +307,7 @@ function ViewTasks() {
                       "Remarks",
                       "Details",
                     ].map((header, index) => (
-                      <th
-                        key={index}
-                        className="px-6 py-3 text-center font-semibold text-base"
-                      >
+                      <th key={index} className="px-6 py-3 text-center">
                         {header}
                       </th>
                     ))}
@@ -282,7 +318,13 @@ function ViewTasks() {
                     <tr
                       key={`${task.Task_ID}-${index}`}
                       className={`transition-colors duration-200 ${
-                        index % 2 === 0 ? "bg-gray-100" : "bg-white"
+                        index % 2 === 0
+                          ? theme === "light"
+                            ? "bg-gray-100"
+                            : "bg-gray-700"
+                          : theme === "light"
+                          ? "bg-white"
+                          : "bg-gray-800"
                       }`}
                     >
                       <td className="px-6 py-6 text-center whitespace-nowrap text-base">
@@ -291,14 +333,20 @@ function ViewTasks() {
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {task.Ax_Brief}
                       </td>
-                     
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {task.Collection_Name}
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
-                        {task.References_Image == 'yes' ? 
-                        <button onClick={handle_show_image} className="mt-2 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700">show</button>: task.References_Image
-                        }
+                        {task.References_Image === "yes" ? (
+                          <button
+                            onClick={handle_show_image}
+                            className="mt-2 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
+                          >
+                            show
+                          </button>
+                        ) : (
+                          task.References_Image
+                        )}
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {task.Project}
@@ -337,15 +385,17 @@ function ViewTasks() {
                         {task.Project_View}
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
-                      {userRole !== 'admin' ? (
+                        {userRole !== "admin" ? (
                           <select
                             value={task.Completed_Status}
-                            onChange={(e) => handleStatusChange(task, e.target.value)}
-                            className={`border shadow-xl rounded-xl px-2 py-1 ${task.Completed_Status === "In Progress" ? "bg-yellow-300" : "border-green-600 bg-green-500 text-white font-bold" 
+                            onChange={(e) =>
+                              handleStatusChange(task, e.target.value)
                             }
-                            `}
-                            // disabled={task.Completed_Status === "Completed"}
-
+                            className={`border shadow-xl rounded-xl px-2 py-1 ${
+                              task.Completed_Status === "In Progress"
+                                ? theme==="dark" ?"bg-yellow-300 text-black":"bg-yellow-300"
+                                : "border-green-600 bg-green-500 text-white font-bold"
+                            }`}
                           >
                             {task.Completed_Status === "In Progress" ? (
                               <>
@@ -358,16 +408,24 @@ function ViewTasks() {
                           </select>
                         ) : (
                           <div>
-                            <p className={`border rounded-xl px-2 py-1 ${task.Completed_Status === "In Progress" ? "bg-yellow-300" : "bg-green-500 text-white"}`}>
-                            {task.Completed_Status}
+                            <p
+                              className={`border rounded-xl px-2 py-1 
+  ${
+    task.Completed_Status === "In Progress"
+      ? theme === "dark"
+        ? "bg-yellow-300 text-black"
+        : "bg-yellow-300"
+      : "bg-green-500 text-white"
+  }`}
+                            >
+                              {task.Completed_Status}
                             </p>
-                            </div>
+                          </div>
                         )}
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {task.Remarks}
                       </td>
-
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         <button
                           onClick={() => handleViewClick(task.Ax_Brief)}
@@ -376,7 +434,6 @@ function ViewTasks() {
                           View
                         </button>
                       </td>
-
                     </tr>
                   ))}
                 </tbody>

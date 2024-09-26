@@ -38,7 +38,6 @@ import Project_detail_new_design from './components/New_Design_detials/Project_d
 import Subproduct_detail_new_design from './components/New_Design_detials/Subproduct_detail'
 import PrivateRoute from './PrivateRoute';
 import Mail from './components/Email'
-import Image from './components/Imageupload'
 import Operational_task from './components/Operational_Task/Operational_task';
 import Phase_view from './components/Operational_Task/Phase_view';
 
@@ -58,7 +57,6 @@ function App() {
             } 
           />
         <Route path='/mail' element={<Mail />} />
-        <Route path='/image' element={<Image />} />
         <Route path="/product-details/:pltcode/:dept" element={
           <PrivateRoute>
           <ProductDetailsPage />
@@ -90,7 +88,7 @@ function App() {
           </PrivateRoute>
           } />
         <Route path = '/rejections' element={
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={['admin']}>
           <Reject />
           </PrivateRoute>
           } />
@@ -106,12 +104,12 @@ function App() {
         </PrivateRoute>
         } />
         <Route path = '/rejections/dept_rejections' element={
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={['admin']}>
           <Department_reject />
           </PrivateRoute>
           } />
         <Route path = '/uploads' element={
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={['admin']}>
           <Upload />
           </PrivateRoute>
           } />
@@ -120,7 +118,13 @@ function App() {
           <New_Design />
           </PrivateRoute>
           } />
-        <Route path='/login' element={<Login/>} />
+        <Route path='/login' element={
+          
+          <PrivateRoute>
+          <Login/>
+           </PrivateRoute>
+          }
+           />
         <Route path = '/demo' element={<Demo />} />
         <Route path="/zone-detail-order_receiving/:zone" element={
           <PrivateRoute>
@@ -204,7 +208,7 @@ function App() {
           } />
         <Route path='/rejections/problem_arised' element=
         {
-          <PrivateRoute>
+          <PrivateRoute allowedRoles={['admin']}>
         <Problem_Arised/>
         </PrivateRoute>
         }/>

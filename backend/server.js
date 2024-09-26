@@ -1369,7 +1369,7 @@ app.get("/raw_filtered_production_data",async(req, res) => {
 
   const sql = `
          SELECT \`From Dept\`,\`To Dept\`, \`CW Qty\`,Project
-         FROM Production_sample_data
+         FROM Production_updated_data
          WHERE \`From Dept\` IN (?)
             
       `;
@@ -1674,6 +1674,13 @@ app.get("/pending_data", (req, res) => {
   });
 });
 
+app.get("/user/loggedin/data",async(req,res)=>{
+  const sql = "SELECT * FROM users";
+  db.query(sql,(err,data)=>{
+    if(err) return res.json(err);
+    return res.json(data);
+  })
+})
 app.get("/raw_filtered_pending_data", async (req, res) => {
   const response = await axios.get("http://localhost:8081/department-mappings");
   const departmentMappings = response.data;
@@ -1683,9 +1690,9 @@ app.get("/raw_filtered_pending_data", async (req, res) => {
   const lowerToDeptFilter = deptToFilter.map((dept) => dept.toLowerCase());
 
   const sql = `
-            SELECT todept, CAST(jcpdscwqty1 AS DECIMAL) as jcpdscwqty1,pltcoded1
-            FROM pending_log
-            WHERE LOWER(todept) IN (?)
+            SELECT TODEPT, CAST(JCPDSCWQTY1 AS DECIMAL) as JCPDSCWQTY1,PLTCODE1
+            FROM pending
+            WHERE LOWER(TODEPT) IN (?)
          `;
 
   db.query(sql, [lowerToDeptFilter], (err, data) => {
