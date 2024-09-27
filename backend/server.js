@@ -264,7 +264,6 @@ db.query(createDesignTable, (err) => {
     console.error('Error creating table:', err);
     return;
   }
-  console.log("table created")
 });
 
 
@@ -2095,7 +2094,8 @@ CREATE TABLE IF NOT EXISTS phase_tasks (
   owner_email VARCHAR(255),
   grace_period DATE,
   STATUS VARCHAR(50) DEFAULT 'In Progress',
-  notes VARCHAR(50) DEFAULT 'Not Yet Received'
+  notes VARCHAR(50) DEFAULT 'Not Yet Received',
+  ot_id VARCHAR (10)
 );
 `;
 
@@ -2107,26 +2107,67 @@ db.query(createPhaseTableQuery, (err) => {
 
 });
 
-app.post('/phase-task', (req, res) => {
-  const { task_id, phase_id, task_name, description, start_date, end_date, assignee, owner_email, grace_period, status, notes } = req.body;
+app.post('/phase-task', async (req, res) => {
+  const tasks = req.body;
 
-  const insertTaskQuery = `
-    INSERT INTO phase_tasks (task_id, phase_id, task_name, description, start_date, end_date, assignee, owner_email, grace_period, status, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+  // Example validation moved outside of the forEach loop
+  tasks.forEach(task => {
+    if (!task.task_id || !task.phase_id || !task.task_name) {
+      return res.status(400).json({ error: 'Missing required fields in task' });
+    }
+  });
+  
+  const missingFields = tasks.some(task => !task.task_id || !task.phase_id || !task.task_name);
+
+  if (missingFields) {
+    return res.status(400).json({ error: 'Missing required fields in task' });
+  }
+
+  const insertTaskQuery = `INSERT INTO phase_tasks (task_id, phase_id, task_name, description, start_date, end_date, assignee, owner_email, grace_period, status, notes,ot_id)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?);
   `;
 
-  db.query(
-    insertTaskQuery, 
-    [task_id, phase_id, task_name, description, start_date, end_date, assignee, owner_email, grace_period, status || 'In Progress', notes || 'Not Yet Received'], 
-    (err, result) => {
-      if (err) {
-        console.error('Error inserting task:', err);
-        return res.status(500).json({ error: 'Failed to insert task' });
-      }
-      res.status(201).json({ message: 'Task created successfully' });
-    }
-  );
+  try {
+    const insertPromises = tasks.map(task => {
+      return new Promise((resolve, reject) => {
+        db.query(
+          insertTaskQuery,
+          [
+            task.task_id,
+            task.phase_id,
+            task.task_name,
+            task.description,
+            task.start_date || null, 
+            task.end_date || null,
+            task.assignee,
+            task.owner_email,
+            task.grace_period || null,
+            task.status || 'In Progress',
+            task.notes || 'Not Yet Received',
+            task.ot_id,
+          ],
+          (err, result) => {
+            if (err) {
+              console.error('Error inserting task:', err);
+              reject(err); // Reject the promise on error
+            } else {
+              resolve(result); // Resolve the promise on success
+            }
+          }
+        );
+      });
+    });
+
+    await Promise.all(insertPromises); // Wait for all inserts to complete
+    res.status(201).json({ message: 'Tasks created successfully' });
+
+  } catch (error) {
+    console.error('Failed to insert tasks:', error);
+    res.status(500).json({ error: 'Failed to insert tasks' });
+  }
 });
+
+
 
 app.post('/phase', (req, res) => {
   const { task_id, phase_id, phase_name} = req.body;

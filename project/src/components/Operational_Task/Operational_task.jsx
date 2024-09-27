@@ -42,7 +42,7 @@ function Operational_task() {
   }
 
   const handleViewPhase = (taskId,project_name, assignee) => {
-    console.log(taskId);
+        console.log(taskId);
     navigate("/task/operational_task/phase_view", {
       state: { taskId, project_name, assignee },
     });
@@ -328,12 +328,18 @@ function Operational_task() {
                         {item.attachment}
                       </td>
                       <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                        <button
+                      <button
                           className="px-5 py-2 bg-blue-500 text-white rounded-lg font-semibold"
-                          onClick={() => handleViewPhase(item.task_id, item.project_name, item.assignee)}
+                          onClick={() => {
+                           
+                              handleViewPhase(item.task_id, item.project_name, item.assignee);
+                            
+                          }}
+                          // disabled={teamDetails[item.task_id]?.length === 0}
                         >
                           View Phases
                         </button>
+
                       </td>
                     </tr>
 
