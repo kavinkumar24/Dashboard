@@ -169,8 +169,10 @@ function CreateTask() {
       setError("Please enter a correct AX Brief ID");
       return;
     }
+    
     const reader = new FileReader();
-    reader.readAsArrayBuffer(selectedImage);
+    const imageToRead = selectedImage || new Array;
+    reader.readAsArrayBuffer(imageToRead);
 
     reader.onloadend = async () => {
       const imageData = new Uint8Array(reader.result);
@@ -189,7 +191,6 @@ function CreateTask() {
       ref_images,
       isChecked,
       image: Array.from(imageData) ||[]
-      
     };
 
     console.log("Task Data:", taskData);

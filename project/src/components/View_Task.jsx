@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import * as XLSX from "xlsx";
+import { useNavigate } from "react-router-dom";
 
 function ViewTasks() {
+  const navigate = useNavigate();
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
@@ -11,7 +13,7 @@ function ViewTasks() {
   const [tasks, setTasks] = useState([]);
   const [sortOrder, setSortOrder] = useState(0);
   const [error, setError] = useState("");
-
+  const userRole = localStorage.getItem("role"); 
   const loggedInEmail = localStorage.getItem("Email");
   const [uploadedImage, setUploadedImage] = useState(null);
   
@@ -46,6 +48,7 @@ function ViewTasks() {
     }
   };
   
+
   
 
   useEffect(() => {
@@ -75,6 +78,10 @@ function ViewTasks() {
 
   const closeModal = () => {
     setshowimage(false);
+  };
+
+  const handleViewClick = (briefId) => {
+    navigate(`/task/detailed_task/brief_id/${briefId}`); // Redirect to detailed task view
   };
 
   const escapeRegExp = (string) => {
@@ -155,14 +162,16 @@ function ViewTasks() {
     }
   };
 
+   
   const handleStatusChange = (task, newStatus) => {
-    updateTaskStatus(task.Task_ID, newStatus);
-
-    setTasks((prevTasks) =>
-      prevTasks.map((t) =>
-        t.Task_ID === task.Task_ID ? { ...t, Completed_Status: newStatus } : t
-      )
-    );
+    if (userRole !== 'admin') {
+      updateTaskStatus(task.Task_ID, newStatus);
+      setTasks((prevTasks) =>
+        prevTasks.map((t) =>
+          t.Task_ID === task.Task_ID ? { ...t, Completed_Status: newStatus } : t
+        )
+      );
+    }
   };
 
   const getStatusClass = (status) => {
@@ -257,6 +266,7 @@ function ViewTasks() {
                       "Project_View",
                       "Status",
                       "Remarks",
+                      "Details",
                     ].map((header, index) => (
                       <th
                         key={index}
@@ -327,31 +337,46 @@ function ViewTasks() {
                         {task.Project_View}
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
-                        <select
-                          value={task.Completed_Status}
-                          onChange={(e) =>
-                            handleStatusChange(task, e.target.value)
-                          }
-                          className={`border rounded px-2 py-1 ${
-                            task.Completed_Status === "In Progress"
-                              ? "bg-yellow-200"
-                              : "bg-green-200"
-                          }`}
-                          disabled={task.Completed_Status === "Completed"}
-                        >
-                          {task.Completed_Status === "In Progress" ? (
-                            <>
-                              <option value="In Progress">In Progress</option>
+                      {userRole !== 'admin' ? (
+                          <select
+                            value={task.Completed_Status}
+                            onChange={(e) => handleStatusChange(task, e.target.value)}
+                            className={`border shadow-xl rounded-xl px-2 py-1 ${task.Completed_Status === "In Progress" ? "bg-yellow-300" : "border-green-600 bg-green-500 text-white font-bold" 
+                            }
+                            `}
+                            // disabled={task.Completed_Status === "Completed"}
+
+                          >
+                            {task.Completed_Status === "In Progress" ? (
+                              <>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                              </>
+                            ) : (
                               <option value="Completed">Completed</option>
-                            </>
-                          ) : (
-                            <option value="Completed">Completed</option>
-                          )}
-                        </select>
+                            )}
+                          </select>
+                        ) : (
+                          <div>
+                            <p className={`border rounded-xl px-2 py-1 ${task.Completed_Status === "In Progress" ? "bg-yellow-300" : "bg-green-500 text-white"}`}>
+                            {task.Completed_Status}
+                            </p>
+                            </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {task.Remarks}
                       </td>
+
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        <button
+                          onClick={() => handleViewClick(task.Ax_Brief)}
+                          className={`bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700`}
+                        >
+                          View
+                        </button>
+                      </td>
+
                     </tr>
                   ))}
                 </tbody>

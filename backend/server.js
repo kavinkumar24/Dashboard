@@ -38,28 +38,102 @@ app.post('/save-targets', (req, res) => {
   // Check if the table exists, and create it if it doesn't
 
 
-  db.query(createTableQuery, (err) => {
-    if (err) {
-      console.error("Error creating table:", err);
-      return res.status(500).send("Error creating table");
+  try {
+    const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+
+    // Expected column names
+    const expectedColumns = ['PROJECT-1', 'Product', 'Sub_Product', 'Total'];
+    const fileHeaders = jsonData[0];
+    
+    // Check for header mismatches
+    const headerMismatch = expectedColumns.filter(col => !fileHeaders.includes(col));
+    if (headerMismatch.length > 0) {
+      return res.status(400).send(`
+        Attention Please!!! : The following columns are missing or mismatched: 
+        ${headerMismatch.join(', ')}. 
+        Please correct the column names and try re-uploading the file after refreshing or reloading the current page.
+      `);
     }
 
-    // Insert or update the data to avoid duplicates
-    const insertDataQuery = `
-      INSERT INTO projects_targets (project, target) 
-      VALUES ?
-      ON DUPLICATE KEY UPDATE target = VALUES(target)
-    `;
-    const values = targets.map(item => [item.project, item.target]);
+    // Process the data, removing the header
+    const values = jsonData.slice(1).map(row => [
+      row[fileHeaders.indexOf('PROJECT-1')],
+      row[fileHeaders.indexOf('Product')],
+      row[fileHeaders.indexOf('Sub_Product')],
+      row[fileHeaders.indexOf('Total')],
+    ]);
 
-    db.query(insertDataQuery, [values], (err) => {
-      if (err) {
-        console.error("Error inserting data:", err);
-        return res.status(500).send("Error inserting data");
+    db.beginTransaction((transactionErr) => {
+      if (transactionErr) {
+        console.error('Transaction error:', transactionErr);
+        return res.status(500).send('Transaction failed');
       }
-      res.status(200).json({ message: 'Data saved successfully' });
+
+      // Create the 'target' table if it doesn't exist
+      const createTableQuery = `
+        CREATE TABLE IF NOT EXISTS target (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          project VARCHAR(255) NOT NULL UNIQUE,
+          product VARCHAR(255),
+          sub_product VARCHAR(255),
+          total FLOAT
+        )
+      `;
+
+      db.query(createTableQuery, (createTableErr) => {
+        if (createTableErr) {
+          db.rollback(() => {
+            console.error('Create table error:', createTableErr);
+            return res.status(500).send('Error creating target table');
+          });
+        }
+
+        // Delete existing data in the 'target' table
+        const deleteQuery = 'DELETE FROM target';
+        db.query(deleteQuery, (deleteErr) => {
+          if (deleteErr) {
+            db.rollback(() => {
+              console.error('Delete error:', deleteErr);
+              return res.status(500).send('Error deleting old target data');
+            });
+          }
+
+          // Insert new data into the 'target' table
+          const insertQuery = `
+            INSERT INTO target (project, product, sub_product, total)
+            VALUES ?
+            ON DUPLICATE KEY UPDATE product = VALUES(product), sub_product = VALUES(sub_product), total = VALUES(total)
+          `;
+
+          db.query(insertQuery, [values], (insertErr) => {
+            if (insertErr) {
+              db.rollback(() => {
+                console.error('Insert error:', insertErr);
+                return res.status(500).send('Error inserting new target data');
+              });
+            }
+
+            db.commit((commitErr) => {
+              if (commitErr) {
+                db.rollback(() => {
+                  console.error('Commit error:', commitErr);
+                  return res.status(500).send('Error committing transaction');
+                });
+              }
+
+              res.send('Target data uploaded and inserted successfully.');
+            });
+          });
+        });
+      });
     });
-  });
+  } catch (error) {
+    console.error('Error processing file:', error);
+    res.status(500).send('Error processing file');
+  }
 });
 
 app.get("/pending-sum", (req, res) => {
@@ -318,7 +392,8 @@ app.post('/api/target/upload', upload.single('file'), (req, res) => {
           Project VARCHAR(255),
           Product VARCHAR(255),
           SubProduct VARCHAR(255),
-          Total INT
+          Total FLOAT
+          
         )
       `;
 
@@ -1248,6 +1323,14 @@ app.get("/jewel-master",(req,res)=>{
 
 })
 
+app.get('/api/target', (req, res) => {
+  const sql = 'SELECT * FROM target';
+  db.query(sql, (err, data) => {
+    if (err) return res.json(err);
+    return res.json(data);
+  });
+});
+
 app.get('/department-mappings', (req, res) => {
   const sql = 'SELECT * FROM Production_master_deparment_mapping';
   db.query(sql, (err, rows) => {
@@ -1285,7 +1368,7 @@ app.get("/raw_filtered_production_data",async(req, res) => {
 
   const sql = `
          SELECT \`From Dept\`,\`To Dept\`, \`CW Qty\`,Project
-         FROM Production_updated_data
+         FROM Production_sample_data
          WHERE \`From Dept\` IN (?)
             
       `;
@@ -1615,17 +1698,30 @@ app.get("/raw_filtered_pending_data", async (req, res) => {
     res.json(data);
   });
 });
-
 app.get("/create-task", (req, res) => {
-   const sql = "SELECT * FROM Created_task";
-   db.query(sql, (err, data) => {
-      if (err) {
-         console.error(err);
-         return res.status(500).json({ message: "Failed to fetch tasks", error: err });
-      }
-      res.json(data);
-   });
+  const sql = "SELECT * FROM Created_task";
+  db.query(sql, (err, data) => {
+     if (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Failed to fetch tasks", error: err });
+     }
+
+     const currentDate = new Date();
+     const updatedTasks = data.map(task => {
+        const targetDate = new Date(task.Target_Date);
+        const diffTime = targetDate - currentDate; 
+        const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+        return {
+           ...task,
+           Remaining_Days: remainingDays < 0 ? 0 : remainingDays 
+        };
+     });
+
+     res.json(updatedTasks);
+  });
 });
+
 
 app.put('/update-task/:id', (req, res) => {
   const taskId = req.params.id;
@@ -1648,22 +1744,22 @@ app.put('/update-task/:id', (req, res) => {
 
 app.post("/create-task", (req, res) => {
   console.log("Request Body:", req.body);
-  const imageBuf = Buffer.from(req.body.image);
-  
+  const imageBuf = Buffer.from(req.body.image) || [];
+
   const {
     ax_brief,
-      collection_name,
-      project,
-      no_of_qty,
-      assign_date,
-      target_date,
-      priority,
-      depart,
-      assignTo,
-      person,
-      hodemail,
-      ref_images,
-      isChecked,
+    collection_name,
+    project,
+    no_of_qty,
+    assign_date,
+    target_date,
+    priority,
+    depart,
+    assignTo,
+    person,
+    hodemail,
+    ref_images,
+    isChecked,
   } = req.body;
 
   if (!ax_brief || !collection_name || !project || !no_of_qty || !assign_date || !target_date || !priority) {
@@ -1671,47 +1767,44 @@ app.post("/create-task", (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
   }
 
+  const calculateRemainingDays = (targetDate) => {
+    const now = new Date();
+    const target = new Date(targetDate);
+    const diffTime = target - now; 
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert to days
+  };
+
+  const remainingDays = calculateRemainingDays(target_date); // Calculate remaining days
+
   const sql = `
-INSERT INTO Created_task (
-    Ax_Brief, Collection_Name, References_Image, Project, Assign_Name,
-    Person, OWNER, No_of_Qty, Dept, Complete_Qty, Pending_Qty,
-    Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks,image_data
-) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?);
+    INSERT INTO Created_task (
+      Ax_Brief, Collection_Name, References_Image, Project, Assign_Name,
+      Person, OWNER, No_of_Qty, Dept, Complete_Qty, Pending_Qty,
+      Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks, image_data
+    ) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+  `;
 
-`;
-
-const calculateRemainingDays = (targetDate) => {
-  const now = new Date();
-  const target = new Date(targetDate);
-  const diffTime = Math.abs(target - now);
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-};
-const remainingDays = calculateRemainingDays(target_date);
-
-
-const values = [
-  ax_brief,          // Ax_Brief            // Sketch
-  collection_name,   // Collection_Name
-  ref_images,        // References_Image
-  project,           // Project
-  assignTo,          // Assign_Name
-  person,            // Person
-  hodemail,          // OWNER
-  no_of_qty,         // No_of_Qty
-  depart,            // Dept
-  0,                 // Complete_Qty (default to 0)
-  0,                 // Pending_Qty (default to 0)
-  assign_date,       // Assign_Date
-  target_date,       // Target_Date
-  remainingDays,                 // Remaining_Days (you can calculate this if needed)
-  isChecked ? 'Yes' : 'No',  // Project_View
-  'In Progress',     // Completed_Status
-  'null pointer',
-  imageBuf || null
-];
-
-
+  const values = [
+    ax_brief,          // Ax_Brief
+    collection_name,   // Collection_Name
+    ref_images,        // References_Image
+    project,           // Project
+    assignTo,          // Assign_Name
+    person,            // Person
+    hodemail,          // OWNER
+    no_of_qty,         // No_of_Qty
+    depart,            // Dept
+    0,                 // Complete_Qty (default to 0)
+    0,                 // Pending_Qty (default to 0)
+    assign_date,       // Assign_Date
+    target_date,       // Target_Date
+    remainingDays,     // Remaining_Days (calculated dynamically)
+    isChecked ? 'Yes' : 'No',  // Project_View
+    'In Progress',     // Completed_Status
+    'null pointer',    // Remarks
+    imageBuf || null   // image_data
+  ];
 
   db.query(sql, values, (err, result) => {
       if (err) {
