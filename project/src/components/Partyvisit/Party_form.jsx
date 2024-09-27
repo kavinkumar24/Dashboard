@@ -3,6 +3,11 @@ import Header from "../Header";
 import Sidebar from "../Sidebar";
 import { useEffect, useState } from "react";
 import Select from "react-select";
+import { ToastContainer, toast } from "react-toastify";
+import Datepicker from "react-tailwindcss-datepicker";
+import './Datepicker.css';
+
+import { light } from "@mui/material/styles/createPalette";
 
 function Party_form() {
   const [theme, setTheme] = useState(
@@ -18,6 +23,11 @@ function Party_form() {
   const [axBriefMapping, setAxBriefMapping] = useState({});
   const [briefOptions, setBriefOptions] = useState([]);
   const [ax_brief_data, setAx_brief_data] = useState("");
+  const [value, setValue] = useState({
+    startDate: null,
+    endDate: null,
+  });
+
   useEffect(() => {
     const fetchBriefOptions = async () => {
       try {
@@ -47,6 +57,16 @@ function Party_form() {
 
     fetchBriefOptions();
   }, []);
+
+  const handleaxbriefselect = (selectedOption) => {
+    const value = selectedOption ? selectedOption.value : "";
+    setAx_brief_data(value);
+  };
+
+  const customDatePickerStyles =
+    theme === "light"
+      ? "bg-white text-gray-700 border-gray-300"
+      : "bg-red-200 text-gray-100 border-gray-600";
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -86,16 +106,78 @@ function Party_form() {
     { value: "completed", label: "Completed" },
   ];
 
-  const handleview = (event) => {
+  const handleview = async (event) => {
     event.preventDefault();
-    console.log("Party Name: ", partyname);
-    console.log("Visit Date: ", visit_date);
-    console.log("Description: ", description);
-    console.log("Assign To: ", assignTo);
-    console.log("Status: ", status_data);
-    console.log("No of Qty: ", no_of_qty);
-    console.log("Ax Brief: ", ax_brief_data);
+    
+    const data = {
+      party_name: partyname,
+      visit_date: visit_date,
+      description: description,
+      assign_person: assignTo,
+      status_data: status_data,
+      brief_no: ax_brief_data,
+      quantity: no_of_qty,
+      order_rev_wt: "0", 
+    };
+  
+    try {
+      // Fetch production data to get the Out Date
+      const productionResponse = await fetch("http://localhost:8081/production_data");
+      if (!productionResponse.ok) {
+        throw new Error("Failed to fetch production data");
+      }
+  
+      const productionData = await productionResponse.json();
+  
+      // Find the relevant entry based on the brief_no
+      const matchingEntries = productionData.filter(item => item["Brief No"] === ax_brief_data);
+      const complete_date = matchingEntries.length > 0 ? matchingEntries[0]["Out Date"] : null;
+  
+      if (!complete_date) {
+        toast.warn("No Out Date found for the selected Brief No, using Visit Date as Complete Date.");
+        data.complete_date = visit_date; 
+      } else {
+        data.complete_date = complete_date; 
+        
+        // Sum CW Qty for all matching entries
+        const totalCWQty = matchingEntries.reduce((sum, item) => sum + (item["CW Qty"] || 0), 0);
+        data.order_rev_wt = totalCWQty.toString(); // Store the sum as a string
+        console.log(totalCWQty)
+      }
+  
+      // Send POST request to create Party Visit
+      const response = await fetch("http://localhost:8081/api/party-visit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+  
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+  
+      const result = await response.json();
+      toast.success("Party visit created");
+  
+      // Reset all state variables to their initial values
+      setPartyname("");
+      setVisit_date("");
+      setDescription("");
+      setassignTo("");
+      setStatus_data(null);
+      setAx_brief_data(null);
+      setNo_of_qty("");
+    } catch (error) {
+      console.error("Error storing data:", error);
+      toast.error("Error storing data");
+    }
   };
+  
+  
+  
+  
 
   return (
     <div
@@ -103,6 +185,7 @@ function Party_form() {
         theme === "light" ? "bg-gray-100" : "bg-gray-800"
       }`}
     >
+      <ToastContainer />
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <main className="flex-1 overflow-y-auto">
@@ -166,6 +249,19 @@ function Party_form() {
                     }  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
                     required
                   />
+           {/* <Datepicker
+  primaryColor={"fuchsia"}
+  useRange={false}
+  asSingle={true}
+  value={value}
+  onChange={(newValue) => setValue(newValue)}
+  inputClassName={`border rounded ml-10 w-full py-4 px-3 leading-tight focus:outline-none focus:shadow-outline absolute  ${
+    theme === "light" ? "bg-white text-gray-900 border-gray-300" : "bg-gray-700 text-gray-100 border-gray-600"
+  }`}
+  classNames={customDatePickerStyles}
+  className={theme === "light" ? "react-datepicker bg-slate-50" : "react-datepicker react-datepicker"}
+/> */}
+
                 </div>
 
                 <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
@@ -227,22 +323,18 @@ function Party_form() {
                   </label>
 
                   <Select
-                    className={`appearance-none rounded w-full ml-10 leading-tight focus:outline-none focus:shadow-outline ${
-                      theme === "light"
-                        ? "border-gray-300"
-                        : "bg-gray-700 text-gray-100 border-gray-600"
-                    } w-full @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
-                    isClearable
-                    options={status}
-                    styles={customStyles}
-                    value={status.find(
-                      (option) => option.value === status_data
-                    )}
-                    onChange={(selectedOption) =>
-                      setStatus_data(selectedOption?.value || "In progress")
-                    }
-                    required
-                  />
+  className={`appearance-none rounded w-full ml-10 leading-tight focus:outline-none focus:shadow-outline ${
+    theme === "light" ? "border-gray-300" : "bg-gray-700 text-gray-100 border-gray-600"
+  } w-full @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
+  isClearable
+  options={status}
+  styles={customStyles}
+  value={status.find(option => option.value === status_data) || null} // Set to null if no match
+  onChange={(selectedOption) =>
+    setStatus_data(selectedOption ? selectedOption.value : null) // Set to null if cleared
+  }
+  required
+/>
                 </div>
                 <div className="space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
                   <label
@@ -254,27 +346,17 @@ function Party_form() {
                     Ax Brief
                   </label>
                   <Select
-                    id="axBriefId"
-                    styles={customStyles}
-                    options={briefOptions}
-                    value={briefOptions.find(
-                      (option) => option.value === ax_brief_data?.value
-                    )}
-                    onChange={(selectedOption) => {
-                      if (selectedOption) {
-                        setAx_brief_data(axBriefMapping[selectedOption.value]);
-                      } else {
-                        setAx_brief_data(null); 
-                      }
-                    }}
-                    isClearable
-                    className={`ml-10 ${
-                      theme === "light"
-                        ? "border-gray-300 text-black"
-                        : "bg-gray-700 text-gray-100 border-gray-600"
-                    } w-full md:w-3/5`}
-                    required
-                  />
+  id="axBriefId"
+  styles={customStyles}
+  options={briefOptions}
+  value={briefOptions.find(option => option.value === ax_brief_data) || null} // Set to null if no match
+  onChange={(selectedOption) => handleaxbriefselect(selectedOption)}
+  isClearable
+  className={`ml-10 ${
+    theme === "light" ? "border-gray-300 text-black" : "bg-gray-700 text-gray-100 border-gray-600"
+  } w-full md:w-3/5`}
+  required
+/>
                 </div>
                 {/* {error && (
                 <p className="text-red-500 text-xs italic">{error}</p>
@@ -314,7 +396,7 @@ function Party_form() {
                     }`}
                     onClick={handleview}
                   >
-                    Create New Task
+                    Create New Party
                   </button>
                 </div>
               </form>

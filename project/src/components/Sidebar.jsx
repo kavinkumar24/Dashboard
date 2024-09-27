@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { GrProjects } from "react-icons/gr";
 import { ImHome } from 'react-icons/im';
 import { BsGear, BsListTask, BsEye, BsPlusCircleDotted } from 'react-icons/bs';
-import { IoDocumentTextOutline } from 'react-icons/io5';
+import { MdOutlineCategory } from "react-icons/md";
+import { IoCreate, IoDocumentTextOutline } from 'react-icons/io5';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { GoStop } from "react-icons/go";
 import { CgIfDesign } from "react-icons/cg";
@@ -17,11 +18,19 @@ function Sidebar({ theme }) {
   const [spin, setSpin] = useState(false);
   const [active, setActive] = useState('home');
   const [taskExpanded, setTaskExpanded] = useState(false);
+  const[party_visit_expand, setParty_visit_expand] =  useState(false)
   const [activeSubTask, setActiveSubTask] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); 
+  const [isSidebarVisible, setIsSidebarVisible] = useState(true); // Sidebar visibility state
+
 
   const [role, setRole] = useState('');
   
+
+  const toggleSidebar = () => {
+    setIsSidebarVisible(prevState => !prevState);
+  };
+
 
   useEffect(() => {
     const path = location.pathname;
@@ -44,8 +53,6 @@ function Sidebar({ theme }) {
         setActiveSubTask('create');
       } else if (path === '/task/view') {
         setActiveSubTask('view');
-      }else if(path==='/task/design_center'){
-        setActiveSubTask('design_center');
       }else if(path==='/task/detailed_task' || path==='/task/detailed_task/brief_id/:id'){
         setActiveSubTask('detailed_task');
       }else if(path==='/task/operational_task' || path==='/task/operational_task/phase_view'){
@@ -81,10 +88,20 @@ function Sidebar({ theme }) {
       setActive('uploads')
     }
     else if(path == '/aop_schedule'||
-      /product-details/.test(path)
+      /product-details/.test(path)||  /AOP\/design_center/.test(path) 
     ){
       setActive('aop_schedule')
     }
+    else if(path.startsWith('/party_visit')){
+      setActive('party_visit')
+      setParty_visit_expand(true)
+    }if (path === '/party_visit/new') {
+      setActiveSubTask('New_party_creation');
+    }
+    if (path === '/party_visit/view') {
+      setActiveSubTask('view_party_creation');
+    }
+
     
   }, [location.pathname]);
 
@@ -100,6 +117,14 @@ function Sidebar({ theme }) {
       setTaskExpanded(false);
       setActiveSubTask('');
     }
+    if(name!=='party_visit'){
+      
+      setParty_visit_expand(false)
+      setActiveSubTask('');
+    }
+
+
+   
     setSpin(true);
     navigate(path);
     setSpin(false);
@@ -109,6 +134,12 @@ function Sidebar({ theme }) {
   const handleTaskClick = () => {
     setTaskExpanded(!taskExpanded);
   };
+  const handleParty_click = (event) =>{
+    event.preventDefault();
+    setParty_visit_expand(!party_visit_expand);
+
+
+  }
 
   const getActiveClass = (name) => {
     if (active === name) {
@@ -130,6 +161,16 @@ function Sidebar({ theme }) {
 
   return (
     <div>
+      <div className="fixed top-0 left-0 z-50 p-4">
+        <button onClick={toggleSidebar}>
+          {isSidebarVisible ? <AiOutlineClose size={24} className='relative left-36 '/> : 
+          <div className='bg-white p-2 relative right-2 shadow-lg rounded-md mt-4'>
+          <AiOutlineMenu size={24} />
+          </div>
+          }
+        </button>
+      </div>
+
       {/* Mobile Menu Button */}
       <div className="md:hidden fixed top-0 left-0 z-50 p-4">
         <button onClick={toggleMobileMenu}>
@@ -159,7 +200,8 @@ function Sidebar({ theme }) {
         </div>
       )}
 
-      <aside className={`hidden md:block w-48 border-r h-full ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-gray-700 border-slate-400 '}`}>
+{isSidebarVisible && (
+      <aside className={`hidden  md:block w-48 border-r h-full ${theme === 'light' ? 'bg-white border-slate-200' : 'bg-gray-700 border-slate-400 '}`}>
         <div className="p-4 px-6">
           <h1 className={`text-xl font-thin ${theme === 'light' ? 'text-slate-800' : 'text-slate-400'}`}>
             <span className={`eb-garamond-normal font-bold ${theme === 'light' ? 'text-indigo-600' : 'text-indigo-300'} text-2xl`}>Ej</span>
@@ -250,18 +292,6 @@ function Sidebar({ theme }) {
           {taskExpanded && (
             <div className="ml-2">
 
-              <a
-                href="#"
-                className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('design_center')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
-                onClick={() => handleNavigation('/task/design_center', 'task')}
-              >
-                <div className='flex flex-row p-0'>
-                  <div className='mt-1 px-2'>
-                    <BsEye />
-                  </div>
-                  Design Center
-                </div>
-              </a>
               <a
                 href="#"
                 className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('detailed_task')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
@@ -355,6 +385,55 @@ function Sidebar({ theme }) {
             </div>
           </a>}
 
+          { role == 'admin' &&     <a
+            href="#"
+            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('party_visit')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+            onClick={handleParty_click}
+          >
+            <div className='flex flex-row p-2'>
+              <div className='mt-1 px-2'>
+                <MdOutlineCategory />
+              </div>
+              Party Wise
+            </div>
+          </a>}
+
+          {party_visit_expand &&
+             <>
+              <div className='ml-2'>
+                 <a
+                href="#"
+                className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('New_party_creation')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
+                onClick={() => handleNavigation('/party_visit/new', '/party_visit')}
+              >
+                <div className='flex flex-row p-0'>
+                  <div className='mt-1 px-2'>
+                    <IoCreate />
+                  </div>
+                  New Party
+                </div>
+              </a>
+              </div>
+              <div className='ml-2'>
+                 <a
+                href="#"
+                className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('view_party_creation')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
+                onClick={() => handleNavigation('/party_visit/view', '/party_visit')}
+              >
+                <div className='flex flex-row p-0'>
+                  <div className='mt-1 px-2'>
+                    <BsEye />
+                  </div>
+                  View Party
+                </div>
+              </a>
+              </div>
+
+              </>
+
+              
+          }
+
           { role == 'admin' && <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('settings')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
@@ -371,6 +450,7 @@ function Sidebar({ theme }) {
 
         </nav>
       </aside>
+)}
     </div>
   );
 }

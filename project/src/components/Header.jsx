@@ -102,7 +102,7 @@ function Header({
     };
   }, []);
   return (
-    <header className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 p-4 relative ">
+    <header className="mt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between mb-5 ml-10 p-4 relative ">
       <div>
         <h1
           className={`text-xl hidden sm:block font-bold ${
@@ -309,7 +309,7 @@ function Header({
     </p>
   </div>
   <button
-    className="mt-6 bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition"
+    className="mt-6 bg-gray-400 text-white p-2 rounded-md hover:bg-gray-600 transition"
     onClick={profile_modal}
   >
     Close
