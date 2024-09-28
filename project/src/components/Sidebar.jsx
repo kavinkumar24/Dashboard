@@ -160,9 +160,9 @@ function Sidebar({ theme }) {
 
   return (
     <div>
-      <div className="fixed top-0 left-0 z-50 p-4">
+      <div className="absolute top-0 left-0 z-50 p-4">
         <button onClick={toggleSidebar}>
-          {isSidebarVisible ? <AiOutlineClose size={24} className='relative left-36 '/> : 
+          {isSidebarVisible ? <AiOutlineClose size={24} className='relative left-36 hover:text-red-500 '/> : 
           <div className='bg-white p-2 relative right-2 shadow-lg rounded-md mt-4'>
           <AiOutlineMenu size={24} />
           </div>
@@ -204,7 +204,7 @@ function Sidebar({ theme }) {
         <div className="p-4 px-6">
           <h1 className={`text-xl font-thin ${theme === 'light' ? 'text-slate-800' : 'text-slate-400'}`}>
             <span className={`eb-garamond-normal font-bold ${theme === 'light' ? 'text-indigo-600' : 'text-indigo-300'} text-2xl`}>Ej</span>
-            <span className='text-lg'>Dashboard</span>
+            <span className='text-lg'> Dashboard</span>
           </h1>
         </div>
         <nav className="mt-5">
@@ -291,7 +291,7 @@ function Sidebar({ theme }) {
           {taskExpanded && (
             <div className="ml-2">
 
-              <a
+              {/* <a
                 href="#"
                 className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('detailed_task')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
                 onClick={() => handleNavigation('/task/detailed_task', 'task')}
@@ -302,7 +302,7 @@ function Sidebar({ theme }) {
                   </div>
                   Detailed Task
                 </div>
-              </a>
+              </a> */}
 
               { role == 'admin' && <a
                 href="#"

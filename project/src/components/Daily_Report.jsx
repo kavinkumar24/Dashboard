@@ -10,6 +10,8 @@ function Daily_Report() {
   const [pendingData, setPendingData] = useState([]);
   const [departmentMappings, setDepartmentMappings] = useState({});
   const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [filter_on, setFilter_on] = useState(false);
+
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -132,8 +134,11 @@ function Daily_Report() {
     >
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
-        <Header onSearch={setSearch} theme={theme} dark={setTheme} />
-        <main className="flex-1 p-6 overflow-y-auto">
+        <Header onSearch={setSearch} theme={theme} dark={setTheme}  on_filter={setFilter_on}
+          filter={filter_on}/>
+        <main className={`flex-1 p-6 overflow-y-auto ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}>
           {!isDataLoaded ? (
             <div className="text-center text-lg font-semibold">
               <div

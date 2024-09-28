@@ -26,6 +26,8 @@ const [showPopup, setShowPopup] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
+  const [filter_on, setFilter_on] = useState(false);
+
 
   let clickTimeout = null;
 
@@ -362,8 +364,12 @@ const groupByProduct = (jewelData = [], pendingData = []) => {
           dark={setTheme}
           onView={setviewData}
           view={viewData}
+          on_filter={setFilter_on}
+          filter={filter_on}
         />
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className={`flex-1 p-6 overflow-y-auto ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}>
           {loading && (
             <div
               className={`border fixed shadow rounded-md p-4 max-w-full min-h-full inset-0 z-50 w-full md:w-[90%]  ml-0 md:ml-52 mx-auto ${

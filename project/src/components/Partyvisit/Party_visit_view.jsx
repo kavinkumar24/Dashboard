@@ -34,9 +34,9 @@ function Party_visit_view() {
         <main className="flex-1 overflow-y-auto">
           <Header onSearch={setSearch} theme={theme} dark={setTheme} />
           <div
-            className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-4 my-5 
+            className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-10 my-5 
   ${theme === "light" ? "bg-white" : "bg-gray-900"} 
-  max-w-full md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-xl`}
+  max-w-full md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-7xl`}
           >
             <h2
               className={`text-2xl font-semibold mb-6 ${
@@ -168,7 +168,7 @@ function Party_visit_view() {
                         {item.Quantity}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {item.Complete_date}
+                        {item.Complete_date.slice(0, 10)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {item.Order_rev_wt}

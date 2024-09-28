@@ -1714,7 +1714,7 @@ app.get("/create-task", (req, res) => {
 
         return {
            ...task,
-           Remaining_Days: remainingDays < 0 ? 0 : remainingDays 
+           Remaining_Days: remainingDays  
         };
      });
 
@@ -1725,13 +1725,42 @@ app.get("/create-task", (req, res) => {
 
 app.put('/update-task/:id', (req, res) => {
   const taskId = req.params.id;
-  const { Completed_Status } = req.body;
+  const { Completed_Status, Remarks } = req.body;
 
-  const sql = "UPDATE Created_task SET Completed_Status = ? WHERE Task_ID = ?";
-  db.query(sql, [Completed_Status, taskId], (err, results) => {
+  const updates = [];
+  const params = [];
+
+  // Only add Completed_Status if it's provided
+  if (Completed_Status !== undefined) {
+    updates.push("Completed_Status = ?");
+    params.push(Completed_Status);
+  }
+
+  // Only add Remarks if it's provided
+  if (Remarks !== undefined) {
+    updates.push("Remarks = ?");
+    params.push(Remarks);
+  }
+
+  // If nothing is being updated, return an error
+  if (updates.length === 0) {
+    return res.status(400).send('No fields to update');
+  }
+
+  const sql = `
+    UPDATE Created_task 
+    SET 
+      ${updates.join(', ')}
+    WHERE 
+      Task_ID = ?
+  `;
+  
+  params.push(taskId);
+
+  db.query(sql, params, (err, results) => {
     if (err) {
-      console.error('Error updating task status:', err);
-      return res.status(500).send('Error updating task status');
+      console.error('Error updating task:', err);
+      return res.status(500).send('Error updating task');
     }
 
     if (results.affectedRows === 0) {
@@ -1741,6 +1770,8 @@ app.put('/update-task/:id', (req, res) => {
     res.send('Task updated successfully');
   });
 });
+
+
 
 
 app.post("/create-task", async (req, res) => {
@@ -1803,53 +1834,81 @@ app.post("/create-task", async (req, res) => {
       remainingDays,
       isChecked ? 'Yes' : 'No', // Project_View
       'In Progress', // Completed_Status
-      'null pointer', // Remarks
+      '', // Remarks
       imageBuf || null // image_data
   ];
 
   db.query(sql, values, async (err, result) => {
-    if (err) {
-        console.error("Database Error:", err);
-        return res.status(500).json({ message: "Failed to create task", error: err });
-    }
+      if (err) {
+          console.error("Database Error:", err);
+          return res.status(500).json({ message: "Failed to create task", error: err });
+      }
 
-    console.log("Inserted Task_ID:", result.insertId);
+      console.log("Inserted Task_ID:", result.insertId);
 
-    try {
-        const productionResponse = await axios.get('http://localhost:8081/production_data');
-        const productionData = productionResponse.data;
+      try {
+          // Fetch production data
+          const productionResponse = await axios.get('http://localhost:8081/production_data');
+          const productionData = productionResponse.data;
 
-        // Filter production data for matching Brief No
-        const matchedItems = productionData.filter(item => item["Brief No"] === ax_brief);
-        const totalCWQty = matchedItems.reduce((sum, item) => sum + (item["CW Qty"] || 0), 0);
-        console.log("Total CW Qty:", totalCWQty);  // Log the total CW Qty
-        
-        // Updating the Complete_Qty based on the fetched production data
-        const updateSql = `
-            UPDATE Created_task
-            SET Complete_Qty = ?
-            WHERE Task_ID = ?; 
-        `;
+          // Filter production data for matching Brief No
+          const matchedItems = productionData.filter(item => item["Brief No"] === ax_brief);
+          const totalCWQty = matchedItems.reduce((sum, item) => sum + (item["CW Qty"] || 0), 0);
+          console.log("Total CW Qty:", totalCWQty);
+          
+          // Update Complete_Qty
+          const updateSql = `
+              UPDATE Created_task
+              SET Complete_Qty = ?
+              WHERE Task_ID = ?; 
+          `;
+          await new Promise((resolve, reject) => {
+              db.query(updateSql, [totalCWQty, result.insertId], (updateErr) => {
+                  if (updateErr) {
+                      console.error("Update Error:", updateErr);
+                      return reject(updateErr);
+                  }
+                  console.log("Update successful, Complete_Qty updated to:", totalCWQty);
+                  resolve();
+              });
+          });
 
-        console.log("Updating Task_ID:", result.insertId, "with Complete_Qty:", totalCWQty); // Use result.insertId
+          // Fetch pending data
+          const pendingResponse = await axios.get('http://localhost:8081/pending_data');
+          const pendingData = pendingResponse.data;
 
-        db.query(updateSql, [totalCWQty, result.insertId], (updateErr) => {
-            if (updateErr) {
-                console.error("Update Error:", updateErr);
-                return res.status(500).json({ message: "Failed to update Complete_Qty", error: updateErr });
-            }
+          // Filter pending data for matching Brief No and sum JCPDSCWQTY1
+          const pendingItems = pendingData.filter(item => item["BRIEFNUM1"] === ax_brief);
+          const totalPendingQty = pendingItems.reduce((sum, item) => sum + (item["JCPDSCWQTY1"] || 0), 0);
+          console.log("Total Pending Qty:", totalPendingQty);
 
-            console.log("Update successful, Complete_Qty updated to:", totalCWQty); // Log success
-            res.json({ message: "Task created successfully", taskId: result.insertId, Complete_Qty: totalCWQty });
-        });
+          // Update Pending_Qty
+          const updatePendingSql = `
+              UPDATE Created_task
+              SET Pending_Qty = ?
+              WHERE Task_ID = ?; 
+          `;
+          await new Promise((resolve, reject) => {
+              db.query(updatePendingSql, [totalPendingQty, result.insertId], (updatePendingErr) => {
+                  if (updatePendingErr) {
+                      console.error("Pending Update Error:", updatePendingErr);
+                      return reject(updatePendingErr);
+                  }
+                  console.log("Pending_Qty updated successfully:", totalPendingQty);
+                  resolve();
+              });
+          });
 
-    } catch (fetchErr) {
-        console.error("Production Data Fetch Error:", fetchErr);
-        return res.status(500).json({ message: "Failed to fetch production data", error: fetchErr });
-    }
+          // Send response
+          res.json({ message: "Task created successfully", taskId: result.insertId, Complete_Qty: totalCWQty, Pending_Qty: totalPendingQty });
+
+      } catch (fetchErr) {
+          console.error("Production Data Fetch Error:", fetchErr);
+          return res.status(500).json({ message: "Failed to fetch production data", error: fetchErr });
+      }
+  });
 });
 
-});
 
 
  

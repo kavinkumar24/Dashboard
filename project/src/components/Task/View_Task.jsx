@@ -5,13 +5,12 @@ import * as XLSX from "xlsx";
 import { useNavigate } from "react-router-dom";
 import { IoIosCloseCircleOutline } from "react-icons/io";
 
-
 function ViewTasks() {
   const navigate = useNavigate();
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
-  const[filter_on,setFilter_on] = useState(false);
+  const [filter_on, setFilter_on] = useState(false);
 
   const [search, setSearch] = useState("");
   const [tasks, setTasks] = useState([]);
@@ -30,21 +29,20 @@ function ViewTasks() {
       const response = await fetch("http://localhost:8081/create-task");
       const tasks = await response.json(); // Now tasks is an array
 
-      // Assuming you want to set the uploaded image for the first task
-      if (tasks.length > 0) {
-        const firstTask = tasks[0]; // Get the first task for demonstration
-        if (firstTask.image_data && Array.isArray(firstTask.image_data.data)) {
-          const byteArray = new Uint8Array(firstTask.image_data.data);
-          const blob = new Blob([byteArray], { type: "image/jpeg" }); // Adjust type as necessary
-          const imageUrl = URL.createObjectURL(blob);
+      const tasksWithImages = await Promise.all(
+        tasks.map(async (task) => {
+          if (task.image_data && Array.isArray(task.image_data.data)) {
+            const byteArray = new Uint8Array(task.image_data.data);
+            const blob = new Blob([byteArray], { type: "image/jpeg" }); // Adjust type as necessary
+            const imageUrl = URL.createObjectURL(blob);
+            console.log("Image URL:", imageUrl);
+            return { ...task, imageUrl }; // Add imageUrl to the task object
+          }
+          return task; // Return the task without modification
+        })
+      );
 
-          setUploadedImage(imageUrl);
-        } else {
-          console.warn("No image data found for the first task.");
-        }
-      }
-
-      setTasks(tasks); // Store all tasks in the state
+      setTasks(tasksWithImages); // Store all tasks with their images in the state
     } catch (error) {
       console.error("Error fetching task data:", error);
       setError("Failed to load tasks. Please try again later.");
@@ -72,7 +70,8 @@ function ViewTasks() {
   };
 
   const [showimage, setshowimage] = useState(false);
-  const handle_show_image = () => {
+  const handle_show_image = (imageUrl) => {
+    setUploadedImage(imageUrl);
     setshowimage(true);
   };
 
@@ -93,12 +92,33 @@ function ViewTasks() {
     return date.toLocaleDateString();
   };
 
+  const updateTaskRemarks = async (taskId, newRemarks) => {
+    try {
+      const response = await fetch(
+        `http://localhost:8081/update-task/${taskId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ Remarks: newRemarks }), // Ensure this is correctly structured
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update task remarks");
+      }
+    } catch (error) {
+      console.error("Error updating task remarks:", error);
+    }
+  };
+
   const filteredTasks = tasks.filter((task) => {
     const escapedSearch = escapeRegExp(search.toLowerCase());
     const searchRegex = new RegExp(escapedSearch);
-    const emailMatch = [task.Assign_Name, task.Person, task.OWNER].includes(
-      loggedInEmail
-    )|| userRole === "admin";
+    const emailMatch =
+      [task.Assign_Name, task.Person, task.OWNER].includes(loggedInEmail) ||
+      userRole === "admin";
 
     return (
       emailMatch &&
@@ -141,7 +161,7 @@ function ViewTasks() {
     XLSX.writeFile(workbook, "tasks.xlsx");
   };
 
-  const updateTaskStatus = async (taskId, newStatus) => {
+  const updateTaskStatus = async (taskId, updatedData) => {
     try {
       const response = await fetch(
         `http://localhost:8081/update-task/${taskId}`,
@@ -150,7 +170,7 @@ function ViewTasks() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ Completed_Status: newStatus }),
+          body: JSON.stringify(updatedData), // Ensure this includes both Completed_Status and Remarks
         }
       );
 
@@ -164,7 +184,13 @@ function ViewTasks() {
 
   const handleStatusChange = (task, newStatus) => {
     if (userRole !== "admin") {
-      updateTaskStatus(task.Task_ID, newStatus);
+      const updatedRemarks = task.Remarks; // Get the current remarks
+      const updatedData = {
+        Completed_Status: newStatus,
+        Remarks: updatedRemarks,
+      };
+
+      updateTaskStatus(task.Task_ID, updatedData);
       setTasks((prevTasks) =>
         prevTasks.map((t) =>
           t.Task_ID === task.Task_ID ? { ...t, Completed_Status: newStatus } : t
@@ -192,9 +218,20 @@ function ViewTasks() {
     >
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
-        <Header onSearch={setSearch} theme={theme} dark={setTheme}
-        on_filter = {setFilter_on} filter={filter_on} />
-        <main className={`flex-1 overflow-y-auto overflow-x-auto p-4 ml-20 w-full md:px-8 lg:px-4 max-w-full md:max-w-screen-xl xl:max-w-screen-2xl ${filter_on===true?'opacity-10':'opacity-100'}`}>
+        <Header
+          onSearch={setSearch}
+          theme={theme}
+          dark={setTheme}
+          on_filter={setFilter_on}
+          filter={filter_on}
+        />
+        <main
+          className={`flex-1 overflow-y-auto overflow-x-auto p-4 ml-10 w-full md:px-8 lg:px-4 max-w-full md:max-w-screen-xl lg:max-w-screen-6xl xl:max-w-screen-7xl  ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}
+        >
+          
+
           {showimage && uploadedImage && (
             <div
               id="modelConfirm"
@@ -219,7 +256,7 @@ function ViewTasks() {
                         : "bg-transparent hover:bg-gray-600 hover:text-gray-300"
                     } rounded-lg text-sm p-1.5 ml-auto inline-flex items-center`}
                   >
-                    <IoIosCloseCircleOutline size={25}/>
+                    <IoIosCloseCircleOutline size={25} />
                   </button>
                 </div>
                 <div className="flex justify-center items-center p-2 border border-emerald-400">
@@ -263,17 +300,17 @@ function ViewTasks() {
 
           <div
             className={`max-w-full overflow-x-auto border rounded-lg shadow-lg 
-  ${
-    theme === "light"
-      ? "border-gray-300 bg-white"
-      : "border-gray-700 bg-gray-800 text-white"
-  }`}
+    ${
+      theme === "light"
+        ? "border-gray-300 bg-white"
+        : "border-gray-700 bg-gray-800 text-white"
+    }`}
           >
             <h1 className="text-xl font-semibold p-2 pl-10 py-5">Task List</h1>
 
             <div
-              className={`min-w-full overflow-x-auto ${
-                theme === "light" ? "bg-white" : "bg-gray-800"
+              className={`w-full overflow-x-auto${
+                theme === "light" ? "bg-black" : "bg-gray-800"
               }`}
             >
               <table
@@ -342,7 +379,7 @@ function ViewTasks() {
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {task.References_Image === "yes" ? (
                           <button
-                            onClick={handle_show_image}
+                            onClick={() => handle_show_image(task.imageUrl)} // Pass the specific image URL
                             className="mt-2 bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
                           >
                             show
@@ -392,11 +429,17 @@ function ViewTasks() {
                           <select
                             value={task.Completed_Status}
                             onChange={(e) =>
-                              handleStatusChange(task, e.target.value)
+                              handleStatusChange(
+                                task,
+                                e.target.value,
+                                task.Remarks
+                              )
                             }
                             className={`border shadow-xl rounded-xl px-2 py-1 ${
                               task.Completed_Status === "In Progress"
-                                ? theme==="dark" ?"bg-yellow-300 text-black":"bg-yellow-300"
+                                ? theme === "dark"
+                                  ? "bg-yellow-300 text-black"
+                                  : "bg-yellow-300"
                                 : "border-green-600 bg-green-500 text-white font-bold"
                             }`}
                           >
@@ -413,13 +456,13 @@ function ViewTasks() {
                           <div>
                             <p
                               className={`border rounded-xl px-2 py-1 
-  ${
-    task.Completed_Status === "In Progress"
-      ? theme === "dark"
-        ? "bg-yellow-300 text-black"
-        : "bg-yellow-300"
-      : "bg-green-500 text-white"
-  }`}
+    ${
+      task.Completed_Status === "In Progress"
+        ? theme === "dark"
+          ? "bg-yellow-300 text-black"
+          : "bg-yellow-300"
+        : "bg-green-500 text-white"
+    }`}
                             >
                               {task.Completed_Status}
                             </p>
@@ -427,8 +470,32 @@ function ViewTasks() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
-                        {task.Remarks}
+                        {loggedInEmail === task.Assign_Name ? (
+                          <input
+                            type="text"
+                            value={task.Remarks}
+                            onChange={(e) => {
+                              const updatedRemarks = e.target.value;
+                              setTasks((prevTasks) =>
+                                prevTasks.map((t) =>
+                                  t.Task_ID === task.Task_ID
+                                    ? { ...t, Remarks: updatedRemarks }
+                                    : t
+                                )
+                              );
+                              // Call the function to update remarks on the backend
+                              updateTaskRemarks(task.Task_ID, updatedRemarks); // Send the string directly
+                            }}
+                            className="border rounded-lg px-2 py-1"
+                            placeholder="Enter your remarks"
+                          />
+                        ) : (
+                          <p className="border rounded-xl px-2 py-1">
+                            {task.Remarks}
+                          </p>
+                        )}
                       </td>
+
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         <button
                           onClick={() => handleViewClick(task.Ax_Brief)}
