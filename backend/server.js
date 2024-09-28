@@ -8,34 +8,26 @@ const upload = multer({ storage });
 const moment = require('moment');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); 
-
+const dotenv = require('dotenv');
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' })); 
-
+dotenv.config();
 const db = mysql.createConnection({
-  host: "172.16.5.233",
-  user: "emerald",
-  password: "emerald",
-  database: "Emerald",
+  host: process.env.HOST,
+  user: process.env.USER,
+  password: process.env.PASSWORD,
+  database: process.env.DATABASE,
 });
 
-// const db = mysql.createConnection({
-//   host: "10.70.251.52",
-//   user: "root",
-//   password: "",
-//   database: "emerald_backup",
-//   port: 3306,
-// });
 
 app.post('/save-targets', (req, res) => {
-  const targets = req.body.targets; // Expecting an array of objects with project and target values
+  const targets = req.body.targets; 
 
   if (!Array.isArray(targets) || targets.length === 0) {
     return res.status(400).json({ error: 'No valid target data provided' });
   }
 
-  // Check if the table exists, and create it if it doesn't
 
 
   try {
@@ -1369,7 +1361,7 @@ app.get("/raw_filtered_production_data",async(req, res) => {
 
   const sql = `
          SELECT \`From Dept\`,\`To Dept\`, \`CW Qty\`,Project
-         FROM Production_sample_data
+         FROM Production_updated_data
          WHERE \`From Dept\` IN (?)
             
       `;
@@ -1674,6 +1666,13 @@ app.get("/pending_data", (req, res) => {
   });
 });
 
+app.get("/user/loggedin/data",async(req,res)=>{
+  const sql = "SELECT * FROM users";
+  db.query(sql,(err,data)=>{
+    if(err) return res.json(err);
+    return res.json(data);
+  })
+})
 app.get("/raw_filtered_pending_data", async (req, res) => {
   const response = await axios.get("http://localhost:8081/department-mappings");
   const departmentMappings = response.data;
@@ -1683,9 +1682,9 @@ app.get("/raw_filtered_pending_data", async (req, res) => {
   const lowerToDeptFilter = deptToFilter.map((dept) => dept.toLowerCase());
 
   const sql = `
-            SELECT todept, CAST(jcpdscwqty1 AS DECIMAL) as jcpdscwqty1,pltcoded1
-            FROM pending_log
-            WHERE LOWER(todept) IN (?)
+            SELECT TODEPT, CAST(JCPDSCWQTY1 AS DECIMAL) as JCPDSCWQTY1,PLTCODE1
+            FROM pending
+            WHERE LOWER(TODEPT) IN (?)
          `;
 
   db.query(sql, [lowerToDeptFilter], (err, data) => {
@@ -1743,24 +1742,25 @@ app.put('/update-task/:id', (req, res) => {
   });
 });
 
-app.post("/create-task", (req, res) => {
+
+app.post("/create-task", async (req, res) => {
   console.log("Request Body:", req.body);
   const imageBuf = Buffer.from(req.body.image) || [];
 
   const {
-    ax_brief,
-    collection_name,
-    project,
-    no_of_qty,
-    assign_date,
-    target_date,
-    priority,
-    depart,
-    assignTo,
-    person,
-    hodemail,
-    ref_images,
-    isChecked,
+      ax_brief,
+      collection_name,
+      project,
+      no_of_qty,
+      assign_date,
+      target_date,
+      priority,
+      depart,
+      assignTo,
+      person,
+      hodemail,
+      ref_images,
+      isChecked,
   } = req.body;
 
   if (!ax_brief || !collection_name || !project || !no_of_qty || !assign_date || !target_date || !priority) {
@@ -1769,52 +1769,88 @@ app.post("/create-task", (req, res) => {
   }
 
   const calculateRemainingDays = (targetDate) => {
-    const now = new Date();
-    const target = new Date(targetDate);
-    const diffTime = target - now; 
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert to days
+      const now = new Date();
+      const target = new Date(targetDate);
+      const diffTime = target - now;
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert to days
   };
 
-  const remainingDays = calculateRemainingDays(target_date); // Calculate remaining days
+  const remainingDays = calculateRemainingDays(target_date);
 
   const sql = `
-    INSERT INTO Created_task (
-      Ax_Brief, Collection_Name, References_Image, Project, Assign_Name,
-      Person, OWNER, No_of_Qty, Dept, Complete_Qty, Pending_Qty,
-      Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks, image_data
-    ) 
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+      INSERT INTO Created_task (
+          Ax_Brief, Collection_Name, References_Image, Project, Assign_Name,
+          Person, OWNER, No_of_Qty, Dept, Complete_Qty, Pending_Qty,
+          Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks, image_data
+      ) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
   `;
 
   const values = [
-    ax_brief,          // Ax_Brief
-    collection_name,   // Collection_Name
-    ref_images,        // References_Image
-    project,           // Project
-    assignTo,          // Assign_Name
-    person,            // Person
-    hodemail,          // OWNER
-    no_of_qty,         // No_of_Qty
-    depart,            // Dept
-    0,                 // Complete_Qty (default to 0)
-    0,                 // Pending_Qty (default to 0)
-    assign_date,       // Assign_Date
-    target_date,       // Target_Date
-    remainingDays,     // Remaining_Days (calculated dynamically)
-    isChecked ? 'Yes' : 'No',  // Project_View
-    'In Progress',     // Completed_Status
-    'null pointer',    // Remarks
-    imageBuf || null   // image_data
+      ax_brief,
+      collection_name,
+      ref_images,
+      project,
+      assignTo,
+      person,
+      hodemail,
+      no_of_qty,
+      depart,
+      0,
+      0, 
+      assign_date,
+      target_date,
+      remainingDays,
+      isChecked ? 'Yes' : 'No', // Project_View
+      'In Progress', // Completed_Status
+      'null pointer', // Remarks
+      imageBuf || null // image_data
   ];
 
-  db.query(sql, values, (err, result) => {
-      if (err) {
-          console.error("Database Error:", err);
-          return res.status(500).json({ message: "Failed to create task", error: err });
-      }
-      res.json({ message: "Task created successfully", taskId: result.insertId });
-  });
+  db.query(sql, values, async (err, result) => {
+    if (err) {
+        console.error("Database Error:", err);
+        return res.status(500).json({ message: "Failed to create task", error: err });
+    }
+
+    console.log("Inserted Task_ID:", result.insertId);
+
+    try {
+        const productionResponse = await axios.get('http://localhost:8081/production_data');
+        const productionData = productionResponse.data;
+
+        // Filter production data for matching Brief No
+        const matchedItems = productionData.filter(item => item["Brief No"] === ax_brief);
+        const totalCWQty = matchedItems.reduce((sum, item) => sum + (item["CW Qty"] || 0), 0);
+        console.log("Total CW Qty:", totalCWQty);  // Log the total CW Qty
+        
+        // Updating the Complete_Qty based on the fetched production data
+        const updateSql = `
+            UPDATE Created_task
+            SET Complete_Qty = ?
+            WHERE Task_ID = ?; 
+        `;
+
+        console.log("Updating Task_ID:", result.insertId, "with Complete_Qty:", totalCWQty); // Use result.insertId
+
+        db.query(updateSql, [totalCWQty, result.insertId], (updateErr) => {
+            if (updateErr) {
+                console.error("Update Error:", updateErr);
+                return res.status(500).json({ message: "Failed to update Complete_Qty", error: updateErr });
+            }
+
+            console.log("Update successful, Complete_Qty updated to:", totalCWQty); // Log success
+            res.json({ message: "Task created successfully", taskId: result.insertId, Complete_Qty: totalCWQty });
+        });
+
+    } catch (fetchErr) {
+        console.error("Production Data Fetch Error:", fetchErr);
+        return res.status(500).json({ message: "Failed to fetch production data", error: fetchErr });
+    }
 });
+
+});
+
 
  
 app.post('/upload-image', (req, res) => {
@@ -2036,6 +2072,18 @@ app.post('/api/rejection/upload', upload.single('file'), (req, res) => {
       res.json(results);
     });
   });
+  app.get('/api/party_visit', (req, res) => {
+    const query = 'SELECT * FROM Party_Visit';
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error('Error fetching uploads:', err);
+        res.status(500).send('Error fetching uploads');
+        return;
+      }
+      res.json(results);
+    });
+  });
+
 
 
 
@@ -2285,6 +2333,35 @@ app.post('/phase', (req, res) => {
 });
 
 
+
+app.post("/api/party-visit", (req, res) => {
+  const {
+    party_name,
+    visit_date,
+    description,
+    assign_person,
+    status_data,
+    brief_no,
+    quantity,
+    complete_date,
+    order_rev_wt,
+  } = req.body;
+
+  const query = `
+    INSERT INTO Party_Visit (Party_Name, visit_date, Description, Assign_Person, Status_data, Brief_no, Quantity, Complete_date, Order_rev_wt)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+  db.query(query, [party_name,visit_date, description, assign_person, status_data, brief_no, quantity, complete_date, order_rev_wt], (err, results) => {
+    if (err) {
+      console.error("Error inserting data:", err);
+      return res.status(500).json({ error: "Database error" });
+    }
+    return res.status(201).json({ message: "Party visit created", id: results.insertId });
+  });
+});
+
+
+
 app.get('/phases', (req, res) => { 
   const query = 'SELECT * FROM phases';
 
@@ -2296,6 +2373,8 @@ app.get('/phases', (req, res) => {
     res.json(results);
   });
 });
+
+ 
 
 app.get('/user', (req, res) => {
   const query = 'SELECT * FROM users';

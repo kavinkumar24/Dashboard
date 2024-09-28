@@ -1,13 +1,13 @@
 import React, { useRef } from "react";
-import Header from "./Header";
-import Sidebar from "./Sidebar";
+import Header from "../Header";
+import Sidebar from "../Sidebar";
 import { useState } from "react";
 import { useEffect } from "react";
 import { Bar, Doughnut } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import { FiMinusCircle } from "react-icons/fi";
-import CustomMultiSelect from "./Custom/Mutliselect";
+import CustomMultiSelect from "../Custom/Mutliselect";
 import { IoFilterOutline } from "react-icons/io5";
 import { Pie } from "react-chartjs-2";
 import { Line } from "react-chartjs-2";

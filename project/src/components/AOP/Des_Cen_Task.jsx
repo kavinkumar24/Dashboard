@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "./Sidebar";
-import Header from "./Header";
+import Sidebar from "../Sidebar";
+import Header from "../Header";
 import axios from "axios";
 import * as XLSX from "xlsx";
 function Des_Cen_Task() {

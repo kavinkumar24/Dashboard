@@ -151,3 +151,25 @@
   background: #ddd; /* Track color */
   border-radius: 2px;
 }
+/* Custom styles for the Datepicker */
+.react-datepicker {
+  background-color: #fff !important; /* Change background for light theme */
+  color: #000; /* Text color for light theme */
+}
+
+
+.react-datepicker-dark {
+  background-color: #006aff; /* Dark background for dark theme */
+  color: #e5e7eb; /* Light text color for dark theme */
+}
+
+/* Specific styles for the calendar */
+.react-datepicker .react-datepicker__header {
+  background-color: fuchsia; /* Header color */
+  color: white; /* Header text color */
+}
+
+.react-datepicker .react-datepicker__day--selected {
+  background-color: fuchsia; /* Selected day color */
+  color: white; /* Selected day text color */
+}

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "./Sidebar";
-import Header from "./Header";
+import Sidebar from "../Sidebar";
+import Header from "../Header";
 import Select from "react-select";
-
 
 function CreateTask() {
   const [axBriefMapping, setAxBriefMapping] = useState({});
@@ -61,43 +60,50 @@ function CreateTask() {
   );
   const [isChecked, setIsChecked] = useState(true);
 
-
   useEffect(() => {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
-
   // const [sketchOptions, setSketchOptions] = useState([]);
   const [image_upload, setImage_upload] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [uploadedImage, setUploadedImage] = useState(null); 
-  
+
   const handleCheckboxChange = (event) => {
     if (!event.target.checked) {
-      alert('You have unchecked the box!');
+      alert("You have unchecked the box!");
     }
     setIsChecked(event.target.checked);
   };
 
-  
+  const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
+  const [fileName, setFileName] = useState("");
+
   const handleImageChange = (event) => {
-    setSelectedImage(event.target.files[0]);
     const file = event.target.files[0];
 
-    // Check if a file is selected
     if (file) {
-      // Check if file size is less than or equal to 10KB (10 * 1024 bytes)
-      if (file.size <= 20 * 1024) {
-        // Proceed with the file (like setting it to state, or previewing the image)
-        console.log('Image selected:', file);
+      // Check if file size is less than or equal to 30KB (30 * 1024 bytes)
+      if (file.size <= 30 * 1024) {
+        // Update the state with the selected image file and its preview URL
+        setSelectedImage(file);
+        setImagePreviewUrl(URL.createObjectURL(file));
+        setFileName(file.name);
       } else {
-        // Display an error message
-        alert('File size must be 10KB or less');
+        // Display an error message if the file is too large
+        alert("File size must be 30KB or less");
         event.target.value = null; // Clear the input
+        setSelectedImage(null);
+        setImagePreviewUrl(null);
+        setFileName("");
       }
+    }
   };
-  }
 
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setFileName("");
+    setImagePreviewUrl(false);
+  };
   const handle_images_upload = (selectedOption) => {
     const value = selectedOption ? selectedOption.value : "";
     setRef_images(value);
@@ -133,10 +139,7 @@ function CreateTask() {
       // setSketchOptions([]);
     }
   };
-  const handleSketch = (selectedOption) => {
-    const value = selectedOption ? selectedOption.value : "";
-    setsketch(value);
-  };
+
   const handledept = (selectedOption) => {
     const value = selectedOption ? selectedOption.value : "";
     setdepart(value);
@@ -150,89 +153,84 @@ function CreateTask() {
     console.log("assign date", assign_date);
     console.log("Target data", target_date);
     console.log(depart);
-    console.log(assignTo)
-    console.log(person)
-    console.log(hodemail)
-    console.log(priority)
-    console.log(ref_images)
-    console.log(isChecked)
+    console.log(assignTo);
+    console.log(person);
+    console.log(hodemail);
+    console.log(priority);
+    console.log(ref_images);
+    console.log(isChecked);
   };
 
-
-  
   // const remainingDays = calculateRemainingDays(target_date);
 
-  
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!isAutoFilled) {
       setError("Please enter a correct AX Brief ID");
       return;
     }
-    
+
     const reader = new FileReader();
-    const imageToRead = selectedImage || new Array;
+    const imageToRead = selectedImage || new Blob();
     reader.readAsArrayBuffer(imageToRead);
 
     reader.onloadend = async () => {
       const imageData = new Uint8Array(reader.result);
-    const taskData = {
-      ax_brief,
-      collection_name,
-      project,
-      no_of_qty,
-      assign_date,
-      target_date,
-      depart,
-      assignTo,
-      person,
-      hodemail,
-      priority,
-      ref_images,
-      isChecked,
-      image: Array.from(imageData) ||[]
-    };
+      const taskData = {
+        ax_brief,
+        collection_name,
+        project,
+        no_of_qty,
+        assign_date,
+        target_date,
+        depart,
+        assignTo,
+        person,
+        hodemail,
+        priority,
+        ref_images,
+        isChecked,
+        image: Array.from(imageData) || [],
+      };
 
-    console.log("Task Data:", taskData);
+      console.log("Task Data:", taskData);
 
+      try {
+        const response = await fetch("http://localhost:8081/create-task", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(taskData),
+        });
 
+        if (!response.ok) {
+          throw new Error("Failed to create task");
+        }
 
-    try {
-      const response = await fetch("http://localhost:8081/create-task", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(taskData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create task");
+        const result = await response.json();
+        console.log(result);
+        alert("Task created successfully");
+        setAx_brief("");
+        setCollection_name("");
+        setProject("");
+        setsketch("");
+        setNo_of_qty("");
+        setAssign_date("");
+        setTarget_date("");
+        setdepart("");
+        setassignTo("");
+        setPerson("");
+        setHodemail("");
+        setPriority("");
+        setRef_images("");
+        setIsChecked(false);
+      } catch (error) {
+        console.error(error);
+        setError("An error occurred while creating the task");
       }
-
-      const result = await response.json();
-      console.log(result);
-      alert("Task created successfully");
-      setAx_brief('');
-      setCollection_name('');
-      setProject('');
-      setsketch('');
-      setNo_of_qty('');
-      setAssign_date('');
-      setTarget_date('');
-      setdepart('');
-      setassignTo('');
-      setPerson('');
-      setHodemail('');
-      setPriority('');
-      setRef_images('');
-      setIsChecked(false);
-
-    } catch (error) {
-      console.error(error);
-      setError("An error occurred while creating the task");
-    }
-  }}
+    };
+  };
   const deptOptions = [
     { value: "cad", label: "CAD" },
     { value: "cam", label: "CAM" },
@@ -255,6 +253,36 @@ function CreateTask() {
       label: "No",
     },
   ];
+
+  const customStyles = {
+    control: (provided) => ({
+      ...provided,
+      backgroundColor: theme === "light" ? "white" : "#374151",
+      padding: "5px 10px",
+      border: theme === "light" ? "1px solid #e2e8f0" : "1px solid #4a5568",
+      color: theme === "light" ? "black" : "white",
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: theme === "light" ? "black" : "white",
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      borderBottom: "1px dotted blue",
+      color: state.isSelected ? "white" : theme === "light" ? "black" : "white",
+      backgroundColor: state.isSelected
+        ? theme === "light"
+          ? "#3b82f6"
+          : "#1e3a8a"
+        : state.isFocused
+        ? theme === "light"
+          ? "#e2e8f0"
+          : "#4a5568"
+        : theme === "light"
+        ? "white"
+        : "#0f172a",
+    }),
+  };
 
   return (
     <div
@@ -291,6 +319,7 @@ function CreateTask() {
                   </label>
                   <Select
                     id="axBriefId"
+                    styles={customStyles}
                     options={briefOptions}
                     value={briefOptions.find(
                       (option) => option.value === ax_brief
@@ -299,7 +328,7 @@ function CreateTask() {
                     isClearable
                     className={`ml-10 ${
                       theme === "light"
-                        ? "border-gray-300"
+                        ? "border-gray-300 text-black "
                         : "bg-gray-700 text-gray-100 border-gray-600"
                     } w-full md:w-3/5`}
                     required
@@ -404,7 +433,6 @@ function CreateTask() {
                     }  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
                     required
                   />
-                  
                 </div>
 
                 <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
@@ -447,6 +475,7 @@ function CreateTask() {
                     } w-full @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
                     isClearable
                     options={deptOptions}
+                    styles={customStyles}
                     value={deptOptions.find(
                       (option) => option.value === assignTo
                     )}
@@ -545,6 +574,7 @@ function CreateTask() {
                     } w-full @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
                     isClearable
                     options={priorityOptions}
+                    styles={customStyles}
                     value={priorityOptions.find(
                       (option) => option.value === priority
                     )}
@@ -573,6 +603,7 @@ function CreateTask() {
                     } w-full @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
                     isClearable
                     options={images}
+                    styles={customStyles}
                     value={images.find((option) => option.value === ref_images)}
                     onChange={handle_images_upload}
                     required
@@ -583,7 +614,11 @@ function CreateTask() {
                   <div className="ml-20">
                     <label
                       htmlFor="uploadFile1"
-                      className="bg-white text-gray-500 font-semibold text-base rounded max-w-[60%] h-32 flex flex-col items-center justify-center cursor-pointer border-2 border-gray-300 border-dashed mx-auto"
+                      className={`${
+                        theme === "light"
+                          ? "bg-white text-gray-500 border-gray-300"
+                          : "bg-gray-800 text-gray-300 border-gray-600"
+                      } font-semibold text-base rounded max-w-[60%] h-32 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed mx-auto`}
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -598,32 +633,51 @@ function CreateTask() {
                         type="file"
                         id="uploadFile1"
                         className="hidden"
-                       accept="image/*"
-                       onChange={handleImageChange}
-                        // onChange={handleFileChange}
-                        // disabled={fileType === ""}
+                        accept="image/*"
+                        onChange={handleImageChange}
                       />
                       <p className="text-xs font-medium text-gray-400 mt-2">
-                        .xlsx file formats are only allowed.
+                        .image only allowed under 30KB.
                       </p>
                     </label>
+
+                    {selectedImage && (
+                      <div className="mt-4 relative flex flex-col items-center w-40 mx-auto">
+                        <img
+                          src={imagePreviewUrl}
+                          alt="Preview"
+                          className="w-24 h-24 object-cover rounded"
+                        />
+                        <button
+                          onClick={handleRemoveImage}
+                          className="absolute top-1 right-1 bg-gray-500 h-5 w-5 text-white rounded-full flex items-center justify-center"
+                          aria-label="Remove image"
+                        >
+                          &times;
+                        </button>
+
+                        <p className="mt-2 text-sm text-gray-500">{fileName}</p>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 <div
-                  className={`block text-base font-bold mb-2 ${
+                  className={`flex items-center mb-2 ${
                     theme === "light" ? "text-gray-700" : "text-gray-200"
                   } w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`}
-                  htmlFor="targetDate"
                 >
-                    <input 
-        id="link-checkbox" 
-        type="checkbox" 
-        checked={isChecked} 
-        onChange={handleCheckboxChange} 
-        className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800" 
-      />
-                  <label className="ms-2 text-sm font-medium text-gray-900 relative -top-1">
+                  <input
+                    id="link-checkbox"
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={handleCheckboxChange}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 mr-2"
+                  />
+                  <label
+                    htmlFor="link-checkbox"
+                    className="text-base font-bold"
+                  >
                     Project View only.
                   </label>
                 </div>

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "./Header";
-import Sidebar from "./Sidebar";
+import Header from "../Header";
+import Sidebar from "../Sidebar";
 
 function Detailed_task() {
   const [theme, setTheme] = useState(

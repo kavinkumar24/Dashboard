@@ -366,33 +366,33 @@ function Department_AOP() {
 
 
 
-  // const handleSave = () => {
-  //   const dataToSave = Object.keys(targets).map((pltcode) => ({
-  //     project: pltcode,
-  //     target: targets[pltcode],
-  //   }));
+    // const handleSave = () => {
+    //   const dataToSave = Object.keys(targets).map((pltcode) => ({
+    //     project: pltcode,
+    //     target: targets[pltcode],
+    //   }));
 
-  //   fetch("http://localhost:8081/api/save-targets", {
-  //     method: "POST",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //     body: JSON.stringify({ targets: dataToSave }),
-  //   })
-  //     .then((response) => response.json())
-  //     .then((data) => {
-  //       console.log("Data saved successfully:", data);
-  //       setShowTargetPopup(false);
+    //   fetch("http://localhost:8081/api/save-targets", {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //     },
+    //     body: JSON.stringify({ targets: dataToSave }),
+    //   })
+    //     .then((response) => response.json())
+    //     .then((data) => {
+    //       console.log("Data saved successfully:", data);
+    //       setShowTargetPopup(false);
 
-  //       setTableData((prevTableData) =>
-  //         prevTableData.map((row) => ({
-  //           ...row,
-  //           Target: targets[row.PLTCODE1] || "",
-  //         }))
-  //       );
-  //     })
-  //     .catch((error) => console.error("Error saving data:", error));
-  // };
+    //       setTableData((prevTableData) =>
+    //         prevTableData.map((row) => ({
+    //           ...row,
+    //           Target: targets[row.PLTCODE1] || "",
+    //         }))
+    //       );
+    //     })
+    //     .catch((error) => console.error("Error saving data:", error));
+    // };
 
   const handleDownload = () => {
     const headers = [
@@ -465,7 +465,7 @@ function Department_AOP() {
 
   return (
     <div
-      className={`min-h-screen flex ${
+      className={`min-h-screen min-w-fit overflow-hidden flex ${
         theme === "light"
           ? "bg-gray-100 text-gray-900"
           : "bg-gray-800 text-gray-100"
@@ -476,7 +476,7 @@ function Department_AOP() {
       <div className="flex-1 flex flex-col p-0">
         <Header theme={theme} dark={setTheme} className="p-0 m-0" />
 
-        <main className="flex-1 p-6 overflow-y-auto">
+        <main className="flex-1 p-0 overflow-y-auto">
           {isloading && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
               <div className="flex gap-2 ml-9">
@@ -486,6 +486,7 @@ function Department_AOP() {
               </div>
             </div>
           )}
+          <button className="bg-blue-500 rounded-lg px-2 py-2 ml-4 text-white" onClick={() => navigate("/AOP/design_center")}>Design Center </button>
           <div className="p-4">
             <Select
               isMulti
@@ -540,6 +541,11 @@ function Department_AOP() {
           </div>
 
           {/* Display Table */}
+          <div
+        className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-14 my-5 ${
+          theme === "light" ? "bg-white" : "bg-gray-900"
+        } max-w-full md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-xl`}
+      >
           {selectedDeptName && (
             <>
               <h2 className="text-xl font-bold mb-4">
@@ -550,7 +556,8 @@ function Department_AOP() {
               <h2 className="text-sm font-normal mb-4 p-1">                
               Percentage: {totalPercentage}%
               </h2>
-              <table className="min-w-full mb-4 border border-gray-300 table-auto text-center">
+              <div className="overflow-x-auto"> 
+              <table className="min-w-full divide-y divide-gray-200 table-auto"> 
                 <thead
                   className={`${
                     theme === "light" ? "bg-gray-200" : "bg-gray-700"
@@ -700,8 +707,10 @@ function Department_AOP() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </>
           )}
+          </div>
 
           {/* Target Popup */}
           {/* Target Popup */}
