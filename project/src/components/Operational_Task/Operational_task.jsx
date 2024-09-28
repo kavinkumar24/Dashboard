@@ -4,6 +4,7 @@ import Header from "../Header";
 import Select from "react-select";
 import { useNavigate } from "react-router-dom";
 
+
 function Operational_task() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
@@ -12,14 +13,17 @@ function Operational_task() {
   const navigate = useNavigate();
 
   const [activeRow, setActiveRow] = useState(null);
+  const [assigneeOptions, setAssigneeOptions] = useState([]);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
   const [tableData, setTableData] = useState([]);
   useEffect(() => {
     fetchData();
-    fetchTeamData();  
+    fetchTeamData();
+    fetchUserData();
+    fetchPhaseTaskData();
   }, []);
+
+// useEffect(() => {fetchPhaseTaskData()}, [activeRow]);
 
   const fetchTeamData = () => {
     fetch("http://localhost:8081/team-member")
@@ -31,23 +35,61 @@ function Operational_task() {
       .catch((err) => console.log(err));
   };
 
-  const fetchData = ()=>{
+  const fetchData = () => {
     fetch("http://localhost:8081/operational-task")
-    .then((res) => res.json())
-    .then((data) => {
-      // console.log(data);
-      setTableData(data);
-    })
-    .catch((err) => console.log(err));
-  }
+      .then((res) => res.json())
+      .then((data) => {
+        // console.log(data);
+        setTableData(data);
+      })
+      .catch((err) => console.log(err));
+  };
 
-  const handleViewPhase = (taskId,project_name, assignee) => {
-        console.log(taskId);
+  const fetchUserData = () => {
+    fetch("http://localhost:8081/user")
+      .then((res) => res.json())
+      .then((data) => {
+        const options = data.map((task) => ({
+          value: task.Email,
+          label: `${task.emp_id} - ${task.employer_name}`,
+        }));
+        setAssigneeOptions(options); // Set the fetched options
+      })
+      .catch((err) => console.log(err));
+  };
+
+  const fetchPhaseTaskData = () => {
+    fetch("http://localhost:8081/phase-tasks")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("taskdata", data);
+  
+        // Extract unique ot_id values
+        const uniqueOtIds = [...new Set(data.map((task) => task.ot_id))];
+        console.log("Unique ot_id values:", uniqueOtIds);
+  
+        // Filter the data based on unique ot_id (not using activeRow)
+        const filteredData = uniqueOtIds.map((ot_id) =>
+          data.filter((task) => task.ot_id === ot_id)
+        );
+        console.log("Filtered Data by ot_id:", filteredData);
+  
+        // If you need to store filtered data in state
+        // setPhaseTaskTableData(filteredData);
+      })
+      .catch((err) => console.log(err));
+  };
+  
+
+  const handleViewPhase = (taskId, project_name, assignee) => {
+    console.log(taskId);
     navigate("/task/operational_task/phase_view", {
       state: { taskId, project_name, assignee },
     });
   };
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const totalPages = Math.ceil(tableData.length / itemsPerPage);
 
   const currentData = tableData.slice(
@@ -56,8 +98,11 @@ function Operational_task() {
   );
 
   const handlePageChange = (page) => {
-    setCurrentPage(page);
+    if (page > 0 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
+
   const [teamDetails, setTeamDetails] = useState({});
   // Function to toggle accordion and fetch team details
 
@@ -103,48 +148,46 @@ function Operational_task() {
     e.preventDefault();
 
     // Generate the new task ID based on the last task in tableData
-    const previousID = tableData.length > 0 ? tableData[tableData.length - 1].task_id : "OT0";
+    const previousID =
+      tableData.length > 0 ? tableData[tableData.length - 1].task_id : "OT0";
     const newID = `OT${parseInt(previousID.slice(2)) + 1}`;
 
     const newTask = {
-        task_id: newID, // Use the new task ID
-        last_edited: lastEdited || new Date().toISOString().split("T")[0], // Set lastEdited to today's date if not set
-        attachment: attachment, // Default attachment value
-        project_name: project_name,
-        status: status,
-        assignee: assigneeemail,
-        starting_date: startingDate,
-        target_date: targetDate,
-        priority: priority,
+      task_id: newID, // Use the new task ID
+      last_edited: lastEdited || new Date().toISOString().split("T")[0], // Set lastEdited to today's date if not set
+      attachment: attachment, // Default attachment value
+      project_name: project_name,
+      status: status,
+      assignee: assigneeemail,
+      starting_date: startingDate,
+      target_date: targetDate,
+      priority: priority,
     };
 
     console.log(newTask);
 
     // Send a POST request to the API
     try {
-        const response = await fetch('http://localhost:8081/operational-task', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(newTask),
-        });
+      const response = await fetch("http://localhost:8081/operational-task", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newTask),
+      });
 
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const result = await response.json();
-        console.log(result.message);
-        
-
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+      const result = await response.json();
+      console.log(result.message);
     } catch (error) {
-        console.error('Error submitting task:', error);
+      console.error("Error submitting task:", error);
     }
 
     fetchData();
     closeTaskModal();
-};
-
+  };
 
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
 
@@ -168,9 +211,9 @@ function Operational_task() {
 
   const handleTeamSubmit = async (e) => {
     e.preventDefault();
-  
+
     const task_ID = activeRow; // Get the active task ID
-  
+
     // Add task_ID and default values to each team member
     const updatedTeamMembers = teamMembers.map((member) => ({
       ...member,
@@ -178,51 +221,53 @@ function Operational_task() {
       status: member.status || "In Progress", // Default status for new team members
       attachment_file: member.attachment_file || "Not Yet Received", // Default attachment placeholder
     }));
-  
+
     try {
       // Send POST requests for each team member concurrently
       await Promise.all(
         updatedTeamMembers.map(async (member) => {
-          const response = await fetch('http://localhost:8081/team-member', {
-            method: 'POST',
+          const response = await fetch("http://localhost:8081/team-member", {
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
             },
             body: JSON.stringify(member),
           });
-  
+
           if (!response.ok) {
-            throw new Error('Failed to submit team member');
+            throw new Error("Failed to submit team member");
           }
-  
+
           const result = await response.json();
-          console.log('Team member created successfully:', result.message);
+          console.log("Team member created successfully:", result.message);
         })
       );
-  
+
       // Update teamTableData with new team members after API call succeeds
       setTeamTableData((prevData) => {
         const updatedData = [...prevData, ...updatedTeamMembers];
         console.log("Updated Team Table Data:", updatedData);
-  
+
         // Automatically update the accordion with new data
         setTeamDetails((prevDetails) => ({
           ...prevDetails,
           [task_ID]: updatedData.filter((team) => team.task_id === task_ID),
         }));
-  
+
         return updatedData; // Return updated table data
       });
-  
+
       console.log("Team Table Data after addition:", teamTableData);
-  
+
       // Close the team modal after submission
+      fetchData();
+      fetchTeamData();
+      fetchUserData();
       closeTeamModal();
     } catch (error) {
-      console.error('Error submitting team member:', error);
+      console.error("Error submitting team member:", error);
     }
   };
-
 
   return (
     <>
@@ -251,6 +296,7 @@ function Operational_task() {
                 </button>
               </div>
             </div>
+
             <table className="w-full table-auto text-sm">
               <thead>
                 <tr className="bg-gray-300 text-gray-700">
@@ -328,18 +374,19 @@ function Operational_task() {
                         {item.attachment}
                       </td>
                       <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                      <button
+                        <button
                           className="px-5 py-2 bg-blue-500 text-white rounded-lg font-semibold"
                           onClick={() => {
-                           
-                              handleViewPhase(item.task_id, item.project_name, item.assignee);
-                            
+                            handleViewPhase(
+                              item.task_id,
+                              item.project_name,
+                              item.assignee
+                            );
                           }}
                           // disabled={teamDetails[item.task_id]?.length === 0}
                         >
                           View Phases
                         </button>
-
                       </td>
                     </tr>
 
@@ -405,20 +452,19 @@ function Operational_task() {
                                             {personIndex + 1}
                                           </td>
                                           <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                                            {person.task_id || "N/A"}
+                                            {person.task_id}
                                           </td>
                                           <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                                            {person.name || "N/A"}
+                                            {person.name}
                                           </td>
                                           <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                                            {person.mail_id || "N/A"}
+                                            {person.mail_id}
                                           </td>
                                           <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                                            {person.Status || "Pending"}
+                                            {person.STATUS}
                                           </td>
                                           <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                                            {person.attachment_File ||
-                                              "No Attachment"}
+                                            {person.attachment_file}
                                           </td>
                                         </tr>
                                       )
@@ -548,21 +594,6 @@ function Operational_task() {
                         />
                       </div>
 
-                      {/* <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
-                  <label className={`block text-base font-bold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'} w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`} htmlFor="status">
-                  Status
-                  </label>
-                  <Select
-                    className={`appearance-none rounded w-full ml-10 leading-tight focus:outline-none focus:shadow-outline ${theme === 'light' ? 'border-gray-300' : 'bg-gray-700 text-gray-100 border-gray-600'} w-full @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
-                    isClearable
-                    // options={deptOptions}
-                    // value={deptOptions.find(option => option.value === assignTo)}
-                    // onChange={(selectedOption) => setassignTo(selectedOption?.value || '')}
-                    required
-                  />
-                  
-                </div> */}
-
                       <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
                         <label
                           className={`block text-base font-bold mb-2 ${
@@ -572,19 +603,23 @@ function Operational_task() {
                           } w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`}
                           htmlFor="assigneeemail"
                         >
-                          Asignee Email
+                          Task Assigner
                         </label>
-                        <input
-                          type="email"
-                          id="assigneeemail"
-                          value={assigneeemail}
-                          onChange={(e) => setAssigneeemail(e.target.value)}
-                          className={`  appearance-none border rounded ml-10 w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
+                        <Select
+                          className={`appearance-none rounded w-full ml-10 leading-tight focus:outline-none focus:shadow-outline ${
                             theme === "light"
-                              ? "bg-gray-100 text-gray-700 border-gray-300"
+                              ? "border-gray-300"
                               : "bg-gray-700 text-gray-100 border-gray-600"
-                          }  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
-                          placeholder="Enter valid email ID"
+                          } w-full @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
+                          isClearable
+                          options={assigneeOptions} // Dynamically loaded options
+                          value={assigneeOptions.find(
+                            (option) => option.value === assigneeemail
+                          )} // Set selected value
+                          onChange={(selectedOption) =>
+                            setAssigneeemail(selectedOption?.value || "")
+                          } // Handle changes
+                          placeholder="Select Assigner Name "
                           required
                         />
                       </div>
@@ -743,7 +778,7 @@ function Operational_task() {
                             {/* Name */}
                             <div className="flex flex-col md:w-1/2">
                               <label
-                                className={`block text-base font-bold  ${
+                                className={`block text-base font-bold ${
                                   theme === "light"
                                     ? "text-gray-700"
                                     : "text-gray-200"
@@ -752,23 +787,33 @@ function Operational_task() {
                               >
                                 Name
                               </label>
-                              <input
-                                type="text"
+
+                              <Select
                                 id={`person_name_${index}`}
-                                className={`appearance-none border rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                className={`appearance-none  rounded w-full py-3 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                                   theme === "light"
-                                    ? "bg-gray-100 text-gray-700 border-gray-300"
-                                    : "bg-gray-700 text-gray-100 border-gray-600"
+                                    ? "text-gray-700 "
+                                    : "text-gray-100"
                                 }`}
-                                placeholder="Enter Person Name"
-                                value={member.name}
-                                onChange={(e) =>
+                                options={assigneeOptions} // Assuming assigneeOptions contains available team members with both name and email
+                                value={assigneeOptions.find(
+                                  (option) => option.label === member.name
+                                )} // Set the selected option by name
+                                onChange={(selectedOption) => {
+                                  // Automatically update both name and email when a name is selected
                                   handleInputChange(
                                     index,
                                     "name",
-                                    e.target.value
-                                  )
-                                }
+                                    selectedOption?.label || ""
+                                  );
+                                  handleInputChange(
+                                    index,
+                                    "email",
+                                    selectedOption?.value || ""
+                                  ); // Auto-fill email based on selected name
+                                }}
+                                isClearable
+                                placeholder="Select Name"
                                 required
                               />
                             </div>
@@ -776,7 +821,7 @@ function Operational_task() {
                             {/* Email */}
                             <div className="flex flex-col md:w-1/2">
                               <label
-                                className={`block text-base font-bold  ${
+                                className={`block text-base font-bold mb-3 ${
                                   theme === "light"
                                     ? "text-gray-700"
                                     : "text-gray-200"
@@ -785,16 +830,16 @@ function Operational_task() {
                               >
                                 Email
                               </label>
+
                               <input
                                 type="email"
                                 id={`assigneeemail_${index}`}
-                                className={`appearance-none border rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                                className={`appearance-none border rounded w-full py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-not-allowed ${
                                   theme === "light"
                                     ? "bg-gray-100 text-gray-700 border-gray-300"
                                     : "bg-gray-700 text-gray-100 border-gray-600"
                                 }`}
-                                placeholder="Enter valid email ID"
-                                value={member.email}
+                                value={member.email} // Automatically filled email based on selected name
                                 onChange={(e) =>
                                   handleInputChange(
                                     index,
@@ -802,6 +847,8 @@ function Operational_task() {
                                     e.target.value
                                   )
                                 }
+                                placeholder="Enter valid email ID"
+                                disabled
                                 required
                               />
                             </div>

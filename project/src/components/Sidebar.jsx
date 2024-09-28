@@ -92,7 +92,6 @@ function Sidebar({ theme }) {
   useEffect(()=>{
     const roles = localStorage.getItem('role')
     setRole(roles);
-    console.log(role);
   },[role])
 
   const handleNavigation = (path, name) => {

@@ -3,6 +3,7 @@ import Sidebar from "../Sidebar";
 import Header from "../Header";
 import Select from "react-select";
 import { useLocation, useNavigate } from "react-router-dom";
+import { TbEdit } from "react-icons/tb";
 
 function Phase_view() {
   const location = useLocation();
@@ -12,43 +13,80 @@ function Phase_view() {
   );
   const [search, setSearch] = useState("");
   const [isPhaseModalOpen, setIsPhaseModalOpen] = useState(false);
+  const [taskStatus, setTaskStatus] = useState("");
+  const [taskNotes, setTaskNotes] = useState("");
+
+  const loggedUser = localStorage.getItem("Email");
+  const getrole = localStorage.getItem("role");
+
+  const getuserID = (mail) => {
+    const filteredTeamData = teamDetails.filter(
+      (task) => task.mail_id === mail
+    );
+    const userID = filteredTeamData[0].name;
+    const indexOfFirst = userID.trim().indexOf(" ");
+    return userID.trim().slice(0, indexOfFirst);
+  };
 
   const openPhaseModal = () => {
     setIsPhaseModalOpen(true);
   };
   const closePhaseModal = () => setIsPhaseModalOpen(false);
-  const [phaseTableData, setphaseTableData] = useState([]);
-  const [overAllData, setOverAllData] = useState([]);
+  const [phaseTableData, setPhaseTableData] = useState([]);
+  const [overAllData, setOverallData] = useState([]);
   const [teamDetails, setTeamDetails] = useState([]);
-  const[assigneeOptions ,setassigneeOptions ] = useState([]);
+  const [assigneeOptions, setAssigneeOptions] = useState([]);
 
-  // const assigneeOptions = [
-  //   { value: "assignee1@example.com", label: "Assignee 1" },
-  //   { value: "assignee2@example.com", label: "Assignee 2" },
-  //   // Add more options as needed
-  // ];
-  
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const statusOptions = [
+    { value: "In Progress", label: "In Progress" },
+    { value: "Completed", label: "Completed" },
+  ];
+
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const [notesTaskId, setNotesTaskId] = useState('');
+
+  const handleOpen = (id) => {
+    setNotesTaskId(id);
+    setIsOpen(true);
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    setInputValue('');
+  };
+
+  const handleSubmit = () => {
+    console.log('Submitted value:', inputValue);
+    updateTaskInDB(notesTaskId, {
+      notes: taskNotes,
+      type: "note",
+    });
+    setNotesTaskId('');
+    setTaskNotes('');
+    handleClose();
+  };
 
   const fetchData = async () => {
-    
+    // Clear previous options
+    setAssigneeOptions([]); // Clear the previous state
+
     const teamResponse = await fetch("http://localhost:8081/team-member");
     const teamData = await teamResponse.json();
-    const filteredTeamData = teamData.filter(task=>task.task_id === taskId);
-    
+    const filteredTeamData = teamData.filter((task) => task.task_id === taskId);
 
-    filteredTeamData.map((task) => {
-      assigneeOptions.push({ value: task.mail_id, label: task.name });
-    }
-  )
+    // Use map to create a new array for assigneeOptions
+    const newAssigneeOptions = filteredTeamData.map((task) => ({
+      value: task.mail_id,
+      label: task.name,
+    }));
 
-
+    // Set the new options in state
+    setAssigneeOptions(newAssigneeOptions);
     setTeamDetails(filteredTeamData);
-    console.log(filteredTeamData);
-    // Fetch phase tasks
+    console.log(teamDetails);
 
+    // Fetch phase tasks
     const phaseTaskResponse = await fetch("http://localhost:8081/phase-tasks");
     const phaseTaskData = await phaseTaskResponse.json();
     const filteredPhaseTaskData = phaseTaskData.filter(
@@ -62,7 +100,7 @@ function Phase_view() {
     const filteredPhaseData = phaseData.filter(
       (phase) => phase.task_id === taskId
     );
-    setphaseTableData(filteredPhaseData);
+    setPhaseTableData(filteredPhaseData);
 
     // Construct overall data structure
     const overallData = {};
@@ -74,14 +112,88 @@ function Phase_view() {
         tasks: filteredPhaseTaskData.filter(
           (task) => task.phase_id === phase.phase_id
         ),
+        phase_status: phase.phase_status,
       };
     });
 
-    setOverAllData(overallData);
+    setOverallData(overallData);
+    console.log("Over all Data",overallData);
+      
 
-    // Log overall data
-    console.log(overallData);
   };
+
+  useEffect(()=>{
+    phaseStatusUpdation();
+  },[overAllData]);
+
+  const phaseStatusUpdation = ()=>{
+    const areAllTasksCompleted = (tasks) => {
+      console.log("fgtyui9opklmnjhiuo",tasks.every((task) => task.status === "Completed"))
+      return tasks.every((task) => task.status === "Completed");
+    };
+
+const updatePhaseStatusIfAllTasksCompleted = (phaseId, phaseData) => {
+  if (areAllTasksCompleted(phaseData.tasks)) {
+    // Update the phase status to 'Completed'
+    const updatedPhase = {
+      phase_status: "Completed",
+    };
+
+    
+    fetch(`http://localhost:8081/update-phase/${phaseId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updatedPhase),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Phase updated successfully:", data);
+      })
+      .catch((error) => {
+        console.error("Error updating phase:", error);
+      });
+
+  } else {
+    console.log("Not all tasks are completed for this phase.");
+  }
+
+};
+
+  // Iterate over all phases to check and update status
+  Object.keys(overAllData).forEach((phaseId) => {
+    const phaseData = overAllData[phaseId];
+    updatePhaseStatusIfAllTasksCompleted(phaseId, phaseData);
+  });
+  }
+  const updateTaskInDB = (taskId, updatedFields) => {
+    // Ensure updatedFields is a valid JSON object
+    fetch(`http://localhost:8081/phase-task/${taskId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(updatedFields),  // Convert the object to a valid JSON string
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('Task updated successfully:', data);
+      })
+      .catch((error) => {
+        console.error('Error updating task:', error);
+      });
+    handleClose();
+    fetchData();  // Refresh data after update
+  };
+  
+  
+
+  
+
+  useEffect(() => {
+    fetchData();
+  }, []);
 
   const [tasks, setTasks] = useState([
     {
@@ -460,7 +572,7 @@ function Phase_view() {
                                   ? "border-gray-300"
                                   : "bg-gray-700 text-gray-100 border-gray-600"
                               }`}
-                              options={assigneeOptions} // Define this array elsewhere
+                              options={assigneeOptions}
                               value={assigneeOptions.find(
                                 (option) => option.value === task.assignee
                               )}
@@ -469,7 +581,7 @@ function Phase_view() {
                                   index,
                                   "assignee",
                                   selectedOption?.value || ""
-                                ); // Adjusting the value on selection
+                                );
                               }}
                               placeholder="Select Assignee"
                               required
@@ -543,52 +655,46 @@ function Phase_view() {
           {Object.keys(overAllData).length > 0 ? (
             Object.entries(overAllData).map(([phaseId, phaseData]) => (
               <div
-                key={phaseId}
+                key={phaseId} // Use phaseId as the key for better uniqueness
                 className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg"
               >
                 <div className="mb-6">
-                  <div className="flex justify-between">
+                  <div className="flex justify-between items-center mr-10">
                     <h1 className="text-xl font-semibold p-2 pl-10 py-5">
                       Phase {phaseId.slice(2)} - {phaseData.phase_name}
                     </h1>
+
+                    <p className={`border-2 px-4 py-2 rounded-lg
+                     ${phaseData.phase_status === 'In Progress' ? 'bg-red-100 text-red-600 border-red-400':'bg-green-100 text-green-600 border-green-400'} `}>{phaseData.phase_status}</p>
                   </div>
-                  <div className="overflow-x-auto">
+                  <div className="">
                     <table className="w-full table-auto text-sm">
                       <thead>
                         <tr className="bg-gray-300 text-gray-700">
-                          <th className="py-3 text-center font-semibold text-base">
-                            Task
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            Description
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            Start Date
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            End Date
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            Grace Period
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            Assignee
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            Owner
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            Status
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            Notes
-                          </th>
+                          {[
+                            "Task",
+                            "Description",
+                            "Start Date",
+                            "End Date",
+                            "Grace Period",
+                            "Assignee",
+                            "Owner",
+                            "Status",
+                            "Notes",
+                          ].map((header) => (
+                            <th
+                              key={header}
+                              className="py-3 text-center font-semibold text-base"
+                            >
+                              {header}
+                            </th>
+                          ))}
                         </tr>
                       </thead>
                       <tbody>
                         {phaseData.tasks.map((task, index) => (
                           <tr
-                            key={index}
+                            key={task.task_id || index} // Use task_id for better uniqueness, fallback to index
                             className="bg-white even:bg-gray-50 hover:bg-gray-200 transition-colors duration-200 cursor-pointer"
                           >
                             <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
@@ -623,11 +729,90 @@ function Phase_view() {
                             <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
                               {task.owner_email}
                             </td>
-                            <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              {task.status}
+                            <td className="py-4 flext justify-center items-center text-center whitespace-nowrap text-base">
+                              {task.status !== "Completed" &&
+                              (task.assignee === loggedUser ||
+                                getuserID(task.assignee) === loggedUser) ? (
+                                <Select
+                                  className={`rounded w-full ml-10 leading-tight focus:outline-none focus:shadow-outline ${
+                                    theme === "light"
+                                      ? "border-gray-300"
+                                      : "bg-gray-700 text-gray-100 border-gray-600"
+                                  } w-full @md/modal:px-8 md:w-3/5 @md/modal:w-3/5 `}
+                                  isClearable
+                                  options={statusOptions}
+                                  placeholder="Update Status"
+                                  required
+                                  value={statusOptions.find(
+                                    (option) => option.value === taskStatus
+                                  )}
+                                  onChange={(selectedOption) => {
+                                    const newStatus = selectedOption
+                                      ? selectedOption.value
+                                      : "";
+                                    setTaskStatus(newStatus);
+                                    // Call the function to update the task status in the database
+                                    updateTaskInDB(task.task_id, {
+                                      status: newStatus,
+                                      type: "state",
+                                      phaseId: task.phase_id,
+                                    });
+
+                                    // handleTaskStatusChange(task.task_id, newStatus, task.phase_id);
+                                  }}
+                                />
+                              ) : (
+                                task.status
+                              )}
                             </td>
-                            <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              {task.notes}
+
+                            <td className="py-4 flext justify-center items-center text-center whitespace-nowrap text-base">
+                              {task.notes === "Not Yet Received" &&
+                              (task.assignee === loggedUser ||
+                                getuserID(task.assignee) === loggedUser) ? (
+                                <div>
+                                <TbEdit 
+                                  className="ml-14 h-7 w-7 text-gray-400 cursor-pointer"
+                                  onClick={()=>handleOpen(task.task_id)} 
+                                />
+                                
+                                {isOpen && (
+                                  <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50">
+                                    <div className="bg-white p-5 rounded-lg shadow-lg w-1/3">
+                                      <h2 className="text-xl font-semibold mb-4">Add your Notes Here</h2>
+                                      <textarea
+                                        className="border rounded w-full p-2 focus:outline-none"
+                                        rows="4"
+                                       
+                                        value={taskNotes}
+                                        onChange={(e) => {
+                                          const newNotes = e.target.value;
+                                          setTaskNotes(newNotes);
+                                        }}
+                                        placeholder="Type your notes here..."
+                                      />
+                                      <div className="mt-4 flex justify-end">
+                                        <button 
+                                          className="bg-blue-100 text-blue-600 rounded px-4 py-2 mr-2 font-semibold"
+                                          onClick={handleSubmit}
+                                        >
+                                          Add Notes
+                                        </button>
+                                        <button 
+                                          className="bg-gray-300 text-gray-700 rounded px-4 py-2"
+                                          onClick={handleClose}
+                                        >
+                                          Cancel
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                                
+                              ) : (
+                                task.notes
+                              )}
                             </td>
                           </tr>
                         ))}

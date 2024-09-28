@@ -279,6 +279,7 @@ app.get('/api/user-only', authorize(['user']), (req, res) => {
 });
 
 
+
 // login page api end
 
 // Convert Excel serial date to JavaScript Date
@@ -2128,7 +2129,7 @@ const createTeamDetailsTableQuery = `
     name VARCHAR(255),
     mail_id VARCHAR(255),
     status VARCHAR(50) DEFAULT 'In Progress',
-    attachment_file VARCHAR(50) DEFAULT 'Not Yet Received',
+    attachment_file TEXT,
     FOREIGN KEY (task_id) REFERENCES operational_task(task_id) ON DELETE CASCADE,
     PRIMARY KEY (member_id)
   );
@@ -2187,7 +2188,7 @@ CREATE TABLE IF NOT EXISTS phase_tasks (
   owner_email VARCHAR(255),
   grace_period DATE,
   STATUS VARCHAR(50) DEFAULT 'In Progress',
-  notes VARCHAR(50) DEFAULT 'Not Yet Received',
+  notes TEXT,
   ot_id VARCHAR (10)
 );
 `;
@@ -2296,6 +2297,17 @@ app.get('/phases', (req, res) => {
   });
 });
 
+app.get('/user', (req, res) => {
+  const query = 'SELECT * FROM users';
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching user:', err);
+      return res.status(500).send('Error fetching user');
+    }
+    res.json(results);
+  });
+});
+
 
 app.get('/phase-tasks', (req, res) => {
   const query = 'SELECT * FROM phase_tasks';
@@ -2309,34 +2321,65 @@ app.get('/phase-tasks', (req, res) => {
   });
 });
 
-
 app.put('/phase-task/:task_id', (req, res) => {
   const { task_id } = req.params;
-  const { phase_id, task_name, description, start_date, end_date, assignee, owner_email, grace_period, status, notes } = req.body;
+  const { status, notes, type } = req.body;
 
-  const updateTaskQuery = `
-    UPDATE phase_tasks
-    SET phase_id = ?, task_name = ?, description = ?, start_date = ?, end_date = ?, assignee = ?, owner_email = ?, grace_period = ?, status = ?, notes = ?
-    WHERE task_id = ?;
-  `;
+  let updateTaskQuery;
+  let queryParams;
 
-  db.query(
-    updateTaskQuery, 
-    [phase_id, task_name, description, start_date, end_date, assignee, owner_email, grace_period, status, notes, task_id], 
-    (err, result) => {
-      if (err) {
-        console.error('Error updating task:', err);
-        return res.status(500).json({ error: 'Failed to update task' });
-      }
-      if (result.affectedRows === 0) {
-        return res.status(404).json({ message: 'Task not found' });
-      }
-      res.status(200).json({ message: 'Task updated successfully' });
+  // Check the type and update the relevant field(s)
+  if (type === 'note') {
+    updateTaskQuery = `
+      UPDATE phase_tasks
+      SET notes = ?
+      WHERE task_id = ?;
+    `;
+    queryParams = [notes, task_id];
+  } else if (type === 'state') {
+    updateTaskQuery = `
+      UPDATE phase_tasks
+      SET status = ?
+      WHERE task_id = ?;
+    `;
+    queryParams = [status, task_id];
+  }
+
+  db.query(updateTaskQuery, queryParams, (err, result) => {
+    if (err) {
+      console.error('Error updating task:', err);
+      return res.status(500).json({ error: 'Failed to update task' });
     }
-  );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Task not found' });
+    }
+    res.status(200).json({ message: 'Task updated successfully' });
+  });
 });
 
 
+
+app.put('/update-phase/:phase_id', (req, res) => {
+  const { phase_id } = req.params;
+  const { phase_status } = req.body;
+
+  const updatePhaseQuery = `
+    UPDATE phases
+    SET phase_status = ?
+    WHERE phase_id = ?;
+  `;
+
+  db.query(updatePhaseQuery, [phase_status, phase_id], (err, result) => {
+    if (err) {
+      console.error('Error updating phase:', err);
+      return res.status(500).json({ error: 'Failed to update phase' });
+    }
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Phase not found' });
+    }
+    res.status(200).json({ message: 'Phase updated successfully' });
+  });
+});
 
 
 
