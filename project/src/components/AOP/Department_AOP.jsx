@@ -62,24 +62,20 @@ function Department_AOP() {
   const [rawFilteredData, setRawFilteredData] = useState([]);
   const [departmentMappings, setDepartmentMappings] = useState({});
   const [selectedDeptName, setSelectedDeptName] = useState("CAD");
-  const [showTargetPopup, setShowTargetPopup] = useState(false);
+ 
   const [targets, setTargets] = useState({});
-  const [tableData, setTableData] = useState([]);
-  const [popupCurrentPage, setPopupCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [tableData, setTableData] = useState([]);  
   const [selectedDepartments, setSelectedDepartments] = useState([]);
-  const [allowedProjects, setAllowedProjects] = useState(ALLOWED_PROJECTS);
-  const [sortedAllowedTargets, setSortedAllowedTargets] =
-    useState(ALLOWED_PROJECTS);
   const [isloading, setisloading] = useState(false);
-  const [productionData, setProductionData] = useState([]);
   const [total, setTotal] = useState(0);
   const [calender, setcalender] = useState(false);
   const [filter_on, setFilter_on] = useState(false);
+  const[achieved, setAchieved] = useState(0);
 
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
+    
   }, [theme]);
 
   const handleCardClick = (deptName) => {
@@ -146,16 +142,39 @@ function Department_AOP() {
         console.error("Error fetching pending sum data:", error)
       );
 
-    fetch("http://localhost:8081/raw_filtered_production_data")
+      fetch("http://localhost:8081/raw_filtered_production_data")
       .then((response) => response.json())
       .then((data) => {
-        console.log("Raw Filtered Production Data:", data);
-        setRawFilteredData(data);
+          console.log("Raw Filtered Production Data:", data);
+          
+          // Assuming departmentMappings is already defined in your scope
+          const departmentMapping = departmentMappings["PHOTO"];
+  
+          if (departmentMapping) {
+              const fromDeptSet = new Set(departmentMapping.from.map((dept) => dept.toUpperCase()));
+              const toDeptSet = new Set(departmentMapping.to.map((dept) => dept.toUpperCase()));
+  
+              const achievedCount = data.reduce((total, item) => {
+                  const fromDept = item["From Dept"]?.toUpperCase() || "";
+                  const toDept = item["To Dept"]?.toUpperCase() || "";
+  
+                  if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
+                      return total + (item["CW Qty"] || 0);
+                  }
+                  return total;
+              }, 0);
+  
+              setAchieved(achievedCount);
+              console.log("Achieved Count:", achievedCount);
+          }
+  
+          // Set the raw filtered data
+          setRawFilteredData(data);
       })
       .catch((error) =>
-        console.error("Error fetching raw filtered production data:", error)
+          console.error("Error fetching raw filtered production data:", error)
       );
-
+  
     fetch("http://localhost:8081/department-mappings")
       .then((response) => response.json())
       .then((data) => {
@@ -207,103 +226,73 @@ function Department_AOP() {
     value: dept.toUpperCase(),
     label: dept,
   }));
-
   const updateTableData = () => {
     const normalizedData = pendingData.map((item) => ({
-      ...item,
-      PLTCODE1: item.PLTCODE1?.toUpperCase() || "",
-      Wip:
-      pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)
-      ?.total_quantity || 0,
+        ...item,
+        PLTCODE1: item.PLTCODE1?.toUpperCase() || "",
+        Wip: pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)?.total_quantity || 0,
     }));
 
     if (!selectedDeptName) {
-      setTableData([]);
-      return;
+        setTableData([]);
+        return;
     }
-    console.log(value.startDate, value.endDate);
-
-
 
     const deptMapping = departmentMappings[selectedDeptName];
     if (deptMapping && deptMapping.to) {
-      const fromDeptSet = new Set(
-        deptMapping.from.map((dept) => dept.toUpperCase())
-      );
-      const toDeptSet = new Set(
-        deptMapping.to.map((dept) => dept.toUpperCase())
-      );
+        const fromDeptSet = new Set(deptMapping.from.map((dept) => dept.toUpperCase()));
+        const toDeptSet = new Set(deptMapping.to.map((dept) => dept.toUpperCase()));
 
-      const projectTotals = rawFilteredData.reduce((acc, item) => {
-        const fromDept = item["From Dept"]?.toUpperCase() || "";
-        const toDept = item["To Dept"]?.toUpperCase() || "";
+        const projectTotals = rawFilteredData.reduce((acc, item) => {
+            const fromDept = item["From Dept"]?.toUpperCase() || "";
+            const toDept = item["To Dept"]?.toUpperCase() || "";
 
-        if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
-          const project = item.Project || "Unknown Project";
-          const cwQty = item["CW Qty"] || 0;
+            if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
+                const project = item.Project || "Unknown Project";
+                const cwQty = item["CW Qty"] || 0;
 
-          if (!acc[project]) {
-            acc[project] = 0;
-          }
-          acc[project] += cwQty;
-        }
+                if (!acc[project]) {
+                    acc[project] = 0;
+                }
+                acc[project] += cwQty;
+            }
 
-        return acc;
-      }, {});
+            return acc;
+        }, {});
 
-      const filteredPendingData = normalizedData.filter((item) => {
-        return (
-          deptMapping.to
-            .map((dept) => dept.toUpperCase())
-            .includes(item.TODEPT?.toUpperCase() || "") &&
-          (selectedDepartments.length === 0 ||
-            selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
-        );
-      });
+        const filteredPendingData = normalizedData.filter((item) => {
+            return (
+                toDeptSet.has(item.TODEPT?.toUpperCase() || "") &&
+                (selectedDepartments.length === 0 || selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
+            );
+        });
 
-      console.log("Filtered Pending Data:222222", filteredPendingData);
+        const pltcodeCounts = filteredPendingData.reduce((acc, item) => {
+            if (!acc[item.PLTCODE1]) {
+                acc[item.PLTCODE1] = { count: 0, totalJCPDSCWQTY1: 0, totalWIP: 0 };
+            }
+            acc[item.PLTCODE1].count += 1;
+            acc[item.PLTCODE1].totalJCPDSCWQTY1 += item.JCPDSCWQTY1 || 0;
+            acc[item.PLTCODE1].totalWIP = item.Wip;
+            return acc;
+        }, {});
 
-      const pltcodeCounts = filteredPendingData.reduce((acc, item) => {
-        if (!acc[item.PLTCODE1]) {
-          acc[item.PLTCODE1] = { count: 0, totalJCPDSCWQTY1: 0, totalWIP: 0 };
-        }
-        acc[item.PLTCODE1].count += 1;
-        acc[item.PLTCODE1].totalJCPDSCWQTY1 += item.JCPDSCWQTY1 || 0;
-        acc[item.PLTCODE1].totalWIP = item.Wip;
-        return acc;
-      }, {});
+        const filteredCounts = Object.keys(pltcodeCounts).filter((pltcode) => {
+            return groupedData[pltcode]; // Only include PLTCODE1 that exist in targets
+        });
 
-      // Use groupedData for targets
-      const photoTotalQty =
-        selectedDeptName.toUpperCase() === "PHOTO"
-          ? filteredPendingData.reduce(
-              (sum, item) => sum + (item.JCPDSCWQTY1 || 0),
-              0
-            )
-          : 0;
-          console.log("plt",pltcodeCounts)
+        const updatedTableData = filteredCounts.map((pltcode) => {
+            const totalJCPDSCWQTY1 = pltcodeCounts[pltcode].totalJCPDSCWQTY1;
 
-          const filteredCounts = (value.startDate && value.endDate)
-          ? Object.keys(pltcodeCounts).filter((pltcode) => {
-              return normalizedData.some((item) => {
-                const recvdDate = new Date(item.RECVDATE1);
-                return item.PLTCODE1 === pltcode &&
-                       recvdDate >= new Date(value.startDate) &&
-                       recvdDate <= new Date(value.endDate);
-              });
-            })
-          : Object.keys(pltcodeCounts);
-          
-          const updatedTableData = filteredCounts
-            .map((pltcode) => {
-              const totalJCPDSCWQTY1 = pltcodeCounts[pltcode].totalJCPDSCWQTY1;
-              const target = groupedData[pltcode]?.total || 0;
-              const achieved = selectedDeptName.toUpperCase() === "PHOTO" ? photoTotalQty : 0;
-              const pending = target - achieved;
-              const week1Count = projectTotals[pltcode] || 0;
-              const percentageAchieved = target > 0 ? (week1Count / target) * 100 : 0;
-          
-              return {
+            const target = groupedData[pltcode] ? groupedData[pltcode].toFixed(0) : 0; // Ensure target is properly set
+            const achieved = selectedDeptName.toUpperCase() === "PHOTO" 
+                ? filteredPendingData.reduce((sum, item) => sum + (item.JCPDSCWQTY1 || 0), 0) 
+                : 0;
+            const pending = target - achieved;
+            const week1Count = projectTotals[pltcode] || 0;
+            const percentageAchieved = target > 0 ? (week1Count / target) * 100 : 0;
+
+            return {
                 PLTCODE1: pltcode,
                 TotalJCPDSCWQTY1: totalJCPDSCWQTY1,
                 Target: target,
@@ -313,26 +302,26 @@ function Department_AOP() {
                 Wip: pltcodeCounts[pltcode].totalWIP,
                 AOP: target,
                 Week1: week1Count,
-              };
-            })
-            .sort((a, b) => a.PLTCODE1.localeCompare(b.PLTCODE1));
-          
-          // Calculate total percentage for "PHOTO" department
-          totalPercentage = updatedTableData.reduce(
-            (acc, item) => acc + parseFloat(item.PercentageAchieved || 0),
-            0
-          );
-          
-          console.log("Total Percentage Achieved:", totalPercentage);
-          setTotal(totalPercentage);
-          setTableData(updatedTableData);
-          
+            };
+        }).sort((a, b) => a.PLTCODE1.localeCompare(b.PLTCODE1));
 
-      setTableData(updatedTableData);
+        // Calculate the total percentage
+        const totalPercentage = updatedTableData.reduce(
+            (acc, item) => acc + (parseFloat(item.PercentageAchieved) || 0),
+            0
+        );
+
+        // Set the total
+        setTotal(totalPercentage);
+
+        // Update table data
+        setTableData(updatedTableData);
+        
     } else {
-      setTableData([]);
+        setTableData([]);
     }
-  };
+};
+
 
   const handleDepartmentChange = (selectedOptions) => {
     if (selectedOptions.length === 0) {
@@ -343,89 +332,43 @@ function Department_AOP() {
       return;
     }
     const selectedValues = selectedOptions.map((option) => option.value);
-    setSortedAllowedTargets(selectedValues);
+    // setSortedAllowedTargets(selectedValues);
     setSelectedDepartments(selectedValues);
 
     const updatedAllowedProjects = selectedValues.length
       ? ALLOWED_PROJECTS.filter((pltcode) => selectedValues.includes(pltcode))
       : ALLOWED_PROJECTS;
 
-    setAllowedProjects(updatedAllowedProjects);
+    // setAllowedProjects(updatedAllowedProjects);
 
     updateTableData();
   };
 
-  const handleTargetClick = () => {
-    setShowTargetPopup(true);
-    setPopupCurrentPage(1);
-  };
-
-  const handleEditChange = (pltcode, value) => {
-    setTargets((prevTargets) => ({
-      ...prevTargets,
-      [pltcode]: value,
-    }));
-  };
 
   const [groupedData, setGroupedData] = useState({});
 
   useEffect(() => {
     fetch("http://localhost:8081/api/target")
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Data fetched successfully:", data);
-        const grouped = data.reduce((acc, item) => {
-          const project = item.Project;
-          const total = item["Total"];
+        .then((response) => response.json())
+        .then((data) => {
+            console.log("Data fetched successfully:", data);
+            const targetMap = {};
+            data.forEach(item => {
+                const project = item.Project?.toUpperCase();
+                const total = item.Total || 0;
 
-          if (!acc[project]) {
-            acc[project] = { total: 0, products: [] };
-          }
+                if (project) {
+                    targetMap[project] = (targetMap[project] || 0) + total;
+                }
+            });
 
-          acc[project].total += total;
-          acc[project].products.push(item);
-          return acc;
-        }, {});
-
-        for (const project in grouped) {
-          grouped[project].total =
-            Math.round(grouped[project].total * 100) / 100;
-        }
-
-        setGroupedData(grouped);
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
-  }, []);
-
-  // const handleSave = () => {
-  //   const dataToSave = Object.keys(targets).map((pltcode) => ({
-  //     project: pltcode,
-  //     target: targets[pltcode],
-  //   }));
-
-  //   fetch("http://localhost:8081/api/save-targets", {
-  //     method: "POST",
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //     },
-  //     body: JSON.stringify({ targets: dataToSave }),
-  //   })
-  //     .then((response) => response.json())
-  //     .then((data) => {
-  //       console.log("Data saved successfully:", data);
-  //       setShowTargetPopup(false);
-
-  //       setTableData((prevTableData) =>
-  //         prevTableData.map((row) => ({
-  //           ...row,
-  //           Target: targets[row.PLTCODE1] || "",
-  //         }))
-  //       );
-  //     })
-  //     .catch((error) => console.error("Error saving data:", error));
-  // };
+            console.log("Grouped Data:", targetMap); // Log the final grouped data
+            setGroupedData(targetMap);
+        })
+        .catch((error) => {
+            console.error("Error fetching data:", error);
+        });
+}, []);
 
   const handleDownload = () => {
     const headers = [
@@ -471,30 +414,12 @@ function Department_AOP() {
 
     XLSX.writeFile(wb, `${selectedDeptName}_AOP_data.xlsx`);
   };
-  const filteredTableData = selectedDeptName
-    ? tableData.filter((item) => item.PLTCODE1 === selectedDeptName)
-    : tableData;
 
-  const popupStartIndex = (popupCurrentPage - 1) * itemsPerPage;
-  const popupEndIndex = popupStartIndex + itemsPerPage;
-  const allowedTargets = Object.keys(targets).filter((pltcode) =>
-    ALLOWED_PROJECTS.includes(pltcode)
-  );
-
-  // let sortedAllowedTargets = allowedTargets.sort(
-  //   (a, b) => ALLOWED_PROJECTS.indexOf(a) - ALLOWED_PROJECTS.indexOf(b)
-  // );
 
   const handleRowClick = (pltcode) => {
     navigate(`/product-details/${pltcode}/${selectedDeptName}`);
   };
-  const paginatedTargets = sortedAllowedTargets.slice(
-    popupStartIndex,
-    popupEndIndex
-  );
-  const handlePopupPageChange = (direction) => {
-    setPopupCurrentPage((prevPage) => prevPage + direction);
-  };
+
 
   return (
     <div
@@ -564,13 +489,7 @@ function Department_AOP() {
 
           {/* Target Button */}
           <div className="flex flex-1 justify-end space-x-2 mr-14 ">
-            {/* <button
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
-              onClick={handleTargetClick}
-            >
-              Set Target
-            </button> */}
-
+           
             <button
               className="mt-4 relative top-2 px-4 py-2  bg-blue-500 text-white rounded-md"
               onClick={handleFilter}
@@ -772,7 +691,7 @@ function Department_AOP() {
                         >
                           <td className="px-6 py-4 border-b">{row.PLTCODE1}</td>
                           <td className="px-6 py-4 border-b">{row.Target}</td>
-                          <td className="px-6 py-4 border-b">{row.Achieved}</td>
+                          <td className="px-6 py-4 border-b">{achieved}</td>
                           <td className="px-6 py-4 border-b">{row.Pending}</td>
                           <td className="px-6 py-4 border-b">{row.Wip}</td>
                           <td className="px-6 py-4 border-b">
@@ -793,47 +712,6 @@ function Department_AOP() {
               </>
             )}
           </div>
-
-          {/* Target Popup */}
-          {/* Target Popup */}
-          {/* {showTargetPopup && (
-  <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-    <div className={`${theme==='light'?'bg-white':'bg-slate-900'}  p-6 rounded-lg shadow-lg w-11/12 max-w-lg max-h-[80vh] overflow-auto`}>
-      <button onClick={() => setShowTargetPopup(false)} className="mr-0 float-right relative">X</button>
-      <h3 className="text-xl font-semibold mb-4">Edit Targets</h3>
-      <div>
-        {sortedAllowedTargets.map((item, index) => (
-          <div key={index} className="mb-4">
-            <label className="block text-sm font-medium mb-1">
-              <div className="flex flex-1 justify-between">
-                {item === selectedDeptName ? selectedDeptName : item}
-                <input
-                  type="text"
-                  value={targets[item] || ""} // Ensure that you use the department `item` directly
-                  onChange={(e) => handleEditChange(item, e.target.value)} // Pass the department `item` directly to handleEditChange
-                  className={`ml-2 p-2 border ${theme==='light'?'bg-white border-gray-300':'bg-slate-700 border-gray-500'} rounded`}
-                />
-              </div>
-            </label>
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-between items-center mt-4">
-        <button
-          className="px-4 py-2 bg-blue-500 text-white rounded-md"
-          onClick={handleSave}
-        >
-          Save
-        </button>
-        <div className="flex items-center">
-          <button className="px-4 py-2 bg-red-500 text-white rounded-md mr-2" onClick={() => setShowTargetPopup(false)}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)} */}
         </main>
       </div>
     </div>

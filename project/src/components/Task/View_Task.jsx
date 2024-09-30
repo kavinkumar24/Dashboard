@@ -470,7 +470,7 @@ function ViewTasks() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
-                        {loggedInEmail === task.Assign_Name ? (
+                        {(loggedInEmail === task.Assign_Name) &&(userRole !== "admin")? (
                           <input
                             type="text"
                             value={task.Remarks}

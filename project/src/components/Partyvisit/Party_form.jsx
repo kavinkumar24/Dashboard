@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import Select from "react-select";
 import { ToastContainer, toast } from "react-toastify";
 import Datepicker from "react-tailwindcss-datepicker";
-import './Datepicker.css';
+import "./Datepicker.css";
 
 import { light } from "@mui/material/styles/createPalette";
 
@@ -27,6 +27,8 @@ function Party_form() {
     startDate: null,
     endDate: null,
   });
+  const [assignToCount, setAssignToCount] = useState(1); // Number of assignees
+  const [assignToEmails, setAssignToEmails] = useState([""]);
 
   useEffect(() => {
     const fetchBriefOptions = async () => {
@@ -108,43 +110,53 @@ function Party_form() {
 
   const handleview = async (event) => {
     event.preventDefault();
-    
+
     const data = {
       party_name: partyname,
       visit_date: visit_date,
       description: description,
-      assign_person: assignTo,
+      assign_person: assignToEmails,
       status_data: status_data,
       brief_no: ax_brief_data,
       quantity: no_of_qty,
-      order_rev_wt: "0", 
+      order_rev_wt: "0",
     };
-  
+
     try {
       // Fetch production data to get the Out Date
-      const productionResponse = await fetch("http://localhost:8081/production_data");
+      const productionResponse = await fetch(
+        "http://localhost:8081/production_data"
+      );
       if (!productionResponse.ok) {
         throw new Error("Failed to fetch production data");
       }
-  
+
       const productionData = await productionResponse.json();
-  
+
       // Find the relevant entry based on the brief_no
-      const matchingEntries = productionData.filter(item => item["Brief No"] === ax_brief_data);
-      const complete_date = matchingEntries.length > 0 ? matchingEntries[0]["Out Date"] : null;
-  
+      const matchingEntries = productionData.filter(
+        (item) => item["Brief No"] === ax_brief_data
+      );
+      const complete_date =
+        matchingEntries.length > 0 ? matchingEntries[0]["Out Date"] : null;
+
       if (!complete_date) {
-        toast.warn("No Out Date found for the selected Brief No, using Visit Date as Complete Date.");
-        data.complete_date = visit_date; 
+        toast.warn(
+          "No Out Date found for the selected Brief No, using Visit Date as Complete Date."
+        );
+        data.complete_date = visit_date;
       } else {
-        data.complete_date = complete_date; 
-        
+        data.complete_date = complete_date;
+
         // Sum CW Qty for all matching entries
-        const totalCWQty = matchingEntries.reduce((sum, item) => sum + (item["CW Qty"] || 0), 0);
+        const totalCWQty = matchingEntries.reduce(
+          (sum, item) => sum + (item["CW Qty"] || 0),
+          0
+        );
         data.order_rev_wt = totalCWQty.toString(); // Store the sum as a string
-        console.log(totalCWQty)
+        console.log(totalCWQty);
       }
-  
+
       // Send POST request to create Party Visit
       const response = await fetch("http://localhost:8081/api/party-visit", {
         method: "POST",
@@ -153,14 +165,14 @@ function Party_form() {
         },
         body: JSON.stringify(data),
       });
-  
+
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
-  
+
       const result = await response.json();
       toast.success("Party visit created");
-  
+
       // Reset all state variables to their initial values
       setPartyname("");
       setVisit_date("");
@@ -174,10 +186,18 @@ function Party_form() {
       toast.error("Error storing data");
     }
   };
-  
-  
-  
-  
+
+  const handleAssignToCountChange = (selectedOption) => {
+    const count = selectedOption.value;
+    setAssignToCount(count);
+    setAssignToEmails(Array(count).fill("")); // Reset email inputs
+  };
+
+  const handleEmailChange = (index, value) => {
+    const updatedEmails = [...assignToEmails];
+    updatedEmails[index] = value;
+    setAssignToEmails(updatedEmails);
+  };
 
   return (
     <div
@@ -249,7 +269,8 @@ function Party_form() {
                     }  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
                     required
                   />
-           {/* <Datepicker
+
+                  {/* <Datepicker
   primaryColor={"fuchsia"}
   useRange={false}
   asSingle={true}
@@ -261,8 +282,56 @@ function Party_form() {
   classNames={customDatePickerStyles}
   className={theme === "light" ? "react-datepicker bg-slate-50" : "react-datepicker react-datepicker"}
 /> */}
-
                 </div>
+
+                <div className="space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
+                  <label
+                    className={`block text-base font-bold ${
+                      theme === "light" ? "text-gray-700" : "text-gray-200"
+                    } w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`}
+                    htmlFor="axBriefId"
+                  >
+                    No of assignee
+                  </label>
+                  <Select
+                    options={[1, 2, 3, 4, 5, 6].map((num) => ({
+                      value: num,
+                      label: num,
+                    }))}
+                    onChange={handleAssignToCountChange}
+                    className={`ml-10 ${
+                      theme === "light"
+                        ? "border-gray-300 text-black"
+                        : "bg-gray-700 text-gray-100 border-gray-600"
+                    } w-full md:w-3/5`}
+                  />
+                </div>
+
+                {Array.from({ length: assignToCount }).map((_, index) => (
+                      <div className="space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5" key={index}>
+                  
+                    <label
+                      className={`block text-base font-bold mb-2 ${
+                        theme === "light" ? "text-gray-700" : "text-gray-200"
+                      } w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`}
+                    >
+                      Assign Person {index + 1} Email
+                    </label>
+                    
+                    <input
+                      type="email"
+                      value={assignToEmails[index] || ""}
+                      onChange={(e) => handleEmailChange(index, e.target.value)}
+                      className={`  appearance-none border rounded ml-10 w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
+                        theme === "light"
+                          ? "bg-gray-100 text-gray-700 border-gray-300"
+                          : "bg-gray-700 text-gray-100 border-gray-600"
+                      }  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
+                      placeholder="Enter valid email ID"
+                      required
+                    />
+                  </div>
+                ))}
 
                 <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
                   <label
@@ -288,30 +357,7 @@ function Party_form() {
                   />
                 </div>
 
-                <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
-                  <label
-                    className={`block text-base font-bold mb-2 ${
-                      theme === "light" ? "text-gray-700" : "text-gray-200"
-                    } w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`}
-                    htmlFor="targetDate"
-                  >
-                    Assign Person Email
-                  </label>
-                  <input
-                    type="email"
-                    id="assigneeEmail"
-                    value={assignTo}
-                    onChange={(e) => setassignTo(e.target.value)}
-                    className={`  appearance-none border rounded ml-10 w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
-                      theme === "light"
-                        ? "bg-gray-100 text-gray-700 border-gray-300"
-                        : "bg-gray-700 text-gray-100 border-gray-600"
-                    }  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
-                    placeholder="Enter valid email ID"
-                    required
-                  />
-                </div>
-
+           
                 <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
                   <label
                     className={`block text-base font-bold mb-2 ${
@@ -323,18 +369,26 @@ function Party_form() {
                   </label>
 
                   <Select
-  className={`appearance-none rounded w-full ml-10 leading-tight focus:outline-none focus:shadow-outline ${
-    theme === "light" ? "border-gray-300" : "bg-gray-700 text-gray-100 border-gray-600"
-  } w-full @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
-  isClearable
-  options={status}
-  styles={customStyles}
-  value={status.find(option => option.value === status_data) || null} // Set to null if no match
-  onChange={(selectedOption) =>
-    setStatus_data(selectedOption ? selectedOption.value : null) // Set to null if cleared
-  }
-  required
-/>
+                    className={`appearance-none rounded w-full ml-10 leading-tight focus:outline-none focus:shadow-outline ${
+                      theme === "light"
+                        ? "border-gray-300"
+                        : "bg-gray-700 text-gray-100 border-gray-600"
+                    } w-full @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
+                    isClearable
+                    options={status}
+                    styles={customStyles}
+                    value={
+                      status.find((option) => option.value === status_data) ||
+                      null
+                    } // Set to null if no match
+                    onChange={
+                      (selectedOption) =>
+                        setStatus_data(
+                          selectedOption ? selectedOption.value : null
+                        ) // Set to null if cleared
+                    }
+                    required
+                  />
                 </div>
                 <div className="space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
                   <label
@@ -346,17 +400,25 @@ function Party_form() {
                     Ax Brief
                   </label>
                   <Select
-  id="axBriefId"
-  styles={customStyles}
-  options={briefOptions}
-  value={briefOptions.find(option => option.value === ax_brief_data) || null} // Set to null if no match
-  onChange={(selectedOption) => handleaxbriefselect(selectedOption)}
-  isClearable
-  className={`ml-10 ${
-    theme === "light" ? "border-gray-300 text-black" : "bg-gray-700 text-gray-100 border-gray-600"
-  } w-full md:w-3/5`}
-  required
-/>
+                    id="axBriefId"
+                    styles={customStyles}
+                    options={briefOptions}
+                    value={
+                      briefOptions.find(
+                        (option) => option.value === ax_brief_data
+                      ) || null
+                    } // Set to null if no match
+                    onChange={(selectedOption) =>
+                      handleaxbriefselect(selectedOption)
+                    }
+                    isClearable
+                    className={`ml-10 ${
+                      theme === "light"
+                        ? "border-gray-300 text-black"
+                        : "bg-gray-700 text-gray-100 border-gray-600"
+                    } w-full md:w-3/5`}
+                    required
+                  />
                 </div>
                 {/* {error && (
                 <p className="text-red-500 text-xs italic">{error}</p>
