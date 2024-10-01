@@ -161,6 +161,21 @@ function ViewTasks() {
     XLSX.writeFile(workbook, "tasks.xlsx");
   };
 
+  function getPercentageTracker(assignDate, targetDate) {
+    const start = new Date(assignDate);
+    const end = new Date(targetDate);
+    const now = new Date();
+
+    if (now >= end) {
+        return 100;
+    }
+
+    const totalDays = (end - start) / (1000 * 60 * 60 * 24);
+    const daysPassed = (now - start) / (1000 * 60 * 60 * 24);
+
+    return (daysPassed / totalDays) * 100;
+}
+
   const updateTaskStatus = async (taskId, updatedData) => {
     try {
       const response = await fetch(
@@ -341,6 +356,7 @@ function ViewTasks() {
                       "Pending_Qty",
                       "Assign Date",
                       "Target Date",
+                      "% of Work Done",
                       "Remaining_Days",
                       "Project_View",
                       "Status",
@@ -417,6 +433,9 @@ function ViewTasks() {
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {formatDate(task.Target_Date)}
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {getPercentageTracker(task.Assign_Date, task.Target_Date).toFixed(2)} %
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {task.Remaining_Days}
