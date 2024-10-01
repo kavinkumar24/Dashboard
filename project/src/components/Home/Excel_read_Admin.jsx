@@ -334,7 +334,7 @@ function Dashboard() {
         <main className={`flex-1 px-4 overflow-y-auto ${filter_on===true?'opacity-10':'opacity-100'}`}>
         <div className={`p-2 ${theme === 'light' ? 'text-gray-700' : 'bg-gray-700 text-gray-300'}`}>
   <p className="text-sm text-left mb-2">Last Updated</p>
-  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-0.5"> {/* Reduced gap size */}
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2"> {/* Reduced gap size */}
     
     <div className="bg-white rounded-lg shadow px-2 py-2 text-center max-w-xs">
       <div className="flex items-center justify-center gap-2"> {/* Flex and gap for same line */}

@@ -567,6 +567,8 @@ db.query(createProductionTableQuery, (err) => {
 
 
 
+const TWO_DAYS_IN_MS = 2 * 24 * 60 * 60 * 1000;
+
 app.post('/api/production/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).send('No file uploaded.');
@@ -581,12 +583,13 @@ app.post('/api/production/upload', upload.single('file'), async (req, res) => {
     const jsonData = xlsx.utils.sheet_to_json(worksheet);
 
     if (jsonData.length > 0) {
+      const currentDate = new Date();
       const values = jsonData.map(row => {
         const inDate = excelSerialDateToDate(row['In Date']);
         const outDate = excelSerialDateToDate(row['Out Date']);
         const formattedInDate = formatDateForMySQL(inDate);
         const formattedOutDate = formatDateForMySQL(outDate);
-        
+
         return [
           row['JC ID'],
           row['Brief No'],
@@ -612,12 +615,12 @@ app.post('/api/production/upload', upload.single('file'), async (req, res) => {
           row['Design specification'],
           row['PRODUNITID'],
           row['Remarks'],
-          new Date() // Store current date for uploadedDateTime
+          currentDate // Store current date for uploadedDateTime
         ];
       });
 
-      // Use INSERT ... ON DUPLICATE KEY UPDATE to update or insert based on JC ID and In Date
-      const query = `
+      // Insert new data or update existing ones based on JC ID and In Date
+      const insertQuery = `
         INSERT INTO Production_sample_data 
         (\`JC ID\`, \`Brief No\`, \`PRE-BRIEF NO\`, \`Sketch No\`, \`Item ID\`, 
          \`Purity\`, \`Empid\`, \`Ref Empid\`, \`Name\`, \`Jwl Type\`, 
@@ -651,13 +654,27 @@ app.post('/api/production/upload', upload.single('file'), async (req, res) => {
           \`uploadedDateTime\` = VALUES(\`uploadedDateTime\`);
       `;
 
-      // Insert or update data
-      db.query(query, [values], function (error, results) {
+      db.query(insertQuery, [values], function (error, results) {
         if (error) {
           console.error('Database error:', error);
           return res.status(500).send('Database error');
         }
-        res.send('File uploaded and data inserted/updated successfully.');
+
+        // Clean up records older than 2 days
+        const cleanupQuery = `
+          DELETE FROM Production_sample_data 
+          WHERE uploadedDateTime < ?;
+        `;
+        const thresholdDate = new Date(currentDate.getTime() - TWO_DAYS_IN_MS);
+
+        db.query(cleanupQuery, [thresholdDate], function (cleanupError, cleanupResults) {
+          if (cleanupError) {
+            console.error('Cleanup error:', cleanupError);
+            return res.status(500).send('Error during cleanup');
+          }
+
+          res.send('File uploaded, data inserted/updated, and old records cleaned up successfully.');
+        });
       });
     } else {
       res.status(400).send('No data found in Excel file');
@@ -667,6 +684,7 @@ app.post('/api/production/upload', upload.single('file'), async (req, res) => {
     res.status(500).send('Error processing file');
   }
 });
+
 
 // ************ End of Production Data post endpoint ******************* //
 
@@ -2925,7 +2943,6 @@ app.put('/update-phase/:phase_id', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
-
 
 
 
