@@ -459,7 +459,7 @@ app.post('/api/design_center/upload', upload.single('file'), (req, res) => {
 
     if (jsonData.length > 0) {
       const values = jsonData.map(row => {
-        // Convert Excel serial date to JavaScript Date
+        
         const documentDate = excelSerialDateToDate(row['Document date']);
         const deadlineDate = excelSerialDateToDate(row['Deadline date']);
         const receivedDate = excelSerialDateToDate(row['Received date']);
@@ -568,6 +568,8 @@ db.query(createProductionTableQuery, (err) => {
 });
 
 
+
+const TWO_DAYS_IN_MS = 2 * 24 * 60 * 60 * 1000;
 
 app.post('/api/production/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
@@ -785,7 +787,7 @@ app.post('/api/pending/upload', upload.single('file'), async (req, res) => {
           formattedRecvdDate,
           row['REMARKS1'],
           row['HALLMARKINCERTCODE1'],
-          new Date() // Store current date for uploadedDateTime
+          new Date() 
         ];
       });
 
@@ -795,7 +797,32 @@ app.post('/api/pending/upload', upload.single('file'), async (req, res) => {
          \`COMPLEXITY1\`, \`JCPDSCWQTY1\`, \`JCQTY1\`, \`DATE1\`, \`Textbox56\`,
          \`Textbox87\`, \`Textbox60\`, \`DESIGNSPEC1\`, \`RECEIVED1\`, \`RECVDATE1\`,
          \`REMARKS1\`, \`HALLMARKINCERTCODE1\`, \`uploadedDateTime\`)
-        VALUES ?`;
+        VALUES ?
+        ON DUPLICATE KEY UPDATE
+        \`BRIEFNUM1\` = VALUES(\`BRIEFNUM1\`),
+        \`MERCHANDISERBRIEF1\` = VALUES(\`MERCHANDISERBRIEF1\`),
+        \`SKETCHNUM1\` = VALUES(\`SKETCHNUM1\`),
+        \`ITEMID\` = VALUES(\`ITEMID\`),
+        \`PERSONNELNUMBER1\` = VALUES(\`PERSONNELNUMBER1\`),
+        \`NAME1\` = VALUES(\`NAME1\`),
+        \`PLTCODE1\` = VALUES(\`PLTCODE1\`),
+        \`PURITY1\` = VALUES(\`PURITY1\`),
+        \`ARTICLECODE1\` = VALUES(\`ARTICLECODE1\`),
+        \`COMPLEXITY1\` = VALUES(\`COMPLEXITY1\`),
+        \`JCPDSCWQTY1\` = VALUES(\`JCPDSCWQTY1\`),
+        \`JCQTY1\` = VALUES(\`JCQTY1\`),
+        \`DATE1\` = VALUES(\`DATE1\`),
+        \`Textbox56\` = VALUES(\`Textbox56\`),
+        \`Textbox87\` = VALUES(\`Textbox87\`),
+        \`Textbox60\` = VALUES(\`Textbox60\`),
+        \`DESIGNSPEC1\` = VALUES(\`DESIGNSPEC1\`),
+        \`RECEIVED1\` = VALUES(\`RECEIVED1\`),
+        \`RECVDATE1\` = VALUES(\`RECVDATE1\`),
+        \`REMARKS1\` = VALUES(\`REMARKS1\`),
+        \`HALLMARKINCERTCODE1\` = VALUES(\`HALLMARKINCERTCODE1\`),
+        \`uploadedDateTime\` = VALUES(\`uploadedDateTime\`)
+        `;
+        
 
       db.query(query, [values], function (error, results) {
         if (error) {
@@ -813,6 +840,9 @@ app.post('/api/pending/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+// ALTER TABLE Pending_sample_data ADD UNIQUE KEY unique_index (JCID1, BRIEFNUM1);
+// ALTER TABLE Pending_sample_data 
+// ADD UNIQUE KEY unique_sample (JCID1, BRIEFNUM1);
 
 
 // ************ end of Pending Data post endpoints ******************* //
@@ -2910,7 +2940,6 @@ app.put('/update-phase/:phase_id', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
 });
-
 
 
 
