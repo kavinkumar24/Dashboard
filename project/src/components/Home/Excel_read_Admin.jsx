@@ -20,6 +20,53 @@ function Dashboard() {
     return localStorage.getItem('theme') || 'light';
   });
   const [sortConfig, setSortConfig] = useState({ key: 'Production Qty', direction: 'ascending' });
+  const [uploadTime_pending, setUploadTime_pending] = useState('');
+  const [uploadTimeProduction, setUploadTimeProduction] = useState('');
+  const [previousDate, setPreviousDate] = useState(null); 
+
+
+
+
+  const fetchPreviousDayData = async () => {
+    try {
+      const response = await axios.get('http://localhost:8081/filtered_production_data_previous');
+      setFilteredData(response.data); // Update the state with the combined data
+      const date = new Date();
+      date.setDate(date.getDate() - 1); // Get the previous day's date
+      setPreviousDate(date.toLocaleDateString());
+    } catch (error) {
+      console.error("Error fetching previous day data:", error);
+    }
+  };
+  
+  
+  // Helper function to combine today's and yesterday's data
+  const combineData = (todayData, yesterdayData) => {
+    const combined = { ...todayData };
+  
+    Object.keys(yesterdayData).forEach(dept => {
+      if (combined[dept]) {
+        combined[dept].total_qty += yesterdayData[dept]?.total_qty || 0;
+      } else {
+        combined[dept] = yesterdayData[dept];
+      }
+    });
+  
+    return combined;
+  };
+  useEffect(() => {
+    const fetchUploadTime = async () => {
+      try {
+        const response = await axios.get('http://localhost:8081/upload_time');
+        setUploadTime_pending(response.data.uploadTime_pending);
+        setUploadTimeProduction(response.data.uploadTime_production);
+      } catch (error) {
+        console.error("Error fetching upload time:", error);
+      }
+    };
+    
+    fetchUploadTime();
+  }, []);
 
   const handleFilter = async (newFilter) => {
     setFilter_on(newFilter);  // Update the filter state
@@ -141,6 +188,14 @@ function Dashboard() {
         className={`p-2 rounded-lg shadow-md flex flex-col justify-center items-center m-0 w-[50%] 
           ${theme === 'light' ? 'bg-white text-gray-700' :' bg-gray-900 text-gray-300'}`}
       >
+            <button onClick={fetchPreviousDayData} className="mb-4">Fetch Previous Day Data</button>
+
+            {previousDate && ( // Render the date if it exists
+          <h2 className={`text-lg mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>
+            Previous Day Data: {previousDate}
+          </h2>
+        )}
+
         <table
           className={`w-[100%] text-sm text-left 
             ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}
@@ -277,7 +332,29 @@ function Dashboard() {
       <div className="flex-1 flex flex-col">
       <Header onSearch = {setSearch} onView = {setviewData} view = {viewData} theme = {theme} dark = {setTheme} on_filter = {setFilter_on} filter={filter_on} onDateRangeChange={handleDateRangeChange}/>
         <main className={`flex-1 px-4 overflow-y-auto ${filter_on===true?'opacity-10':'opacity-100'}`}>
-        
+        <div className={`p-2 ${theme === 'light' ? 'text-gray-700' : 'bg-gray-700 text-gray-300'}`}>
+  <p className="text-sm text-left mb-2">Last Updated</p>
+  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-0.5"> {/* Reduced gap size */}
+    
+    <div className="bg-white rounded-lg shadow px-2 py-2 text-center max-w-xs">
+      <div className="flex items-center justify-center gap-2"> {/* Flex and gap for same line */}
+        <h3 className="font-thin text-sm whitespace-nowrap">Pending</h3>
+        <p className="text-sm font-bold">{uploadTime_pending}</p>
+      </div>
+    </div>
+    
+    <div className="bg-white rounded-lg shadow px-2 py-2 text-center max-w-xs">
+      <div className="flex items-center justify-center gap-2"> {/* Flex and gap for same line */}
+        <h3 className="font-thin text-sm whitespace-nowrap">Production</h3>
+        <p className="text-sm font-bold">{uploadTimeProduction}</p>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+
+
           {/* Department Cards */}
           <div className={`${viewData ? 'relative overflow-x-auto':'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2'}`}>
         {viewData

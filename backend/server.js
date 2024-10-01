@@ -131,7 +131,7 @@ app.post('/save-targets', (req, res) => {
 app.get("/pending-sum", (req, res) => {
   const query = `
     SELECT PLTCODE1, COUNT(JCPDSCWQTY1) AS total_quantity
-    FROM pending
+    FROM Pending_sample_data
     GROUP BY PLTCODE1;
   `;
 
@@ -567,16 +567,12 @@ db.query(createProductionTableQuery, (err) => {
 
 
 
-
-
-
-app.post('/api/production/upload', upload.single('file'), (req, res) => {
+app.post('/api/production/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).send('No file uploaded.');
   }
 
   const fileBuffer = req.file.buffer;
-  const fileName = req.file.originalname;
 
   try {
     const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
@@ -586,12 +582,11 @@ app.post('/api/production/upload', upload.single('file'), (req, res) => {
 
     if (jsonData.length > 0) {
       const values = jsonData.map(row => {
-        // Convert Excel serial date to JavaScript Date
         const inDate = excelSerialDateToDate(row['In Date']);
         const outDate = excelSerialDateToDate(row['Out Date']);
-        const formatedInDate = formatDateForMySQL(inDate);
-        const formatedoutDate = formatDateForMySQL(outDate);
-
+        const formattedInDate = formatDateForMySQL(inDate);
+        const formattedOutDate = formatDateForMySQL(outDate);
+        
         return [
           row['JC ID'],
           row['Brief No'],
@@ -609,36 +604,60 @@ app.post('/api/production/upload', upload.single('file'), (req, res) => {
           row['Qty'],
           row['From Dept'],
           row['To Dept'],
-          // moment(inDate).format('YYYY-MM-DD HH:mm:ss'),
-          // moment(outDate).format('YYYY-MM-DD HH:mm:ss'),
-          formatedInDate,
-          formatedoutDate,
+          formattedInDate,
+          formattedOutDate,
           row['Hours'],
           row['Days'],
           row['Description'],
           row['Design specification'],
           row['PRODUNITID'],
-          row['Remarks']
+          row['Remarks'],
+          new Date() // Store current date for uploadedDateTime
         ];
       });
 
+      // Use INSERT ... ON DUPLICATE KEY UPDATE to update or insert based on JC ID and In Date
       const query = `
-      INSERT INTO Production_sample_data 
-      (\`JC ID\`, \`Brief No\`, \`PRE-BRIEF NO\`, \`Sketch No\`, \`Item ID\`, 
-       \`Purity\`, \`Empid\`, \`Ref Empid\`, \`Name\`, \`Jwl Type\`, 
-       \`Project\`, \`Sub Category\`, \`CW Qty\`, \`Qty\`, \`From Dept\`, 
-       \`To Dept\`, \`In Date\`, \`Out Date\`, \`Hours\`, \`Days\`, 
-       \`Description\`, \`Design specification\`, \`PRODUNITID\`, \`Remarks\`)
-      VALUES ?
-    `;
+        INSERT INTO Production_sample_data 
+        (\`JC ID\`, \`Brief No\`, \`PRE-BRIEF NO\`, \`Sketch No\`, \`Item ID\`, 
+         \`Purity\`, \`Empid\`, \`Ref Empid\`, \`Name\`, \`Jwl Type\`, 
+         \`Project\`, \`Sub Category\`, \`CW Qty\`, \`Qty\`, \`From Dept\`, 
+         \`To Dept\`, \`In Date\`, \`Out Date\`, \`Hours\`, \`Days\`, 
+         \`Description\`, \`Design specification\`, \`PRODUNITID\`, \`Remarks\`, \`uploadedDateTime\`)
+        VALUES ? 
+        ON DUPLICATE KEY UPDATE 
+          \`Brief No\` = VALUES(\`Brief No\`),
+          \`PRE-BRIEF NO\` = VALUES(\`PRE-BRIEF NO\`),
+          \`Sketch No\` = VALUES(\`Sketch No\`),
+          \`Item ID\` = VALUES(\`Item ID\`),
+          \`Purity\` = VALUES(\`Purity\`),
+          \`Empid\` = VALUES(\`Empid\`),
+          \`Ref Empid\` = VALUES(\`Ref Empid\`),
+          \`Name\` = VALUES(\`Name\`),
+          \`Jwl Type\` = VALUES(\`Jwl Type\`),
+          \`Project\` = VALUES(\`Project\`),
+          \`Sub Category\` = VALUES(\`Sub Category\`),
+          \`CW Qty\` = VALUES(\`CW Qty\`),
+          \`Qty\` = VALUES(\`Qty\`),
+          \`From Dept\` = VALUES(\`From Dept\`),
+          \`To Dept\` = VALUES(\`To Dept\`),
+          \`Out Date\` = VALUES(\`Out Date\`),
+          \`Hours\` = VALUES(\`Hours\`),
+          \`Days\` = VALUES(\`Days\`),
+          \`Description\` = VALUES(\`Description\`),
+          \`Design specification\` = VALUES(\`Design specification\`),
+          \`PRODUNITID\` = VALUES(\`PRODUNITID\`),
+          \`Remarks\` = VALUES(\`Remarks\`),
+          \`uploadedDateTime\` = VALUES(\`uploadedDateTime\`);
+      `;
 
-      db.query(query, [values], function (error, results, fields) {
+      // Insert or update data
+      db.query(query, [values], function (error, results) {
         if (error) {
           console.error('Database error:', error);
           return res.status(500).send('Database error');
         }
-        // console.log('Rows inserted:', results.affectedRows);
-        res.send('File uploaded and data inserted successfully.');
+        res.send('File uploaded and data inserted/updated successfully.');
       });
     } else {
       res.status(400).send('No data found in Excel file');
@@ -648,7 +667,6 @@ app.post('/api/production/upload', upload.single('file'), (req, res) => {
     res.status(500).send('Error processing file');
   }
 });
-
 
 // ************ End of Production Data post endpoint ******************* //
 
@@ -691,13 +709,12 @@ db.query(createPendingTableQuery, (err) => {
   
 });
 
-app.post('/api/pending/upload', upload.single('file'), (req, res) => {
+app.post('/api/pending/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).send('No file uploaded.');
   }
 
   const fileBuffer = req.file.buffer;
-  const fileName = req.file.originalname;
 
   try {
     const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
@@ -706,19 +723,27 @@ app.post('/api/pending/upload', upload.single('file'), (req, res) => {
     const jsonData = xlsx.utils.sheet_to_json(worksheet);
 
     if (jsonData.length > 0) {
+      // Clear records older than 2 days
+      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
+      await new Promise((resolve, reject) => {
+        const deleteQuery = `DELETE FROM Pending_sample_data WHERE uploadedDateTime < ?`;
+        db.query(deleteQuery, [twoDaysAgo], (error) => {
+          if (error) {
+            return reject(error);
+          }
+          resolve();
+        });
+      });
+
       const values = jsonData.map(row => {
-        // Convert Excel serial date to JavaScript Date
         const recvdDate = excelSerialDateToDate(row['RECVDATE1']);
         let formattedRecvdDate = formatDateForMySQL(recvdDate);
-
-        // Handle invalid dates
         if (!formattedRecvdDate || formattedRecvdDate === '1899-12-31 00:00:00') {
           formattedRecvdDate = null;
         }
 
         const date1 = excelSerialDateToDate(row['DATE1']);
         let formattedDate1 = formatDateForMySQL(date1);
-
         if (!formattedDate1 || formattedDate1 === '1899-12-31 00:00:00') {
           formattedDate1 = null;
         }
@@ -738,29 +763,28 @@ app.post('/api/pending/upload', upload.single('file'), (req, res) => {
           row['COMPLEXITY1'],
           row['JCPDSCWQTY1'],
           row['JCQTY1'],
-          formattedDate1,  // Properly formatted DATE1
+          formattedDate1,
           row['Textbox56'],
           row['Textbox87'],
           row['Textbox60'],
           row['DESIGNSPEC1'],
           row['RECEIVED1'],
-          formattedRecvdDate,  // Properly formatted RECVDATE1
+          formattedRecvdDate,
           row['REMARKS1'],
-          row['HALLMARKINCERTCODE1']
+          row['HALLMARKINCERTCODE1'],
+          new Date() // Store current date for uploadedDateTime
         ];
       });
 
-      const query = `
-      INSERT INTO Pending_sample_data 
-      (\`TODEPT\`, \`JCID1\`, \`BRIEFNUM1\`, \`MERCHANDISERBRIEF1\`, \`SKETCHNUM1\`, \`ITEMID\`,
-       \`PERSONNELNUMBER1\`, \`NAME1\`, \`PLTCODE1\`, \`PURITY1\`, \`ARTICLECODE1\`,
-       \`COMPLEXITY1\`, \`JCPDSCWQTY1\`, \`JCQTY1\`, \`DATE1\`, \`Textbox56\`,
-       \`Textbox87\`, \`Textbox60\`, \`DESIGNSPEC1\`, \`RECEIVED1\`, \`RECVDATE1\`,
-       \`REMARKS1\`, \`HALLMARKINCERTCODE1\`)
-      VALUES ?
-    `;
+      const query = `INSERT INTO Pending_sample_data 
+        (\`TODEPT\`, \`JCID1\`, \`BRIEFNUM1\`, \`MERCHANDISERBRIEF1\`, \`SKETCHNUM1\`, \`ITEMID\`,
+         \`PERSONNELNUMBER1\`, \`NAME1\`, \`PLTCODE1\`, \`PURITY1\`, \`ARTICLECODE1\`,
+         \`COMPLEXITY1\`, \`JCPDSCWQTY1\`, \`JCQTY1\`, \`DATE1\`, \`Textbox56\`,
+         \`Textbox87\`, \`Textbox60\`, \`DESIGNSPEC1\`, \`RECEIVED1\`, \`RECVDATE1\`,
+         \`REMARKS1\`, \`HALLMARKINCERTCODE1\`, \`uploadedDateTime\`)
+        VALUES ?`;
 
-      db.query(query, [values], function (error, results, fields) {
+      db.query(query, [values], function (error, results) {
         if (error) {
           console.error('Database error:', error);
           return res.status(500).send('Database error');
@@ -1500,7 +1524,7 @@ app.post('/api/target/upload', upload.single('file'), (req, res) => {
 });
 
 app.get("/api/pending", (req, res) => {
-  const sql = "SELECT BRIEFNUM1, DESIGNSPEC1, PLTCODE1, SKETCHNUM1 FROM pending";
+  const sql = "SELECT BRIEFNUM1, DESIGNSPEC1, PLTCODE1, SKETCHNUM1 FROM Pending_sample_data";
   
   db.query(sql, (err, data) => {
     if (err) return res.json(err);
@@ -1549,14 +1573,20 @@ app.get("/filtered_production_data", async (req, res) => {
   const lowerDeptFromFilter = deptFromFilter.map(dept => dept.toLowerCase());
   const lowerDeptToFilter = deptToFilter.map(dept => dept.toLowerCase());
 
+  // Get today's date in the required format for your SQL database
+  const today = new Date();
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
   let sql = `
     SELECT \`From Dept\`, \`To Dept\`, SUM(\`CW Qty\`) AS total_qty
-    FROM Production_updated_data
+    FROM Production_sample_data
     WHERE LOWER(\`From Dept\`) IN (?)
       AND LOWER(\`To Dept\`) IN (?)
+      AND UploadedDateTime >= ? AND UploadedDateTime < ?
   `;
 
-  const params = [lowerDeptFromFilter, lowerDeptToFilter];
+  const params = [lowerDeptFromFilter, lowerDeptToFilter, startOfDay, endOfDay];
 
   if (startDate) {
     sql += ` AND \`In Date\` >= ?`;
@@ -1570,7 +1600,6 @@ app.get("/filtered_production_data", async (req, res) => {
   sql += ` GROUP BY \`From Dept\`, \`To Dept\``;
 
   db.query(sql, params, (err, data) => {
-    
     if (err) return res.json(err);
 
     const results = Object.keys(departmentMappings).reduce((acc, group) => {
@@ -1578,7 +1607,7 @@ app.get("/filtered_production_data", async (req, res) => {
       return acc;
     }, {});
 
-    data.forEach((row) => {
+    data.forEach(row => {
       const fromDept = row["From Dept"].toUpperCase();
       const toDept = row["To Dept"].toUpperCase();
       const qty = row.total_qty;
@@ -1592,6 +1621,88 @@ app.get("/filtered_production_data", async (req, res) => {
 
     return res.json(results);
   });
+});
+
+app.get("/filtered_production_data_previous", async (req, res) => {
+  const response = await axios.get("http://localhost:8081/department-mappings");
+  const departmentMappings = response.data;
+
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const startOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+  const endOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate() + 1);
+
+  const deptFromFilter = Object.values(departmentMappings).flatMap(mapping => mapping.from);
+  const deptToFilter = Object.values(departmentMappings).flatMap(mapping => mapping.to);
+
+  const lowerDeptFromFilter = deptFromFilter.map(dept => dept.toLowerCase());
+  const lowerDeptToFilter = deptToFilter.map(dept => dept.toLowerCase());
+
+  // SQL for today's data
+  let sqlToday = `
+    SELECT \`From Dept\`, \`To Dept\`, SUM(\`CW Qty\`) AS total_qty
+    FROM Production_sample_data
+    WHERE LOWER(\`From Dept\`) IN (?)
+      AND LOWER(\`To Dept\`) IN (?)
+      AND UploadedDateTime >= ? AND UploadedDateTime < ?
+    GROUP BY \`From Dept\`, \`To Dept\`
+  `;
+
+  const paramsToday = [lowerDeptFromFilter, lowerDeptToFilter, startOfToday, endOfToday];
+
+  // SQL for yesterday's data
+  let sqlYesterday = `
+    SELECT \`From Dept\`, \`To Dept\`, SUM(\`CW Qty\`) AS total_qty
+    FROM Production_sample_data
+    WHERE LOWER(\`From Dept\`) IN (?)
+      AND LOWER(\`To Dept\`) IN (?)
+      AND UploadedDateTime >= ? AND UploadedDateTime < ?
+    GROUP BY \`From Dept\`, \`To Dept\`
+  `;
+
+  const paramsYesterday = [lowerDeptFromFilter, lowerDeptToFilter, startOfYesterday, endOfYesterday];
+
+  try {
+    const [todayData, yesterdayData] = await Promise.all([
+      new Promise((resolve, reject) => {
+        db.query(sqlToday, paramsToday, (err, data) => (err ? reject(err) : resolve(data)));
+      }),
+      new Promise((resolve, reject) => {
+        db.query(sqlYesterday, paramsYesterday, (err, data) => (err ? reject(err) : resolve(data)));
+      })
+    ]);
+
+    const results = Object.keys(departmentMappings).reduce((acc, group) => {
+      acc[group] = { total_qty: 0 };
+      return acc;
+    }, {});
+
+    const processRowData = (data) => {
+      data.forEach(row => {
+        const fromDept = row["From Dept"].toUpperCase();
+        const toDept = row["To Dept"].toUpperCase();
+        const qty = row.total_qty;
+
+        for (const [group, { from, to }] of Object.entries(departmentMappings)) {
+          if (from.includes(fromDept) && to.includes(toDept)) {
+            results[group].total_qty += qty;
+          }
+        }
+      });
+    };
+
+    // Process both today's and yesterday's data
+    processRowData(todayData);
+    processRowData(yesterdayData);
+
+    return res.json(results);
+  } catch (err) {
+    return res.json(err);
+  }
 });
 
 
@@ -1659,7 +1770,7 @@ app.get("/jewel_master", (req, res) => {
 });
 
 app.get("/pending_data", (req, res) => {
-  const sql = "SELECT * FROM pending";
+  const sql = "SELECT * FROM Pending_sample_data";
   db.query(sql, (err, data) => {
     if (err) return res.json(err);
     return res.json(data);
@@ -1683,7 +1794,7 @@ app.get("/raw_filtered_pending_data", async (req, res) => {
 
   const sql = `
             SELECT TODEPT, CAST(JCPDSCWQTY1 AS DECIMAL) as JCPDSCWQTY1,PLTCODE1
-            FROM pending
+            FROM Pending_sample_data
             WHERE LOWER(TODEPT) IN (?)
          `;
 
@@ -1714,7 +1825,7 @@ app.get("/create-task", (req, res) => {
 
         return {
            ...task,
-           Remaining_Days: remainingDays < 0 ? 0 : remainingDays 
+           Remaining_Days: remainingDays  
         };
      });
 
@@ -1725,13 +1836,42 @@ app.get("/create-task", (req, res) => {
 
 app.put('/update-task/:id', (req, res) => {
   const taskId = req.params.id;
-  const { Completed_Status } = req.body;
+  const { Completed_Status, Remarks } = req.body;
 
-  const sql = "UPDATE Created_task SET Completed_Status = ? WHERE Task_ID = ?";
-  db.query(sql, [Completed_Status, taskId], (err, results) => {
+  const updates = [];
+  const params = [];
+
+  // Only add Completed_Status if it's provided
+  if (Completed_Status !== undefined) {
+    updates.push("Completed_Status = ?");
+    params.push(Completed_Status);
+  }
+
+  // Only add Remarks if it's provided
+  if (Remarks !== undefined) {
+    updates.push("Remarks = ?");
+    params.push(Remarks);
+  }
+
+  // If nothing is being updated, return an error
+  if (updates.length === 0) {
+    return res.status(400).send('No fields to update');
+  }
+
+  const sql = `
+    UPDATE Created_task 
+    SET 
+      ${updates.join(', ')}
+    WHERE 
+      Task_ID = ?
+  `;
+  
+  params.push(taskId);
+
+  db.query(sql, params, (err, results) => {
     if (err) {
-      console.error('Error updating task status:', err);
-      return res.status(500).send('Error updating task status');
+      console.error('Error updating task:', err);
+      return res.status(500).send('Error updating task');
     }
 
     if (results.affectedRows === 0) {
@@ -1741,6 +1881,145 @@ app.put('/update-task/:id', (req, res) => {
     res.send('Task updated successfully');
   });
 });
+
+
+
+
+// app.post("/create-task", async (req, res) => {
+//   console.log("Request Body:", req.body);
+//   const imageBuf = Buffer.from(req.body.image) || [];
+
+//   const {
+//       ax_brief,
+//       collection_name,
+//       project,
+//       no_of_qty,
+//       assign_date,
+//       target_date,
+//       priority,
+//       depart,
+//       assignTo,
+//       person,
+//       hodemail,
+//       ref_images,
+//       isChecked,
+//   } = req.body;
+
+//   if (!ax_brief || !collection_name || !project || !no_of_qty || !assign_date || !target_date || !priority) {
+//       console.error("Missing required fields");
+//       return res.status(400).json({ message: "Missing required fields" });
+//   }
+
+//   const calculateRemainingDays = (targetDate) => {
+//       const now = new Date();
+//       const target = new Date(targetDate);
+//       const diffTime = target - now;
+//       return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert to days
+//   };
+
+//   const remainingDays = calculateRemainingDays(target_date);
+
+//   const sql = `
+//       INSERT INTO Created_task (
+//           Ax_Brief, Collection_Name, References_Image, Project, Assign_Name,
+//           Person, OWNER, No_of_Qty, Dept, Complete_Qty, Pending_Qty,
+//           Assign_Date, Target_Date, Remaining_Days, Project_View, Completed_Status, Remarks, image_data
+//       ) 
+//       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+//   `;
+
+//   const values = [
+//       ax_brief,
+//       collection_name,
+//       ref_images,
+//       project,
+//       assignTo,
+//       person,
+//       hodemail,
+//       no_of_qty,
+//       depart,
+//       0,
+//       0, 
+//       assign_date,
+//       target_date,
+//       remainingDays,
+//       isChecked ? 'Yes' : 'No', // Project_View
+//       'In Progress', // Completed_Status
+//       '', // Remarks
+//       imageBuf || null // image_data
+//   ];
+
+//   db.query(sql, values, async (err, result) => {
+//       if (err) {
+//           console.error("Database Error:", err);
+//           return res.status(500).json({ message: "Failed to create task", error: err });
+//       }
+
+//       console.log("Inserted Task_ID:", result.insertId);
+
+//       try {
+//           // Fetch production data
+//           const productionResponse = await axios.get('http://localhost:8081/production_data');
+//           const productionData = productionResponse.data;
+
+//           // Filter production data for matching Brief No
+//           const matchedItems = productionData.filter(item => item["Brief No"] === ax_brief);
+//           const totalCWQty = matchedItems.reduce((sum, item) => sum + (item["CW Qty"] || 0), 0);
+//           console.log("Total CW Qty:", totalCWQty);
+          
+//           // Update Complete_Qty
+//           const updateSql = `
+//               UPDATE Created_task
+//               SET Complete_Qty = ?
+//               WHERE Task_ID = ?; 
+//           `;
+//           await new Promise((resolve, reject) => {
+//               db.query(updateSql, [totalCWQty, result.insertId], (updateErr) => {
+//                   if (updateErr) {
+//                       console.error("Update Error:", updateErr);
+//                       return reject(updateErr);
+//                   }
+//                   console.log("Update successful, Complete_Qty updated to:", totalCWQty);
+//                   resolve();
+//               });
+//           });
+
+//           // Fetch pending data
+//           const pendingResponse = await axios.get('http://localhost:8081/pending_data');
+//           const pendingData = pendingResponse.data;
+
+//           // Filter pending data for matching Brief No and sum JCPDSCWQTY1
+//           const pendingItems = pendingData.filter(item => item["BRIEFNUM1"] === ax_brief);
+//           const totalPendingQty = pendingItems.reduce((sum, item) => sum + (item["JCPDSCWQTY1"] || 0), 0);
+//           console.log("Total Pending Qty:", totalPendingQty);
+
+//           // Update Pending_Qty
+//           const updatePendingSql = `
+//               UPDATE Created_task
+//               SET Pending_Qty = ?
+//               WHERE Task_ID = ?; 
+//           `;
+//           await new Promise((resolve, reject) => {
+//               db.query(updatePendingSql, [totalPendingQty, result.insertId], (updatePendingErr) => {
+//                   if (updatePendingErr) {
+//                       console.error("Pending Update Error:", updatePendingErr);
+//                       return reject(updatePendingErr);
+//                   }
+//                   console.log("Pending_Qty updated successfully:", totalPendingQty);
+//                   resolve();
+//               });
+//           });
+
+//           // Send response
+//           res.json({ message: "Task created successfully", taskId: result.insertId, Complete_Qty: totalCWQty, Pending_Qty: totalPendingQty });
+
+//       } catch (fetchErr) {
+//           console.error("Production Data Fetch Error:", fetchErr);
+//           return res.status(500).json({ message: "Failed to fetch production data", error: fetchErr });
+//       }
+//   });
+// });
+
 
 
 app.post("/create-task", async (req, res) => {
@@ -1768,15 +2047,6 @@ app.post("/create-task", async (req, res) => {
       return res.status(400).json({ message: "Missing required fields" });
   }
 
-  const calculateRemainingDays = (targetDate) => {
-      const now = new Date();
-      const target = new Date(targetDate);
-      const diffTime = target - now;
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert to days
-  };
-
-  const remainingDays = calculateRemainingDays(target_date);
-
   const sql = `
       INSERT INTO Created_task (
           Ax_Brief, Collection_Name, References_Image, Project, Assign_Name,
@@ -1797,59 +2067,119 @@ app.post("/create-task", async (req, res) => {
       no_of_qty,
       depart,
       0,
-      0, 
+      0,
       assign_date,
       target_date,
-      remainingDays,
+      null, // Placeholder for Remaining_Days, will set later
       isChecked ? 'Yes' : 'No', // Project_View
       'In Progress', // Completed_Status
-      'null pointer', // Remarks
+      '-', // Remarks
       imageBuf || null // image_data
   ];
 
   db.query(sql, values, async (err, result) => {
-    if (err) {
-        console.error("Database Error:", err);
-        return res.status(500).json({ message: "Failed to create task", error: err });
-    }
+      if (err) {
+          console.error("Database Error:", err);
+          return res.status(500).json({ message: "Failed to create task", error: err });
+      }
 
-    console.log("Inserted Task_ID:", result.insertId);
+      console.log("Inserted Task_ID:", result.insertId);
+      const calculateRemainingDays = (targetDate) => {
+        const now = new Date();
+        const target = new Date(targetDate);
+        const diffTime = target - now;
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert to days
+    };
+      try {
+          // Check if the task is completed
+          const completedStatus = 'In Progress'; // Default status, you can adjust as needed
+          let remainingDays;
 
-    try {
-        const productionResponse = await axios.get('http://localhost:8081/production_data');
-        const productionData = productionResponse.data;
+          if (completedStatus === 'Completed') {
+              remainingDays = 0; // Freeze remaining days if completed
+          } else {
+              remainingDays = calculateRemainingDays(target_date); // Calculate remaining days if not completed
+          }
 
-        // Filter production data for matching Brief No
-        const matchedItems = productionData.filter(item => item["Brief No"] === ax_brief);
-        const totalCWQty = matchedItems.reduce((sum, item) => sum + (item["CW Qty"] || 0), 0);
-        console.log("Total CW Qty:", totalCWQty);  // Log the total CW Qty
-        
-        // Updating the Complete_Qty based on the fetched production data
-        const updateSql = `
-            UPDATE Created_task
-            SET Complete_Qty = ?
-            WHERE Task_ID = ?; 
-        `;
+          // Update Remaining_Days in the database
+          const updateRemainingDaysSql = `
+              UPDATE Created_task
+              SET Remaining_Days = ?
+              WHERE Task_ID = ?; 
+          `;
+          await new Promise((resolve, reject) => {
+              db.query(updateRemainingDaysSql, [remainingDays, result.insertId], (updateErr) => {
+                  if (updateErr) {
+                      console.error("Update Remaining Days Error:", updateErr);
+                      return reject(updateErr);
+                  }
+                  console.log("Remaining Days updated to:", remainingDays);
+                  resolve();
+              });
+          });
 
-        console.log("Updating Task_ID:", result.insertId, "with Complete_Qty:", totalCWQty); // Use result.insertId
+          // Fetch production data
+          const productionResponse = await axios.get('http://localhost:8081/production_data');
+          const productionData = productionResponse.data;
 
-        db.query(updateSql, [totalCWQty, result.insertId], (updateErr) => {
-            if (updateErr) {
-                console.error("Update Error:", updateErr);
-                return res.status(500).json({ message: "Failed to update Complete_Qty", error: updateErr });
-            }
+          // Filter production data for matching Brief No
+          const matchedItems = productionData.filter(item => item["Brief No"] === ax_brief);
+          const totalCWQty = matchedItems.reduce((sum, item) => sum + (item["CW Qty"] || 0), 0);
+          console.log("Total CW Qty:", totalCWQty);
+          
+          // Update Complete_Qty
+          const updateSql = `
+              UPDATE Created_task
+              SET Complete_Qty = ?
+              WHERE Task_ID = ?; 
+          `;
+          await new Promise((resolve, reject) => {
+              db.query(updateSql, [totalCWQty, result.insertId], (updateErr) => {
+                  if (updateErr) {
+                      console.error("Update Error:", updateErr);
+                      return reject(updateErr);
+                  }
+                  console.log("Update successful, Complete_Qty updated to:", totalCWQty);
+                  resolve();
+              });
+          });
 
-            console.log("Update successful, Complete_Qty updated to:", totalCWQty); // Log success
-            res.json({ message: "Task created successfully", taskId: result.insertId, Complete_Qty: totalCWQty });
-        });
+          // Fetch pending data
+          const pendingResponse = await axios.get('http://localhost:8081/pending_data');
+          const pendingData = pendingResponse.data;
 
-    } catch (fetchErr) {
-        console.error("Production Data Fetch Error:", fetchErr);
-        return res.status(500).json({ message: "Failed to fetch production data", error: fetchErr });
-    }
+          // Filter pending data for matching Brief No and sum JCPDSCWQTY1
+          const pendingItems = pendingData.filter(item => item["BRIEFNUM1"] === ax_brief);
+          const totalPendingQty = pendingItems.reduce((sum, item) => sum + (item["JCPDSCWQTY1"] || 0), 0);
+          console.log("Total Pending Qty:", totalPendingQty);
+
+          // Update Pending_Qty
+          const updatePendingSql = `
+              UPDATE Created_task
+              SET Pending_Qty = ?
+              WHERE Task_ID = ?; 
+          `;
+          await new Promise((resolve, reject) => {
+              db.query(updatePendingSql, [totalPendingQty, result.insertId], (updatePendingErr) => {
+                  if (updatePendingErr) {
+                      console.error("Pending Update Error:", updatePendingErr);
+                      return reject(updatePendingErr);
+                  }
+                  console.log("Pending_Qty updated successfully:", totalPendingQty);
+                  resolve();
+              });
+          });
+
+          // Send response
+          res.json({ message: "Task created successfully", taskId: result.insertId, Complete_Qty: totalCWQty, Pending_Qty: totalPendingQty });
+
+      } catch (fetchErr) {
+          console.error("Production Data Fetch Error:", fetchErr);
+          return res.status(500).json({ message: "Failed to fetch production data", error: fetchErr });
+      }
+  });
 });
 
-});
 
 
  
@@ -1886,24 +2216,110 @@ app.get('/get-image', (req, res) => {
 
 
 const axios = require("axios");
+app.get("/upload-time-pending", async (req, res) => {
+  const sql = `SELECT MAX(uploadedDateTime) AS last_upload FROM Pending_sample_data`;
+
+  try {
+    const results = await db.query(sql);
+    console.log("Pending Query Results:", results); // Debugging log
+
+    if (results && results[0] && results[0][0]) {
+      const lastUploadTime = results[0][0].last_upload
+        ? new Date(results[0][0].last_upload).toLocaleString()
+        : "No uploads found";
+      return res.json({ last_upload: lastUploadTime });
+    } else {
+      return res.json({ last_upload: "No uploads found" });
+    }
+  } catch (err) {
+    console.error("Error fetching upload time:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+
+app.get("/upload_time_pending", async (req, res) => {
+  // SQL query to get the latest uploaded time
+  const sql = 
+   ` SELECT MAX(UploadedDateTime) AS last_upload
+    FROM Pending_sample_data`
+  ;
+
+  db.query(sql, (err, results) => {
+    if (err) {
+      console.error("Error fetching upload time:", err);
+      return res.status(500).json({ error: "Internal Server Error" });
+    }
+
+    if (results.length > 0 && results[0].last_upload) {
+      // Format the upload time as needed (e.g., to a readable string)
+      const lastUploadTime = new Date(results[0].last_upload).toLocaleString();
+      return res.json({ uploadTime: lastUploadTime });
+    } else {
+      return res.json({ uploadTime: "No uploads found" });
+    }
+  });
+});
+
+app.get("/upload_time", async (req, res) => {
+  const sqlPending = `SELECT MAX(UploadedDateTime) AS last_upload FROM Pending_sample_data`;
+  const sqlProduction = `SELECT MAX(UploadedDateTime) AS last_upload FROM Production_sample_data`; // Ensure casing consistency
+
+  try {
+    const pendingResults = await new Promise((resolve, reject) => {
+      db.query(sqlPending, (err, results) => {
+        if (err) return reject(err);
+        resolve(results);
+      });
+    });
+
+    const productionResults = await new Promise((resolve, reject) => {
+      db.query(sqlProduction, (err, results) => {
+        if (err) return reject(err);
+        resolve(results);
+      });
+    });
+
+    const lastUploadTimePending = pendingResults.length > 0 && pendingResults[0].last_upload
+      ? new Date(pendingResults[0].last_upload).toLocaleString()
+      : "No uploads found for Pending";
+
+    const lastUploadTimeProduction = productionResults.length > 0 && productionResults[0].last_upload
+      ? new Date(productionResults[0].last_upload).toLocaleString()
+      : "No uploads found for Production";
+
+    return res.json({ 
+      uploadTime_pending: lastUploadTimePending,
+      uploadTime_production: lastUploadTimeProduction 
+    });
+  } catch (err) {
+    console.error("Error fetching upload time:", err);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
 
 app.get("/filtered_pending_data", async (req, res) => {
   const response = await axios.get("http://localhost:8081/department-mappings");
-const departmentMappings = response.data;
+  const departmentMappings = response.data;
 
-  const toDeptFilter = Object.values(departmentMappings).flatMap(
-    (mapping) => mapping.from
-  );
-  const lowerToDeptFilter = toDeptFilter.map((dept) => dept.toLowerCase());
+  const toDeptFilter = Object.values(departmentMappings).flatMap(mapping => mapping.from);
+  const lowerToDeptFilter = toDeptFilter.map(dept => dept.toLowerCase());
+
+  // Get today's date in the required format for your SQL database
+  const today = new Date();
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
   const sql = `
-            SELECT todept, SUM(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty
-            FROM pending
-            WHERE LOWER(todept) IN (?)
-            GROUP BY todept
-         `;
+    SELECT todept, SUM(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty
+    FROM Pending_sample_data
+    WHERE LOWER(todept) IN (?)
+      AND UploadedDateTime >= ? AND UploadedDateTime < ?
+    GROUP BY todept
+  `;
 
-  db.query(sql, [lowerToDeptFilter], (err, data) => {
+  db.query(sql, [lowerToDeptFilter, startOfDay, endOfDay], (err, data) => {
     if (err) return res.json(err);
 
     const results = Object.keys(departmentMappings).reduce((acc, group) => {
@@ -1911,7 +2327,7 @@ const departmentMappings = response.data;
       return acc;
     }, {});
 
-    data.forEach((row) => {
+    data.forEach(row => {
       const toDept = row.todept ? row.todept.toUpperCase() : null;
       const qty = row.total_qty;
 
@@ -1927,6 +2343,7 @@ const departmentMappings = response.data;
     return res.json(results);
   });
 });
+
 
 const PORT = process.env.PORT || 8081;
 
@@ -2347,18 +2764,25 @@ app.post("/api/party-visit", (req, res) => {
     order_rev_wt,
   } = req.body;
 
+  // Log the incoming data
+  console.log("Received data:", req.body);
+
+  // If assign_person is an array, join it into a string
+  const assign_person_string = Array.isArray(assign_person) ? assign_person.join(',') : assign_person;
+
   const query = `
     INSERT INTO Party_Visit (Party_Name, visit_date, Description, Assign_Person, Status_data, Brief_no, Quantity, Complete_date, Order_rev_wt)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-  db.query(query, [party_name,visit_date, description, assign_person, status_data, brief_no, quantity, complete_date, order_rev_wt], (err, results) => {
+  db.query(query, [party_name, visit_date, description, assign_person_string, status_data, brief_no, quantity, complete_date, order_rev_wt], (err, results) => {
     if (err) {
       console.error("Error inserting data:", err);
-      return res.status(500).json({ error: "Database error" });
+      return res.status(500).json({ error: "Database error", details: err });
     }
     return res.status(201).json({ message: "Party visit created", id: results.insertId });
   });
 });
+
 
 
 

@@ -6,8 +6,13 @@ export default {
     "./node_modules/react-tailwindcss-datepicker/dist/index.esm.js",  
   ],
   theme: {
-    extend: {},
+    extend: {
+      maxWidth: {
+        'screen-6xl': '96rem', // Adjust as needed
+        'screen-3xl':'48rem',
+        'screen-7xl': '112rem', // Adjust as needed
+      },
+    },
   },
   plugins: [],
 }
-
