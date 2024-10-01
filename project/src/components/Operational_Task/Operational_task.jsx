@@ -14,6 +14,7 @@ function Operational_task() {
 
   const [activeRow, setActiveRow] = useState(null);
   const [assigneeOptions, setAssigneeOptions] = useState([]);
+  // const [phaseData, setPhaseData] = useState([]);
 
   const [tableData, setTableData] = useState([]);
   useEffect(() => {
@@ -21,6 +22,7 @@ function Operational_task() {
     fetchTeamData();
     fetchUserData();
     fetchPhaseTaskData();
+    // fetchPhaseData();
   }, []);
 
 // useEffect(() => {fetchPhaseTaskData()}, [activeRow]);
@@ -57,6 +59,60 @@ function Operational_task() {
       })
       .catch((err) => console.log(err));
   };
+
+// State to hold phase data (assuming you're using useState)
+const [phaseData, setPhaseData] = useState([]);
+
+// Fetch phase data from the backend
+const fetchPhaseData = () => {
+  fetch("http://localhost:8081/phases")
+    .then((res) => res.json())
+    .then((data) => {
+      setPhaseData(data);      
+      updateTaskStatusIfCompleted(data, "OT1"); // Call the function after fetching data
+    })
+    .catch((err) => console.log(err));
+};
+
+// Function to check if all phases for a specific task are completed
+const updateTaskStatusIfCompleted = (phases, taskId) => {
+  const taskPhases = phases.filter(phase => phase.task_id === taskId);
+  const allCompleted = taskPhases.every(phase => phase.phase_status === "Completed");
+
+  if (allCompleted) {
+    // Update the task status to 'Completed'
+    updateTaskInDB(taskId, { status: "Completed" });
+    console.log(`Task ${taskId} status updated to Completed.`);
+  } else {
+    console.log(`Task ${taskId} is not yet fully completed.`);
+  }
+};
+
+// Function to update the task status in the database (example)
+const updateTaskInDB = (taskId, updateData) => {
+  // fetch(`http://localhost:8081/tasks/${taskId}`, {
+  //   method: "PUT",
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //   },
+  //   body: JSON.stringify(updateData),
+  // })
+  //   .then((res) => res.json())
+  //   .then((data) => {
+  //     console.log(`Task ${taskId} updated successfully:`, data);
+  //   })
+  //   .catch((err) => console.log(err));
+
+  console.log(`Task ${taskId} updated with:`, updateData);
+};
+
+// Fetch phase data on component mount or when needed
+useEffect(() => {
+  fetchPhaseData();
+}, []);
+
+
+
 
   const fetchPhaseTaskData = () => {
     fetch("http://localhost:8081/phase-tasks")
@@ -430,12 +486,12 @@ function Operational_task() {
                                     <th className="py-3 text-center font-semibold text-base">
                                       Mail ID
                                     </th>
-                                    <th className="py-3 text-center font-semibold text-base">
+                                    {/* <th className="py-3 text-center font-semibold text-base">
                                       Status
                                     </th>
                                     <th className="py-3 text-center font-semibold text-base">
                                       Attachment File
-                                    </th>
+                                    </th> */}
                                   </tr>
                                 </thead>
 
@@ -460,12 +516,12 @@ function Operational_task() {
                                           <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
                                             {person.mail_id}
                                           </td>
-                                          <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                                          {/* <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
                                             {person.STATUS}
                                           </td>
                                           <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
                                             {person.attachment_file}
-                                          </td>
+                                          </td> */}
                                         </tr>
                                       )
                                     )

@@ -2374,8 +2374,8 @@ app.get('/phases', (req, res) => {
   });
 });
 
+// app.
  
-
 app.get('/user', (req, res) => {
   const query = 'SELECT * FROM users';
   db.query(query, (err, results) => {
@@ -2402,7 +2402,7 @@ app.get('/phase-tasks', (req, res) => {
 
 app.put('/phase-task/:task_id', (req, res) => {
   const { task_id } = req.params;
-  const { status, notes, type } = req.body;
+  const { status, notes, type,link,grace_period } = req.body;
 
   let updateTaskQuery;
   let queryParams;
@@ -2411,10 +2411,10 @@ app.put('/phase-task/:task_id', (req, res) => {
   if (type === 'note') {
     updateTaskQuery = `
       UPDATE phase_tasks
-      SET notes = ?
+      SET notes = ? , link = ?
       WHERE task_id = ?;
     `;
-    queryParams = [notes, task_id];
+    queryParams = [notes,link, task_id];
   } else if (type === 'state') {
     updateTaskQuery = `
       UPDATE phase_tasks
@@ -2422,6 +2422,13 @@ app.put('/phase-task/:task_id', (req, res) => {
       WHERE task_id = ?;
     `;
     queryParams = [status, task_id];
+  }else if(type === 'grace'){
+    updateTaskQuery = `
+      UPDATE phase_tasks
+      SET grace_period = ?
+      WHERE task_id = ?;
+    `;
+    queryParams = [grace_period, task_id];
   }
 
   db.query(updateTaskQuery, queryParams, (err, result) => {
