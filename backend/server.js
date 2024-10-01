@@ -552,7 +552,9 @@ const createProductionTableQuery = `CREATE TABLE IF NOT EXISTS \`Production_samp
   \`Description\` varchar(255) DEFAULT NULL,
   \`Design specification\` varchar(255) DEFAULT NULL,
   \`PRODUNITID\` varchar(255) DEFAULT NULL,
-  \`Remarks\` varchar(255) DEFAULT NULL
+  \`Remarks\` varchar(255) DEFAULT NULL,
+  \`fileID\` varchar(10) DEFAULT NULL,
+  \`unique_fileID\` VARCHAR(10) DEFAULT NULL
 )`;
 
 
@@ -581,83 +583,90 @@ app.post('/api/production/upload', upload.single('file'), async (req, res) => {
     const jsonData = xlsx.utils.sheet_to_json(worksheet);
 
     if (jsonData.length > 0) {
-      const values = jsonData.map(row => {
-        const inDate = excelSerialDateToDate(row['In Date']);
-        const outDate = excelSerialDateToDate(row['Out Date']);
-        const formattedInDate = formatDateForMySQL(inDate);
-        const formattedOutDate = formatDateForMySQL(outDate);
-        
-        return [
-          row['JC ID'],
-          row['Brief No'],
-          row['PRE-BRIEF NO'],
-          row['Sketch No'],
-          row['Item ID'],
-          row['Purity'],
-          row['Empid'],
-          row['Ref Empid'],
-          row['Name'],
-          row['Jwl Type'],
-          row['Project'],
-          row['Sub Category'],
-          row['CW Qty'],
-          row['Qty'],
-          row['From Dept'],
-          row['To Dept'],
-          formattedInDate,
-          formattedOutDate,
-          row['Hours'],
-          row['Days'],
-          row['Description'],
-          row['Design specification'],
-          row['PRODUNITID'],
-          row['Remarks'],
-          new Date() // Store current date for uploadedDateTime
-        ];
-      });
+      // Generate new unique_fileID and fileID based on the latest in the database
+      const lastFileIdQuery = 'SELECT fileID FROM Production_sample_data ORDER BY fileID DESC LIMIT 1';
+      const lastUniqueFileIdQuery = 'SELECT unique_fileID FROM Production_sample_data ORDER BY unique_fileID DESC LIMIT 1';
 
-      // Use INSERT ... ON DUPLICATE KEY UPDATE to update or insert based on JC ID and In Date
-      const query = `
-        INSERT INTO Production_sample_data 
-        (\`JC ID\`, \`Brief No\`, \`PRE-BRIEF NO\`, \`Sketch No\`, \`Item ID\`, 
-         \`Purity\`, \`Empid\`, \`Ref Empid\`, \`Name\`, \`Jwl Type\`, 
-         \`Project\`, \`Sub Category\`, \`CW Qty\`, \`Qty\`, \`From Dept\`, 
-         \`To Dept\`, \`In Date\`, \`Out Date\`, \`Hours\`, \`Days\`, 
-         \`Description\`, \`Design specification\`, \`PRODUNITID\`, \`Remarks\`, \`uploadedDateTime\`)
-        VALUES ? 
-        ON DUPLICATE KEY UPDATE 
-          \`Brief No\` = VALUES(\`Brief No\`),
-          \`PRE-BRIEF NO\` = VALUES(\`PRE-BRIEF NO\`),
-          \`Sketch No\` = VALUES(\`Sketch No\`),
-          \`Item ID\` = VALUES(\`Item ID\`),
-          \`Purity\` = VALUES(\`Purity\`),
-          \`Empid\` = VALUES(\`Empid\`),
-          \`Ref Empid\` = VALUES(\`Ref Empid\`),
-          \`Name\` = VALUES(\`Name\`),
-          \`Jwl Type\` = VALUES(\`Jwl Type\`),
-          \`Project\` = VALUES(\`Project\`),
-          \`Sub Category\` = VALUES(\`Sub Category\`),
-          \`CW Qty\` = VALUES(\`CW Qty\`),
-          \`Qty\` = VALUES(\`Qty\`),
-          \`From Dept\` = VALUES(\`From Dept\`),
-          \`To Dept\` = VALUES(\`To Dept\`),
-          \`Out Date\` = VALUES(\`Out Date\`),
-          \`Hours\` = VALUES(\`Hours\`),
-          \`Days\` = VALUES(\`Days\`),
-          \`Description\` = VALUES(\`Description\`),
-          \`Design specification\` = VALUES(\`Design specification\`),
-          \`PRODUNITID\` = VALUES(\`PRODUNITID\`),
-          \`Remarks\` = VALUES(\`Remarks\`),
-          \`uploadedDateTime\` = VALUES(\`uploadedDateTime\`);
-      `;
-
-      // Insert or update data
-      db.query(query, [values], function (error, results) {
-        if (error) {
-          console.error('Database error:', error);
+      db.query(lastFileIdQuery, (err, fileIdResult) => {
+        if (err) {
+          console.error('Error fetching fileID:', err);
           return res.status(500).send('Database error');
         }
-        res.send('File uploaded and data inserted/updated successfully.');
+
+        db.query(lastUniqueFileIdQuery, (err, uniqueFileIdResult) => {
+          if (err) {
+            console.error('Error fetching unique_fileID:', err);
+            return res.status(500).send('Database error');
+          }
+
+          // Fetch the latest fileID and unique_fileID
+          let lastFileId = fileIdResult[0]?.fileID || 'PRO0';
+          let lastUniqueFileId = uniqueFileIdResult[0]?.unique_fileID || 'PROD0'; // Default to 'PROD0' if no records exist
+
+          // Increment fileID for each row and unique_fileID for the entire upload
+          let fileCounter = parseInt(lastFileId.replace('PRO', '')) + 1;
+          let newUniqueFileIdNum = parseInt(lastUniqueFileId.replace('PROD', '')) + 1;
+          let newUniqueFileId = `PROD${newUniqueFileIdNum}`;
+
+          const values = jsonData.map(row => {
+            const inDate = excelSerialDateToDate(row['In Date']);
+            const outDate = excelSerialDateToDate(row['Out Date']);
+            const formattedInDate = formatDateForMySQL(inDate);
+            const formattedOutDate = formatDateForMySQL(outDate);
+
+            // Assign the same newUniqueFileId for each row and increment fileID for each row
+            const newFileId = `PRO${fileCounter++}`; // Increment fileID for each row
+
+            return [
+              row['JC ID'],
+              row['Brief No'],
+              row['PRE-BRIEF NO'],
+              row['Sketch No'],
+              row['Item ID'],
+              row['Purity'],
+              row['Empid'],
+              row['Ref Empid'],
+              row['Name'],
+              row['Jwl Type'],
+              row['Project'],
+              row['Sub Category'],
+              row['CW Qty'],
+              row['Qty'],
+              row['From Dept'],
+              row['To Dept'],
+              formattedInDate,
+              formattedOutDate,
+              row['Hours'],
+              row['Days'],
+              row['Description'],
+              row['Design specification'],
+              row['PRODUNITID'],
+              row['Remarks'],
+              newFileId, // Increment fileID for each row
+              newUniqueFileId // Same unique_fileID for all rows in the file
+            ];
+          });
+
+          // Insert the data into the database
+          const query = `
+            INSERT INTO Production_sample_data 
+            (\`JC ID\`, \`Brief No\`, \`PRE-BRIEF NO\`, \`Sketch No\`, \`Item ID\`, 
+             \`Purity\`, \`Empid\`, \`Ref Empid\`, \`Name\`, \`Jwl Type\`, 
+             \`Project\`, \`Sub Category\`, \`CW Qty\`, \`Qty\`, \`From Dept\`, 
+             \`To Dept\`, \`In Date\`, \`Out Date\`, \`Hours\`, \`Days\`, 
+             \`Description\`, \`Design specification\`, \`PRODUNITID\`, \`Remarks\`, 
+             \`fileID\`, \`unique_fileID\`)
+            VALUES ?;
+          `;
+
+          db.query(query, [values], function (error, results) {
+            if (error) {
+              console.error('Database error:', error);
+              return res.status(500).send('Database error');
+            }
+            res.send('File uploaded and new data inserted successfully.');
+          });
+        });
       });
     } else {
       res.status(400).send('No data found in Excel file');
@@ -667,6 +676,10 @@ app.post('/api/production/upload', upload.single('file'), async (req, res) => {
     res.status(500).send('Error processing file');
   }
 });
+
+
+
+
 
 // ************ End of Production Data post endpoint ******************* //
 
