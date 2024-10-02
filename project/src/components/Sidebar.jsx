@@ -393,7 +393,7 @@ function Sidebar({ theme }) {
               <div className='mt-1 px-2'>
                 <MdOutlineCategory />
               </div>
-              Party Wise
+              Party Visit
             </div>
           </a>}
 

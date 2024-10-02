@@ -20,8 +20,7 @@ function Party_form() {
   const [description, setDescription] = useState("");
   const [visit_date, setVisit_date] = useState("");
   const [partyname, setPartyname] = useState("");
-  const [axBriefMapping, setAxBriefMapping] = useState({});
-  const [briefOptions, setBriefOptions] = useState([]);
+
   const [ax_brief_data, setAx_brief_data] = useState("");
   const [value, setValue] = useState({
     startDate: null,
@@ -30,35 +29,7 @@ function Party_form() {
   const [assignToCount, setAssignToCount] = useState(1); // Number of assignees
   const [assignToEmails, setAssignToEmails] = useState([""]);
 
-  useEffect(() => {
-    const fetchBriefOptions = async () => {
-      try {
-        const response = await fetch("http://localhost:8081/api/pending");
-        if (!response.ok) throw new Error("Network response was not ok");
-        const result = await response.json();
-        const briefNumOptions = result.map((item) => ({
-          value: item.BRIEFNUM1,
-          label: item.BRIEFNUM1,
-        }));
-        const briefMapping = {};
-        result.forEach((item) => {
-          briefMapping[item.BRIEFNUM1] = {
-            designspecs: item.designspecs,
-            pltcodes: item.pltcodes,
-            sketchnums: item.sketchnums,
-          };
-        });
-        setAxBriefMapping(briefMapping);
-        setBriefOptions(briefNumOptions);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        // setLoading(false);
-      }
-    };
-
-    fetchBriefOptions();
-  }, []);
+ 
 
   const handleaxbriefselect = (selectedOption) => {
     const value = selectedOption ? selectedOption.value : "";
@@ -102,7 +73,6 @@ function Party_form() {
         : "#0f172a",
     }),
   };
-
   const status = [
     { value: "in progress", label: "In progress" },
     { value: "completed", label: "Completed" },
@@ -117,9 +87,6 @@ function Party_form() {
       description: description,
       assign_person: assignToEmails,
       status_data: status_data,
-      brief_no: ax_brief_data,
-      quantity: no_of_qty,
-      order_rev_wt: "0",
     };
 
     try {
@@ -390,63 +357,8 @@ function Party_form() {
                     required
                   />
                 </div>
-                <div className="space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
-                  <label
-                    className={`block text-base font-bold ${
-                      theme === "light" ? "text-gray-700" : "text-gray-200"
-                    } w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`}
-                    htmlFor="axBriefId"
-                  >
-                    Ax Brief
-                  </label>
-                  <Select
-                    id="axBriefId"
-                    styles={customStyles}
-                    options={briefOptions}
-                    value={
-                      briefOptions.find(
-                        (option) => option.value === ax_brief_data
-                      ) || null
-                    } // Set to null if no match
-                    onChange={(selectedOption) =>
-                      handleaxbriefselect(selectedOption)
-                    }
-                    isClearable
-                    className={`ml-10 ${
-                      theme === "light"
-                        ? "border-gray-300 text-black"
-                        : "bg-gray-700 text-gray-100 border-gray-600"
-                    } w-full md:w-3/5`}
-                    required
-                  />
-                </div>
-                {/* {error && (
-                <p className="text-red-500 text-xs italic">{error}</p>
-              )} */}
-
-                <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
-                  <label
-                    className={`block text-base font-bold mb-2 ${
-                      theme === "light" ? "text-gray-700" : "text-gray-200"
-                    } w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`}
-                    htmlFor="qty"
-                  >
-                    No. of Qty
-                  </label>
-                  <input
-                    type="text"
-                    id="qty"
-                    value={no_of_qty}
-                    onChange={(e) => setNo_of_qty(e.target.value)}
-                    className={` appearance-none border-2 rounded ml-10 w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
-                      theme === "light"
-                        ? "bg-gray-100 text-gray-700 border-gray-300"
-                        : "bg-gray-700 text-gray-100 border-gray-600"
-                    }  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
-                    placeholder="Enter Quantity"
-                    required
-                  />
-                </div>
+               
+            
 
                 <div className="md:col-span-2 flex justify-center">
                   <button
