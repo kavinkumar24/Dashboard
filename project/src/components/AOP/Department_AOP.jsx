@@ -62,26 +62,30 @@ function Department_AOP() {
   const [rawFilteredData, setRawFilteredData] = useState([]);
   const [departmentMappings, setDepartmentMappings] = useState({});
   const [selectedDeptName, setSelectedDeptName] = useState("CAD");
- 
+
   const [targets, setTargets] = useState({});
-  const [tableData, setTableData] = useState([]);  
+  const [tableData, setTableData] = useState([]);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
   const [isloading, setisloading] = useState(false);
   const [total, setTotal] = useState(0);
   const [calender, setcalender] = useState(false);
   const [filter_on, setFilter_on] = useState(false);
-  const[achieved, setAchieved] = useState(0);
-
+  const [achieved, setAchieved] = useState(0);
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
-    
   }, [theme]);
 
   const handleCardClick = (deptName) => {
+    setisloading(true);
+ 
+    setTimeout(() => {
+      setisloading(false)
+    }, 3000);
     if (deptName) {
       setSelectedDeptName(deptName);
       updateTableData();
+      fetchAndProcessData();
     }
   };
   const [value, setValue] = useState({
@@ -115,10 +119,7 @@ function Department_AOP() {
   let totalPercentage = 0;
 
   useEffect(() => {
-    setisloading(true);
-    setTimeout(() => {
-      setisloading(false);
-    }, 3000);
+    
     const defaultDepartments = DEFAULT_DEPARTMENTS.map((dept) => ({
       name: dept,
     }));
@@ -145,36 +146,40 @@ function Department_AOP() {
       fetch("http://localhost:8081/raw_filtered_production_data")
       .then((response) => response.json())
       .then((data) => {
-          console.log("Raw Filtered Production Data:", data);
-          
-          // Assuming departmentMappings is already defined in your scope
-          const departmentMapping = departmentMappings["PHOTO"];
-  
-          if (departmentMapping) {
-              const fromDeptSet = new Set(departmentMapping.from.map((dept) => dept.toUpperCase()));
-              const toDeptSet = new Set(departmentMapping.to.map((dept) => dept.toUpperCase()));
-  
-              const achievedCount = data.reduce((total, item) => {
-                  const fromDept = item["From Dept"]?.toUpperCase() || "";
-                  const toDept = item["To Dept"]?.toUpperCase() || "";
-  
-                  if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
-                      return total + (item["CW Qty"] || 0);
-                  }
-                  return total;
-              }, 0);
-  
-              setAchieved(achievedCount);
-              console.log("Achieved Count:", achievedCount);
-          }
-  
-          // Set the raw filtered data
+        console.log("Raw Filtered Production Data:", data);
+    
+        const departmentMapping = departmentMappings["PHOTO"];
+
+    
+        if (departmentMapping) {
+          const fromDeptSet = new Set(
+            departmentMapping.from.map((dept) => dept.toUpperCase())
+          );
+          const toDeptSet = new Set(
+            departmentMapping.to.map((dept) => dept.toUpperCase())
+          );
+    
+          const achievedCount = data.reduce((total, item) => {
+            const fromDept = item["From Dept"]?.toUpperCase() || "";
+            const toDept = item["To Dept"]?.toUpperCase() || "";
+          // Adjust based on your actual key
+    
+            // Check if the PLTCODE is in the selected set
+            if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
+              return total + (item["CW Qty"] || 0);
+            }
+            return total;
+          }, 0);
+    
+          setAchieved(achievedCount);
           setRawFilteredData(data);
+          console.log("Achieved Count:", achievedCount);
+        }
       })
       .catch((error) =>
-          console.error("Error fetching raw filtered production data:", error)
+        console.error("Error fetching raw filtered production data:", error)
       );
-  
+    
     fetch("http://localhost:8081/department-mappings")
       .then((response) => response.json())
       .then((data) => {
@@ -203,125 +208,226 @@ function Department_AOP() {
         console.log("Production Data Response:", data);
         setProductionData(data);
       })
+      
       .catch((error) =>
         console.error("Error fetching production data:", error)
       );
   }, []);
+  const [rawFilteredPendingData, setRawFilteredPendingData] = useState([]);
+  const [groupedData, setGroupedData] = useState({});
 
   useEffect(() => {
     updateTableData();
-  }, [
-    selectedDeptName,
-    selectedDepartments,
-    pendingData,
-    pendingSumData,
-    rawFilteredData,
-    departmentMappings,
-    targets,
-    value.startDate,
-    value.endDate,
-  ]);
+  }, [rawFilteredPendingData, selectedDeptName, selectedDepartments, pendingData, pendingSumData,  departmentMappings, targets, value.startDate, value.endDate]);
+  
+  useEffect(() => {
+    fetchAndProcessData();
+  }, [selectedDeptName, departmentMappings]);
 
   const departmentOptions = ALLOWED_PROJECTS.map((dept) => ({
     value: dept.toUpperCase(),
     label: dept,
   }));
+
+
+
+  function fetchAndProcessData() {
+    fetch("http://localhost:8081/raw_filtered_pending_data")
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log("Raw Filtered Pending Data:", data);
+  
+        if (selectedDeptName && departmentMappings[selectedDeptName]) {
+          const deptMapping = departmentMappings[selectedDeptName];
+          console.log("Department Mapping:", deptMapping);
+  
+          if (deptMapping && deptMapping.from) {
+            const toDeptSet = new Set(
+              deptMapping.from.map((dept) => dept.toUpperCase())
+            );
+  
+            // Filter the data based on TODEPT and selected department
+            const filteredData = data.filter((item) =>
+              toDeptSet.has(item.TODEPT?.toUpperCase() || "")
+            );
+  
+            console.log("Filtered Pending Data:", filteredData);
+            // Group the filtered data by department
+            const groupedData = groupDataByDept(filteredData);
+            console.log("Grouped Data by Department:", groupedData);
+  
+            // Update state with grouped data
+            setRawFilteredPendingData(groupedData);
+          } else {
+            setRawFilteredPendingData({});
+          }
+        } else {
+          setRawFilteredPendingData({});
+        }
+      })
+      .catch((error) => {
+        console.error("Error fetching raw filtered pending data:", error);
+      });
+  }
+  const groupDataByDept = (data) => {
+    if (Array.isArray(data)) {
+      return data.reduce((acc, item) => {
+        const dept = (item.TODEPT || "Unknown").toUpperCase(); // Ensure you're using TODEPT
+        const pltcode = item.pltcode || item.PLTCODE1 || "Unknown";
+
+        if (!acc[dept]) {
+          acc[dept] = { quantity: 0, pltcodes: {} };
+        }
+
+        acc[dept].quantity += Number(item.JCPDSCWQTY1) || 0;
+
+        if (!acc[dept].pltcodes[pltcode]) {
+          acc[dept].pltcodes[pltcode] = 0;
+        }
+        acc[dept].pltcodes[pltcode] += 1;
+
+        return acc;
+      }, {});
+    } else {
+      console.error("Invalid data format for grouping:", data);
+      return {};
+    }
+  };
+
+
+  const aggregatePendingData = (groupedData) => {
+    const aggregatedData = {};
+
+    for (const dept in groupedData) {
+      const { pltcodes, quantity } = groupedData[dept];
+
+      // Aggregate the total quantity for each pltcode
+      for (const pltcode in pltcodes) {
+        const pltcodeQuantity = pltcodes[pltcode];
+
+        if (!aggregatedData[pltcode]) {
+          aggregatedData[pltcode] = 0;
+        }
+
+        aggregatedData[pltcode] += pltcodeQuantity; // Sum the quantities
+      }
+    }
+
+    return aggregatedData;
+  };
+  
   const updateTableData = () => {
     const normalizedData = pendingData.map((item) => ({
-        ...item,
-        PLTCODE1: item.PLTCODE1?.toUpperCase() || "",
-        Wip: pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)?.total_quantity || 0,
+      ...item,
+      PLTCODE1: item.PLTCODE1?.toUpperCase() || "",
+      Wip:
+        pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)
+          ?.total_quantity || 0,
     }));
 
     if (!selectedDeptName) {
-        setTableData([]);
-        return;
+      setTableData([]);
+      return;
     }
 
     const deptMapping = departmentMappings[selectedDeptName];
     if (deptMapping && deptMapping.to) {
-        const fromDeptSet = new Set(deptMapping.from.map((dept) => dept.toUpperCase()));
-        const toDeptSet = new Set(deptMapping.to.map((dept) => dept.toUpperCase()));
+      const fromDeptSet = new Set(
+        deptMapping.from.map((dept) => dept.toUpperCase())
+      );
+      const toDeptSet = new Set(
+        deptMapping.to.map((dept) => dept.toUpperCase())
+      );
 
-        const projectTotals = rawFilteredData.reduce((acc, item) => {
-            const fromDept = item["From Dept"]?.toUpperCase() || "";
-            const toDept = item["To Dept"]?.toUpperCase() || "";
+      const projectTotals = rawFilteredData.reduce((acc, item) => {
+        const fromDept = item["From Dept"]?.toUpperCase() || "";
+        const toDept = item["To Dept"]?.toUpperCase() || "";
 
-            if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
-                const project = item.Project || "Unknown Project";
-                const cwQty = item["CW Qty"] || 0;
+        if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
+          const project = item.Project || "Unknown Project";
+          const cwQty = item["CW Qty"] || 0;
 
-                if (!acc[project]) {
-                    acc[project] = 0;
-                }
-                acc[project] += cwQty;
-            }
+          if (!acc[project]) {
+            acc[project] = 0;
+          }
+          acc[project] += cwQty;
+        }
 
-            return acc;
-        }, {});
+        return acc;
+      }, {});
 
-        const filteredPendingData = normalizedData.filter((item) => {
-            return (
-                toDeptSet.has(item.TODEPT?.toUpperCase() || "") &&
-                (selectedDepartments.length === 0 || selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
-            );
-        });
+      const pltcodePendingData = aggregatePendingData(rawFilteredPendingData);
 
-        const pltcodeCounts = filteredPendingData.reduce((acc, item) => {
-            if (!acc[item.PLTCODE1]) {
-                acc[item.PLTCODE1] = { count: 0, totalJCPDSCWQTY1: 0, totalWIP: 0 };
-            }
-            acc[item.PLTCODE1].count += 1;
-            acc[item.PLTCODE1].totalJCPDSCWQTY1 += item.JCPDSCWQTY1 || 0;
-            acc[item.PLTCODE1].totalWIP = item.Wip;
-            return acc;
-        }, {});
-
-        const filteredCounts = Object.keys(pltcodeCounts).filter((pltcode) => {
-            return groupedData[pltcode]; // Only include PLTCODE1 that exist in targets
-        });
-
-        const updatedTableData = filteredCounts.map((pltcode) => {
-            const totalJCPDSCWQTY1 = pltcodeCounts[pltcode].totalJCPDSCWQTY1;
-
-            const target = groupedData[pltcode] ? groupedData[pltcode].toFixed(0) : 0; // Ensure target is properly set
-            const achieved = selectedDeptName.toUpperCase() === "PHOTO" 
-                ? filteredPendingData.reduce((sum, item) => sum + (item.JCPDSCWQTY1 || 0), 0) 
-                : 0;
-            const pending = target - achieved;
-            const week1Count = projectTotals[pltcode] || 0;
-            const percentageAchieved = target > 0 ? (week1Count / target) * 100 : 0;
-
-            return {
-                PLTCODE1: pltcode,
-                TotalJCPDSCWQTY1: totalJCPDSCWQTY1,
-                Target: target,
-                Achieved: achieved,
-                Pending: pending,
-                PercentageAchieved: percentageAchieved,
-                Wip: pltcodeCounts[pltcode].totalWIP,
-                AOP: target,
-                Week1: week1Count,
-            };
-        }).sort((a, b) => a.PLTCODE1.localeCompare(b.PLTCODE1));
-
-        // Calculate the total percentage
-        const totalPercentage = updatedTableData.reduce(
-            (acc, item) => acc + (parseFloat(item.PercentageAchieved) || 0),
-            0
+      const filteredPendingData = normalizedData.filter((item) => {
+        return (
+          toDeptSet.has(item.TODEPT?.toUpperCase() || "") &&
+          (selectedDepartments.length === 0 ||
+            selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
         );
+      });
 
-        // Set the total
-        setTotal(totalPercentage);
+      const pltcodeCounts = filteredPendingData.reduce((acc, item) => {
+        if (!acc[item.PLTCODE1]) {
+          acc[item.PLTCODE1] = { count: 0, totalJCPDSCWQTY1: 0, totalWIP: 0 };
+        }
+        acc[item.PLTCODE1].count += 1;
+        acc[item.PLTCODE1].totalJCPDSCWQTY1 += item.JCPDSCWQTY1 || 0;
+        acc[item.PLTCODE1].totalWIP = item.Wip;
+        return acc;
+      }, {});
 
-        // Update table data
-        setTableData(updatedTableData);
-        
+      // Create the updated table data with allowed projects
+      const updatedTableData = ALLOWED_PROJECTS.map((project) => {
+        const pltcode = project.toUpperCase();
+        const totalJCPDSCWQTY1 = pltcodePendingData[pltcode] || 0; // Use aggregated data
+        const target = groupedData[pltcode]
+          ? groupedData[pltcode].toFixed(0)
+          : 0;
+        const achieved =
+          selectedDeptName.toUpperCase() === "PHOTO"
+            ? filteredPendingData.reduce(
+                (sum, item) => sum + (item.JCPDSCWQTY1 || 0),
+                0
+              )
+            : 0;
+        const pending = target - achieved;
+        const week1Count = projectTotals[pltcode] || 0;
+        const percentageAchieved = target > 0 ? (week1Count / target) * 100 : 0;
+
+        return {
+          PLTCODE1: pltcode,
+          TotalJCPDSCWQTY1: totalJCPDSCWQTY1,
+          Target: target,
+          Achieved: achieved,
+          Pending: pending,
+          PercentageAchieved: percentageAchieved,
+          Wip: pltcodeCounts[pltcode]?.totalWIP || 0,
+          AOP: target,
+          Week1: week1Count,
+        };
+      }).sort((a, b) => a.PLTCODE1.localeCompare(b.PLTCODE1));
+
+      // Calculate the total percentage
+      const totalPercentage = updatedTableData.reduce(
+        (acc, item) => acc + (parseFloat(item.PercentageAchieved) || 0),
+        0
+      );
+
+      // Set the total
+      setTotal(totalPercentage);
+
+      // Update table data
+ 
+      setTableData(updatedTableData);
     } else {
-        setTableData([]);
+      setTableData([]);
     }
-};
-
+  };
 
   const handleDepartmentChange = (selectedOptions) => {
     if (selectedOptions.length === 0) {
@@ -340,35 +446,33 @@ function Department_AOP() {
       : ALLOWED_PROJECTS;
 
     // setAllowedProjects(updatedAllowedProjects);
-
+  fetchAndProcessData()
     updateTableData();
   };
 
 
-  const [groupedData, setGroupedData] = useState({});
-
   useEffect(() => {
     fetch("http://localhost:8081/api/target")
-        .then((response) => response.json())
-        .then((data) => {
-            console.log("Data fetched successfully:", data);
-            const targetMap = {};
-            data.forEach(item => {
-                const project = item.Project?.toUpperCase();
-                const total = item.Total || 0;
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Data fetched successfully:", data);
+        const targetMap = {};
+        data.forEach((item) => {
+          const project = item.Project?.toUpperCase();
+          const total = item.Total || 0;
 
-                if (project) {
-                    targetMap[project] = (targetMap[project] || 0) + total;
-                }
-            });
-
-            console.log("Grouped Data:", targetMap); // Log the final grouped data
-            setGroupedData(targetMap);
-        })
-        .catch((error) => {
-            console.error("Error fetching data:", error);
+          if (project) {
+            targetMap[project] = (targetMap[project] || 0) + total;
+          }
         });
-}, []);
+
+        console.log("Grouped Data:", targetMap); // Log the final grouped data
+        setGroupedData(targetMap);
+      })
+      .catch((error) => {
+        console.error("Error fetching data:", error);
+      });
+  }, []);
 
   const handleDownload = () => {
     const headers = [
@@ -415,11 +519,9 @@ function Department_AOP() {
     XLSX.writeFile(wb, `${selectedDeptName}_AOP_data.xlsx`);
   };
 
-
   const handleRowClick = (pltcode) => {
     navigate(`/product-details/${pltcode}/${selectedDeptName}`);
   };
-
 
   return (
     <div
@@ -432,12 +534,19 @@ function Department_AOP() {
       <Sidebar theme={theme} className="w-1/6 h-screen p-0" />
 
       <div className="flex-1 flex flex-col p-0">
-        <Header theme={theme} dark={setTheme} className="p-0 m-0"  on_filter={setFilter_on}
-          filter={filter_on} />
+        <Header
+          theme={theme}
+          dark={setTheme}
+          className="p-0 m-0"
+          on_filter={setFilter_on}
+          filter={filter_on}
+        />
 
-        <main className={`"flex-1 p-0 overflow-y-auto  ${
+        <main
+          className={`"flex-1 p-0 overflow-y-auto  ${
             filter_on === true ? "opacity-10" : "opacity-100"
-          }`}>
+          }`}
+        >
           {isloading && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
               <div className="flex gap-2 ml-9">
@@ -489,7 +598,6 @@ function Department_AOP() {
 
           {/* Target Button */}
           <div className="flex flex-1 justify-end space-x-2 mr-14 ">
-           
             <button
               className="mt-4 relative top-2 px-4 py-2  bg-blue-500 text-white rounded-md"
               onClick={handleFilter}

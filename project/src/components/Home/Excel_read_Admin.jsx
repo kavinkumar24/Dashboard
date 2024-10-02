@@ -23,22 +23,56 @@ function Dashboard() {
   const [uploadTime_pending, setUploadTime_pending] = useState('');
   const [uploadTimeProduction, setUploadTimeProduction] = useState('');
   const [previousDate, setPreviousDate] = useState(null); 
+  const [previousDayData, setPreviousDayData] = useState([]); // For the previous day data
+  const [usePreviousDay, setUsePreviousDay] = useState(false); // Track whether to use previous day's data
 
 
+  const[previous_production,setPrevious_production]=useState({})
+  const[previous_pending,setPrevious_pending]=useState({})
 
+  useEffect(()=>{
+    fetch('http://localhost:8081/filtered_pending_data_previous')
+    .then((res)=>res.json())
+    if (typeof data === 'object' && !Array.isArray(data)) {
+      const groupedPendingData = Object.keys(data).reduce((acc, dept) => {
+        acc[dept] = data[dept].total_qty || 0; 
+        return acc;
+      }, {});
+      setPrevious_pending(groupedPendingData)
+    }
+},[])
 
   const fetchPreviousDayData = async () => {
     try {
       const response = await axios.get('http://localhost:8081/filtered_production_data_previous');
-      setFilteredData(response.data); // Update the state with the combined data
+      console.log("Previous Day Data:", response.data);
+  
+      // Check if response.data is an object and not an array
+      if (typeof response.data === 'object' && response.data !== null && !Array.isArray(response.data)) {
+        const groupedPreviousDayData = Object.keys(response.data).reduce((acc, dept) => {
+          // Check if department exists and has total_qty
+          const totalQty = response.data[dept]?.total_qty || 0;  // Fallback to 0 if total_qty is missing
+          acc[dept] = totalQty;
+          return acc;
+        }, {});
+  
+        setPrevious_production(groupedPreviousDayData);  // Update the state with the grouped data
+        console.log("Grouped Previous Day Data:", groupedPreviousDayData);
+      } else {
+        console.log("Previous Day Data is not in the expected format or is empty:", response.data);
+      }
+  
+      // Update other states
+      setPreviousDayData(response.data);  // Update raw data state
+      setUsePreviousDay(!usePreviousDay);  // Indicate that the previous day's data should be shown
       const date = new Date();
-      date.setDate(date.getDate() - 1); // Get the previous day's date
+      date.setDate(date.getDate() - 1);  // Get the previous day's date
       setPreviousDate(date.toLocaleDateString());
+  
     } catch (error) {
       console.error("Error fetching previous day data:", error);
     }
   };
-  
   
   // Helper function to combine today's and yesterday's data
   const combineData = (todayData, yesterdayData) => {
@@ -94,30 +128,16 @@ function Dashboard() {
     fetch('http://localhost:8081/filtered_production_data')
       .then(response => response.json())
       .then(data => {
-        const mappedData = {
-          CAD: data.CAD?.total_qty || 0,
-          PRBOM: data.PRBOM?.total_qty || 0,
-          CAM: data.CAM?.total_qty || 0,
-          MFD: data.MFD?.total_qty || 0,
-          SFD: data.SFD?.total_qty || 0,
-          DIE: data.DIE?.total_qty || 0,
-          MP: data.MP?.total_qty || 0,
-          WAX: data.WAX?.total_qty || 0,
-          CAST: data.CAST?.total_qty || 0,
-          SEP: data.SEP?.total_qty || 0,
-          ASY: data.ASY?.total_qty || 0,
-          BP: data.BP?.total_qty || 0,
-          COR: data.COR?.total_qty || 0,
-          SST: data.SST?.total_qty || 0,
-          BUF: data.BUF?.total_qty || 0,
-          TXT: data.TXT?.total_qty || 0,
-          CORR: data.CORR?.total_qty || 0,
-          SISM: data.SISM?.total_qty || 0,
-          IND: data.IND?.total_qty || 0,
-          MMD1: data.MMD1?.total_qty || 0,
-          MMD2: data.MMD2?.total_qty || 0,
-        };
+        const mappedData = {};
 
+        // Iterate through each key in the data object
+        for (const key in data) {
+          // Skip the 'null' key and only map valid departments
+          if (key !== 'null') {
+            mappedData[key] = data[key]?.total_qty || 0;
+          }
+        }
+  
         setProductionData(mappedData);
       })
       .catch(error => {
@@ -144,6 +164,7 @@ function Dashboard() {
           }, {});
   
           setPendingDepartmentData(groupedPendingData);
+
           console.log("Grouped Pending Data:", groupedPendingData);
         } else {
           console.log("Pending Data is not in expected format or is empty:", data);
@@ -157,8 +178,12 @@ function Dashboard() {
   const sortedData = () => {
     const sortableItems = Object.keys(productionData).map((dept) => ({
       dept,
-      productionQty: productionData[dept],
-      pendingQty: pendingDepartmentData[dept] || 0,
+      productionQty: usePreviousDay 
+        ? previous_production[dept] || 0 
+        : productionData[dept] || 0,
+      pendingQty: usePreviousDay 
+        ? previous_pending[dept] || 0 
+        : pendingDepartmentData[dept] || 0,
     }));
   
     if (sortConfig !== null) {
@@ -175,22 +200,24 @@ function Dashboard() {
     return sortableItems;
   };
   
+
   const handleSort = (key) => {
     let direction = 'ascending';
-    if (sortConfig.key === key && sortConfig.direction === 'ascending') {
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'ascending') {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
   };
-  const renderTable = () => (
+
+   const renderTable = () => (
     <div className="flex justify-center items-center h-full">
       <div
         className={`p-2 rounded-lg shadow-md flex flex-col justify-center items-center m-0 w-[50%] 
           ${theme === 'light' ? 'bg-white text-gray-700' :' bg-gray-900 text-gray-300'}`}
       >
-            <button onClick={fetchPreviousDayData} className="mb-4">Fetch Previous Day Data</button>
+        <button onClick={fetchPreviousDayData} className={`mb-4 w-full p-3 ${usePreviousDay?'bg-gray-300':'bg-none'}`}>Fetch Previous Day Data</button>
 
-            {previousDate && ( // Render the date if it exists
+        {previousDate && ( // Render the date if it exists
           <h2 className={`text-lg mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-300'}`}>
             Previous Day Data: {previousDate}
           </h2>
@@ -215,28 +242,28 @@ function Dashboard() {
             </tr>
           </thead>
           <tbody>
-  {sortedData()
-    .filter((item) =>
-      search.toLowerCase() === '' ? item.dept : item.dept.toLowerCase().includes(search.toLowerCase())
-    )
-    .map((item, index) => (
-      <tr
-        key={item.dept}
-        className={`border-b border-solid 
-          ${theme === 'light' ? (index % 2 === 0 ? 'bg-gray-200 text-gray-700 border-slate-200' : 'bg-white text-gray-700 border-slate-100') : 
-          (index % 2 === 0 ? 'bg-gray-800 text-gray-300 border-slate-900' : 'bg-gray-900 text-gray-300 border-gray-500')}`}
-      >
-        <td className="px-6 py-3">{item.dept}</td>
-        <td className="px-6 py-3">{item.productionQty}</td>
-        <td className="px-6 py-3">{item.pendingQty}</td>
-      </tr>
-    ))}
-</tbody>
-
+            {sortedData()
+              .filter((item) =>
+                search.toLowerCase() === '' ? item.dept : item.dept.toLowerCase().includes(search.toLowerCase())
+              )
+              .map((item, index) => (
+                <tr
+                  key={item.dept}
+                  className={`border-b border-solid 
+                    ${theme === 'light' ? (index % 2 === 0 ? 'bg-gray-200 text-gray-700 border-slate-200' : 'bg-white text-gray-700 border-slate-100') : 
+                    (index % 2 === 0 ? 'bg-gray-800 text-gray-300 border-slate-900' : 'bg-gray-900 text-gray-300 border-gray-500')}`}
+                >
+                  <td className="px-6 py-3">{item.dept}</td>
+                  <td className="px-6 py-3">{item.productionQty}</td>
+                  <td className="px-6 py-3">{item.pendingQty}</td>
+                </tr>
+              ))}
+          </tbody>
         </table>
       </div>
     </div>
   );
+
   const renderCards = () => {
     const departments = Object.keys(productionData).filter((dept) =>
       search.toLowerCase() === '' ? dept : dept.toLowerCase().includes(search.toLowerCase())
