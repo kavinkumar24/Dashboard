@@ -1428,7 +1428,7 @@ app.get("/raw_filtered_production_data",async(req, res) => {
 
   const sql = `
          SELECT \`From Dept\`,\`To Dept\`, \`CW Qty\`,Project
-         FROM Production_sample_data
+         FROM Production_updated_data
          WHERE \`From Dept\` IN (?)
             
       `;
@@ -1666,101 +1666,150 @@ app.get("/filtered_production_data", async (req, res) => {
   });
 });
 
-app.get("/filtered_pending_data_previous", async (req, res) => {
-  const response = await axios.get("http://localhost:8081/department-mappings");
-  const departmentMappings = response.data;
-
-  const toDeptFilter = Object.values(departmentMappings).flatMap(mapping => mapping.from);
-  const lowerToDeptFilter = toDeptFilter.map(dept => dept.toLowerCase());
-
-  // Get yesterday's date in the required format for your SQL database
-  const today = new Date();
-  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
-  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-  const sql = `
-    SELECT todept, SUM(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty
-    FROM Pending_sample_data
-    WHERE LOWER(todept) IN (?)
-      AND UploadedDateTime >= ? AND UploadedDateTime < ?
-    GROUP BY todept
-  `;
-
-  db.query(sql, [lowerToDeptFilter, startOfDay, endOfDay], (err, data) => {
-    if (err) return res.json(err);
-
-    const results = Object.keys(departmentMappings).reduce((acc, group) => {
-      acc[group] = { total_qty: 0 };
-      return acc;
-    }, {});
-
-    data.forEach(row => {
-      const toDept = row.todept ? row.todept.toUpperCase() : null;
-      const qty = row.total_qty;
-
-      if (toDept) {
-        for (const [group, { from }] of Object.entries(departmentMappings)) {
-          if (from.includes(toDept)) {
-            results[group].total_qty += qty;
-          }
-        }
-      }
-    });
-
-    return res.json(results);
-  });
-});
-
-
-
-app.get("/filtered_production_data_previous", async (req, res) => {
+app.get("/filtered_production_data_with_date", async (req, res) => {
   try {
-    // Fetch the department mappings
+    // Get department mappings
     const response = await axios.get("http://localhost:8081/department-mappings");
     const departmentMappings = response.data;
+    const { startDate, endDate } = req.query;
 
-    // Get today's and yesterday's date
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-
-    // Define start and end times for yesterday
-    const startOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
-    const endOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate() + 1);
-
-    // Extract department mappings
     const deptFromFilter = Object.values(departmentMappings).flatMap(mapping => mapping.from);
     const deptToFilter = Object.values(departmentMappings).flatMap(mapping => mapping.to);
 
     const lowerDeptFromFilter = deptFromFilter.map(dept => dept.toLowerCase());
     const lowerDeptToFilter = deptToFilter.map(dept => dept.toLowerCase());
 
-    // SQL for yesterday's data
-    const sqlYesterday = `
-      SELECT \`From Dept\`, \`To Dept\`, SUM(\`CW Qty\`) AS total_qty
+    // Get today's date range
+    const today = new Date();
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+    // Get yesterday's date range
+    const startOfYesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    const endOfYesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    // SQL query to get total quantity for both today and yesterday
+    const sql = `
+      SELECT \`From Dept\`, \`To Dept\`, SUM(\`CW Qty\`) AS total_qty, 
+             CASE 
+               WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'today'
+               WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'previous_day'
+               ELSE NULL
+             END AS day_type
       FROM Production_sample_data
       WHERE LOWER(\`From Dept\`) IN (?)
         AND LOWER(\`To Dept\`) IN (?)
-        AND UploadedDateTime >= ? AND UploadedDateTime < ?
-      GROUP BY \`From Dept\`, \`To Dept\`
+        AND (UploadedDateTime >= ? AND UploadedDateTime < ? OR UploadedDateTime >= ? AND UploadedDateTime < ?)
+      GROUP BY \`From Dept\`, \`To Dept\`, day_type
     `;
 
-    const paramsYesterday = [lowerDeptFromFilter, lowerDeptToFilter, startOfYesterday, endOfYesterday];
+    const params = [
+      startOfToday, endOfToday,   // Today's date range
+      startOfYesterday, endOfYesterday, // Yesterday's date range
+      lowerDeptFromFilter, lowerDeptToFilter,
+      startOfToday, endOfToday,   // Today's date range for WHERE condition
+      startOfYesterday, endOfYesterday // Yesterday's date range for WHERE condition
+    ];
 
-    // Execute the query to fetch yesterday's data
-    db.query(sqlYesterday, paramsYesterday, (err, yesterdayData) => {
-      if (err) {
-        console.error('Database error:', err);
-        return res.status(500).json({ error: 'Database error' });
-      }
+    db.query(sql, params, (err, data) => {
+      if (err) return res.json(err);
 
-      const results = Object.keys(departmentMappings).reduce((acc, group) => {
-        acc[group] = { total_qty: 0 };
-        return acc;
-      }, {});
+      // Initialize the result object with all departments set to 0 for both today and previous day
+      const results = {
+        today: {},
+        previous_day: {}
+      };
 
-      // Process yesterday's data and accumulate quantities
-      yesterdayData.forEach(row => {
+      // Set all departments to 0 initially
+      Object.keys(departmentMappings).forEach(group => {
+        results.today[group] = 0;
+        results.previous_day[group] = 0;
+      });
+
+      // Update the total_qty based on the actual query results
+      data.forEach(row => {
+        const fromDept = row["From Dept"].toUpperCase();
+        const toDept = row["To Dept"].toUpperCase();
+        const qty = row.total_qty;
+        const dayType = row.day_type; // 'today' or 'previous_day'
+
+        for (const [group, { from, to }] of Object.entries(departmentMappings)) {
+          if (from.includes(fromDept) && to.includes(toDept)) {
+            results[dayType][group] += qty; // Add quantity to the respective day
+          }
+        }
+      });
+
+      return res.json(results);
+    });
+  } catch (error) {
+    console.error("Error fetching production data:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+
+app.get("/filtered_production_data_previous", async (req, res) => {
+  const response = await axios.get("http://localhost:8081/department-mappings");
+  const departmentMappings = response.data;
+
+  const today = new Date(); 
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  const startOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+  const endOfYesterday = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate() + 1);
+
+  const deptFromFilter = Object.values(departmentMappings).flatMap(mapping => mapping.from);
+  const deptToFilter = Object.values(departmentMappings).flatMap(mapping => mapping.to);
+
+  const lowerDeptFromFilter = deptFromFilter.map(dept => dept.toLowerCase());
+  const lowerDeptToFilter = deptToFilter.map(dept => dept.toLowerCase());
+
+  // SQL for today's data
+  let sqlToday = `
+    SELECT \`From Dept\`, \`To Dept\`, SUM(\`CW Qty\`) AS total_qty
+    FROM Production_sample_data
+    WHERE LOWER(\`From Dept\`) IN (?)
+      AND LOWER(\`To Dept\`) IN (?)
+      AND UploadedDateTime >= ? AND UploadedDateTime < ?
+    GROUP BY \`From Dept\`, \`To Dept\`
+  `;
+
+  const paramsToday = [lowerDeptFromFilter, lowerDeptToFilter, startOfToday, endOfToday];
+
+  // SQL for yesterday's data
+  let sqlYesterday = `
+    SELECT \`From Dept\`, \`To Dept\`, SUM(\`CW Qty\`) AS total_qty
+    FROM Production_sample_data
+    WHERE LOWER(\`From Dept\`) IN (?)
+      AND LOWER(\`To Dept\`) IN (?)
+      AND UploadedDateTime >= ? AND UploadedDateTime < ?
+    GROUP BY \`From Dept\`, \`To Dept\`
+  `;
+
+  const paramsYesterday = [lowerDeptFromFilter, lowerDeptToFilter, startOfYesterday, endOfYesterday];
+
+  try {
+    const [todayData, yesterdayData] = await Promise.all([
+      new Promise((resolve, reject) => {
+        db.query(sqlToday, paramsToday, (err, data) => (err ? reject(err) : resolve(data)));
+      }),
+      new Promise((resolve, reject) => {
+        db.query(sqlYesterday, paramsYesterday, (err, data) => (err ? reject(err) : resolve(data)));
+      })
+    ]);
+
+    const results = Object.keys(departmentMappings).reduce((acc, group) => {
+      acc[group] = { total_qty: 0 };
+      return acc;
+    }, {});
+
+    const processRowData = (data) => {
+      data.forEach(row => {
         const fromDept = row["From Dept"].toUpperCase();
         const toDept = row["To Dept"].toUpperCase();
         const qty = row.total_qty;
@@ -1771,16 +1820,18 @@ app.get("/filtered_production_data_previous", async (req, res) => {
           }
         }
       });
+    };
 
-      // Return the results
-      return res.json(results);
-    });
+    // Process both today's and yesterday's data
+    processRowData(todayData);
+    processRowData(yesterdayData);
 
-  } catch (error) {
-    console.error('Error processing request:', error);
-    return res.status(500).json({ error: 'Error processing request' });
+    return res.json(results);
+  } catch (err) {
+    return res.json(err);
   }
 });
+
 
 
 // app.get('/filtered_production_data', (req, res) => {
@@ -2375,42 +2426,116 @@ app.get("/upload_time", async (req, res) => {
 });
 
 
-  app.get("/filtered_pending_data", async (req, res) => {
+app.get("/filtered_pending_data", async (req, res) => {
+  const response = await axios.get("http://localhost:8081/department-mappings");
+  const departmentMappings = response.data;
+
+  const toDeptFilter = Object.values(departmentMappings).flatMap(mapping => mapping.from);
+  const lowerToDeptFilter = toDeptFilter.map(dept => dept.toLowerCase());
+
+  // Get today's date in the required format for your SQL database
+  const today = new Date();
+  const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+
+  const sql = `
+    SELECT todept, SUM(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty
+    FROM Pending_sample_data
+    WHERE LOWER(todept) IN (?)
+      AND UploadedDateTime >= ? AND UploadedDateTime < ?
+    GROUP BY todept
+  `;
+
+  db.query(sql, [lowerToDeptFilter, startOfDay, endOfDay], (err, data) => {
+    if (err) return res.json(err);
+
+    const results = Object.keys(departmentMappings).reduce((acc, group) => {
+      acc[group] = { total_qty: 0 };
+      return acc;
+    }, {});
+
+    data.forEach(row => {
+      const toDept = row.todept ? row.todept.toUpperCase() : null;
+      const qty = row.total_qty;
+
+      if (toDept) {
+        for (const [group, { from }] of Object.entries(departmentMappings)) {
+          if (from.includes(toDept)) {
+            results[group].total_qty += qty;
+          }
+        }
+      }
+    });
+
+    return res.json(results);
+  });
+});
+
+app.get("/filtered_pending_data_with_date", async (req, res) => {
+  try {
+    // Get department mappings
     const response = await axios.get("http://localhost:8081/department-mappings");
     const departmentMappings = response.data;
 
     const toDeptFilter = Object.values(departmentMappings).flatMap(mapping => mapping.from);
     const lowerToDeptFilter = toDeptFilter.map(dept => dept.toLowerCase());
 
-    // Get today's date in the required format for your SQL database
+    // Get today's date range
     const today = new Date();
-    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
+    // Get yesterday's date range
+    const startOfYesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+    const endOfYesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+    // SQL query to get total quantity for both today and yesterday
     const sql = `
-      SELECT todept, SUM(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty
+      SELECT todept, SUM(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty,
+             CASE 
+               WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'today'
+               WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'previous_day'
+               ELSE NULL
+             END AS day_type
       FROM Pending_sample_data
       WHERE LOWER(todept) IN (?)
-        AND UploadedDateTime >= ? AND UploadedDateTime < ?
-      GROUP BY todept
+        AND (UploadedDateTime >= ? AND UploadedDateTime < ? OR UploadedDateTime >= ? AND UploadedDateTime < ?)
+      GROUP BY todept, day_type
     `;
 
-    db.query(sql, [lowerToDeptFilter, startOfDay, endOfDay], (err, data) => {
+    const params = [
+      startOfToday, endOfToday,   // Today's date range
+      startOfYesterday, endOfYesterday, // Yesterday's date range
+      lowerToDeptFilter,
+      startOfToday, endOfToday,   // Today's date range for WHERE condition
+      startOfYesterday, endOfYesterday // Yesterday's date range for WHERE condition
+    ];
+
+    db.query(sql, params, (err, data) => {
       if (err) return res.json(err);
 
-      const results = Object.keys(departmentMappings).reduce((acc, group) => {
-        acc[group] = { total_qty: 0 };
-        return acc;
-      }, {});
+      // Initialize the result object with all departments set to 0 for both today and previous day
+      const results = {
+        today: {},
+        previous_day: {}
+      };
 
+      // Set all departments to 0 initially
+      Object.keys(departmentMappings).forEach(group => {
+        results.today[group] = 0;
+        results.previous_day[group] = 0;
+      });
+
+      // Update the total_qty based on the actual query results
       data.forEach(row => {
         const toDept = row.todept ? row.todept.toUpperCase() : null;
         const qty = row.total_qty;
+        const dayType = row.day_type; // 'today' or 'previous_day'
 
         if (toDept) {
           for (const [group, { from }] of Object.entries(departmentMappings)) {
             if (from.includes(toDept)) {
-              results[group].total_qty += qty;
+              results[dayType][group] += qty; // Add quantity to the respective day
             }
           }
         }
@@ -2418,7 +2543,11 @@ app.get("/upload_time", async (req, res) => {
 
       return res.json(results);
     });
-  });
+  } catch (error) {
+    console.error("Error fetching pending data:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 
 const PORT = process.env.PORT || 8081;
