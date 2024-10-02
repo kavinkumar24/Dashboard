@@ -167,14 +167,14 @@ function ViewTasks() {
     const now = new Date();
 
     if (now >= end) {
-        return 100;
+      return 100;
     }
 
     const totalDays = (end - start) / (1000 * 60 * 60 * 24);
     const daysPassed = (now - start) / (1000 * 60 * 60 * 24);
 
     return (daysPassed / totalDays) * 100;
-}
+  }
 
   const updateTaskStatus = async (taskId, updatedData) => {
     try {
@@ -241,12 +241,10 @@ function ViewTasks() {
           filter={filter_on}
         />
         <main
-          className={`flex-1 overflow-y-auto overflow-x-auto p-4 ml-10 w-full md:px-8 lg:px-4 max-w-full md:max-w-screen-xl lg:max-w-screen-6xl xl:max-w-screen-7xl  ${
+          className={`flex-1 p-0 overflow-y-auto  ${
             filter_on === true ? "opacity-10" : "opacity-100"
           }`}
         >
-          
-
           {showimage && uploadedImage && (
             <div
               id="modelConfirm"
@@ -303,33 +301,26 @@ function ViewTasks() {
                 theme === "light" ? "text-gray-800" : "text-white"
               }`}
             >
-              Task List
+              
             </h1>
             <button
               onClick={handleDownload}
-              className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700"
+              className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 mr-10"
             >
               Download
             </button>
           </div>
 
           <div
-            className={`max-w-full overflow-x-auto border rounded-lg shadow-lg 
-    ${
-      theme === "light"
-        ? "border-gray-300 bg-white"
-        : "border-gray-700 bg-gray-800 text-white"
-    }`}
+            className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-14 my-5 ${
+              theme === "light" ? "bg-white" : "bg-gray-900 text-white"
+            } max-w-full md:max-w-lg lg:max-w-xl xl:max-w-screen-5xl 2xl:max-w-screen-7xl`}
           >
             <h1 className="text-xl font-semibold p-2 pl-10 py-5">Task List</h1>
 
-            <div
-              className={`w-full overflow-x-auto${
-                theme === "light" ? "bg-black" : "bg-gray-800"
-              }`}
-            >
+            <div className={`overflow-x-auto`}>
               <table
-                className={`w-full table-auto text-sm ${
+                className={`min-w-full justify-center items-center table-auto text-sm ${
                   theme === "light" ? "text-gray-800" : "text-gray-200"
                 }`}
               >
@@ -435,7 +426,11 @@ function ViewTasks() {
                         {formatDate(task.Target_Date)}
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
-                        {getPercentageTracker(task.Assign_Date, task.Target_Date).toFixed(2)} %
+                        {getPercentageTracker(
+                          task.Assign_Date,
+                          task.Target_Date
+                        ).toFixed(2)}{" "}
+                        %
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {task.Remaining_Days}
@@ -489,8 +484,10 @@ function ViewTasks() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
-                        {(loggedInEmail === task.Assign_Name) &&(userRole !== "admin")? (
-                          <input
+                        {loggedInEmail === task.Assign_Name &&
+                        userRole !== "admin" ? (
+                          <input 
+                          
                             type="text"
                             value={task.Remarks}
                             onChange={(e) => {
@@ -505,7 +502,9 @@ function ViewTasks() {
                               // Call the function to update remarks on the backend
                               updateTaskRemarks(task.Task_ID, updatedRemarks); // Send the string directly
                             }}
-                            className="border rounded-lg px-2 py-1"
+                            className={`border rounded-lg px-2 py-1 ${theme==='light'?'bg-white border-gray-200':
+                             'bg-gray-700 border-gray-500' 
+                            }`}
                             placeholder="Enter your remarks"
                           />
                         ) : (

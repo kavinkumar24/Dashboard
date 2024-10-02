@@ -83,14 +83,14 @@ function Party_visit_view() {
   const handleStatusChange = async (selectedOption, slNo) => {
     const newStatus = selectedOption.value;
     let completeDate = null;
-
+  
     if (newStatus === "completed") {
       completeDate = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
     }
-
+  
     const briefIndex = filteredData.findIndex((item) => item.SL_NO === slNo);
     const briefNo = selectedBriefs[briefIndex];
-
+  
     try {
       const response = await fetch(
         `http://localhost:8081/api/update_party_visit_status`,
@@ -107,13 +107,13 @@ function Party_visit_view() {
           }),
         }
       );
-
+  
       if (!response.ok) {
         throw new Error("Failed to update status");
       }
-
+  
       setActiveRow(slNo);
-
+  
       setData((prevData) =>
         prevData.map((item) =>
           item.SL_NO === slNo
@@ -164,7 +164,7 @@ function Party_visit_view() {
   const statusOptions = [
     { value: "in progress", label: "In Progress" },
     { value: "completed", label: "Completed" },
-    { value: "canceled", label: "Canceled" },
+    { value: "cancelled", label: "Cancel" },
   ];
 
   useEffect(() => {
@@ -318,49 +318,53 @@ function Party_visit_view() {
                         <td className="px-6 py-4 text-center whitespace-nowrap">
                           {isAssignedPerson ? (
                             <div className="w-40">
-                              <Select
-                                styles={{
-                                  ...customStyles,
-                                  menuPortal: (base) => ({
-                                    ...base,
-                                    zIndex: 9999,
-                                  }),
-                                }}
-                                options={statusOptions}
-                                value={statusOptions.find(
-                                  (option) => option.value === item.Status_data
-                                )}
-                                onChange={(option) =>
-                                  handleStatusChange(option, item.SL_NO)
-                                }
-                                className="z-50"
-                                menuPortalTarget={document.body}
-                                isDisabled={!isRowEditable}
-                              />
-                            </div>
-                          ) : (
-                            <div>
-                            <span
-                              className={`px-4 py-2 rounded ${
-                                item.Status_data === "in progress"
-                                  ? "bg-yellow-300"
-                                  : item.Status_data === "completed"
-                                  ? "bg-green-400"
-                                  : item.Status_data === "cancel"
-                                  ? "bg-red-500"
-                                  : ""
-                              }`}
-                            >
-                              {item.Status_data}
-                            </span>
-                            </div>
-                          )}
-                        </td>
+                              {item.Status_data === "completed" || item.Status_data === "cancelled" ? (
+        <span className={`px-4 py-2 rounded ${item.Status_data === "completed" ? "bg-green-400" : "bg-red-500 text-gray-100"}`}>
+          {item.Status_data}
+        </span>
+      ) : (
+        <Select
+          styles={{
+            ...customStyles,
+            menuPortal: (base) => ({
+              ...base,
+              zIndex: 9999,
+            }),
+          }}
+          options={statusOptions}
+          value={statusOptions.find(
+            (option) => option.value === item.Status_data
+          )}
+          onChange={(option) => handleStatusChange(option, item.SL_NO)}
+          className="z-50"
+          menuPortalTarget={document.body}
+          isDisabled={!isRowEditable}
+        />
+      )}
+    </div>
+  ) : (
+    <span>
+      <span
+        className={`px-4 py-2 rounded ${
+          item.Status_data === "in progress"
+            ? "bg-yellow-300"
+            : item.Status_data === "completed"
+            ? "bg-green-400"
+            : item.Status_data === "cancelled"
+            ? "bg-red-500 text-gray-100"
+            : ""
+        }`}
+      >
+        {item.Status_data}
+      </span>
+    </span>
+  )}
+</td>
                         <td
                           className="px-10 py-4 text-center whitespace-nowrap"
                           
                         >
-                          <div className="w-40 -ml-14">
+                          <div className="w-56 -ml-24">
                             {isAssignedPerson ? (
                               <Select
                                 options={briefOptions}

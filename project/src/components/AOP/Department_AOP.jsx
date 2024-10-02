@@ -143,7 +143,6 @@ function Department_AOP() {
         console.error("Error fetching pending sum data:", error)
       );
 
-    
     fetch("http://localhost:8081/department-mappings")
       .then((response) => response.json())
       .then((data) => {
@@ -178,66 +177,72 @@ function Department_AOP() {
       );
   }, []);
 
-
   const fetchData = async (selectedDeptName) => {
     try {
-      const response = await fetch("http://localhost:8081/raw_filtered_production_data");
+      const response = await fetch(
+        "http://localhost:8081/raw_filtered_production_data"
+      );
       const data = await response.json();
       console.log("Raw Filtered Production Data:", data);
-  
+
       const departmentMapping = departmentMappings[selectedDeptName] || {};
       const photoMapping = departmentMappings["PHOTO"] || {};
-  
+
       // Extract from and to departments for the selected department and PHOTO
       const fromDepartments = departmentMapping.from || [];
       const toDepartments = departmentMapping.to || [];
       const photoFromDepartments = photoMapping.from || [];
       const photoToDepartments = photoMapping.to || [];
-  
+
       // Initialize an object to hold counts for each allowed project
       const achievedCounts = ALLOWED_PROJECTS.reduce((acc, project) => {
         acc[project.toUpperCase()] = 0; // Initialize each project count to 0
         return acc;
       }, {});
-  
+
       // Calculate achieved counts based on the selected department and PHOTO mappings
       data.forEach((item) => {
         const fromDept = item["From Dept"]?.toUpperCase() || "";
         const toDept = item["To Dept"]?.toUpperCase() || "";
         const project = item["Project"]?.toUpperCase() || ""; // Get the project name
-  
-        console.log("From Dept:", fromDept, "To Dept:", toDept, "Project:", project);
-  
+
+        console.log(
+          "From Dept:",
+          fromDept,
+          "To Dept:",
+          toDept,
+          "Project:",
+          project
+        );
+
         // Check if the fromDept and toDept match the selected department mappings
         const isMatchingDept =
-          fromDepartments.includes(fromDept) &&
-          toDepartments.includes(toDept);
-  
+          fromDepartments.includes(fromDept) && toDepartments.includes(toDept);
+
         // Check if the fromDept and toDept match the PHOTO mappings
         const isMatchingPhoto =
           photoFromDepartments.includes(fromDept) &&
           photoToDepartments.includes(toDept);
-  
+
         // If either department mapping matches, check allowed projects
-        if ((isMatchingDept || isMatchingPhoto) && 
-            ALLOWED_PROJECTS.includes(project)) {
+        if (
+          (isMatchingDept || isMatchingPhoto) &&
+          ALLOWED_PROJECTS.includes(project)
+        ) {
           achievedCounts[project] += item["CW Qty"] || 0; // Default to 0 if CW Qty is not present
         }
       });
-  
+
       console.log("Achieved Counts:", achievedCounts);
       setAchieved(achievedCounts); // Update the achieved state
-      setRawFilteredData(data); 
+      setRawFilteredData(data);
     } catch (error) {
       console.error("Error fetching data:", error);
-    } 
+    }
   };
-  
-
 
   const [rawFilteredPendingData, setRawFilteredPendingData] = useState([]);
   const [groupedData, setGroupedData] = useState({});
-
 
   useEffect(() => {
     fetchData();
@@ -259,7 +264,7 @@ function Department_AOP() {
 
   useEffect(() => {
     fetchAndProcessData();
-    fetchData()
+    fetchData();
   }, [selectedDeptName, departmentMappings]);
 
   const departmentOptions = ALLOWED_PROJECTS.map((dept) => ({
@@ -360,45 +365,52 @@ function Department_AOP() {
     const normalizedData = pendingData.map((item) => ({
       ...item,
       PLTCODE1: item.PLTCODE1?.toUpperCase() || "",
-      Wip: pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)?.total_quantity || 0,
+      Wip:
+        pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)
+          ?.total_quantity || 0,
     }));
-  
+
     if (!selectedDeptName) {
       setTableData([]);
       return;
     }
-  
+
     const deptMapping = departmentMappings[selectedDeptName];
     if (deptMapping && deptMapping.to) {
-      const fromDeptSet = new Set(deptMapping.from.map((dept) => dept.toUpperCase()));
-      const toDeptSet = new Set(deptMapping.to.map((dept) => dept.toUpperCase()));
-  
+      const fromDeptSet = new Set(
+        deptMapping.from.map((dept) => dept.toUpperCase())
+      );
+      const toDeptSet = new Set(
+        deptMapping.to.map((dept) => dept.toUpperCase())
+      );
+
       const projectTotals = rawFilteredData.reduce((acc, item) => {
         const fromDept = item["From Dept"]?.toUpperCase() || "";
         const toDept = item["To Dept"]?.toUpperCase() || "";
-  
+
         if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
           const project = item.Project || "Unknown Project";
           const cwQty = item["CW Qty"] || 0;
-  
+
           if (!acc[project]) {
             acc[project] = 0;
           }
           acc[project] += cwQty;
         }
-  
+
         return acc;
       }, {});
-  
+
       const pltcodePendingData = aggregatePendingData(rawFilteredPendingData);
-  
+
       const filteredPendingData = normalizedData.filter((item) => {
         return (
           toDeptSet.has(item.TODEPT?.toUpperCase() || "") &&
-          (selectedDepartments.length === 0 || selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
+          (selectedDepartments.length === 0 ||
+            selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
         );
       });
-  
+
       const pltcodeCounts = filteredPendingData.reduce((acc, item) => {
         if (!acc[item.PLTCODE1]) {
           acc[item.PLTCODE1] = { count: 0, totalJCPDSCWQTY1: 0, totalWIP: 0 };
@@ -408,24 +420,30 @@ function Department_AOP() {
         acc[item.PLTCODE1].totalWIP = item.Wip;
         return acc;
       }, {});
-  
+
       // Make sure to access `achieved` from state
       const achievedCounts = achieved; // Assuming `achieved` is your state variable holding the counts
-  
+
       // Create the updated table data with allowed projects
       const updatedTableData = ALLOWED_PROJECTS.map((project) => {
         const pltcode = project.toUpperCase();
         const totalJCPDSCWQTY1 = pltcodePendingData[pltcode] || 0; // Use aggregated data
-        const target = Math.round(groupedData[pltcode]) ? Math.round(groupedData[pltcode]) : 0;
-  
+        const target = Math.round(groupedData[pltcode])
+          ? Math.round(groupedData[pltcode])
+          : 0;
+
         // Access achieved directly from state
         const achieved = achievedCounts[pltcode] || 0;
-  
+
         // Calculate pending
         const pending = target - achieved; // This should now not be NaN
         const week1Count = projectTotals[pltcode] || 0;
+        const week2Count = 0;
+        const week3Count = 0;
+        const week4Count = 0;
+
         const percentageAchieved = target > 0 ? (week1Count / target) * 100 : 0;
-  
+        const sum_of_weeks = week1Count + week2Count + week3Count + week4Count;
         return {
           PLTCODE1: pltcode,
           TotalJCPDSCWQTY1: totalJCPDSCWQTY1,
@@ -435,26 +453,30 @@ function Department_AOP() {
           PercentageAchieved: percentageAchieved,
           Wip: pltcodeCounts[pltcode]?.totalWIP || 0,
           AOP: target,
+          completed:sum_of_weeks,
           Week1: week1Count,
+          Week2: week2Count,
+          Week3: week3Count,
+          Week4: week4Count,
+
         };
       }).sort((a, b) => a.PLTCODE1.localeCompare(b.PLTCODE1));
-  
+
       // Calculate the total percentage
       const totalPercentage = updatedTableData.reduce(
         (acc, item) => acc + (parseFloat(item.PercentageAchieved) || 0),
         0
       );
-  
+
       // Set the total
       setTotal(totalPercentage);
-  
+
       // Update table data
       setTableData(updatedTableData);
     } else {
       setTableData([]);
     }
   };
-  
 
   const handleDepartmentChange = (selectedOptions) => {
     if (selectedOptions.length === 0) {
@@ -569,7 +591,7 @@ function Department_AOP() {
         />
 
         <main
-          className={`"flex-1 p-0 overflow-y-auto  ${
+          className={`flex-1 p-0 overflow-y-auto  ${
             filter_on === true ? "opacity-10" : "opacity-100"
           }`}
         >
@@ -655,198 +677,214 @@ function Department_AOP() {
           </div>
 
           {/* Display Table */}
-          <div
-            className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-14 my-5 ${
-              theme === "light" ? "bg-white" : "bg-gray-900"
-            } max-w-full md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-7xl`}
+         {/* Display Table */}
+<div
+  className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-14 my-5 ${
+    theme === "light" ? "bg-white" : "bg-gray-900"
+  } max-w-full md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-7xl`}
+>
+  {selectedDeptName && (
+    <>
+      <h2 className="text-xl font-bold mb-4">
+        Department: {selectedDeptName}
+      </h2>
+
+      <h2 className="text-sm font-normal mb-4 p-1">
+        Percentage: {total.toFixed(2)}%
+      </h2>
+      <div className="overflow-x-auto">
+        <table className={`min-w-full divide-y ${theme === "light" ? "divide-gray-200" : "divide-gray-700"} table-auto`}>
+          <thead
+            className={`${
+              theme === "light" ? "bg-gray-200" : "bg-gray-700"
+            } text-white`}
           >
-            {selectedDeptName && (
-              <>
-                <h2 className="text-xl font-bold mb-4">
-                  Department: {selectedDeptName}
-                </h2>
+            <tr>
+              <th
+                rowSpan="2"
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-300"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                Project wise
+              </th>
+              <th
+                rowSpan="2"
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-300"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                Project wise Target
+              </th>
+              <th
+                colSpan="2"
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-400"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                AOP Achieved
+              </th>
+              <th
+                colSpan="1"
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-400"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                Assignment AOP
+              </th>
+              <th
+                rowSpan="2"
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-300"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                {selectedDeptName}
+              </th>
+              <th
+                rowSpan="2"
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-300"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                {selectedDeptName} Completed
+              </th>
+              <th
+                rowSpan="2"
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-300"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                Weekly Percentage
+              </th>
+              <th
+                rowSpan="2"
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-300"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                Week1
+              </th>
+              <th
+                rowSpan="2"
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-300"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                Week2
+              </th>
+              <th
+                rowSpan="2"
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-300"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                Week3
+              </th>
+              <th
+                rowSpan="2"
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-300"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                Week4
+              </th>
+            </tr>
+            <tr>
+              <th
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-400"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                Achieved
+              </th>
+              <th
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-400"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                Pending
+              </th>
+              <th
+                className={`px-6 py-3 border-b ${
+                  theme === "light"
+                    ? "text-gray-800 border-gray-400"
+                    : "text-gray-300 border-gray-600"
+                }`}
+              >
+                WIP
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {tableData.map((row, index) => (
+              <tr
+                key={index}
+                onClick={() => handleRowClick(row.PLTCODE1)}
+                className={`hover:transition cursor-pointer ${
+                  index % 2 === 0
+                    ? theme === "light"
+                      ? "bg-gray-100 hover:bg-gray-400 hover:text-white"
+                      : "bg-gray-600 hover:bg-gray-900"
+                    : theme === "light"
+                    ? "bg-white hover:bg-gray-400 hover:text-white"
+                    : "bg-gray-800 hover:bg-gray-900"
+                }`}
+              >
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>{row.PLTCODE1}</td>
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>{row.Target}</td>
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>
+                  {achieved[row.PLTCODE1] || 0}
+                </td>
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>{row.Pending}</td>
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>{row.Wip}</td>
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>
+                  {row.TotalJCPDSCWQTY1}
+                </td>
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>
+                  {row.completed}
+                </td>
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>
+                  {row.PercentageAchieved.toFixed(2)}%
+                </td>
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>{row.Week1}</td>
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>-</td>
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>-</td>
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>-</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  )}
+</div>
 
-                <h2 className="text-sm font-normal mb-4 p-1">
-                  Percentage: {total.toFixed(2)}%
-                </h2>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 table-auto">
-                    <thead
-                      className={`${
-                        theme === "light" ? "bg-gray-200" : "bg-gray-700"
-                      } text-white`}
-                    >
-                      <tr>
-                        <th
-                          rowSpan="2"
-                          className={`px-6 py-3 border-b ${
-                            theme === "light"
-                              ? "text-gray-800"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          Project wise
-                        </th>
-                        <th
-                          rowSpan="2"
-                          className={`px-6 py-3 border-b ${
-                            theme === "light"
-                              ? "text-gray-800"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          Project wise Target
-                        </th>
-                        <th
-                          colSpan="2"
-                          className={`px-6 py-3 border-b ${
-                            theme === "light"
-                              ? "text-gray-800 border-gray-400"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          AOP Achieved
-                        </th>
-                        <th
-                          colSpan="1"
-                          className={`px-6 py-3 border-b ${
-                            theme === "light"
-                              ? "text-gray-800 border-gray-400"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          Assignment AOP
-                        </th>
-                        <th
-                          rowSpan="2"
-                          className={`px-6 py-3 border-b ${
-                            theme === "light"
-                              ? "text-gray-800"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          {selectedDeptName}
-                        </th>
-                        <th
-                          rowSpan="2"
-                          className={`px-6 py-3 border-b ${
-                            theme === "light"
-                              ? "text-gray-800"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          Weekly Percentage
-                        </th>
-                        <th
-                          rowSpan="2"
-                          className={`px-6 py-3 border-b ${
-                            theme === "light"
-                              ? "text-gray-800"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          Week1
-                        </th>
-                        <th
-                          rowSpan="2"
-                          className={`px-6 py-3 border-b ${
-                            theme === "light"
-                              ? "text-gray-800"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          Week2
-                        </th>
-                        <th
-                          rowSpan="2"
-                          className={`px-6 py-3 border-b ${
-                            theme === "light"
-                              ? "text-gray-800"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          Week3
-                        </th>
-                        <th
-                          rowSpan="2"
-                          className={`px-6 py-3 border-b ${
-                            theme === "light"
-                              ? "text-gray-800"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          Week4
-                        </th>
-                      </tr>
-                      <tr>
-                        <th
-                          className={`px-6 py-3 border-b ${
-                            theme === "light"
-                              ? "text-gray-800"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          Achieved
-                        </th>
-                        <th
-                          className={`px-6 py-3 border-b ${
-                            theme === "light"
-                              ? "text-gray-800"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          Pending
-                        </th>
-                        <th
-                          className={`px-6 py-3 border-b ${
-                            theme === "light"
-                              ? "text-gray-800"
-                              : "text-gray-300"
-                          }`}
-                        >
-                          WIP
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {tableData.map((row, index) => (
-                        <tr
-                          key={index}
-                          onClick={() => handleRowClick(row.PLTCODE1)}
-                          className={`hover:transition cursor-pointer ${
-                            index % 2 === 0
-                              ? theme === "light"
-                                ? "bg-gray-100 hover:bg-gray-400 hover:text-white"
-                                : "bg-gray-600 hover:bg-gray-900"
-                              : theme === "light"
-                              ? "bg-white hover:bg-gray-400 hover:text-white"
-                              : "bg-gray-800 hover:bg-gray-900"
-                          }`}
-                        >
-                          <td className="px-6 py-4 border-b">{row.PLTCODE1}</td>
-                          <td className="px-6 py-4 border-b">{row.Target}</td>
-                            <td className="px-6 py-4 border-b">{achieved[row.PLTCODE1] || 0}</td>
-
-                          <td className="px-6 py-4 border-b">{row.Pending}</td>
-                          <td className="px-6 py-4 border-b">{row.Wip}</td>
-                          <td className="px-6 py-4 border-b">
-                            {row.TotalJCPDSCWQTY1}
-                          </td>
-                          <td className="px-6 py-4 border-b">
-                            {row.PercentageAchieved.toFixed(2)}%
-                          </td>
-                          <td className="px-6 py-4 border-b">{row.Week1}</td>
-                          <td className="px-6 py-4 border-b">-</td>
-                          <td className="px-6 py-4 border-b">-</td>
-                          <td className="px-6 py-4 border-b">-</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
-            )}
-          </div>
         </main>
       </div>
     </div>
