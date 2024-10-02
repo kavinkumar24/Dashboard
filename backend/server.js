@@ -147,7 +147,7 @@ app.get("/pending-sum", (req, res) => {
 
 
 app.get("/targets", (req, res) => {
-  db.query("SELECT * FROM projects_targets", (err, result) => {
+  db.query("SELECT * FROM target", (err, result) => {
     if (err) {
       console.error("Error fetching data:", err);
       return res.status(500).json({ message: "Error fetching data" });
@@ -385,7 +385,7 @@ app.post('/api/target/upload', upload.single('file'), (req, res) => {
           Project VARCHAR(255),
           Product VARCHAR(255),
           SubProduct VARCHAR(255),
-          Total FLOAT
+          Total INT
           
         )
       `;
@@ -1384,7 +1384,7 @@ app.get("/jewel-master",(req,res)=>{
 })
 
 app.get('/api/target', (req, res) => {
-  const sql = 'SELECT * FROM target';
+  const sql = 'SELECT * FROM aop';
   db.query(sql, (err, data) => {
     if (err) return res.json(err);
     return res.json(data);
@@ -1481,7 +1481,6 @@ app.post('/api/target/upload', upload.single('file'), (req, res) => {
     const headerMismatch = expectedColumns.filter(col => !fileHeaders.includes(col));
 
     if (headerMismatch.length > 0) {
-      // If there's a mismatch in headers, return an error message to the user
       return res.status(400).send(`
         Attention Please!!! : The following columns are missing or mismatched: 
         ${headerMismatch.join(', ')}. 
@@ -1506,11 +1505,10 @@ app.post('/api/target/upload', upload.single('file'), (req, res) => {
       // Create the 'target' table if it doesn't exist
       const createTableQuery = `
         CREATE TABLE IF NOT EXISTS target (
-          Project VARCHAR(255),
+          \`PROJECT-1\` VARCHAR(255),
           Product VARCHAR(255),
-          SubProduct VARCHAR(255),
-          Total FLOAT
-          
+          Sub_Product VARCHAR(255),
+          Total INT
         )
       `;
 
@@ -1534,11 +1532,11 @@ app.post('/api/target/upload', upload.single('file'), (req, res) => {
 
           // Insert new data into the 'target' table
           const insertQuery = `
-            INSERT INTO target (Project, Product, SubProduct, Total)
+            INSERT INTO target (\`PROJECT-1\`, Product, Sub_Product, Total)
             VALUES ?
           `;
 
-          db.query(insertQuery, [values], (insertErr, results) => {
+          db.query(insertQuery, [values], (insertErr) => {
             if (insertErr) {
               db.rollback(() => {
                 console.error('Insert error:', insertErr);
@@ -1554,7 +1552,7 @@ app.post('/api/target/upload', upload.single('file'), (req, res) => {
                 });
               }
 
-              res.send('Target data uploaded and inserted successfully.');
+              res.send('Target data uploaded and replaced successfully.');
             });
           });
         });
@@ -1565,6 +1563,7 @@ app.post('/api/target/upload', upload.single('file'), (req, res) => {
     res.status(500).send('Error processing file');
   }
 });
+
 
 app.get("/api/pending", (req, res) => {
   const sql = "SELECT BRIEFNUM1, DESIGNSPEC1, PLTCODE1, SKETCHNUM1 FROM Pending_sample_data";
@@ -1830,7 +1829,7 @@ app.get("/filtered_production_data_previous", async (req, res) => {
 // });
 
 app.get("/production_data", (req, res) => {
-  const sql = "SELECT * FROM Production_updated_data";
+  const sql = "SELECT * FROM Production_sample_data";
   db.query(sql, (err, data) => {
     if (err) return res.json(err);
     return res.json(data);
@@ -2431,7 +2430,7 @@ app.get("/", (req, res) => {
 
 
 app.get("/order_receive&new_design", (req, res) => {
-  const sql = `SELECT NAME1, TRANSDATE, ORDERNO, \`Group party\`, ZONE, Purity, Color, \`PHOTO NO 2\`, PRODUCT, QTY, WT, \`DD&month\`, Dyr,TYPE,PROJECT,\`SUB PRODUCT\`, \`PL-ST\` FROM Order_receving_data`;
+  const sql = `SELECT NAME1, TRANSDATE, ORDERNO, \`Group party\`, ZONE, Purity, Color, \`PHOTO NO 2\`, PRODUCT, QTY, WT, \`DD&month\`, Dyr,TYPE,PROJECT,\`SUB PRODUCT\`, \`PL-ST\`, Brief FROM Order_receving_data`;
 
   db.query(sql, (err, results) => {
     if (err) {
@@ -2543,6 +2542,18 @@ app.post('/api/rejection/upload', upload.single('file'), (req, res) => {
     });
   });
 
+  app.get('/api/descenTask_Brief', (req, res) => {
+    const query = 'SELECT DISTINCT `Brief number` FROM design_center_task';
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error('Error fetching uploads:', err);
+        res.status(500).send('Error fetching uploads');
+        return;
+      }
+      res.json(results);
+    });
+  }
+  );
   app.get('/api/desCenTask', (req, res) => {
     const query = 'SELECT * FROM design_center_task';
     db.query(query, (err, results) => {
@@ -2834,10 +2845,7 @@ app.post("/api/party-visit", (req, res) => {
     description,
     assign_person,
     status_data,
-    brief_no,
-    quantity,
-    complete_date,
-    order_rev_wt,
+    
   } = req.body;
 
   // Log the incoming data
@@ -2847,10 +2855,10 @@ app.post("/api/party-visit", (req, res) => {
   const assign_person_string = Array.isArray(assign_person) ? assign_person.join(',') : assign_person;
 
   const query = `
-    INSERT INTO Party_Visit (Party_Name, visit_date, Description, Assign_Person, Status_data, Brief_no, Quantity, Complete_date, Order_rev_wt)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    INSERT INTO Party_Visit (Party_Name, visit_date, Description, Assign_Person, Status_data)
+    VALUES (?, ?, ?, ?, ?)`;
 
-  db.query(query, [party_name, visit_date, description, assign_person_string, status_data, brief_no, quantity, complete_date, order_rev_wt], (err, results) => {
+  db.query(query, [party_name, visit_date, description, assign_person_string, status_data], (err, results) => {
     if (err) {
       console.error("Error inserting data:", err);
       return res.status(500).json({ error: "Database error", details: err });
@@ -2858,7 +2866,64 @@ app.post("/api/party-visit", (req, res) => {
     return res.status(201).json({ message: "Party visit created", id: results.insertId });
   });
 });
+app.put("/api/update_party_visit_status", (req, res) => {
+  const { SL_NO, Status_data, Complete_date } = req.body;
 
+  const sql = `UPDATE Party_Visit SET Status_data = ?, Complete_date = ?  WHERE SL_NO = ?`;
+  db.query(sql, [Status_data, Complete_date, SL_NO], (err, results) => {
+    if (err) {
+      console.error("Error executing query:", err);
+      return res.status(500).json({ message: "Error executing query" });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: "Party visit not found" });
+    }
+
+    res.json({ message: "Status updated successfully", results });
+  });
+});
+
+
+app.put("/api/update_party_visit_brief", (req, res) => {
+  console.log("Request body:", req.body); // Log incoming request
+  const { SL_NO, Brief_no } = req.body;
+
+  if (!SL_NO || !Brief_no) {
+    return res.status(400).json({ message: "SL_NO and Brief_no are required" });
+  }
+
+  console.log("Updating with SL_NO:", SL_NO, "and Brief_no:", Brief_no);
+
+  const sql = `UPDATE Party_Visit SET Brief_no = ? WHERE SL_NO = ?`;
+  db.query(sql, [Brief_no, SL_NO], (err, results) => {
+    if (err) {
+      console.error("Error executing query:", err);
+      return res.status(500).json({ message: "Error executing query" });
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).json({ message: "Party visit not found" });
+    }
+
+    res.json({ message: "Brief updated successfully", results });
+  });
+});
+
+
+app.put("/api/update_party_visit_quantity", (req, res) => {
+  const { SL_NO, Quantity } = req.body;
+
+  const sql = `UPDATE Party_Visit SET Quantity = ? WHERE SL_NO = ?`;
+  db.query(sql, [Quantity, SL_NO], (err, results) => {
+    if (err) {
+      console.error("Error executing query:", err);
+      return res.status(500).json({ message: "Error executing query" });
+    }
+
+    res.json({ message: "Quantity updated successfully", results });
+  });
+});
 
 
 
