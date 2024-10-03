@@ -512,31 +512,6 @@ const yesterdayFormatted = `${String(yesterday.getDate()).padStart(2, '0')}/${St
             </tbody>
           </table>
         </div>
-
-        {/* Pagination Controls */}
-        {/* <div className="flex justify-center space-x-2 m-4">
-    <button
-      className={`text-base font-semibold px-5 py-3 rounded-lg border ${
-        currentPage1 === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'
-      }`}
-      onClick={() => handlePageChange(currentPage1 - 1)}
-      disabled={currentPage1 === 1}
-    >
-      Previous
-    </button>
-
-    <button className="text-base px-5 py-3 rounded-lg border bg-gray-300">{currentPage1}</button>
-
-    <button
-      className={`text-base font-semibold px-5 py-3 rounded-lg border ${
-        currentPage1 === totalPages ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'
-      }`}
-      onClick={() => handlePageChange(currentPage1 + 1)}
-      disabled={currentPage1 === totalPages}
-    >
-      Next
-    </button>
-  </div> */}
       </div>
     </div>
   );
