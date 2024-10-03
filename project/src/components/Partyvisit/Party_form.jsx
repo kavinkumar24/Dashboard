@@ -261,6 +261,7 @@ function Party_form() {
                     No of assignee
                   </label>
                   <Select
+                    styles={customStyles}
                     options={[1, 2, 3, 4, 5, 6].map((num) => ({
                       value: num,
                       label: num,

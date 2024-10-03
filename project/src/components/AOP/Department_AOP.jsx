@@ -681,7 +681,7 @@ function Department_AOP() {
 <div
   className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-14 my-5 ${
     theme === "light" ? "bg-white" : "bg-gray-900"
-  } max-w-full md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-7xl`}
+  } max-w-full md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-8xl`}
 >
   {selectedDeptName && (
     <>

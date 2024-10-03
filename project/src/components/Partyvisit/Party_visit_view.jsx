@@ -232,7 +232,7 @@ function Party_visit_view() {
           <div
             className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-10 my-5 
               ${theme === "light" ? "bg-white" : "bg-gray-900"} 
-              max-w-full md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-7xl mb-64`}
+              max-w-full md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-8xl mb-64`}
           >
             <h2
               className={`text-2xl font-semibold mb-6 ${
@@ -347,9 +347,9 @@ function Party_visit_view() {
       <span
         className={`px-4 py-2 rounded ${
           item.Status_data === "in progress"
-            ? "bg-yellow-300"
+            ? "bg-yellow-300 text-gray-800"
             : item.Status_data === "completed"
-            ? "bg-green-400"
+            ? "bg-green-400 text-gray-800"
             : item.Status_data === "cancelled"
             ? "bg-red-500 text-gray-100"
             : ""

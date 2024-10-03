@@ -731,6 +731,30 @@ app.post('/api/pending/upload', upload.single('file'), async (req, res) => {
 
   const fileBuffer = req.file.buffer;
 
+  // Function to convert Excel serial date to JavaScript Date object
+function excelSerialDateToDate(serial) {
+  if (!serial || serial <= 0) {
+    return null; // Treat invalid dates as null
+  }
+  
+  const excelEpoch = new Date(1899, 11, 30); // Excel's starting date (Dec 30, 1899)
+  const daysOffset = serial - 1; // Adjust for Excel's serial format
+  return new Date(excelEpoch.getTime() + daysOffset * 24 * 60 * 60 * 1000);
+}
+
+// Function to format date for MySQL
+function formatDateForMySQL(date) {
+  if (!date) return null;
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const seconds = date.getSeconds().toString().padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+
   try {
     const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
     const sheetName = workbook.SheetNames[0];
@@ -738,105 +762,100 @@ app.post('/api/pending/upload', upload.single('file'), async (req, res) => {
     const jsonData = xlsx.utils.sheet_to_json(worksheet);
 
     if (jsonData.length > 0) {
-      // Clear records older than 2 days
-      const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000);
-      await new Promise((resolve, reject) => {
-        const deleteQuery = `DELETE FROM Pending_sample_data WHERE uploadedDateTime < ?`;
-        db.query(deleteQuery, [twoDaysAgo], (error) => {
-          if (error) {
-            return reject(error);
-          }
-          resolve();
-        });
-      });
+      // Fetch the latest fileID and unique_fileID from Pending_sample_data
+      const lastFileIdQuery = 'SELECT fileID FROM Pending_sample_data ORDER BY fileID DESC LIMIT 1';
+      const lastUniqueFileIdQuery = 'SELECT unique_fileID FROM Pending_sample_data ORDER BY unique_fileID DESC LIMIT 1';
 
-      const values = jsonData.map(row => {
-        const recvdDate = excelSerialDateToDate(row['RECVDATE1']);
-        let formattedRecvdDate = formatDateForMySQL(recvdDate);
-        if (!formattedRecvdDate || formattedRecvdDate === '1899-12-31 00:00:00') {
-          formattedRecvdDate = null;
-        }
-
-        const date1 = excelSerialDateToDate(row['DATE1']);
-        let formattedDate1 = formatDateForMySQL(date1);
-        if (!formattedDate1 || formattedDate1 === '1899-12-31 00:00:00') {
-          formattedDate1 = null;
-        }
-
-        return [
-          row['TODEPT'],
-          row['JCID1'],
-          row['BRIEFNUM1'],
-          row['MERCHANDISERBRIEF1'],
-          row['SKETCHNUM1'],
-          row['ITEMID'],
-          row['PERSONNELNUMBER1'],
-          row['NAME1'],
-          row['PLTCODE1'],
-          row['PURITY1'],
-          row['ARTICLECODE1'],
-          row['COMPLEXITY1'],
-          row['JCPDSCWQTY1'],
-          row['JCQTY1'],
-          formattedDate1,
-          row['Textbox56'],
-          row['Textbox87'],
-          row['Textbox60'],
-          row['DESIGNSPEC1'],
-          row['RECEIVED1'],
-          formattedRecvdDate,
-          row['REMARKS1'],
-          row['HALLMARKINCERTCODE1'],
-          new Date() 
-        ];
-      });
-
-      const query = `INSERT INTO Pending_sample_data 
-        (\`TODEPT\`, \`JCID1\`, \`BRIEFNUM1\`, \`MERCHANDISERBRIEF1\`, \`SKETCHNUM1\`, \`ITEMID\`,
-         \`PERSONNELNUMBER1\`, \`NAME1\`, \`PLTCODE1\`, \`PURITY1\`, \`ARTICLECODE1\`,
-         \`COMPLEXITY1\`, \`JCPDSCWQTY1\`, \`JCQTY1\`, \`DATE1\`, \`Textbox56\`,
-         \`Textbox87\`, \`Textbox60\`, \`DESIGNSPEC1\`, \`RECEIVED1\`, \`RECVDATE1\`,
-         \`REMARKS1\`, \`HALLMARKINCERTCODE1\`, \`uploadedDateTime\`)
-        VALUES ?
-        ON DUPLICATE KEY UPDATE
-        \`BRIEFNUM1\` = VALUES(\`BRIEFNUM1\`),
-        \`MERCHANDISERBRIEF1\` = VALUES(\`MERCHANDISERBRIEF1\`),
-        \`SKETCHNUM1\` = VALUES(\`SKETCHNUM1\`),
-        \`ITEMID\` = VALUES(\`ITEMID\`),
-        \`PERSONNELNUMBER1\` = VALUES(\`PERSONNELNUMBER1\`),
-        \`NAME1\` = VALUES(\`NAME1\`),
-        \`PLTCODE1\` = VALUES(\`PLTCODE1\`),
-        \`PURITY1\` = VALUES(\`PURITY1\`),
-        \`ARTICLECODE1\` = VALUES(\`ARTICLECODE1\`),
-        \`COMPLEXITY1\` = VALUES(\`COMPLEXITY1\`),
-        \`JCPDSCWQTY1\` = VALUES(\`JCPDSCWQTY1\`),
-        \`JCQTY1\` = VALUES(\`JCQTY1\`),
-        \`DATE1\` = VALUES(\`DATE1\`),
-        \`Textbox56\` = VALUES(\`Textbox56\`),
-        \`Textbox87\` = VALUES(\`Textbox87\`),
-        \`Textbox60\` = VALUES(\`Textbox60\`),
-        \`DESIGNSPEC1\` = VALUES(\`DESIGNSPEC1\`),
-        \`RECEIVED1\` = VALUES(\`RECEIVED1\`),
-        \`RECVDATE1\` = VALUES(\`RECVDATE1\`),
-        \`REMARKS1\` = VALUES(\`REMARKS1\`),
-        \`HALLMARKINCERTCODE1\` = VALUES(\`HALLMARKINCERTCODE1\`),
-        \`uploadedDateTime\` = VALUES(\`uploadedDateTime\`)
-        `;
-        
-
-      db.query(query, [values], function (error, results) {
-        if (error) {
-          console.error('Database error:', error);
+      db.query(lastFileIdQuery, (err, fileIdResult) => {
+        if (err) {
+          console.error('Error fetching fileID:', err);
           return res.status(500).send('Database error');
         }
-        res.send('File uploaded and data inserted successfully.');
+
+        db.query(lastUniqueFileIdQuery, (err, uniqueFileIdResult) => {
+          if (err) {
+            console.error('Error fetching unique_fileID:', err);
+            return res.status(500).send('Database error');
+          }
+
+          // Fetch the latest fileID and unique_fileID
+          let lastFileId = fileIdResult[0]?.fileID || 'PEND0';
+          let lastUniqueFileId = uniqueFileIdResult[0]?.unique_fileID || 'PENDING0';
+
+          // Increment fileID for each row and unique_fileID for the entire upload
+          let fileCounter = parseInt(lastFileId.replace('PEND', '')) + 1;
+          let newUniqueFileIdNum = parseInt(lastUniqueFileId.replace('PENDING', '')) + 1;
+          let newUniqueFileId = `PENDING${newUniqueFileIdNum}`;
+
+          const values = jsonData.map(row => {
+            const recvdDate = excelSerialDateToDate(row['RECVDATE1']);
+            let formattedRecvdDate = formatDateForMySQL(recvdDate);
+            if (formattedRecvdDate === '1899-12-30 00:00:00') {
+              formattedRecvdDate = null;
+            }
+    
+            const date1 = excelSerialDateToDate(row['DATE1']);
+            let formattedDate1 = formatDateForMySQL(date1);
+            if (formattedDate1 === '1899-12-31 00:00:00') {
+              formattedDate1 = null;
+            }
+
+            const newFileId = `PEND${fileCounter++}`; // Increment fileID for each row
+
+            return [
+              row['TODEPT'],
+              row['JCID1'],
+              row['BRIEFNUM1'],
+              row['MERCHANDISERBRIEF1'],
+              row['SKETCHNUM1'],
+              row['ITEMID'],
+              row['PERSONNELNUMBER1'],
+              row['NAME1'],
+              row['PLTCODE1'],
+              row['PURITY1'],
+              row['ARTICLECODE1'],
+              row['COMPLEXITY1'],
+              row['JCPDSCWQTY1'],
+              row['JCQTY1'],
+              formattedDate1,
+              row['Textbox56'],
+              row['Textbox87'],
+              row['Textbox60'],
+              row['DESIGNSPEC1'],
+              row['RECEIVED1'],
+              formattedRecvdDate,
+              row['REMARKS1'],
+              row['HALLMARKINCERTCODE1'],
+              newFileId,
+              newUniqueFileId, // Same unique_fileID for all rows in the file
+              new Date()
+            ];
+          });
+
+          const query = `INSERT INTO Pending_sample_data 
+            (\`TODEPT\`, \`JCID1\`, \`BRIEFNUM1\`, \`MERCHANDISERBRIEF1\`, \`SKETCHNUM1\`, 
+             \`ITEMID\`, \`PERSONNELNUMBER1\`, \`NAME1\`, \`PLTCODE1\`, \`PURITY1\`, 
+             \`ARTICLECODE1\`, \`COMPLEXITY1\`, \`JCPDSCWQTY1\`, \`JCQTY1\`, 
+             \`DATE1\`, \`Textbox56\`, \`Textbox87\`, \`Textbox60\`, \`DESIGNSPEC1\`, 
+             \`RECEIVED1\`, \`RECVDATE1\`, \`REMARKS1\`, \`HALLMARKINCERTCODE1\`, 
+             \`fileID\`, \`unique_fileID\`, \`uploadedDateTime\`)
+            VALUES ? `;
+
+          db.query(query, [values], function (error, results) {
+            if (error) {
+              console.error('Database error:', error);
+              return res.status(500).send('Database error');
+            }
+            res.send('Pending file uploaded and data inserted successfully.');
+          });
+        });
       });
     } else {
-      res.status(400).send('No data found in Excel file');
+      res.status(400).send('No data found in Excel file.');
     }
   } catch (error) {
     console.error('Error processing file:', error);
-    res.status(500).send('Error processing file');
+    res.status(500).send('Error processing file.');
   }
 });
 
@@ -1428,8 +1447,9 @@ app.get("/raw_filtered_production_data",async(req, res) => {
 
   const sql = `
          SELECT \`From Dept\`,\`To Dept\`, \`CW Qty\`,Project
-         FROM Production_updated_data
+         FROM Production_sample_data
          WHERE \`From Dept\` IN (?)
+         AND DATE(uploadedDateTime) = CURDATE()
             
       `;
 
@@ -1922,6 +1942,7 @@ app.get("/raw_filtered_pending_data", async (req, res) => {
             SELECT TODEPT, CAST(JCPDSCWQTY1 AS DECIMAL) as JCPDSCWQTY1,PLTCODE1
             FROM Pending_sample_data
             WHERE LOWER(TODEPT) IN (?)
+             AND DATE(uploadedDateTime) = CURDATE()
          `;
 
   db.query(sql, [lowerToDeptFilter], (err, data) => {
@@ -2425,28 +2446,41 @@ app.get("/upload_time", async (req, res) => {
   }
 });
 
-
 app.get("/filtered_pending_data", async (req, res) => {
   const response = await axios.get("http://localhost:8081/department-mappings");
   const departmentMappings = response.data;
 
-  const toDeptFilter = Object.values(departmentMappings).flatMap(mapping => mapping.from);
-  const lowerToDeptFilter = toDeptFilter.map(dept => dept.toLowerCase());
+  const deptFromFilter = Object.values(departmentMappings).flatMap(mapping => mapping.from);
+  const lowerDeptFromFilter = deptFromFilter.map(dept => dept.toLowerCase());
+
+  const { startDate, endDate } = req.query;
 
   // Get today's date in the required format for your SQL database
   const today = new Date();
   const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
 
-  const sql = `
+  let sql = `
     SELECT todept, SUM(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty
     FROM Pending_sample_data
     WHERE LOWER(todept) IN (?)
       AND UploadedDateTime >= ? AND UploadedDateTime < ?
-    GROUP BY todept
   `;
 
-  db.query(sql, [lowerToDeptFilter, startOfDay, endOfDay], (err, data) => {
+  const params = [lowerDeptFromFilter, startOfDay, endOfDay];
+
+  if (startDate) {
+    sql += ` AND UploadedDateTime >= ?`;
+    params.push(new Date(startDate));
+  }
+  if (endDate) {
+    sql += ` AND UploadedDateTime <= ?`;
+    params.push(new Date(endDate));
+  }
+
+  sql += ` GROUP BY todept`;
+
+  db.query(sql, params, (err, data) => {
     if (err) return res.json(err);
 
     const results = Object.keys(departmentMappings).reduce((acc, group) => {
@@ -2470,6 +2504,7 @@ app.get("/filtered_pending_data", async (req, res) => {
     return res.json(results);
   });
 });
+
 
 app.get("/filtered_pending_data_with_date", async (req, res) => {
   try {
@@ -2673,7 +2708,7 @@ app.post('/api/rejection/upload', upload.single('file'), (req, res) => {
   });
 
   app.get('/api/descenTask_Brief', (req, res) => {
-    const query = 'SELECT DISTINCT `Brief number` FROM design_center_task';
+    const query = 'SELECT DISTINCT `Brief number` FROM design_center_task_sample';
     db.query(query, (err, results) => {
       if (err) {
         console.error('Error fetching uploads:', err);
@@ -2685,7 +2720,7 @@ app.post('/api/rejection/upload', upload.single('file'), (req, res) => {
   }
   );
   app.get('/api/desCenTask', (req, res) => {
-    const query = 'SELECT * FROM design_center_task';
+    const query = 'SELECT * FROM design_center_task_sample';
     db.query(query, (err, results) => {
       if (err) {
         console.error('Error fetching uploads:', err);

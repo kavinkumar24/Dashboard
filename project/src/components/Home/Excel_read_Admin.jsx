@@ -385,136 +385,134 @@ const yesterdayFormatted = `${String(yesterday.getDate()).padStart(2, '0')}/${St
 
       {/* //////////////////////////////////////// */}
 
-      <div className="m-4 mt-7 border rounded-lg border-gray-300 bg-white shadow-lg">
-        <div className="flex justify-between p-2 m-2">
-          <h1 className="text-xl font-semibold pt-2">
-            Production and Pending Data
-          </h1>
-        </div>
+      <div className={`m-4 mt-7 border rounded-lg ${theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-white'} shadow-lg`}>
+  <div className="flex justify-between p-2 m-2">
+    <h1 className={`text-xl font-semibold pt-2 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
+      Production and Pending Data
+    </h1>
+  </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full table-auto text-sm">
-            <thead>
-              <tr className="bg-gray-300 text-gray-700">
-                <th
-                  rowSpan="2"
-                  className="border border-gray-300 px-4 py-2 text-center font-semibold text-base"
-                >
-                  Dept
-                </th>
-                <th
-                  rowSpan="2"
-                  className="border border-gray-300 px-4 py-2 text-center font-semibold text-base"
-                >
-                  Align
-                </th>
-                <th
-                  rowSpan="2"
-                  className="border border-gray-300 px-4 py-2 text-center font-semibold text-base"
-                >
-                  Capacity/Plan
-                </th>
-                <th
-                  rowSpan="2"
-                  className="border border-gray-300 px-4 py-2 text-center font-semibold text-base"
-                >
-                  Total Pro
-                </th>
-                <th
-                  rowSpan="2"
-                  className="border border-gray-300 px-4 py-2 text-center font-semibold text-base"
-                >
-                  Balance Pro
-                </th>
-                <th
-                  rowSpan="2"
-                  className="border border-gray-300 px-4 py-2 text-center font-semibold text-base"
-                >
-                  Avg Pro QTY/Day
-                </th>
-                <th
-                  colSpan="2"
-                  className="border border-gray-300 px-4 py-2 text-center font-semibold text-base text-red-600"
-                >
-                  {todayFormatted}
-                </th>
-                <th
-                  colSpan="2"
-                  className="border border-gray-300 px-4 py-2 text-center font-semibold text-base text-red-600"
-                >
-                  {yesterdayFormatted}
-                </th>
-                <th
-                  rowSpan="2"
-                  className="border border-gray-300 px-4 py-2 text-center font-semibold text-base"
-                >
-                  Remarks
-                </th>
-              </tr>
-              <tr className="bg-gray-200 text-gray-700">
-                <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-base">
-                  Pro
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-base">
-                  Pen
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-base">
-                  Pro
-                </th>
-                <th className="border border-gray-300 px-4 py-2 text-center font-semibold text-base">
-                  Pen
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {tableData.map((row, index) => (
-                <tr
-                  key={index}
-                  className={`${
-                    index % 2 === 0 ? "bg-white" : "bg-gray-50"
-                  } hover:bg-gray-200 transition-colors duration-200`}
-                >
-                  <td className="border border-gray-300 px-4 py-2 text-center text-base font-medium">
-                    {row.dept}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2 text-center text-base">
-                    {row.align}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2 text-center text-base">
-                    {row.capacity}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2 text-center text-base">
-                    {row.totalPro}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2 text-center text-base">
-                    {row.balancePro}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2 text-center text-base">
-                    {row.avgProPerDay}
-                  </td>
-                  <td className="border bg-green-200 border-gray-300 px-4 py-2 text-center text-base font-medium">
-                    {row.protoday}
-                  </td>
-                  <td className="border bg-red-100 border-gray-300 px-4 py-2 text-center text-base font-medium">
-                    {row.pentoday}
-                  </td>
-                  <td className="border bg-green-200 border-gray-300 px-4 py-2 text-center text-base font-medium">
-                    {row.proprev}
-                  </td>
-                  <td className="border  bg-red-100 border-gray-300 px-4 py-2 text-center text-base font-medium">
-                    {row.penprev}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2 text-center text-base">
-                    {row.remarks}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+  <div className="overflow-x-auto">
+    <table className={`min-w-full table-auto text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+      <thead>
+        <tr className={`${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-300'}`}>
+          <th
+            rowSpan="2"
+            className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center font-semibold text-base`}
+          >
+            Dept
+          </th>
+          <th
+            rowSpan="2"
+            className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center font-semibold text-base`}
+          >
+            Align
+          </th>
+          <th
+            rowSpan="2"
+            className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center font-semibold text-base`}
+          >
+            Capacity/Plan
+          </th>
+          <th
+            rowSpan="2"
+            className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center font-semibold text-base`}
+          >
+            Total Pro
+          </th>
+          <th
+            rowSpan="2"
+            className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center font-semibold text-base`}
+          >
+            Balance Pro
+          </th>
+          <th
+            rowSpan="2"
+            className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center font-semibold text-base`}
+          >
+            Avg Pro QTY/Day
+          </th>
+          <th
+            colSpan="2"
+            className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center font-semibold text-base text-red-600`}
+          >
+            {todayFormatted}
+          </th>
+          <th
+            colSpan="2"
+            className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center font-semibold text-base text-red-600`}
+          >
+            {yesterdayFormatted}
+          </th>
+          <th
+            rowSpan="2"
+            className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center font-semibold text-base`}
+          >
+            Remarks
+          </th>
+        </tr>
+        <tr className={`${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'}`}>
+          <th className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center font-semibold text-base`}>
+            Pro
+          </th>
+          <th className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center font-semibold text-base`}>
+            Pen
+          </th>
+          <th className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center font-semibold text-base`}>
+            Pro
+          </th>
+          <th className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center font-semibold text-base`}>
+            Pen
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {tableData.map((row, index) => (
+          <tr
+            key={index}
+            className={`${index % 2 === 0 ? (theme === 'dark' ? 'bg-gray-700 hover:bg-gray-800 ' : 'bg-white hover:bg-gray-200 ') : (theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50')} transition-colors duration-200`}
+          >
+            <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center text-base font-medium`}>
+              {row.dept}
+            </td>
+            <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center text-base`}>
+              {row.align}
+            </td>
+            <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center text-base`}>
+              {row.capacity}
+            </td>
+            <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center text-base`}>
+              {row.totalPro}
+            </td>
+            <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center text-base`}>
+              {row.balancePro}
+            </td>
+            <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center text-base`}>
+              {row.avgProPerDay}
+            </td>
+            <td className={`border  ${theme === 'dark' ? 'border-gray-600 bg-green-700 text-gray-200' : 'border-gray-300 bg-green-200'} px-4 py-2 text-center text-base font-medium`}>
+              {row.protoday}
+            </td>
+            <td className={`border  ${theme === 'dark' ? 'border-gray-600 text-gray-200 bg-yellow-600 ' : 'border-gray-300 bg-yellow-100 '} px-4 py-2 text-center text-base font-medium`}>
+              {row.pentoday}
+            </td>
+            <td className={`border  ${theme === 'dark' ? 'border-gray-600 bg-green-700 text-gray-200' : 'border-gray-300 bg-green-200'} px-4 py-2 text-center text-base font-medium`}>
+              {row.proprev}
+            </td>
+            <td className={`border  ${theme === 'dark' ? 'border-gray-600 text-gray-200 bg-yellow-600 ' : 'border-gray-300 bg-yellow-100 '} px-4 py-2 text-center text-base font-medium`}>
+              {row.penprev}
+            </td>
+            <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center text-base`}>
+              {row.remarks}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
 
-        {/* Pagination Controls */}
-        {/* <div className="flex justify-center space-x-2 m-4">
+  {/* Pagination Controls */}
+  {/* <div className="flex justify-center space-x-2 m-4">
     <button
       className={`text-base font-semibold px-5 py-3 rounded-lg border ${
         currentPage1 === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'
@@ -537,7 +535,8 @@ const yesterdayFormatted = `${String(yesterday.getDate()).padStart(2, '0')}/${St
       Next
     </button>
   </div> */}
-      </div>
+</div>
+
     </div>
   );
 
@@ -726,14 +725,14 @@ const yesterdayFormatted = `${String(yesterday.getDate()).padStart(2, '0')}/${St
         >
           <div
             className={`p-2 ${
-              theme === "light" ? "text-gray-700" : "bg-gray-700 text-gray-300"
+              theme === "light" ? "text-gray-700" : "bg-gray-800 text-gray-300"
             }`}
           >
             <p className="text-sm text-left mb-2">Last Updated</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-2">
               {" "}
               {/* Reduced gap size */}
-              <div className="bg-white rounded-lg shadow px-2 py-2 text-center max-w-xs">
+              <div className={`rounded-lg shadow px-2 py-2 text-center max-w-xs  ${theme==='light'?'bg-white':'bg-gray-600'}`}>
                 <div className="flex items-center justify-center gap-2">
                   {" "}
                   {/* Flex and gap for same line */}
@@ -743,7 +742,7 @@ const yesterdayFormatted = `${String(yesterday.getDate()).padStart(2, '0')}/${St
                   <p className="text-sm font-bold">{uploadTime_pending}</p>
                 </div>
               </div>
-              <div className="bg-white rounded-lg shadow px-2 py-2 text-center max-w-xs">
+              <div className={`rounded-lg shadow px-2 py-2 text-center max-w-xs ${theme==='light'?'bg-white':'bg-gray-600'}`}>
                 <div className="flex items-center justify-center gap-2">
                   {" "}
                   {/* Flex and gap for same line */}

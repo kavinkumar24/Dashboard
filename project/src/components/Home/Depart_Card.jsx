@@ -277,7 +277,7 @@ function DepartmentDetail() {
 {type === 'pending' && (
   <div className="mb-8">
     {renderFromDepartmentCards(
-      departmentMappings[selectedDept]?.from || [],
+      departmentMappings[selectedDept]?.to || [],
       dataView,
       'Pending'
     )}
