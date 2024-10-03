@@ -206,15 +206,6 @@ function Department_AOP() {
         const toDept = item["To Dept"]?.toUpperCase() || "";
         const project = item["Project"]?.toUpperCase() || ""; // Get the project name
 
-        console.log(
-          "From Dept:",
-          fromDept,
-          "To Dept:",
-          toDept,
-          "Project:",
-          project
-        );
-
         // Check if the fromDept and toDept match the selected department mappings
         const isMatchingDept =
           fromDepartments.includes(fromDept) && toDepartments.includes(toDept);
@@ -228,8 +219,9 @@ function Department_AOP() {
         if (
           (isMatchingDept || isMatchingPhoto) &&
           ALLOWED_PROJECTS.includes(project)
+          
         ) {
-          achievedCounts[project] += item["CW Qty"] || 0; // Default to 0 if CW Qty is not present
+          achievedCounts[project] += 1;
         }
       });
 
@@ -395,7 +387,7 @@ function Department_AOP() {
           if (!acc[project]) {
             acc[project] = 0;
           }
-          acc[project] += cwQty;
+          acc[project] += 1; // or if sum = acc[project] += cwQty;
         }
 
         return acc;
@@ -444,6 +436,7 @@ function Department_AOP() {
 
         const percentageAchieved = target > 0 ? (week1Count / target) * 100 : 0;
         const sum_of_weeks = week1Count + week2Count + week3Count + week4Count;
+        
         return {
           PLTCODE1: pltcode,
           TotalJCPDSCWQTY1: totalJCPDSCWQTY1,
@@ -458,9 +451,11 @@ function Department_AOP() {
           Week2: week2Count,
           Week3: week3Count,
           Week4: week4Count,
-
-        };
-      }).sort((a, b) => a.PLTCODE1.localeCompare(b.PLTCODE1));
+        }
+        
+      })
+      .filter((data)=> data.Target!==0)
+      .sort((a, b) => a.PLTCODE1.localeCompare(b.PLTCODE1));
 
       // Calculate the total percentage
       const totalPercentage = updatedTableData.reduce(

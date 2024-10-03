@@ -6,6 +6,7 @@ import axios from "axios";
 function Dashboard() {
   const [productionData, setProductionData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
+  const [remarks, setRemarks] = useState({}); // To store remarks for each department
 
   // const [pendingData, setPendingData] = useState([]);
   const [departmentData, setDepartmentData] = useState({});
@@ -19,6 +20,7 @@ function Dashboard() {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("theme") || "light";
   });
+  const role = localStorage.getItem("role");
   const [sortConfig, setSortConfig] = useState({
     key: "Production Qty",
     direction: "ascending",
@@ -278,6 +280,19 @@ function Dashboard() {
   }, [twodays_pending]);
   
   
+  const handleRemarksChange = (dept, value) => {
+    setRemarks((prev) => ({ ...prev, [dept]: value })); // Update remarks for specific dept
+  };
+
+  
+  const saveRemarks = async (dept) => {
+    try {
+      await axios.post('http://localhost:8081/api/save-remarks', { dept, remarks: remarks[dept] });
+      alert('Remarks saved successfully');
+    } catch (error) {
+      console.error('Error saving remarks:', error);
+    }
+  };
   
   // Get today's date
 const today = new Date();
@@ -287,105 +302,28 @@ const todayFormatted = `${String(today.getDate()).padStart(2, '0')}/${String(tod
 const yesterday = new Date();
 yesterday.setDate(today.getDate() - 1);
 const yesterdayFormatted = `${String(yesterday.getDate()).padStart(2, '0')}/${String(yesterday.getMonth() + 1).padStart(2, '0')}/${yesterday.getFullYear()}`;
+useEffect(() => {
+  const fetchRemarks = async () => {
+    try {
+      const response = await axios.get('http://localhost:8081/api/remarks/data');
+      const remarksData = response.data.reduce((acc, row) => {
+        acc[row.dept] = row.remarks;
+        return acc;
+      }, {});
+      setRemarks(remarksData);
+    } catch (error) {
+      console.error('Error fetching remarks:', error);
+    }
+  };
+
+  fetchRemarks();
+}, []);
 
   
   const renderTable = () => (
     
     <div>
-      {/* <div className="flex justify-center items-center h-full">
-        <div
-          className={`p-2 rounded-lg shadow-md flex flex-col justify-center items-center m-0 w-[50%] 
-          ${
-            theme === "light"
-              ? "bg-white text-gray-700"
-              : " bg-gray-900 text-gray-300"
-          }`}
-        >
-          <button
-            onClick={fetchPreviousDayData}
-            className={`mb-4 w-full p-3 ${
-              usePreviousDay ? "bg-gray-300" : "bg-none"
-            }`}
-          >
-            Fetch Previous Day Data
-          </button>
-
-          {previousDate && ( // Render the date if it exists
-            <h2
-              className={`text-lg mb-2 ${
-                theme === "light" ? "text-gray-700" : "text-gray-300"
-              }`}
-            >
-              Previous Day Data: {previousDate}
-            </h2>
-          )}
-
-          <table
-            className={`w-[100%] text-sm text-left 
-            ${theme === "light" ? "text-gray-700" : "text-gray-300"}`}
-          >
-            <thead
-              className={`text-base uppercase 
-              ${
-                theme === "light"
-                  ? "bg-gray-100 text-gray-700"
-                  : "bg-gray-700 text-gray-300"
-              }`}
-            >
-              <tr>
-                <th scope="col" className="px-2 py-3">
-                  Warehouse
-                </th>
-                <th
-                  scope="col"
-                  className="px-2 py-3 cursor-pointer"
-                  onClick={() => handleSort("productionQty")}
-                >
-                  Production Qty
-                </th>
-                <th
-                  scope="col"
-                  className="px-2 py-3 cursor-pointer"
-                  onClick={() => handleSort("pendingQty")}
-                >
-                  Pending Qty
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedData()
-                .filter((item) =>
-                  search.toLowerCase() === ""
-                    ? item.dept
-                    : item.dept.toLowerCase().includes(search.toLowerCase())
-                )
-                .map((item, index) => (
-                  <tr
-                    key={item.dept}
-                    className={`border-b border-solid 
-                    ${
-                      theme === "light"
-                        ? index % 2 === 0
-                          ? "bg-gray-200 text-gray-700 border-slate-200"
-                          : "bg-white text-gray-700 border-slate-100"
-                        : index % 2 === 0
-                        ? "bg-gray-800 text-gray-300 border-slate-900"
-                        : "bg-gray-900 text-gray-300 border-gray-500"
-                    }`}
-                  >
-                    <td className="px-6 py-3">{item.dept}</td>
-                    <td className="px-6 py-3">{item.productionQty}</td>
-                    <td className="px-6 py-3">{item.pendingQty}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </div> */}
-
-      {/* //////////////////////////////////////// */}
-
-      <div className={`m-4 mt-7 border rounded-lg ${theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-white'} shadow-lg`}>
+        <div className={`m-4 mt-7 border rounded-lg ${theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-white'} shadow-lg`}>
   <div className="flex justify-between p-2 m-2">
     <h1 className={`text-xl font-semibold pt-2 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
       Production and Pending Data
@@ -476,7 +414,7 @@ const yesterdayFormatted = `${String(yesterday.getDate()).padStart(2, '0')}/${St
               {row.dept}
             </td>
             <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center text-base`}>
-              {row.align}
+              {row.align}%
             </td>
             <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center text-base`}>
               {row.capacity}
@@ -502,9 +440,22 @@ const yesterdayFormatted = `${String(yesterday.getDate()).padStart(2, '0')}/${St
             <td className={`border  ${theme === 'dark' ? 'border-gray-600 text-gray-200 bg-yellow-600 ' : 'border-gray-300 bg-yellow-100 '} px-4 py-2 text-center text-base font-medium`}>
               {row.penprev}
             </td>
-            <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center text-base`}>
-              {row.remarks}
-            </td>
+            <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center`}>
+            {role === 'admin' ? (
+  <textarea
+    className={`w-full h-10 p-2 rounded ${theme === 'dark' ? 'bg-gray-900 text-gray-200 border-gray-600' : 'bg-white text-black border-gray-300'} resize-none`}
+    placeholder="Enter remarks..."
+    value={remarks[row.dept] || ''} // Bind the textarea to remarks state
+    onChange={(e) => handleRemarksChange(row.dept, e.target.value)}
+    onBlur={() => saveRemarks(row.dept)} // Save remarks when textarea loses focus
+  />
+) : (
+  <div className={`w-full h-10 p-2 rounded ${theme === 'dark' ? 'bg-gray-800 text-gray-200 border-gray-600' : 'bg-gray-200 text-black border-gray-300'}`}>
+    {remarks[row.dept] || 'N/A'} // Show remarks or N/A
+  </div>
+)}
+
+                </td>
           </tr>
         ))}
       </tbody>
@@ -558,7 +509,7 @@ const yesterdayFormatted = `${String(yesterday.getDate()).padStart(2, '0')}/${St
           ? (((productionQty + pendingQty) / productionQty) * 1).toFixed(1)
           : "N/A";
       const Target = 100;
-      const efficiency = (productionQty / Target).toFixed(2);
+      const efficiency = (((productionQty / Target).toFixed(2))*100);
       return (
         <div
           key={dept}
@@ -648,7 +599,7 @@ const yesterdayFormatted = `${String(yesterday.getDate()).padStart(2, '0')}/${St
               `}
             >
               <p className="font-normal text-sm text-center p-2">
-                Efficiency: <span className="font-bold">{efficiency}</span>
+                Efficiency: <span className="font-bold">{efficiency}%</span>
               </p>
             </div>
           </div>
@@ -671,7 +622,7 @@ const yesterdayFormatted = `${String(yesterday.getDate()).padStart(2, '0')}/${St
         ? (((productionQty + pendingQty) / productionQty) * 1).toFixed(1)
         : "N/A";
     const Target = 100;
-    const efficiency = (productionQty / Target).toFixed(2);
+    const efficiency = (((productionQty / Target).toFixed(2))*100);
   
 
     const toDayProduction = twodays_production && twodays_production.today && twodays_production.today[dept] || 0;
@@ -760,7 +711,7 @@ const yesterdayFormatted = `${String(yesterday.getDate()).padStart(2, '0')}/${St
             className={`${
               viewData
                 ? "relative overflow-x-auto"
-                : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2"
+                : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-2 mb-10"
             }`}
           >
             {viewData

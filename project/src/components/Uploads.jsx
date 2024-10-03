@@ -83,7 +83,7 @@ function Uploads() {
     if (selectedFileType) {
       setTypeMsg("");
     }
-    if (selectedFileType === "production") {
+    if (selectedFileType === "production1") {
       setDetailedData([
         "JC ID",
         "Brief No",
@@ -112,7 +112,40 @@ function Uploads() {
       ]);
 
       setApi("http://localhost:8081/api/production/upload");
-    } else if (selectedFileType === "pending") {
+    }
+    else if (selectedFileType === "production2") {
+      setDetailedData([
+        "JCID",
+        "BRIEFNUM",
+        "PRE-BRIEFNUM",
+        "SKETCH NUM",
+        "ITEMID",
+        "PURITY",
+        "EMP-ID",
+        "REF-EMP-ID",
+        "NAME",
+        "JWTYPE",
+        "PROJECT",
+        "SUB-CATEGORY",
+        "INPDSCWQTY",
+        "INQTY",
+        "RCVCWQTY",
+        "RCVQTY",
+        "FROMWH",
+        "TOWH",
+        "IN DATE & TIME",
+        "OUT DATE & TIME",
+        "Hours       ",
+        "Days",
+        "DESCRIPTION",
+        "Design specification",
+        "PRODUNITID",
+        "REMARKS",
+      ]);
+
+      setApi("http://localhost:8081/api/production/upload");
+    } 
+    else if (selectedFileType === "pending1") {
       setDetailedData([
         "TODEPT",
         "JCID1",
@@ -139,6 +172,31 @@ function Uploads() {
         "HALLMARKINCERTCODE1",
       ]);
       setApi("http://localhost:8081/api/pending/upload");
+    } else if (selectedFileType === "pending2") {
+      setDetailedData([
+        "TOWH1",
+        "JCID",
+        "BRIEFNUM",
+        "MERCHANDISERBRIEF",
+        "SKETCHNUM",
+        "ITEMID",
+        "PERSONNELNUMBER",
+        "NAME",
+        "PLTCODE",
+        "PURITY",
+        "ARTICLECODE",
+        "COMPLEXITY",
+        "RCVCWQTY",
+        "RCVQTY",
+        "MODIFIEDDATETIME",
+        "dd",
+        "Textbox39",
+        "Textbox42",
+        "DESIGNSPEC",
+        "RCVCWQTY2",
+        "RCVQTY2",
+      ]);
+      setApi("http://localhost:8081/api/pending/upload");
     } else if (selectedFileType === "rejection") {
       setDetailedData([
         "Yr",
@@ -163,38 +221,43 @@ function Uploads() {
     } else if (selectedFileType === "orderRece_newDesi") {
       setDetailedData([
         "NAME1",
-        "ACCOUNTNUM",
-        "Itemcwqty2",
-        "Itemqty2",
+        "SUB PARTY",
+        "Group party",
         "JCID",
         "TRANSDATE",
         "ORDERNO",
         "OrderType",
-        "SEGMENTID",
-        "KNOWNAS",
+        "ZONE",
         "OGPG",
-        "PURITY",
-        "ColorId",
-        "JCCRATENAME",
-        "JOBCARDTYPE1",
-        "ITEMID",
-        "SKETCHNUM",
-        "CRWINCEPTIONDATE",
-        "subparty1",
-        "PLTCODE",
-        "HALLMARKINGCODE",
-        "MFG_CODE",
-        "ARTICLE_CODE",
-        "COMPLEXITY_CODE",
-        "DESCRIPTION",
-        "NIM_PROCATEGORY",
-        "TOPSUBCATEGORY",
+        "Purity",
+        "Color",
+        "PHOTO NO",
+        "PHOTO NO 2",
+        "PROJECT",
+        "TYPE",
+        "ITEM",
+        "PRODUCT",
+        "SUB PRODUCT",
+        "QTY",
+        "WT",
+        "Avg",
+        "Wt range",
+        "PL-ST",
+        "DD",
+        "SKCHNI",
+        "EMP",
+        "Name",
+        "CODE",
         "GENDER",
-        "NAMEALIAS",
-        "PERSONNELNUMBER",
-        "DesignerName2",
-        "Itemcwqty",
-        "Itemqty",
+        "2024 Set Photo",
+        "Po-new",
+        "DD&month",
+        "Dyr",
+        "Brief",
+        "Maketype",
+        "collection",
+        "Collection-1",
+        "Collection-2",
       ]);
 
       setApi("http://localhost:8081/api/order/upload");
@@ -356,8 +419,10 @@ function Uploads() {
             value={fileType}
           >
             <option value="">Choose the File Type</option>
-            <option value="production">Production</option>
-            <option value="pending">Pending</option>
+            <option value="production1">Production1 - non Gold</option>
+            <option value="production2">Production2 - new </option>
+            <option value="pending1">Pending1 - PDD</option>
+            <option value="pending2">Pending2 - new</option>
             <option value="rejection">Rejection</option>
             <option value="orderRece_newDesi">
               Order Receiving & New Design
@@ -368,32 +433,42 @@ function Uploads() {
 
           {typeMsg && <p className="text-red-600 mx-4 mt-2">{typeMsg}</p>}
           <div className="upload-container pt-5">
-          <label
-  htmlFor="uploadFile1"
-  className={`flex flex-col items-center justify-center max-w-md h-32 cursor-pointer border-2 border-dashed mx-auto ${theme === "light" ? "bg-white text-gray-500 border-gray-300" : "bg-gray-800 text-gray-200 border-gray-600"}`}
-  onClick={handleFileInputClick} // Handle click to prevent file input opening
->
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    className={`w-11 mb-2 ${theme === "light" ? "fill-gray-500" : "fill-gray-300"}`}
-    viewBox="0 0 32 32"
-  >
-    <path d="M23.75 11.044a7.99 7.99 0 0 0-15.5-.009A8 8 0 0 0 9 27h3a1 1 0 0 0 0-2H9a6 6 0 0 1-.035-12 1.038 1.038 0 0 0 1.1-.854 5.991 5.991 0 0 1 11.862 0A1.08 1.08 0 0 0 23 13a6 6 0 0 1 0 12h-3a1 1 0 0 0 0 2h3a8 8 0 0 0 .75-15.956z" />
-    <path d="M20.293 19.707a1 1 0 0 0 1.414-1.414l-5-5a1 1 0 0 0-1.414 0l-5 5a1 1 0 0 0 1.414 1.414L15 16.414V29a1 1 0 0 0 2 0V16.414z" />
-  </svg>
-  Import New Rejection file
-  <input
-    type="file"
-    id="uploadFile1"
-    className="hidden"
-    accept=".xlsx"
-    onChange={handleFileChange}
-    disabled={fileType === ""}
-  />
-  <p className={`text-xs font-medium mt-2 ${theme === "light" ? "text-gray-400" : "text-gray-500"}`}>
-    .xlsx file formats are only allowed.
-  </p>
-</label>
+            <label
+              htmlFor="uploadFile1"
+              className={`flex flex-col items-center justify-center max-w-md h-32 cursor-pointer border-2 border-dashed mx-auto ${
+                theme === "light"
+                  ? "bg-white text-gray-500 border-gray-300"
+                  : "bg-gray-800 text-gray-200 border-gray-600"
+              }`}
+              onClick={handleFileInputClick} // Handle click to prevent file input opening
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className={`w-11 mb-2 ${
+                  theme === "light" ? "fill-gray-500" : "fill-gray-300"
+                }`}
+                viewBox="0 0 32 32"
+              >
+                <path d="M23.75 11.044a7.99 7.99 0 0 0-15.5-.009A8 8 0 0 0 9 27h3a1 1 0 0 0 0-2H9a6 6 0 0 1-.035-12 1.038 1.038 0 0 0 1.1-.854 5.991 5.991 0 0 1 11.862 0A1.08 1.08 0 0 0 23 13a6 6 0 0 1 0 12h-3a1 1 0 0 0 0 2h3a8 8 0 0 0 .75-15.956z" />
+                <path d="M20.293 19.707a1 1 0 0 0 1.414-1.414l-5-5a1 1 0 0 0-1.414 0l-5 5a1 1 0 0 0 1.414 1.414L15 16.414V29a1 1 0 0 0 2 0V16.414z" />
+              </svg>
+              Import New Rejection file
+              <input
+                type="file"
+                id="uploadFile1"
+                className="hidden"
+                accept=".xlsx"
+                onChange={handleFileChange}
+                disabled={fileType === ""}
+              />
+              <p
+                className={`text-xs font-medium mt-2 ${
+                  theme === "light" ? "text-gray-400" : "text-gray-500"
+                }`}
+              >
+                .xlsx file formats are only allowed.
+              </p>
+            </label>
 
             {message && message === "File uploaded successfully!" ? (
               <div>
@@ -419,9 +494,18 @@ function Uploads() {
           </div>
 
           {detailedData.length > 0 && mismatchData.length <= 0 && !message && (
-            <div className={`m-4 mt-6 p-4 border   rounded-lg max-h-60 overflow-y-auto transition-all ease-in-out duration-1000 ${theme==='light'?'border-blue-300 bg-blue-50':'bg-blue-950 border-blue-800'
-            }`}>
-              <h3 className={`text-lg font-semibold   ${theme==='light'?'text-blue-800':'text-blue-500'} mb-2`}>
+            <div
+              className={`m-4 mt-6 p-4 border   rounded-lg max-h-60 overflow-y-auto transition-all ease-in-out duration-1000 ${
+                theme === "light"
+                  ? "border-blue-300 bg-blue-50"
+                  : "bg-blue-950 border-blue-800"
+              }`}
+            >
+              <h3
+                className={`text-lg font-semibold   ${
+                  theme === "light" ? "text-blue-800" : "text-blue-500"
+                } mb-2`}
+              >
                 Expected Column Names for{" "}
                 {fileType.charAt(0).toUpperCase() +
                   fileType.slice(1).toLowerCase()}{" "}
@@ -433,7 +517,12 @@ function Uploads() {
               </p>
               <ul className="list-disc ml-6">
                 {detailedData.map((column, index) => (
-                  <li key={index} className={` ${theme==='light'?'text-gray-700':'text-gray-400'}`}>
+                  <li
+                    key={index}
+                    className={` ${
+                      theme === "light" ? "text-gray-700" : "text-gray-400"
+                    }`}
+                  >
                     {column}
                   </li>
                 ))}

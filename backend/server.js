@@ -573,6 +573,49 @@ db.query(createProductionTableQuery, (err) => {
 });
 
 
+const isDaysValid = (days) => {
+  const parsedDays = parseInt(days);
+  return !isNaN(parsedDays) && parsedDays >= 0; // Ensure it's a non-negative integer
+};
+
+
+app.post('/api/save-remarks', async (req, res) => {
+  const { dept, remarks } = req.body;
+  console.log(dept,remarks)
+
+  if (!dept || !remarks) {
+    return res.status(400).send('Department and remarks are required.');
+  }
+
+  // Use upsert logic depending on your database
+  const query = `
+    INSERT INTO remarks_department (dept, remarks)
+    VALUES (?, ?)
+    ON DUPLICATE KEY UPDATE remarks = ?;
+  `;
+
+  db.query(query, [dept, remarks, remarks], (err, result) => {
+    if (err) {
+      console.error('Error updating remarks:', err);
+      return res.status(500).send('Error updating remarks.');
+    }
+    res.send('Remarks updated successfully.');
+  });
+});
+
+app.get('/api/remarks/data', async (req, res) => {
+  const query = 'SELECT dept, remarks FROM remarks_department';
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching remarks:', err);
+      return res.status(500).send('Error fetching remarks.');
+    }
+    res.json(results);
+  });
+});
+
+
 app.post('/api/production/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).send('No file uploaded.');
@@ -587,7 +630,6 @@ app.post('/api/production/upload', upload.single('file'), async (req, res) => {
     const jsonData = xlsx.utils.sheet_to_json(worksheet);
 
     if (jsonData.length > 0) {
-      // Generate new unique_fileID and fileID based on the latest in the database
       const lastFileIdQuery = 'SELECT fileID FROM Production_sample_data ORDER BY fileID DESC LIMIT 1';
       const lastUniqueFileIdQuery = 'SELECT unique_fileID FROM Production_sample_data ORDER BY unique_fileID DESC LIMIT 1';
 
@@ -603,55 +645,94 @@ app.post('/api/production/upload', upload.single('file'), async (req, res) => {
             return res.status(500).send('Database error');
           }
 
-          // Fetch the latest fileID and unique_fileID
           let lastFileId = fileIdResult[0]?.fileID || 'PRO0';
-          let lastUniqueFileId = uniqueFileIdResult[0]?.unique_fileID || 'PROD0'; // Default to 'PROD0' if no records exist
+          let lastUniqueFileId = uniqueFileIdResult[0]?.unique_fileID || 'PROD0';
 
-          // Increment fileID for each row and unique_fileID for the entire upload
           let fileCounter = parseInt(lastFileId.replace('PRO', '')) + 1;
           let newUniqueFileIdNum = parseInt(lastUniqueFileId.replace('PROD', '')) + 1;
           let newUniqueFileId = `PROD${newUniqueFileIdNum}`;
 
-          const values = jsonData.map(row => {
+          const values = jsonData.map((row, index) => {
             const inDate = excelSerialDateToDate(row['In Date']);
             const outDate = excelSerialDateToDate(row['Out Date']);
             const formattedInDate = formatDateForMySQL(inDate);
             const formattedOutDate = formatDateForMySQL(outDate);
 
-            // Assign the same newUniqueFileId for each row and increment fileID for each row
-            const newFileId = `PRO${fileCounter++}`; // Increment fileID for each row
+            const newFileId = `PRO${fileCounter++}`;
 
-            return [
-              row['JC ID'],
-              row['Brief No'],
-              row['PRE-BRIEF NO'],
-              row['Sketch No'],
-              row['Item ID'],
-              row['Purity'],
-              row['Empid'],
-              row['Ref Empid'],
-              row['Name'],
-              row['Jwl Type'],
-              row['Project'],
-              row['Sub Category'],
-              row['CW Qty'],
-              row['Qty'],
-              row['From Dept'],
-              row['To Dept'],
-              formattedInDate,
-              formattedOutDate,
-              row['Hours'],
-              row['Days'],
-              row['Description'],
-              row['Design specification'],
-              row['PRODUNITID'],
-              row['Remarks'],
-              newFileId, // Increment fileID for each row
-              newUniqueFileId // Same unique_fileID for all rows in the file
-            ];
-          });
+            const daysValue = row['Days'];
+            const daysToInsert = isDaysValid(daysValue) ? parseInt(daysValue) : null; // Insert NULL for invalid values
 
-          // Insert the data into the database
+            if (!isDaysValid(daysValue)) {
+              console.warn(`Invalid Days value: '${daysValue}' at row ${index + 1}. It will be set to NULL.`);
+            }
+
+            console.log(`Row ${index + 1}: JC ID: ${row['JC ID'] || row['JCID']}, Days: ${daysValue}, Valid: ${isDaysValid(daysValue)}`);
+
+            if (Object.keys(row)[0] === "JC ID") {
+              return [
+                row['JC ID'],
+                row['Brief No'],
+                row['PRE-BRIEF NO'],
+                row['Sketch No'],
+                row['Item ID'],
+                row['Purity'],
+                row['Empid'],
+                row['Ref Empid'],
+                row['Name'],
+                row['Jwl Type'],
+                row['Project'],
+                row['Sub Category'],
+                row['CW Qty'],
+                row['Qty'],
+                row['From Dept'],
+                row['To Dept'],
+                formattedInDate,
+                formattedOutDate,
+                row['Hours'],
+                daysToInsert, // Use validated daysToInsert
+                row['Description'],
+                row['Design specification'],
+                row['PRODUNITID'],
+                row['Remarks'],
+                newFileId,
+                newUniqueFileId
+              ];
+            } else if (Object.keys(row)[0] === "JCID") {
+              return [
+                row['JCID'],
+                row['BRIEFNUM'],
+                row['PRE-BRIEFNUM'],
+                row['SKETCH NUM'],
+                row['ITEMID'],
+                row['PURITY'],
+                row['EMP-ID'],
+                row['REF-EMP-ID'],
+                row['NAME'],
+                row['JWTYPE'],
+                row['PROJECT'],
+                row['SUB-CATEGORY'],
+                row['RCVCWQTY'],
+                row['RCVQTY'],
+                row['FROMWH'],
+                row['TOWH'],
+                formattedInDate,
+                formattedOutDate,
+                row['Hours       '],
+                daysToInsert, // Use validated daysToInsert
+                row['DESCRIPTION'],
+                row['DESIGNSPECIFICATION'],
+                row['PRODUNITID'],
+                row['REMARKS'],
+                newFileId,
+                newUniqueFileId
+              ];
+            }
+          }).filter(value => value); // Filter out any undefined values due to invalid rows
+
+          // Log the values before inserting
+          console.log('Inserting values:', values);
+
           const query = `
             INSERT INTO Production_sample_data 
             (\`JC ID\`, \`Brief No\`, \`PRE-BRIEF NO\`, \`Sketch No\`, \`Item ID\`, 
@@ -680,6 +761,7 @@ app.post('/api/production/upload', upload.single('file'), async (req, res) => {
     res.status(500).send('Error processing file');
   }
 });
+
 
 
 
@@ -802,8 +884,39 @@ function formatDateForMySQL(date) {
               formattedDate1 = null;
             }
 
-            const newFileId = `PEND${fileCounter++}`; // Increment fileID for each row
+            const newFileId = `PEND${fileCounter++}`; 
 
+           if(Object.keys(row)[0] === "TOWH1"){
+            return [
+              row['TOWH1'],
+              row['JCID'],
+              row['BRIEFNUM'],
+              row['MERCHANDISERBRIEF'],
+              row['SKETCHNUM'],
+              row['ITEMID'],
+              row['PERSONNELNUMBER'],
+              row['NAME'],
+              row['PLTCODE'],
+              row['PURITY'],
+              row['ARTICLECODE'],
+              row['COMPLEXITY'],
+              row['RCVCWQTY'],
+              row['RCVQTY'],
+              null,
+              row['dd'],
+              row['Textbox39'],
+              row['Textbox42'],
+              row['DESIGNSPEC'],
+              null,
+              null,
+              row['RCVCWQTY2'],
+              row['RCVQTY2'],
+              newFileId,
+              newUniqueFileId, // Same unique_fileID for all rows in the file
+              new Date()
+            ];
+           }
+           else{
             return [
               row['TODEPT'],
               row['JCID1'],
@@ -819,19 +932,20 @@ function formatDateForMySQL(date) {
               row['COMPLEXITY1'],
               row['JCPDSCWQTY1'],
               row['JCQTY1'],
-              formattedDate1,
+              null,
               row['Textbox56'],
               row['Textbox87'],
               row['Textbox60'],
               row['DESIGNSPEC1'],
               row['RECEIVED1'],
-              formattedRecvdDate,
+              null,
               row['REMARKS1'],
               row['HALLMARKINCERTCODE1'],
               newFileId,
               newUniqueFileId, // Same unique_fileID for all rows in the file
               new Date()
             ];
+           }
           });
 
           const query = `INSERT INTO Pending_sample_data 
@@ -987,7 +1101,7 @@ app.post('/api/order/upload', upload.single('file'), (req, res) => {
     row['Avg'],
     row['Wt range'],
     row['PL-ST'],
-    formattedDdDate,
+    null,
     row['SKCHNI'],
     row['EMP'],
     row['Name'],
@@ -995,7 +1109,7 @@ app.post('/api/order/upload', upload.single('file'), (req, res) => {
     row['GENDER'],
     row['2024 Set Photo'],
     row['Po-new'],
-    formattedDdMonth,
+    null,
     row['Dyr'],
     row['Brief'],
     row['Maketype'],
