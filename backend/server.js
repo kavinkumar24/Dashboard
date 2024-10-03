@@ -557,6 +557,11 @@ const createProductionTableQuery = `CREATE TABLE IF NOT EXISTS \`Production_samp
   \`unique_fileID\` VARCHAR(10) DEFAULT NULL
 )`;
 
+// ALTER TABLE Pending_sample_data 
+// ADD UNIQUE KEY unique_jcid_uploaded_fileID_unique_fileID (`JCID1`, `uploadedDateTime`, `fileID`, `unique_fileID`);
+
+// ALTER TABLE Production_sample_data 
+// ADD UNIQUE KEY unique_jc_in_date_fileID_unique_fileID (`JC ID`, `uploadedDateTime`, `fileID`, `unique_fileID`);
 
 
 db.query(createProductionTableQuery, (err) => {
@@ -567,9 +572,6 @@ db.query(createProductionTableQuery, (err) => {
   
 });
 
-
-
-const TWO_DAYS_IN_MS = 2 * 24 * 60 * 60 * 1000;
 
 app.post('/api/production/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
@@ -712,7 +714,8 @@ const createPendingTableQuery = `CREATE TABLE IF NOT EXISTS \`Pending_sample_dat
   \`RECVDATE1\` timestamp(6) NULL DEFAULT NULL,
   \`REMARKS1\` varchar(255) DEFAULT NULL,
   \`HALLMARKINCERTCODE1\` varchar(255) DEFAULT NULL,
-  \`fileID\` varchar(255) DEFAULT NULL,
+  \`fileID\` varchar(10) DEFAULT NULL,
+  \`unique_fileID\` varchar(10) DEFAULT NULL,
   \`uploadedDateTime\` timestamp NULL DEFAULT NULL
 )`;
 
@@ -721,7 +724,6 @@ db.query(createPendingTableQuery, (err) => {
     console.error('Error creating table:', err);
     return;
   }
-  
 });
 
 app.post('/api/pending/upload', upload.single('file'), async (req, res) => {
@@ -859,9 +861,7 @@ function formatDateForMySQL(date) {
   }
 });
 
-// ALTER TABLE Pending_sample_data ADD UNIQUE KEY unique_index (JCID1, BRIEFNUM1);
-// ALTER TABLE Pending_sample_data 
-// ADD UNIQUE KEY unique_sample (JCID1, BRIEFNUM1);
+
 
 
 // ************ end of Pending Data post endpoints ******************* //
