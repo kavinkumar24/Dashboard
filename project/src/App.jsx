@@ -342,7 +342,7 @@ function App() {
           <Route
             path="/party_visit/new"
             element={
-              <PrivateRoute>
+              <PrivateRoute allowedRoles={["admin"]}>
                 <Party_form />
               </PrivateRoute>
             }

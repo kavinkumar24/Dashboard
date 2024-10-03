@@ -213,65 +213,67 @@ useEffect(()=>{
 
   return (
     <div className={`min-h-screen flex ${theme === "light" ? "bg-gray-100 text-gray-900" : "bg-gray-800 text-gray-100"}`}>
-      <Sidebar theme={theme} className="w-64 h-screen p-0" />
-
-      <div className="flex-1 flex flex-col">
-        <Header theme={theme} className="p-0 m-0" on_filter={setFilter_on} filter={filter_on} />
-
-        <main className={`flex-1 p-6 overflow-y-auto ${filter_on ? "opacity-10" : "opacity-100"}`}>
-          <h1 className="text-2xl font-bold mb-4">Product Details for {pltcode}</h1>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {Object.keys(groupedProducts).length > 0 ? (
-              Object.keys(groupedProducts).map((product) => (
-                <div key={product} className={`p-4 rounded-lg shadow-md border-t-4 border-indigo-300 relative ${theme === "light" ? "text-gray-800 bg-white" : "text-gray-300 bg-slate-600"}`}>
-                  <div className={`p-2 mt-2 rounded-lg ${theme === "light" ? "bg-slate-100" : "bg-slate-500"}`}>
-                    <h3 className="font-bold text-lg">{product}</h3>
-                    <p>Count: <mark className={`rounded-md px-1 py-0.5 ${theme === "light" ? "bg-purple-200 text-black" : "bg-purple-900 text-slate-50"}`}>{Math.round(groupedProducts[product].count)}</mark></p>
-                  </div>
-
-                  <div className="mt-4">
-                    {Object.keys(groupedProducts[product].subProducts).length > 0 ? (
-                      <table className="w-full table-fixed border-collapse">
-                        <thead>
-                          <tr>
-                            <th className="border px-2 py-1 text-left">Sub-Product</th>
-                            <th className="border px-2 py-1 text-center">Target</th>
-                            <th className="border px-2 py-1 text-center">Achieved</th>
-                            <th className="border px-2 py-1 text-center">Pending</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-  {Object.keys(groupedProducts[product].subProducts).map((subProduct) => {
-    const subProductData = groupedProducts[product].subProducts[subProduct];
-    const total = subProductData.total; // Total target
-    const achieved = subProductData.achieved; // Achieved CW Qty
-    const pending = total - achieved; // Calculate pending
-
-    return (
-      <tr key={subProduct}>
-        <td className="border px-2 py-1">{subProduct}</td>
-        <td className="border px-2 py-1 text-center">{total}</td>
-        <td className="border px-2 py-1 text-center">{achieved}</td>
-        <td className="border px-2 py-1 text-center">{pending}</td>
-      </tr>
-    );
-  })}
-</tbody>
-
-                      </table>
-                    ) : (
-                      <p>No sub-products found.</p>
-                    )}
-                  </div>
+    <Sidebar theme={theme} className="w-64 h-screen p-0" />
+  
+    <div className="flex-1 flex flex-col">
+      <Header theme={theme} dark={setTheme} className="p-0 m-0" on_filter={setFilter_on} filter={filter_on} />
+  
+      <main className={`flex-1 p-6 overflow-y-auto ${filter_on ? "opacity-10" : "opacity-100"}`}>
+        <h1 className="text-2xl font-bold mb-4">Product Details for {pltcode}</h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {Object.keys(groupedProducts).length > 0 ? (
+            Object.keys(groupedProducts).map((product) => (
+              <div key={product} className={`p-4 rounded-lg shadow-md border-t-4 border-indigo-300 relative ${theme === "light" ? "text-gray-800 bg-white" : "text-gray-300 bg-slate-600"}`}>
+                <div className={`p-2 mt-2 rounded-lg ${theme === "light" ? "bg-slate-100" : "bg-slate-500"}`}>
+                  <h3 className="font-bold text-lg">{product}</h3>
+                  <p>Count: <mark className={`rounded-md px-1 py-0.5 ${theme === "light" ? "bg-purple-200 text-black" : "bg-purple-900 text-slate-50"}`}>{Math.round(groupedProducts[product].count)}</mark></p>
                 </div>
-              ))
-            ) : (
-              <p>No products found for the specified code.</p>
-            )}
-          </div>
-        </main>
-      </div>
+  
+                <div className="mt-4">
+                  {Object.keys(groupedProducts[product].subProducts).length > 0 ? (
+                 <table className="w-full table-fixed border-collapse">
+                 <thead className={`${theme === "dark" ? "bg-gray-800" : "bg-gray-200"}`}>
+                   <tr>
+                     <th className={`border px-2 py-1 text-center ${theme === "dark" ? "border-gray-600" : "border-gray-300"}`}>Sub-Product</th>
+                     <th className={`border px-2 py-1 text-center ${theme === "dark" ? "border-gray-600" : "border-gray-300"}`}>Target</th>
+                     <th className={`border px-2 py-1 text-center ${theme === "dark" ? "border-gray-600" : "border-gray-300"}`}>Achieved</th>
+                     <th className={`border px-2 py-1 text-center ${theme === "dark" ? "border-gray-600" : "border-gray-300"}`}>Pending</th>
+                   </tr>
+                 </thead>
+               
+                      <tbody>
+                        {Object.keys(groupedProducts[product].subProducts).map((subProduct, index) => {
+                          const subProductData = groupedProducts[product].subProducts[subProduct];
+                          const total = subProductData.total; // Total target
+                          const achieved = subProductData.achieved; // Achieved CW Qty
+                          const pending = total - achieved; // Calculate pending
+  
+                          return (
+                            <tr key={subProduct} className={index % 2 === 0 ? (theme === "light" ? "bg-gray-100" : "bg-gray-700") : (theme === "light" ? "bg-white" : "bg-gray-800")}>
+                              <td className={`border px-2 py-1 ${theme === "dark" ? "border-gray-600" : "border-gray-300"}`}>{subProduct}</td>
+                              <td className={`border px-2 py-1 text-center ${theme === "dark" ? "border-gray-600" : "border-gray-300"}`}>{total}</td>
+                              <td className={`border px-2 py-1 text-center ${theme === "dark" ? "border-gray-600" : "border-gray-300"}`}>{achieved}</td>
+                              <td className={`border px-2 py-1 text-center ${theme === "dark" ? "border-gray-600" : "border-gray-300"}`}>{pending}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <p>No sub-products found.</p>
+                  )}
+                </div>
+              </div>
+            ))
+          ) : (
+            <p>No products found for the specified code.</p>
+          )}
+        </div>
+      </main>
     </div>
+  </div>
+  
+  
   );
 }
 

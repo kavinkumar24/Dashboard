@@ -237,6 +237,7 @@ function CreateTask() {
     { value: "casting", label: "CASTING" },
     { value: "upstream", label: "UPSTREAM" },
     { value: "downstream", label: "DOWNSTREAM" },
+    {value : "design", label:"DESIGN"}
   ];
   const priorityOptions = [
     { value: "low", label: "Low" },

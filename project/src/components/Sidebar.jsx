@@ -328,6 +328,7 @@ function Sidebar({ theme }) {
                   View
                 </div>
               </a>
+              
               <a
                 href="#"
                 className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('operational_task')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
@@ -384,7 +385,7 @@ function Sidebar({ theme }) {
             </div>
           </a>}
 
-          { role == 'admin' &&     <a
+            <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('party_visit')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
             onClick={handleParty_click}
@@ -395,11 +396,12 @@ function Sidebar({ theme }) {
               </div>
               Party Visit
             </div>
-          </a>}
+          </a>
 
           {party_visit_expand &&
              <>
               <div className='ml-2'>
+                {role == 'admin' &&
                  <a
                 href="#"
                 className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass('New_party_creation')} ${theme === 'light' ? 'text-gray-500 hover:bg-slate-100 hover:text-gray-600' : ' text-slate-400 hover:bg-gray-900'}`}
@@ -412,6 +414,7 @@ function Sidebar({ theme }) {
                   New Party
                 </div>
               </a>
+}
               </div>
               <div className='ml-2'>
                  <a

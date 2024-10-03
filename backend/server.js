@@ -1957,24 +1957,25 @@ app.get("/raw_filtered_pending_data", async (req, res) => {
 app.get("/create-task", (req, res) => {
   const sql = "SELECT * FROM Created_task";
   db.query(sql, (err, data) => {
-     if (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Failed to fetch tasks", error: err });
-     }
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Failed to fetch tasks", error: err });
+    }
 
-     const currentDate = new Date();
-     const updatedTasks = data.map(task => {
-        const targetDate = new Date(task.Target_Date);
-        const diffTime = targetDate - currentDate; 
-        const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    const currentDate = new Date();
+    const updatedTasks = data.map(task => {
+      const targetDate = new Date(task.Target_Date);
+      const remainingDays = task.Completed_Status === 'Completed' 
+        ? task.Remaining_Days 
+        : Math.ceil((targetDate - currentDate) / (1000 * 60 * 60 * 24)); 
 
-        return {
-           ...task,
-           Remaining_Days: remainingDays  
-        };
-     });
+      return {
+        ...task,
+        Remaining_Days: remainingDays  
+      };
+    });
 
-     res.json(updatedTasks);
+    res.json(updatedTasks);
   });
 });
 
