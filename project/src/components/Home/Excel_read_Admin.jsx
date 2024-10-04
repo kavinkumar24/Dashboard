@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Header from "../Header";
 import Sidebar from "../Sidebar";
+import { FiEdit2 } from "react-icons/fi";
 import axios from "axios";
 function Dashboard() {
   const [productionData, setProductionData] = useState([]);
@@ -35,6 +36,7 @@ function Dashboard() {
   const [previous_pending, setPrevious_pending] = useState({});
   const [twodays_production, setTwodays_production] = useState(null);
   const [twodays_pending, setTwodays_pending] = useState(null);
+  const [show_text_Area, setShow_text_Area] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:8081/filtered_production_data_previous").then(
@@ -167,6 +169,10 @@ function Dashboard() {
         console.error("Error fetching production data:", error);
       });
   }, []);
+
+  const handleShow_text_area = () =>{
+    setShow_text_Area(true)
+  }
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -441,21 +447,26 @@ useEffect(() => {
               {row.penprev}
             </td>
             <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-4 py-2 text-center`}>
-            {role === 'admin' ? (
-  <textarea
-    className={`w-full h-10 p-2 rounded ${theme === 'dark' ? 'bg-gray-900 text-gray-200 border-gray-600' : 'bg-white text-black border-gray-300'} resize-none`}
-    placeholder="Enter remarks..."
-    value={remarks[row.dept] || ''} // Bind the textarea to remarks state
-    onChange={(e) => handleRemarksChange(row.dept, e.target.value)}
-    onBlur={() => saveRemarks(row.dept)} // Save remarks when textarea loses focus
-  />
-) : (
-  <div className={`w-full h-10 p-2 rounded ${theme === 'dark' ? 'bg-gray-800 text-gray-200 border-gray-600' : 'bg-gray-200 text-black border-gray-300'}`}>
-    {remarks[row.dept] || 'N/A'} // Show remarks or N/A
-  </div>
-)}
+  {role === 'admin' ? (
+    <div>
+      <FiEdit2 onClick={handleShow_text_area} />
+      {show_text_Area ? (
+        <textarea
+          className={`w-full h-10 p-2 rounded ${theme === 'dark' ? 'bg-gray-900 text-gray-200 border-gray-600' : 'bg-white text-black border-gray-300'} resize-none`}
+          placeholder="Enter remarks..."
+          value={remarks[row.dept] || ''} // Bind the textarea to remarks state
+          onChange={(e) => handleRemarksChange(row.dept, e.target.value)}
+          onBlur={() => saveRemarks(row.dept)} // Save remarks when textarea loses focus
+        />
+      ) : (
+        <div className={`w-full h-10 p-2 rounded ${theme === 'dark' ? 'bg-gray-800 text-gray-200 border-gray-600' : 'bg-gray-200 text-black border-gray-300'}`}>
+          {remarks[row.dept] || 'N/A'}
+        </div>
+      )}
+    </div>
+  ) : null}
+</td>
 
-                </td>
           </tr>
         ))}
       </tbody>

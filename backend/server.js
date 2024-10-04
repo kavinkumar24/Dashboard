@@ -21,6 +21,8 @@ const db = mysql.createConnection({
 });
 
 
+
+
 app.post('/save-targets', (req, res) => {
   const targets = req.body.targets; 
 
@@ -274,30 +276,37 @@ app.get('/api/user-only', authorize(['user']), (req, res) => {
 
 // login page api end
 
-// Convert Excel serial date to JavaScript Date
 function excelSerialDateToDate(serial) {
   if (!serial || isNaN(serial)) {
     return null;
   }
+
   const excelEpoch = new Date(1899, 11, 30); // Excel epoch starts from 1899-12-30
   const days = Math.floor(serial); // Get the whole part of the serial date
   const timeFraction = serial - days; // Get the time fraction of the day
+
+  // Calculate the full date
   const date = new Date(excelEpoch.getTime() + days * 86400000); // Convert days to milliseconds
-  date.setMinutes(date.getMinutes() + Math.round(timeFraction * 1440)); // Add time portion
+
+  // Add the time fraction (in milliseconds)
+  date.setMilliseconds(date.getMilliseconds() + timeFraction * 86400000); // 86400000 ms in a day
+
   return date;
 }
 
+
+//input date -> 
 // Format date for MySQL
-function formatDateForMySQL(date) {
-  if (!date) return null;
-  const year = date.getFullYear();
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const day = date.getDate().toString().padStart(2, '0');
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  const seconds = date.getSeconds().toString().padStart(2, '0');
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
+// function formatDateForMySQL(date) {
+//   if (!date) return null;
+//   const year = date.getFullYear();
+//   const month = (date.getMonth() + 1).toString().padStart(2, '0');
+//   const day = date.getDate().toString().padStart(2, '0');
+//   const hours = date.getHours().toString().padStart(2, '0');
+//   const minutes = date.getMinutes().toString().padStart(2, '0');
+//   const seconds = date.getSeconds().toString().padStart(2, '0');
+//   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+// }
 
 
 const createDesignTable = "CREATE TABLE if not exists `design_center_task_sample` ( \
@@ -1035,24 +1044,27 @@ db.query(createOrderReceivingTableQuery, (err) => {
 });
 
 function excelSerialDateToDate1(serial) {
-  const startDate = new Date(1899, 11, 30); // Excel starts from 1899-12-30
-  return new Date(startDate.getTime() + (serial * 24 * 60 * 60 * 1000));
+  const startDate = new Date(1899, 11, 30); 
+  return new Date(startDate.getTime() + (serial * 12 * 60 * 60 * 1000));
 }
-function formatDateForMySQL1(date) {
+function formatDateForMySQL(date) {
+  if (!date) return null;
   const year = date.getFullYear();
-  const month = ('0' + (date.getMonth() + 1)).slice(-2);
-  const day = ('0' + date.getDate()).slice(-2);
-  return `${year}-${month}-${day}`;
+  const month = String(date.getMonth() + 1).padStart(2, '0'); 
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 
-app.post('/api/order/upload', upload.single('file'), (req, res) => {
+app.post('/api/order/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).send('No file uploaded.');
   }
 
   const fileBuffer = req.file.buffer;
-  const fileName = req.file.originalname;
 
   try {
     const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
@@ -1062,61 +1074,60 @@ app.post('/api/order/upload', upload.single('file'), (req, res) => {
 
     if (jsonData.length > 0) {
       const values = jsonData.map(row => {
-        // Convert and format dates, handling possible invalid dates
         const transDate = excelSerialDateToDate1(row['TRANSDATE']);
-  const formattedTransDate = transDate ? formatDateForMySQL1(transDate) : null;
+        const formattedTransDate = transDate ? formatDateForMySQL1(transDate) : null;
 
-  const ddDate = excelSerialDateToDate1(row['DD']);
-  const formattedDdDate = ddDate ? formatDateForMySQL1(ddDate) : null;
+        const ddDate = excelSerialDateToDate1(row['DD']);
+        const formattedDdDate = ddDate ? formatDateForMySQL1(ddDate) : null;
 
-  const ddMonth = excelSerialDateToDate1(row['DD&month']);
-  const formattedDdMonth = ddMonth ? formatDateForMySQL1(ddMonth) : null;
+        const ddMonth = excelSerialDateToDate1(row['DD&month']);
+        const formattedDdMonth = ddMonth ? formatDateForMySQL1(ddMonth) : null;
 
-  // Log if any date is invalid
-  if (!formattedTransDate || !formattedDdDate || !formattedDdMonth) {
-    console.warn('Invalid date format for row:', row);
-  }
+        // Log if any date is invalid
+        if (!formattedTransDate || !formattedDdDate || !formattedDdMonth) {
+          console.warn('Invalid date format for row:', row);
+        }
 
-  return [
-    row['NAME1'],
-    row['SUB PARTY'],
-    row['Group party'],
-    row['JCID'],
-    formattedTransDate,
-    row['ORDERNO'],
-    row['OrderType'],
-    row['ZONE'],
-    row['OGPG'],
-    row['Purity'],
-    row['Color'],
-    row['PHOTO NO'],
-    row['PHOTO NO 2'],
-    row['PROJECT'],
-    row['TYPE'],
-    row['ITEM'],
-    row['PRODUCT'],
-    row['SUB PRODUCT'],
-    row['QTY'],
-    row['WT'],
-    row['Avg'],
-    row['Wt range'],
-    row['PL-ST'],
-    null,
-    row['SKCHNI'],
-    row['EMP'],
-    row['Name'],
-    row['CODE'],
-    row['GENDER'],
-    row['2024 Set Photo'],
-    row['Po-new'],
-    null,
-    row['Dyr'],
-    row['Brief'],
-    row['Maketype'],
-    row['collection'],
-    row['Collection-1'],
-    row['Collection-2']
-  ];
+        return [
+          row['NAME1'],
+          row['SUB PARTY'],
+          row['Group party'],
+          row['JCID'],
+          formattedTransDate,
+          row['ORDERNO'],
+          row['OrderType'],
+          row['ZONE'],
+          row['OGPG'],
+          row['Purity'],
+          row['Color'],
+          row['PHOTO NO'],
+          row['PHOTO NO 2'],
+          row['PROJECT'],
+          row['TYPE'],
+          row['ITEM'],
+          row['PRODUCT'],
+          row['SUB PRODUCT'],
+          row['QTY'],
+          row['WT'],
+          row['Avg'],
+          row['Wt range'],
+          row['PL-ST'],
+          null, // Assuming this is for DD
+          row['SKCHNI'],
+          row['EMP'],
+          row['Name'],
+          row['CODE'],
+          row['GENDER'],
+          row['2024 Set Photo'],
+          row['Po-new'],
+          null, // Assuming this is for DD_month
+          row['Dyr'],
+          row['Brief'],
+          row['Maketype'],
+          row['collection'],
+          row['Collection-1'],
+          row['Collection-2']
+        ];
       });
 
       const query = `
@@ -1131,13 +1142,27 @@ app.post('/api/order/upload', upload.single('file'), (req, res) => {
         VALUES ?
       `;
 
-      db.query(query, [values], function (error, results, fields) {
-        if (error) {
-          console.error('Database error:', error);
-          return res.status(500).send('Database error');
+      const batchSize = 1000; // Adjust batch size as needed
+      let index = 0;
+
+      const insertNextBatch = () => {
+        if (index < values.length) {
+          const batch = values.slice(index, index + batchSize);
+          db.query(query, [batch], (error, results) => {
+            if (error) {
+              console.error('Database error:', error);
+              return res.status(500).send('Database error');
+            }
+            index += batchSize;
+            insertNextBatch(); // Recursively call to insert the next batch
+          });
+        } else {
+          res.send('File uploaded and order receiving data inserted successfully.');
         }
-        res.send('File uploaded and order receiving data inserted successfully.');
-      });
+      };
+
+      // Start inserting batches
+      insertNextBatch();
     } else {
       res.status(400).send('No data found in Excel file');
     }
@@ -3124,6 +3149,7 @@ app.post("/api/party-visit", (req, res) => {
     description,
     assign_person,
     status_data,
+    image_link
     
   } = req.body;
 
@@ -3134,10 +3160,10 @@ app.post("/api/party-visit", (req, res) => {
   const assign_person_string = Array.isArray(assign_person) ? assign_person.join(',') : assign_person;
 
   const query = `
-    INSERT INTO Party_Visit (Party_Name, visit_date, Description, Assign_Person, Status_data)
-    VALUES (?, ?, ?, ?, ?)`;
+    INSERT INTO Party_Visit (Party_Name, visit_date, Description, Assign_Person, Status_data,image_link)
+    VALUES (?, ?, ?, ?, ?, ?)`;
 
-  db.query(query, [party_name, visit_date, description, assign_person_string, status_data], (err, results) => {
+  db.query(query, [party_name, visit_date, description, assign_person_string, status_data,image_link], (err, results) => {
     if (err) {
       console.error("Error inserting data:", err);
       return res.status(500).json({ error: "Database error", details: err });

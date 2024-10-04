@@ -20,6 +20,7 @@ function Party_form() {
   const [description, setDescription] = useState("");
   const [visit_date, setVisit_date] = useState("");
   const [partyname, setPartyname] = useState("");
+  const[imagelink, setImagelink] = useState("")
 
   const [ax_brief_data, setAx_brief_data] = useState("");
   const [value, setValue] = useState({
@@ -87,6 +88,7 @@ function Party_form() {
       description: description,
       assign_person: assignToEmails,
       status_data: status_data,
+      image_link:imagelink
     };
 
     try {
@@ -359,7 +361,29 @@ function Party_form() {
                   />
                 </div>
                
-            
+                <div className="mb-4 space-y-2 md:flex @md/modal:flex md:flex-row @md/modal:flex-row md:space-y-0 @md/modal:space-y-0 py-5">
+                  <label
+                    className={`block text-base font-bold mb-2 ${
+                      theme === "light" ? "text-gray-700" : "text-gray-200"
+                    } w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`}
+                    htmlFor="qty"
+                  >
+                    Image link (Drive)
+                  </label>
+                  <input
+                    type="text"
+                    id="qty"
+                    value={imagelink}
+                    onChange={(e) => setImagelink(e.target.value)}
+                    className={` appearance-none border-2 rounded ml-10 w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
+                      theme === "light"
+                        ? "bg-gray-100 text-gray-700 border-gray-300"
+                        : "bg-gray-700 text-gray-100 border-gray-600"
+                    }  w-full space-y-2 px-6 md:px-8 @md/modal:px-8 md:w-3/5 @md/modal:w-3/5`}
+                    placeholder="Enter image link"
+                    required
+                  />
+                </div>
 
                 <div className="md:col-span-2 flex justify-center">
                   <button

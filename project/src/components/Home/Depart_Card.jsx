@@ -167,7 +167,7 @@ function DepartmentDetail() {
 
   const renderFromDepartmentCards = (fromDepartments, data, label) => {
     if (!fromDepartments.length || !Object.keys(data).length) {
-      return <p>No data available for the selected department's "from" departments.</p>;
+      return <p className={`${theme === 'light'?'text-gray-800':'text-red-500'}`}>No data available for the selected department's "from" departments.</p>;
     }
   
     return (

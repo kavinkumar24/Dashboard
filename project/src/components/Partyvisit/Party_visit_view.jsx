@@ -16,6 +16,9 @@ function Party_visit_view() {
   const [weights, setWeights] = useState({});
   const [activeRow, setActiveRow] = useState(null); // Track the active row
 
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+  }, [theme]);
   const handleQuantityChange = async (e, slNo) => {
     const newQuantity = e.target.value;
 
@@ -59,13 +62,14 @@ function Party_visit_view() {
       try {
         const response = await fetch(
           "http://localhost:8081/api/update_party_visit_brief",
+
           {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              SL_NO: filteredData[index].SL_NO,
+              SL_NO: index,
               Brief_no: value,
             }),
           }
@@ -83,14 +87,14 @@ function Party_visit_view() {
   const handleStatusChange = async (selectedOption, slNo) => {
     const newStatus = selectedOption.value;
     let completeDate = null;
-  
+
     if (newStatus === "completed") {
       completeDate = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
     }
-  
+
     const briefIndex = filteredData.findIndex((item) => item.SL_NO === slNo);
     const briefNo = selectedBriefs[briefIndex];
-  
+
     try {
       const response = await fetch(
         `http://localhost:8081/api/update_party_visit_status`,
@@ -107,13 +111,13 @@ function Party_visit_view() {
           }),
         }
       );
-  
+
       if (!response.ok) {
         throw new Error("Failed to update status");
       }
-  
+
       setActiveRow(slNo);
-  
+
       setData((prevData) =>
         prevData.map((item) =>
           item.SL_NO === slNo
@@ -134,10 +138,13 @@ function Party_visit_view() {
   const customStyles = {
     control: (provided) => ({
       ...provided,
-      backgroundColor: theme === "light" ? "white" : "#374151",
-      padding: "5px 10px",
+      backgroundColor: theme === "light" ? "white" : "#374151", // Dark background
       border: theme === "light" ? "1px solid #e2e8f0" : "1px solid #4a5568",
       color: theme === "light" ? "black" : "white",
+      boxShadow: "none",
+      "&:hover": {
+        border: theme === "light" ? "1px solid #a0aec0" : "1px solid #a0aec0",
+      },
     }),
     singleValue: (provided) => ({
       ...provided,
@@ -150,14 +157,14 @@ function Party_visit_view() {
       backgroundColor: state.isSelected
         ? theme === "light"
           ? "#3b82f6"
-          : "#1e3a8a"
+          : "#1e3a8a" // Dark selected color
         : state.isFocused
         ? theme === "light"
           ? "#e2e8f0"
-          : "#4a5568"
+          : "#4a5568" // Dark focused color
         : theme === "light"
         ? "white"
-        : "#0f172a",
+        : "#0f172a", // Dark default background
     }),
   };
 
@@ -258,6 +265,7 @@ function Party_visit_view() {
                       "Quantity",
                       "Complete Date",
                       "Order rec Wt",
+                      "Image",
                     ].map((header) => (
                       <th
                         key={header}
@@ -318,56 +326,64 @@ function Party_visit_view() {
                         <td className="px-6 py-4 text-center whitespace-nowrap">
                           {isAssignedPerson ? (
                             <div className="w-40">
-                              {item.Status_data === "completed" || item.Status_data === "cancelled" ? (
-        <span className={`px-4 py-2 rounded ${item.Status_data === "completed" ? "bg-green-400" : "bg-red-500 text-gray-100"}`}>
-          {item.Status_data}
-        </span>
-      ) : (
-        <Select
-          styles={{
-            ...customStyles,
-            menuPortal: (base) => ({
-              ...base,
-              zIndex: 9999,
-            }),
-          }}
-          options={statusOptions}
-          value={statusOptions.find(
-            (option) => option.value === item.Status_data
-          )}
-          onChange={(option) => handleStatusChange(option, item.SL_NO)}
-          className="z-50"
-          menuPortalTarget={document.body}
-          isDisabled={!isRowEditable}
-        />
-      )}
-    </div>
-  ) : (
-    <span>
-      <span
-        className={`px-4 py-2 rounded ${
-          item.Status_data === "in progress"
-            ? "bg-yellow-300 text-gray-800"
-            : item.Status_data === "completed"
-            ? "bg-green-400 text-gray-800"
-            : item.Status_data === "cancelled"
-            ? "bg-red-500 text-gray-100"
-            : ""
-        }`}
-      >
-        {item.Status_data}
-      </span>
-    </span>
-  )}
-</td>
-                        <td
-                          className="px-10 py-4 text-center whitespace-nowrap"
-                          
-                        >
+                              {item.Status_data === "completed" ||
+                              item.Status_data === "cancelled" ? (
+                                <span
+                                  className={`px-4 py-2 rounded ${
+                                    item.Status_data === "completed"
+                                      ? "bg-green-400 text-black"
+                                      : "bg-red-500 text-gray-100"
+                                  }`}
+                                >
+                                  {item.Status_data}
+                                </span>
+                              ) : (
+                                <Select
+                                  styles={{
+                                    ...customStyles,
+                                    menuPortal: (base) => ({
+                                      ...base,
+                                      zIndex: 9999,
+                                    }),
+                                  }}
+                                  options={statusOptions}
+                                  value={statusOptions.find(
+                                    (option) =>
+                                      option.value === item.Status_data
+                                  )}
+                                  onChange={(option) =>
+                                    handleStatusChange(option, item.SL_NO)
+                                  }
+                                  className="z-50"
+                                  menuPortalTarget={document.body}
+                                  isDisabled={!isRowEditable}
+                                />
+                              )}
+                            </div>
+                          ) : (
+                            <span>
+                              <span
+                                className={`px-4 py-2 rounded ${
+                                  item.Status_data === "in progress"
+                                    ? "bg-yellow-300 text-gray-800"
+                                    : item.Status_data === "completed"
+                                    ? "bg-green-400 text-gray-800"
+                                    : item.Status_data === "cancelled"
+                                    ? "bg-red-500 text-gray-100"
+                                    : ""
+                                }`}
+                              >
+                                {item.Status_data}
+                              </span>
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-10 py-4 text-center whitespace-nowrap">
                           <div className="w-56 -ml-24">
                             {isAssignedPerson ? (
                               <Select
                                 options={briefOptions}
+                                styles={customStyles} // Change this line
                                 value={
                                   briefOptions.find(
                                     (option) =>
@@ -379,7 +395,7 @@ function Party_visit_view() {
                                   handleBriefSelect(selectedOption, item.SL_NO)
                                 }
                                 isClearable
-                                isDisabled={selectedBriefs[item.SL_NO]} // Disable if already selected
+                                isDisabled={selectedBriefs[item.SL_NO]}
                                 className={`ml-10 ${
                                   theme === "light"
                                     ? "border-gray-300 text-black"
@@ -400,11 +416,11 @@ function Party_visit_view() {
                                 ? (e) => handleQuantityChange(e, item.SL_NO)
                                 : null
                             }
-                            className={`border ${
+                            className={`border p-1 w-full ${
                               theme === "light"
-                                ? "border-gray-300"
-                                : "border-gray-600"
-                            } p-1 w-full`}
+                                ? "border-gray-300 bg-white text-black"
+                                : "border-gray-600 bg-gray-700 text-white"
+                            }`}
                             disabled={!isAssignedPerson}
                           />
                         </td>
@@ -415,6 +431,23 @@ function Party_visit_view() {
                         </td>
                         <td className="px-6 py-4 text-center whitespace-nowrap">
                           {weights[index] || 0}
+                        </td>
+                        <td className="px-6 py-4 text-center whitespace-nowrap">
+                        {item.image_link ? (
+  <a
+    href={item.image_link}
+    className={`underline ${
+      theme === "light" ? "text-blue-600" : "text-blue-200"
+    }`}
+  >
+    View image
+  </a>
+) : (
+  <span className={`text-gray-500 ${theme === "light" ? "text-gray-700" : "text-gray-300"}`}>
+    N/A
+  </span>
+)}
+
                         </td>
                       </tr>
                     );
