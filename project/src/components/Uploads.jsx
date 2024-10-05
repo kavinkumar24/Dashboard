@@ -20,6 +20,7 @@ function Uploads() {
   const [mismatchData, setMismatchData] = useState([]); // New state for mismatch data
   const currentTime = new Date().toLocaleString();
   const [fileID, setFileID] = useState("");
+  const[isloading,setIsloading] = useState(false)
 
   // Function to fetch the previous fileID from the API
   const fetchPreviousFileID = async (fapi) => {
@@ -295,16 +296,19 @@ function Uploads() {
     }
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = async (event) => {
+    setIsloading(true)
     if (fileType === "") {
       setTypeMsg("Please select the File Type before choosing a file.");
       event.target.value = null;
       return;
     }
+    
 
     const selectedFile = event.target.files[0];
     setFile(selectedFile);
-    handleUpload(selectedFile);
+    await handleUpload(selectedFile);
+    
   };
 
   const handleFileInputClick = (event) => {
@@ -315,6 +319,7 @@ function Uploads() {
   };
 
   const handleUpload = async (selectedFile) => {
+    
     if (!selectedFile) {
       setMessage("Please select a file first.");
       return;
@@ -372,13 +377,18 @@ function Uploads() {
         });
 
         setMessage(response.data.message || "File uploaded successfully!");
+    setIsloading(false)
+
       } catch (error) {
         console.error("Error uploading file:", error);
         setMessage("Failed to upload file");
+        setIsloading(false)
       }
     };
 
     fileReader.readAsArrayBuffer(selectedFile);
+    
+
   };
 
   return (
@@ -388,6 +398,15 @@ function Uploads() {
           theme === "light" ? "bg-gray-100" : "bg-gray-800"
         }`}
       >
+             {isloading && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
+              <div className="flex gap-2 ml-9">
+                <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+                <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+                <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+              </div>
+            </div>
+          )}
         <Sidebar theme={theme} />
         <div className="flex-1 flex flex-col">
           <Header onSearch={setSearch} theme={theme} dark={setTheme} />

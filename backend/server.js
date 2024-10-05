@@ -18,6 +18,9 @@ const db = mysql.createConnection({
   user: process.env.USER,
   password: process.env.PASSWORD,
   database: process.env.DATABASE,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
 
@@ -1059,12 +1062,13 @@ function formatDateForMySQL(date) {
 }
 
 
-app.post('/api/order/upload', upload.single('file'), async (req, res) => {
+app.post('/api/order/upload', upload.single('file'), (req, res) => {
   if (!req.file) {
     return res.status(400).send('No file uploaded.');
   }
 
   const fileBuffer = req.file.buffer;
+  const fileName = req.file.originalname;
 
   try {
     const workbook = xlsx.read(fileBuffer, { type: 'buffer' });
@@ -1074,60 +1078,61 @@ app.post('/api/order/upload', upload.single('file'), async (req, res) => {
 
     if (jsonData.length > 0) {
       const values = jsonData.map(row => {
-        const transDate = excelSerialDateToDate1(row['TRANSDATE']);
-        const formattedTransDate = transDate ? formatDateForMySQL1(transDate) : null;
+        // Convert and format dates, handling possible invalid dates
+        const transDate = row['TRANSDATE'];
+  // const formattedTransDate = transDate ? formatDateForMySQL(transDate) : null;
 
-        const ddDate = excelSerialDateToDate1(row['DD']);
-        const formattedDdDate = ddDate ? formatDateForMySQL1(ddDate) : null;
+  const ddDate = excelSerialDateToDate1(row['DD']);
+  const formattedDdDate = ddDate ? formatDateForMySQL(ddDate) : null;
 
-        const ddMonth = excelSerialDateToDate1(row['DD&month']);
-        const formattedDdMonth = ddMonth ? formatDateForMySQL1(ddMonth) : null;
+  const ddMonth = excelSerialDateToDate1(row['DD&month']);
+  const formattedDdMonth = ddMonth ? formatDateForMySQL(ddMonth) : null;
 
-        // Log if any date is invalid
-        if (!formattedTransDate || !formattedDdDate || !formattedDdMonth) {
-          console.warn('Invalid date format for row:', row);
-        }
+  // Log if any date is invalid
+  // if (!formattedTransDate || !formattedDdDate || !formattedDdMonth) {
+  //   console.warn('Invalid date format for row:', row);
+  // }
 
-        return [
-          row['NAME1'],
-          row['SUB PARTY'],
-          row['Group party'],
-          row['JCID'],
-          formattedTransDate,
-          row['ORDERNO'],
-          row['OrderType'],
-          row['ZONE'],
-          row['OGPG'],
-          row['Purity'],
-          row['Color'],
-          row['PHOTO NO'],
-          row['PHOTO NO 2'],
-          row['PROJECT'],
-          row['TYPE'],
-          row['ITEM'],
-          row['PRODUCT'],
-          row['SUB PRODUCT'],
-          row['QTY'],
-          row['WT'],
-          row['Avg'],
-          row['Wt range'],
-          row['PL-ST'],
-          null, // Assuming this is for DD
-          row['SKCHNI'],
-          row['EMP'],
-          row['Name'],
-          row['CODE'],
-          row['GENDER'],
-          row['2024 Set Photo'],
-          row['Po-new'],
-          null, // Assuming this is for DD_month
-          row['Dyr'],
-          row['Brief'],
-          row['Maketype'],
-          row['collection'],
-          row['Collection-1'],
-          row['Collection-2']
-        ];
+  return [
+    row['NAME1'],
+    row['SUB PARTY'],
+    row['Group party'],
+    row['JCID'],
+    transDate,
+    row['ORDERNO'],
+    row['OrderType'],
+    row['ZONE'],
+    row['OGPG'],
+    row['Purity'],
+    row['Color'],
+    row['PHOTO NO'],
+    row['PHOTO NO 2'],
+    row['PROJECT'],
+    row['TYPE'],
+    row['ITEM'],
+    row['PRODUCT'],
+    row['SUB PRODUCT'],
+    row['QTY'],
+    row['WT'],
+    row['Avg'],
+    row['Wt range'],
+    row['PL-ST'],
+    null,
+    row['SKCHNI'],
+    row['EMP'],
+    row['Name'],
+    row['CODE'],
+    row['GENDER'],
+    row['2024 Set Photo'],
+    row['Po-new'],
+    null,
+    row['Dyr'],
+    row['Brief'],
+    row['Maketype'],
+    row['collection'],
+    row['Collection-1'],
+    row['Collection-2']
+  ];
       });
 
       const query = `
@@ -1141,7 +1146,7 @@ app.post('/api/order/upload', upload.single('file'), async (req, res) => {
          \`Collection_2\`)
         VALUES ?
       `;
-
+      
       const batchSize = 1000; // Adjust batch size as needed
       let index = 0;
 
@@ -1166,6 +1171,8 @@ app.post('/api/order/upload', upload.single('file'), async (req, res) => {
     } else {
       res.status(400).send('No data found in Excel file');
     }
+     
+   
   } catch (error) {
     console.error('Error processing file:', error);
     res.status(500).send('Error processing file');
