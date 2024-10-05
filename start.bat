@@ -1,6 +1,6 @@
 cd backend
-start node server.js
+start "" /min cmd /c "node server.js"
 
 cd ..
 cd project
-start npm run dev
+start "" /min cmd /c "npm run dev"
