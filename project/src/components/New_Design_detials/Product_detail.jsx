@@ -230,7 +230,7 @@ const ProjectDetails = () => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          `http://localhost:8081/order_receive&new_design`
+          `http://localhost:8081/api/order_receive&new_design`
         );
 
         const jsonData = await response.json();

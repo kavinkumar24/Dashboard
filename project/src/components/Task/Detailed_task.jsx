@@ -19,7 +19,7 @@ function Detailed_task() {
 
   const fetchData = async () => {
     try {
-      const pendingResponse = await fetch("http://localhost:8081/pending_data");
+      const pendingResponse = await fetch("http://localhost:8081/api/pending_data");
       const pendingData = await pendingResponse.json();
 
       const filteredPendingData = pendingData.reduce((acc, curr) => {

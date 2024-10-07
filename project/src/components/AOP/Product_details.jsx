@@ -31,7 +31,7 @@ function ProductDetailsPage() {
   
   const groupProducts = (data) => {
     const filteredData = data.filter(
-      (item) => item["PROJECT-1"].toLowerCase() === pltcode.toLowerCase()
+      (item) => item["Project"].toLowerCase() === pltcode.toLowerCase()
     );
     const grouped = filteredData.reduce((acc, item) => {
       const product = item.Product;
@@ -62,10 +62,10 @@ function ProductDetailsPage() {
     try {
       const [targetResponse, productionResponse, mappingsResponse, jewelMasterResponse] =
         await Promise.all([
-          axios.get("http://localhost:8081/api/target"),
-          axios.get("http://localhost:8081/production_data"),
-          axios.get("http://localhost:8081/department-mappings"),
-          axios.get("http://localhost:8081/jewel-master"),
+          axios.get("http://localhost:8081/api/targets"),
+          axios.get("http://localhost:8081/api/production_data"),
+          axios.get("http://localhost:8081/api/department-mappings"),
+          axios.get("http://localhost:8081/api/jewel-master"),
         ]);
   
       setData(targetResponse.data || []);

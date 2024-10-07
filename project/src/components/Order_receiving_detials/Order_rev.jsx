@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import Header from "./Header";
-import Sidebar from "./Sidebar";
+import Header from "../Header";
+import Sidebar from "../Sidebar";
 import * as XLSX from "xlsx";
 import { Bar, Line } from "react-chartjs-2";
 import Chart from "chart.js/auto";
@@ -9,7 +9,7 @@ import { FiMinusCircle } from "react-icons/fi";
 import { Pie } from "react-chartjs-2";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import { IoFilterOutline } from "react-icons/io5";
-import CustomMultiSelect from "./Custom/Mutliselect";
+import CustomMultiSelect from "../Custom/Mutliselect";
 import { Doughnut } from "react-chartjs-2";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -671,7 +671,7 @@ function Order_rev() {
       return;
     }
 
-    fetch("http://localhost:8081/order_receive&new_design")
+    fetch("http://localhost:8081/api/order_receive&new_design")
       .then((response) => response.json())
       .then((data) => {
         fetchedDataRef.current = data; // Cache data

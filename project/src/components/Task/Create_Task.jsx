@@ -196,7 +196,7 @@ function CreateTask() {
       console.log("Task Data:", taskData);
 
       try {
-        const response = await fetch("http://localhost:8081/create-task", {
+        const response = await fetch("http://localhost:8081/api/create-task", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

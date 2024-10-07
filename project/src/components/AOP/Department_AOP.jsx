@@ -118,69 +118,62 @@ function Department_AOP() {
     }),
   };
   let totalPercentage = 0;
-
   useEffect(() => {
-    const defaultDepartments = DEFAULT_DEPARTMENTS.map((dept) => ({
-      name: dept,
-    }));
-    setDepartments(defaultDepartments);
-
-    fetch("http://localhost:8081/pending_data")
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Pending Data Response:", data);
-        setPendingData(data);
-      })
-      .catch((error) => console.error("Error fetching pending data:", error));
-
-    fetch("http://localhost:8081/pending-sum") // count of the projects pending [from Projects]
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Pending Sum Data:", data);
-        setPendingSumData(data);
-      })
-      .catch((error) =>
-        console.error("Error fetching pending sum data:", error)
-      );
-
-    fetch("http://localhost:8081/department-mappings")
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Department Mappings Response:", data);
-        setDepartmentMappings(data);
-      })
-      .catch((error) =>
-        console.error("Error fetching department mappings:", error)
-      );
-
-    fetch("http://localhost:8081/targets")
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Targets Data:", data);
-        const targetsMap = data.reduce((acc, item) => {
-          acc[item["PROJECT-1"].toUpperCase()] = item.target;
+    const fetchData = async () => {
+      setisloading(true);
+  
+      const defaultDepartments = DEFAULT_DEPARTMENTS.map((dept) => ({
+        name: dept,
+      }));
+      setDepartments(defaultDepartments);
+  
+      try {
+        const [pendingDataResponse, pendingSumResponse, departmentMappingsResponse, targetsResponse, productionDataResponse] = await Promise.all([
+          fetch("http://localhost:8081/api/pending_data"),
+          fetch("http://localhost:8081/api/pending-sum"),
+          fetch("http://localhost:8081/api/department-mappings"),
+          fetch("http://localhost:8081/api/targets"),
+          fetch("http://localhost:8081/api/production_data"),
+        ]);
+  
+        const pendingData = await pendingDataResponse.json();
+        console.log("Pending Data Response:", pendingData);
+        setPendingData(pendingData);
+  
+        const pendingSumData = await pendingSumResponse.json();
+        console.log("Pending Sum Data:", pendingSumData);
+        setPendingSumData(pendingSumData);
+  
+        const departmentMappings = await departmentMappingsResponse.json();
+        console.log("Department Mappings Response:", departmentMappings);
+        setDepartmentMappings(departmentMappings);
+  
+        const targetsData = await targetsResponse.json();
+        console.log("Targets Data:", targetsData);
+        const targetsMap = targetsData.reduce((acc, item) => {
+          acc[item["Project"].toUpperCase()] = item.target;
           return acc;
         }, {});
         setTargets(targetsMap);
-      })
-      .catch((error) => console.error("Error fetching targets:", error));
-
-    fetch("http://localhost:8081/production_data")
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Production Data Response:", data);
-        setProductionData(data);
-      })
-
-      .catch((error) =>
-        console.error("Error fetching production data:", error)
-      );
+  
+        const productionData = await productionDataResponse.json();
+        console.log("Production Data Response:", productionData);
+        setProductionData(productionData);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setisloading(false);
+      }
+    };
+  
+    fetchData();
   }, []);
+  
 
   const fetchData = async (selectedDeptName) => {
     try {
       const response = await fetch(
-        "http://localhost:8081/raw_filtered_production_data"
+        "http://localhost:8081/api/raw_filtered_production_data"
       );
       const data = await response.json();
       console.log("Raw Filtered Production Data:", data);
@@ -265,7 +258,7 @@ function Department_AOP() {
   }));
 
   function fetchAndProcessData() {
-    fetch("http://localhost:8081/raw_filtered_pending_data")
+    fetch("http://localhost:8081/api/raw_filtered_pending_data")
       .then((response) => {
         if (!response.ok) {
           throw new Error("Network response was not ok");
@@ -495,13 +488,13 @@ function Department_AOP() {
   };
 
   useEffect(() => {
-    fetch("http://localhost:8081/api/target")
+    fetch("http://localhost:8081/api/targets")
       .then((response) => response.json())
       .then((data) => {
         console.log("Data fetched successfully:", data);
         const targetMap = {};
         data.forEach((item) => {
-          const project = item["PROJECT-1"]?.toUpperCase();
+          const project = item["Project"]?.toUpperCase();
           const total = item.Total || 0;
 
           if (project) {

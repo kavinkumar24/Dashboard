@@ -121,7 +121,7 @@ function Phase_view() {
     // Clear previous options
     setAssigneeOptions([]); // Clear the previous state
 
-    const teamResponse = await fetch("http://localhost:8081/team-member");
+    const teamResponse = await fetch("http://localhost:8081/api/team-member");
     const teamData = await teamResponse.json();
     const filteredTeamData = teamData.filter((task) => task.task_id === taskId);
 
@@ -137,7 +137,7 @@ function Phase_view() {
     // console.log(teamDetails);
 
     // Fetch phase tasks
-    const phaseTaskResponse = await fetch("http://localhost:8081/phase-tasks");
+    const phaseTaskResponse = await fetch("http://localhost:8081/api/phase-tasks");
     const phaseTaskData = await phaseTaskResponse.json();
     const filteredPhaseTaskData = phaseTaskData.filter(
       (task) => task.ot_id === taskId
@@ -145,7 +145,7 @@ function Phase_view() {
     setSubmittedTasks(filteredPhaseTaskData);
 
     // Fetch phases
-    const phaseResponse = await fetch("http://localhost:8081/phases");
+    const phaseResponse = await fetch("http://localhost:8081/api/phases");
     const phaseData = await phaseResponse.json();
     const filteredPhaseData = phaseData.filter(
       (phase) => phase.task_id === taskId
@@ -178,14 +178,14 @@ function Phase_view() {
 
   const phaseStatusUpdation = useCallback(async () => {
     try {
-      const phaseResponse = await fetch("http://localhost:8081/phases");
+      const phaseResponse = await fetch("http://localhost:8081/api/phases");
       const phaseData = await phaseResponse.json();
       const filteredPhaseData = phaseData.filter(
         (phase) => phase.task_id === taskId
       );
 
       const phaseTaskResponse = await fetch(
-        "http://localhost:8081/phase-tasks"
+        "http://localhost:8081/api/phase-tasks"
       );
       const phaseTaskData = await phaseTaskResponse.json();
       const filteredPhaseTaskData = phaseTaskData.filter(
@@ -224,7 +224,7 @@ function Phase_view() {
 
       try {
         const response = await fetch(
-          `http://localhost:8081/update-phase/${phaseId}`,
+          `http://localhost:8081/api/update-phase/${phaseId}`,
           {
             method: "PUT",
             headers: {
@@ -247,7 +247,7 @@ function Phase_view() {
 
       try {
         const response = await fetch(
-          `http://localhost:8081/update-phase/${phaseId}`,
+          `http://localhost:8081/api/update-phase/${phaseId}`,
           {
             method: "PUT",
             headers: {
@@ -278,7 +278,7 @@ function Phase_view() {
 
   const updateTaskInDB = (taskId, updatedFields) => {
     // Ensure updatedFields is a valid JSON object
-    fetch(`http://localhost:8081/phase-task/${taskId}`, {
+    fetch(`http://localhost:8081/api/phase-task/${taskId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -392,7 +392,7 @@ function Phase_view() {
       // console.log("Updated Task Data:", updatedTasks);
 
       // Submit phase data
-      const phaseResponse = await fetch("http://localhost:8081/phase", {
+      const phaseResponse = await fetch("http://localhost:8081/api/phase", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -407,7 +407,7 @@ function Phase_view() {
       }
 
       // Submit task data
-      const taskResponse = await fetch("http://localhost:8081/phase-task", {
+      const taskResponse = await fetch("http://localhost:8081/api/phase-task", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

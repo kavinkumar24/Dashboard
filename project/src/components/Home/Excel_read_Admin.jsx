@@ -39,7 +39,7 @@ function Dashboard() {
   const [show_text_Area, setShow_text_Area] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:8081/filtered_production_data_previous").then(
+    fetch("http://localhost:8081/api/filtered_production_data_previous").then(
       (res) => res.json()
     );
     if (typeof data === "object" && !Array.isArray(data)) {
@@ -54,7 +54,7 @@ function Dashboard() {
   const fetchPreviousDayData = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8081/filtered_production_data_previous"
+        "http://localhost:8081/api/filtered_production_data_previous"
       );
       console.log("Previous Day Data:", response.data);
 
@@ -111,7 +111,7 @@ function Dashboard() {
   useEffect(() => {
     const fetchUploadTime = async () => {
       try {
-        const response = await axios.get("http://localhost:8081/upload_time");
+        const response = await axios.get("http://localhost:8081/api/upload_time");
         setUploadTime_pending(response.data.uploadTime_pending);
         setUploadTimeProduction(response.data.uploadTime_production);
       } catch (error) {
@@ -134,7 +134,7 @@ function Dashboard() {
   const handleDateRangeChange = async (fromDate, toDate) => {
     try {
       const response = await axios.get(
-        "http://localhost:8081/filtered_production_data",
+        "http://localhost:8081/api/filtered_production_data",
         {
           params: {
             startDate: fromDate,
@@ -149,7 +149,7 @@ function Dashboard() {
   };
 
   useEffect(() => {
-    fetch("http://localhost:8081/filtered_production_data")
+    fetch("http://localhost:8081/api/filtered_production_data")
       .then((response) => response.json())
       .then((data) => {
         const mappedData = {};
@@ -179,7 +179,7 @@ function Dashboard() {
   }, [theme]);
   useEffect(() => {
     setSkeleton(true);
-    fetch("http://localhost:8081/filtered_pending_data")
+    fetch("http://localhost:8081/api/filtered_pending_data")
       .then((res) => res.json())
       .then((data) => {
         console.log("Pending Data:", data);
@@ -245,7 +245,7 @@ function Dashboard() {
   // Fetch production data for two days
   const twoDaysProductionData = async () => {
     try {
-      const res = await fetch("http://localhost:8081/filtered_production_data_with_date");
+      const res = await fetch("http://localhost:8081/api/filtered_production_data_with_date");
       const data = await res.json();
       console.log("Production Data 2 days:", data);
       setTwodays_production(data);
@@ -257,7 +257,7 @@ function Dashboard() {
   // Fetch pending data for two days
   const twoDaysPendingData = async () => {
     try {
-      const res = await fetch("http://localhost:8081/filtered_pending_data_with_date");
+      const res = await fetch("http://localhost:8081/api/filtered_pending_data_with_date");
       const data = await res.json();
       console.log("Pending Data 2 days:", data);
       setTwodays_pending(data);

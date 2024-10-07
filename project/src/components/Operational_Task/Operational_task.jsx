@@ -28,7 +28,7 @@ function Operational_task() {
 // useEffect(() => {fetchPhaseTaskData()}, [activeRow]);
 
   const fetchTeamData = () => {
-    fetch("http://localhost:8081/team-member")
+    fetch("http://localhost:8081/api/team-member")
       .then((res) => res.json())
       .then((data) => {
         // console.log(data);
@@ -38,7 +38,7 @@ function Operational_task() {
   };
 
   const fetchData = () => {
-    fetch("http://localhost:8081/operational-task")
+    fetch("http://localhost:8081/api/operational-task")
       .then((res) => res.json())
       .then((data) => {
         // console.log(data);
@@ -48,7 +48,7 @@ function Operational_task() {
   };
 
   const fetchUserData = () => {
-    fetch("http://localhost:8081/user")
+    fetch("http://localhost:8081/api/user")
       .then((res) => res.json())
       .then((data) => {
         const options = data.map((task) => ({
@@ -65,7 +65,7 @@ const [phaseData, setPhaseData] = useState([]);
 
 // Fetch phase data from the backend
 const fetchPhaseData = () => {
-  fetch("http://localhost:8081/phases")
+  fetch("http://localhost:8081/api/phases")
     .then((res) => res.json())
     .then((data) => {
       setPhaseData(data);      
@@ -115,7 +115,7 @@ useEffect(() => {
 
 
   const fetchPhaseTaskData = () => {
-    fetch("http://localhost:8081/phase-tasks")
+    fetch("http://localhost:8081/api/phase-tasks")
       .then((res) => res.json())
       .then((data) => {
         console.log("taskdata", data);
@@ -224,7 +224,7 @@ useEffect(() => {
 
     // Send a POST request to the API
     try {
-      const response = await fetch("http://localhost:8081/operational-task", {
+      const response = await fetch("http://localhost:8081/api/operational-task", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -282,7 +282,7 @@ useEffect(() => {
       // Send POST requests for each team member concurrently
       await Promise.all(
         updatedTeamMembers.map(async (member) => {
-          const response = await fetch("http://localhost:8081/team-member", {
+          const response = await fetch("http://localhost:8081/api/team-member", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

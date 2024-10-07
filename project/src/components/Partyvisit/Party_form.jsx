@@ -94,7 +94,7 @@ function Party_form() {
     try {
       // Fetch production data to get the Out Date
       const productionResponse = await fetch(
-        "http://localhost:8081/production_data"
+        "http://localhost:8081/api/production_data"
       );
       if (!productionResponse.ok) {
         throw new Error("Failed to fetch production data");

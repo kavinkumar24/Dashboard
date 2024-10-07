@@ -383,7 +383,14 @@ function Party_visit_view() {
                             {isAssignedPerson ? (
                               <Select
                                 options={briefOptions}
-                                styles={customStyles} // Change this line
+                                styles={{
+                                  ...customStyles,
+                                  menuPortal: (base) => ({
+                                    ...base,
+                                    zIndex: 9999,
+                                  }),
+                                }}
+                                // Change this line
                                 value={
                                   briefOptions.find(
                                     (option) =>
@@ -396,11 +403,14 @@ function Party_visit_view() {
                                 }
                                 isClearable
                                 isDisabled={selectedBriefs[item.SL_NO]}
-                                className={`ml-10 ${
+                                className={`ml-10 z-50 ${
                                   theme === "light"
                                     ? "border-gray-300 text-black"
                                     : "bg-gray-700 text-gray-100 border-gray-600"
                                 } w-full`}
+                                
+                                  menuPortalTarget={document.body}
+
                               />
                             ) : (
                               <span>{item.Brief_no}</span>

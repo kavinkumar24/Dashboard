@@ -35,7 +35,7 @@ function Header({
   useEffect(() => {
     const emailToMatch = localStorage.getItem("Email");
 
-    fetch("http://localhost:8081/user/loggedin/data", {
+    fetch("http://localhost:8081/api/user/loggedin/data", {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -80,6 +80,7 @@ function Header({
 
   const [dropdown, setdropdown] = useState(false);
   const handleprofile = () => {
+
     setdropdown(!dropdown);
   };
 

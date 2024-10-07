@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
@@ -21,6 +21,9 @@ function Uploads() {
   const currentTime = new Date().toLocaleString();
   const [fileID, setFileID] = useState("");
   const[isloading,setIsloading] = useState(false)
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   // Function to fetch the previous fileID from the API
   const fetchPreviousFileID = async (fapi) => {
@@ -361,6 +364,7 @@ function Uploads() {
       if (mismatches.length > 0 || mismatchedColumns.length > 0) {
         setMismatchData(combinedMismatches);
         setMessage("Column mismatch! Please review the table below.");
+        setIsloading(false)
         return;
       }
 

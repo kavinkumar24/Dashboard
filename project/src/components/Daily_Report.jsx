@@ -14,8 +14,8 @@ function Daily_Report() {
     localStorage.setItem("theme", theme);
   
     Promise.all([
-      fetch("http://localhost:8081/department-mappings").then((response) => response.json()),
-      fetch("http://localhost:8081/pending_data").then((response) => response.json()),
+      fetch("http://localhost:8081/api/department-mappings").then((response) => response.json()),
+      fetch("http://localhost:8081/api/pending_data").then((response) => response.json()),
     ])
       .then(([deptMappings, pending]) => {
         const normalizedMappings = Object.entries(deptMappings).reduce((acc, [key, value]) => {

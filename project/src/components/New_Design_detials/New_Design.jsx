@@ -860,7 +860,7 @@ function New_Design() {
       return;
     }
 
-    fetch("http://localhost:8081/order_receive&new_design")
+    fetch("http://localhost:8081/api/order_receive&new_design")
       .then((response) => response.json())
       .then((data) => {
         fetchedDataRef.current = data; // Cache data

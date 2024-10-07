@@ -26,7 +26,7 @@ function ViewTasks() {
 
   const fetch_task_data = async () => {
     try {
-      const response = await fetch("http://localhost:8081/create-task");
+      const response = await fetch("http://localhost:8081/api/create-task");
       const tasks = await response.json(); // Now tasks is an array
 
       const tasksWithImages = await Promise.all(
@@ -95,7 +95,7 @@ function ViewTasks() {
   const updateTaskRemarks = async (taskId, newRemarks) => {
     try {
       const response = await fetch(
-        `http://localhost:8081/update-task/${taskId}`,
+        `http://localhost:8081/api/update-task/${taskId}`,
         {
           method: "PUT",
           headers: {
@@ -179,7 +179,7 @@ function ViewTasks() {
   const updateTaskStatus = async (taskId, updatedData) => {
     try {
       const response = await fetch(
-        `http://localhost:8081/update-task/${taskId}`,
+        `http://localhost:8081/api/update-task/${taskId}`,
         {
           method: "PUT",
           headers: {

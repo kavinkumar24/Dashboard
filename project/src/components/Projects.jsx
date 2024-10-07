@@ -115,9 +115,9 @@ const [showPopup, setShowPopup] = useState(false);
     const fetchData = async () => {
       try {
         const [productionRes, pendingRes, jewelRes] = await Promise.all([
-          fetch("http://localhost:8081/production_data"),
-          fetch("http://localhost:8081/pending_data"),
-          axios.get("http://localhost:8081/jewel-master"),
+          fetch("http://localhost:8081/api/production_data"),
+          fetch("http://localhost:8081/api/pending_data"),
+          axios.get("http://localhost:8081/api/jewel-master"),
         ]);
 
         const productionData = await productionRes.json();
@@ -166,7 +166,7 @@ const [showPopup, setShowPopup] = useState(false);
     const fetchPendingData = async () => {
       setLoading(true);
       try {
-        const response = await axios.get("http://localhost:8081/pending_data");
+        const response = await axios.get("http://localhost:8081/api/pending_data");
         const pendingData = response.data;
         const uniquePLTCodes = [
           ...new Set(pendingData.map((item) => item.PLTCODE1)),
@@ -213,9 +213,9 @@ const [showPopup, setShowPopup] = useState(false);
     try {
         // Fetch both pending_data and department mappings
         const [pendingResponse, departmentMappingResponse, jewelResponse] = await Promise.all([
-            axios.get("http://localhost:8081/pending_data"),
-            axios.get("http://localhost:8081/department-mappings"),
-            axios.get("http://localhost:8081/jewel-master"),
+            axios.get("http://localhost:8081/api/pending_data"),
+            axios.get("http://localhost:8081/api/department-mappings"),
+            axios.get("http://localhost:8081/api/jewel-master"),
         ]);
 
         const pendingData = pendingResponse.data;

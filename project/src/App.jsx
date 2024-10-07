@@ -7,7 +7,7 @@ import Daily_Report from "./components/Daily_Report";
 import CreateTask from "./components/Task/Create_Task";
 import ViewTasks from "./components/Task/View_Task";
 import Reject from "./components/Reject";
-import Order_rev from "./components/Order_rev";
+import Order_rev from "./components/Order_receiving_detials/Order_rev";
 import Skch_reject from "./components/Skch_reject";
 import Department_reject from "./components/Department_reject";
 import Upload from "./components/Uploads";

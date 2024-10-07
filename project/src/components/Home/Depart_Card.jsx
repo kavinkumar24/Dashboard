@@ -76,7 +76,7 @@ function DepartmentDetail() {
 
   const fetchDepartmentMappings = async () => {
     try {
-      const res = await fetch('http://localhost:8081/department-mappings');
+      const res = await fetch('http://localhost:8081/api/department-mappings');
       if (!res.ok) throw new Error('Network response was not ok');
       const data = await res.json();
       setDepartmentMappings(data);
@@ -88,8 +88,8 @@ function DepartmentDetail() {
   const fetchData = async (dataType) => {
     try {
       const url = dataType === 'production' 
-        ? 'http://localhost:8081/raw_filtered_production_data' 
-        : 'http://localhost:8081/raw_filtered_pending_data';
+        ? 'http://localhost:8081/api/raw_filtered_production_data' 
+        : 'http://localhost:8081/api/raw_filtered_pending_data';
       const res = await fetch(url);
       if (!res.ok) throw new Error('Network response was not ok');
       const fetchedData = await res.json();
