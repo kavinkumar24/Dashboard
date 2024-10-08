@@ -971,9 +971,9 @@ function Order_rev() {
   };
 
   const chartComponents = [
-    <div className="" key="total-weight">
+    <div className="w-[50%] sm:w-full md:w-full lg:w-full" key="total-weight">
       <div
-        className={`order-1 col-span-1 ${
+        className={`order-1 col-span-1 w-[180%] md:w-full ${
           theme === "light" ? "bg-white" : "bg-slate-900"
         }  p-4 rounded shadow-md  h-[450px]`}
       >
@@ -1064,7 +1064,7 @@ function Order_rev() {
         )}
       </div>
     </div>,
-    <div className="" key="total-weight-month">
+    <div className="w-[50%] sm:w-full md:w-full lg:w-full" key="total-weight-month">
       <div
         className={`order-1 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
@@ -1157,7 +1157,7 @@ function Order_rev() {
       </div>
     </div>,
 
-    <div className="" key="kg-per-year-chart">
+    <div className="w-[50%] sm:w-full md:w-full lg:w-full" key="kg-per-year-chart">
       <div
         className={`order-2 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
@@ -1315,7 +1315,7 @@ function Order_rev() {
         )}
       </div>
     </div>,
-    <div className="" key="purity-wise-chart">
+    <div className="w-[50%] sm:w-full md:w-full lg:w-full" key="purity-wise-chart">
       <div
         className={`order-2 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
@@ -2240,11 +2240,12 @@ function Order_rev() {
   const getMonthName = (monthIndex) => monthNames[monthIndex];
 
   return (
-    <div
-      className={`min-h-screen w-[180%] md:w-[100%] flex ${
-        theme === "light" ? "bg-gray-100" : "bg-gray-800"
-      }`}
-    >
+<div
+  className={`min-h-screen w-full flex flex-col md:flex-row sm:flex-row ${
+    theme === "light" ? "bg-gray-100" : "bg-gray-800"
+  }`}
+>
+
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <Header theme={theme} dark={setTheme} />
@@ -2261,7 +2262,7 @@ function Order_rev() {
             Filter
           </button>
         </div> */}
-        <div className="flex justify-end mr-10">
+        <div className="flex justify-start ml-10">
           <button
             onClick={handleFilterClick}
             className={`mr-3 py-2 px-4 font-bold text-sm text-white rounded-lg flex ${
@@ -2424,7 +2425,7 @@ function Order_rev() {
         </div> */}
         </div>
         <div
-          className={`m-6 px-10 border rounded-lg   ${
+          className={`m-6 px-10 max-w-[80%] sm:max-w-[100%] md:max-w-[100%] border rounded-lg   ${
             theme === "light"
               ? "bg-white border-gray-300"
               : "bg-slate-900 border-zinc-800"
@@ -2477,7 +2478,7 @@ function Order_rev() {
             <div
               className={`${
                 activeIndex === 1 ? "max-h-screen" : "max-h-0"
-              } overflow-hidden transition-all duration-300 ease-in-out`}
+              } overflow-auto transition-all duration-300 ease-in-out`}
             >
               <div
                 className={`m-6 border rounded-lg ${

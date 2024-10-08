@@ -114,11 +114,11 @@ function Daily_Report() {
   ];
 
   return (
-    <div className={`min-h-screen flex ${theme === "light" ? "bg-gray-100 text-gray-900" : "bg-gray-800 text-gray-100"}`}>
+    <div className={`min-h-screen flex overflow-y-hidden ${theme === "light" ? "bg-gray-100 text-gray-900" : "bg-gray-800 text-gray-100"}`}>
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <Header onSearch={setSearch} theme={theme} dark={setTheme} on_filter={setFilter_on} filter={filter_on} />
-        <main className={`flex-1 p-6 overflow-y-auto ${filter_on ? "opacity-10" : "opacity-100"}`}>
+        <main className={`flex-1 p-6 overflow-y-hidden ${filter_on ? "opacity-10" : "opacity-100"}`}>
           {!isDataLoaded ? (
             <div className="text-center text-lg font-semibold">
               <div className={`border fixed shadow rounded-md p-4 max-w-full min-h-full inset-0 z-50 w-full md:w-[90%] ml-0 md:ml-52 mx-auto ${theme === "dark" ? "bg-gray-900 border-gray-800" : "bg-white border-gray-200"} sm:ml-0`}>
@@ -278,8 +278,9 @@ function Daily_Report() {
               </div>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
+            <div className="ml-6 md:ml-0 lg:ml-0 xl:ml-0 max-w-80 md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-8xl bg-red-400">
+            <div className="overflow-x-auto bg-sky-400">
+            <table className={`min-w-full divide-y ${theme === "light" ? "divide-gray-200" : "divide-gray-700"} table-auto`}>
                 <thead className={`${theme === "light" ? "bg-gray-200 text-gray-800" : "bg-gray-700 text-gray-200"}`}>
                   <tr>
                     <th scope="col" className="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider">Department</th>
@@ -306,11 +307,14 @@ function Daily_Report() {
                 </tbody>
               </table>
             </div>
+          </div>
           )}
         </main>
       </div>
     </div>
   );
 }
+
+
 
 export default Daily_Report;

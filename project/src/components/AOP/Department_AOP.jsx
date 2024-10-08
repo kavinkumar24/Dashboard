@@ -72,6 +72,8 @@ function Department_AOP() {
   const [calender, setcalender] = useState(false);
   const [filter_on, setFilter_on] = useState(false);
   const [achieved, setAchieved] = useState({});
+  const[AllowedProjects, setAllowedProjects] = useState(ALLOWED_PROJECTS);
+  const[sortedAllowedTargets,setSortedAllowedTargets ] = useState(ALLOWED_PROJECTS);
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -410,7 +412,7 @@ function Department_AOP() {
       const achievedCounts = achieved; // Assuming `achieved` is your state variable holding the counts
 
       // Create the updated table data with allowed projects
-      const updatedTableData = ALLOWED_PROJECTS.map((project) => {
+      const updatedTableData = AllowedProjects.map((project) => {
         const pltcode = project.toUpperCase();
         const totalJCPDSCWQTY1 = pltcodePendingData[pltcode] || 0; // Use aggregated data
         const target = Math.round(groupedData[pltcode])
@@ -482,7 +484,7 @@ function Department_AOP() {
       ? ALLOWED_PROJECTS.filter((pltcode) => selectedValues.includes(pltcode))
       : ALLOWED_PROJECTS;
 
-    // setAllowedProjects(updatedAllowedProjects);
+    setAllowedProjects(updatedAllowedProjects);
     fetchAndProcessData();
     updateTableData();
   };
@@ -561,12 +563,16 @@ function Department_AOP() {
 
   return (
     <div
-      className={`min-h-screen min-w-fit overflow-hidden flex ${
+      className={`min-h-screen min-w-full flex flex-col md:flex-row ${
         theme === "light"
           ? "bg-gray-100 text-gray-900"
           : "bg-gray-800 text-gray-100"
       }`}
     >
+      
+
+
+
       <Sidebar theme={theme} className="w-1/6 h-screen p-0" />
 
       <div className="flex-1 flex flex-col p-0">
@@ -579,7 +585,7 @@ function Department_AOP() {
         />
 
         <main
-          className={`flex-1 p-0 overflow-y-auto  ${
+          className={`flex-1 p-0 overflow-y-auto overflow-hidden ${
             filter_on === true ? "opacity-10" : "opacity-100"
           }`}
         >
@@ -598,7 +604,7 @@ function Department_AOP() {
           >
             Design Center{" "}
           </button>
-          <div className="p-4">
+          <div className="p-4 max-w-[100%] md:max-w-full lg:max-w-full">
             <Select
               isMulti
               options={departmentOptions}
@@ -610,14 +616,14 @@ function Department_AOP() {
             />
           </div>
 
-          <div className="grid grid-cols-5 gap-x-4 gap-y-4 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 lg:grid-cols-5 gap-x-4 gap-y-4 p-6 overflow-hidden">
             {departments.map((dept, index) => (
               <div
                 key={index}
                 onClick={() => handleCardClick(dept.name)}
-                className={`border p-4 rounded-lg shadow-md transition duration-300 ease-in-out transform cursor-pointer ${
+                className={`border w-[100%] md:w-full lg:w-full scale-100 p-4 rounded-lg shadow-md transition duration-300 ease-in-out transform cursor-pointer ${
                   selectedDeptName === dept.name
-                    ? `scale-105 ${
+                    ? `md:scale-105 ${
                         theme === "light"
                           ? "bg-blue-100 border-blue-300"
                           : "bg-blue-900 border-blue-500"
@@ -633,7 +639,7 @@ function Department_AOP() {
           </div>
 
           {/* Target Button */}
-          <div className="flex flex-1 justify-end space-x-2 mr-14 ">
+          <div className="flex flex-1 ml-20 space-x-2 mr-14 justify-start ">
             <button
               className="mt-4 relative top-2 px-4 py-2  bg-blue-500 text-white rounded-md"
               onClick={handleFilter}
@@ -667,10 +673,11 @@ function Department_AOP() {
           {/* Display Table */}
          {/* Display Table */}
 <div
-  className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-14 my-5 ${
+  className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-10 my-5 ${
     theme === "light" ? "bg-white" : "bg-gray-900"
-  } max-w-1xl md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-8xl`}
+  } max-w-[90%] md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-8xl`}
 >
+  
   {selectedDeptName && (
     <>
       <h2 className="text-xl font-bold mb-4">

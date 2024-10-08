@@ -212,7 +212,7 @@ useEffect(()=>{
   }
 
   return (
-    <div className={`min-h-screen flex ${theme === "light" ? "bg-gray-100 text-gray-900" : "bg-gray-800 text-gray-100"}`}>
+    <div className={`min-h-screen w-full flex ${theme === "light" ? "bg-gray-100 text-gray-900" : "bg-gray-800 text-gray-100"}`}>
     <Sidebar theme={theme} className="w-64 h-screen p-0" />
   
     <div className="flex-1 flex flex-col">

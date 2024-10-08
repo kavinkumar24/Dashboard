@@ -125,7 +125,7 @@ function Header({
           {currentTime}
         </p>
 
-        <div className="flex flex-row">
+        <div className="flex flex-row -ml-10">
           <input
             type="search"
             placeholder="Search"
