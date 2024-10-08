@@ -8,6 +8,7 @@ export default {
   theme: {
     extend: {
       maxWidth: {
+        'screen-1xl':'10rem',
         'screen-6xl': '96rem', // Adjust as needed
         'screen-4xl': '64rem', // Adjust as needed
         'screen-3xl':'48rem',
