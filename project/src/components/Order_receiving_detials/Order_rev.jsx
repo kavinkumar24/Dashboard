@@ -973,7 +973,7 @@ function Order_rev() {
   const chartComponents = [
     <div className="w-[50%] sm:w-full md:w-full lg:w-full" key="total-weight">
       <div
-        className={`order-1 col-span-1 w-[180%] md:w-full ${
+        className={`order-1 col-span-1 w-[200%] md:w-full ${
           theme === "light" ? "bg-white" : "bg-slate-900"
         }  p-4 rounded shadow-md  h-[450px]`}
       >
@@ -1066,9 +1066,9 @@ function Order_rev() {
     </div>,
     <div className="w-[50%] sm:w-full md:w-full lg:w-full" key="total-weight-month">
       <div
-        className={`order-1 col-span-1 ${
+        className={`order-1 col-span-1 w-[200%] md:w-full ${
           theme === "light" ? "bg-white" : "bg-slate-900"
-        }  p-4 rounded shadow-md h-[450px]`}
+        }  p-4 rounded shadow-md  h-[450px]`}
       >
             <h2
           className={`text-md font-bold ${
@@ -1157,11 +1157,11 @@ function Order_rev() {
       </div>
     </div>,
 
-    <div className="w-[50%] sm:w-full md:w-full lg:w-full" key="kg-per-year-chart">
+    <div className="w-[50%] sm:w-full md:w-full lg:w-full overflow-auto" key="kg-per-year-chart">
       <div
         className={`order-2 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
-        } p-4 rounded shadow-md h-[450px] flex flex-col`}
+        } p-4 rounded shadow-md min-w-[200%] md:w-full h-[450px] flex flex-col`}
       >
         <h2
           className={`text-md font-bold ${
