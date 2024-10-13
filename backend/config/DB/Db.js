@@ -1,15 +1,17 @@
 const mysql = require("mysql");
 
+
+
+
 const db = mysql.createConnection({
-  host:'localhost',
-  user: "root",
-  password:"",
-  database: "emerald_db_cmp",
+  host:'172.16.5.233',
+  user: "emerald",
+  password:"emerald",
+  database: "Emerald",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
 });
-
 
 db.connect(err => {
   if (err) {
