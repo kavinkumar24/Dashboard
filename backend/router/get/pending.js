@@ -102,7 +102,7 @@ router.get("/pending", (req, res) => {
     );
   
     let sql = `
-      SELECT todept, SUM(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty
+      SELECT todept, COUNT(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty
       FROM Pending_sample_data
       WHERE LOWER(todept) IN (?)
         AND UploadedDateTime >= ? AND UploadedDateTime < ?
@@ -186,7 +186,7 @@ router.get("/pending", (req, res) => {
   
       // SQL query to get total quantity for both today and yesterday
       const sql = `
-        SELECT todept, SUM(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty,
+        SELECT todept, COUNT(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty,
                CASE 
                  WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'today'
                  WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'previous_day'

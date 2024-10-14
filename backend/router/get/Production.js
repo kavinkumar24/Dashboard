@@ -42,7 +42,7 @@ router.get("/filtered_production_data", async (req, res) => {
     );
   
     let sql = `
-      SELECT \`From Dept\`, \`To Dept\`, SUM(\`CW Qty\`) AS total_qty
+      SELECT \`From Dept\`, \`To Dept\`, COUNT(\`CW Qty\`) AS total_qty
       FROM Production_sample_data
       WHERE LOWER(\`From Dept\`) IN (?)
         AND LOWER(\`To Dept\`) IN (?)
@@ -134,7 +134,7 @@ router.get("/filtered_production_data", async (req, res) => {
   
       // SQL query to get total quantity for both today and yesterday
       const sql = `
-        SELECT \`From Dept\`, \`To Dept\`, SUM(\`CW Qty\`) AS total_qty, 
+        SELECT \`From Dept\`, \`To Dept\`, COUNT(\`CW Qty\`) AS total_qty, 
                CASE 
                  WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'today'
                  WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'previous_day'
@@ -241,7 +241,7 @@ router.get("/filtered_production_data", async (req, res) => {
   
     // SQL for today's data
     let sqlToday = `
-      SELECT \`From Dept\`, \`To Dept\`, SUM(\`CW Qty\`) AS total_qty
+      SELECT \`From Dept\`, \`To Dept\`, COUNT(\`CW Qty\`) AS total_qty
       FROM Production_sample_data
       WHERE LOWER(\`From Dept\`) IN (?)
         AND LOWER(\`To Dept\`) IN (?)
@@ -258,7 +258,7 @@ router.get("/filtered_production_data", async (req, res) => {
   
     // SQL for yesterday's data
     let sqlYesterday = `
-      SELECT \`From Dept\`, \`To Dept\`, SUM(\`CW Qty\`) AS total_qty
+      SELECT \`From Dept\`, \`To Dept\`, COUNT(\`CW Qty\`) AS total_qty
       FROM Production_sample_data
       WHERE LOWER(\`From Dept\`) IN (?)
         AND LOWER(\`To Dept\`) IN (?)

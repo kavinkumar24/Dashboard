@@ -44,8 +44,7 @@ function Daily_Report() {
   const getDaysRange = (recvdate1) => {
     const today = new Date();
     const recvDate = new Date(recvdate1);
-    const diffTime = today - recvDate;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = recvdate1;
 
     if (diffDays <= 0) return "0";
     if (diffDays <= 10) return diffDays.toString();
@@ -60,7 +59,7 @@ function Daily_Report() {
   };
 
   const groupedData = filteredPendingData.reduce((acc, item) => {
-    const range = getDaysRange(item.RECVDATE1);
+    const range = getDaysRange(item.Textbox56);
     const toDept = item.TODEPT;
     const departmentName = departmentMappings[toDept] || "Unknown";
 
@@ -278,7 +277,7 @@ function Daily_Report() {
               </div>
             </div>
           ) : (
-            <div className="ml-6 md:ml-0 lg:ml-0 xl:ml-0 max-w-80 md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-8xl bg-red-400">
+            <div className="ml-6 md:ml-0 lg:ml-0 xl:ml-0 max-w-80 md:max-w-lg lg:max-w-4xl xl:max-w-screen-lg 2xl:max-w-screen-8xl bg-red-400">
             <div className="overflow-x-auto bg-sky-400">
             <table className={`min-w-full divide-y ${theme === "light" ? "divide-gray-200" : "divide-gray-700"} table-auto`}>
                 <thead className={`${theme === "light" ? "bg-gray-200 text-gray-800" : "bg-gray-700 text-gray-200"}`}>

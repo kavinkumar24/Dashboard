@@ -115,7 +115,8 @@ function DepartmentDetail() {
           acc[dept] = { quantity: 0, pltcodes: {} };
         }
   
-        acc[dept].quantity += Number(item["CW Qty"] || item.JCPDSCWQTY1) || 0;
+        // acc[dept].quantity += Number(item["CW Qty"] || item.JCPDSCWQTY1) || 0;
+        acc[dept].quantity += 1 || 0;
   
         if (!acc[dept].pltcodes[pltcode]) {
           acc[dept].pltcodes[pltcode] = 0;
@@ -140,7 +141,7 @@ function DepartmentDetail() {
                 acc[dept] = { quantity: 0, pltcodes: {} };
             }
 
-            acc[dept].quantity += Number(item.JCPDSCWQTY1) || 0;
+            acc[dept].quantity += 1 ;
 
             if (!acc[dept].pltcodes[pltcode]) {
                 acc[dept].pltcodes[pltcode] = 0;
