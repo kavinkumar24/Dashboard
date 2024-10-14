@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { ToastContainer, toast } from 'react-toastify';
+import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
+import { IoCheckmarkDoneCircle } from "react-icons/io5";
+import { MdSmsFailed } from "react-icons/md";
 
 function Uploads() {
   const [search, setSearch] = useState("");
@@ -21,7 +23,7 @@ function Uploads() {
   const [mismatchData, setMismatchData] = useState([]); // New state for mismatch data
   const currentTime = new Date().toLocaleString();
   const [fileID, setFileID] = useState("");
-  const[isloading,setIsloading] = useState(false)
+  const [isloading, setIsloading] = useState(false);
   useEffect(() => {
     localStorage.setItem("theme", theme);
   }, [theme]);
@@ -117,8 +119,7 @@ function Uploads() {
       ]);
 
       setApi("http://localhost:8081/api/production/upload");
-    }
-    else if (selectedFileType === "production2") {
+    } else if (selectedFileType === "production2") {
       setDetailedData([
         "JCID",
         "BRIEFNUM",
@@ -149,8 +150,7 @@ function Uploads() {
       ]);
 
       setApi("http://localhost:8081/api/production/upload");
-    } 
-    else if (selectedFileType === "pending1") {
+    } else if (selectedFileType === "pending1") {
       setDetailedData([
         "TODEPT",
         "JCID1",
@@ -301,18 +301,16 @@ function Uploads() {
   };
 
   const handleFileChange = async (event) => {
-    setIsloading(true)
+    setIsloading(true);
     if (fileType === "") {
       setTypeMsg("Please select the File Type before choosing a file.");
       event.target.value = null;
       return;
     }
-    
 
     const selectedFile = event.target.files[0];
     setFile(selectedFile);
     await handleUpload(selectedFile);
-    
   };
 
   const handleFileInputClick = (event) => {
@@ -323,9 +321,12 @@ function Uploads() {
   };
 
   const handleUpload = async (selectedFile) => {
-    
     if (!selectedFile) {
       setMessage("Please select a file first.");
+      toast.warn("Select File !")
+      setTimeout(()=>{
+        window.location.reload();
+      },4000)
       return;
     }
 
@@ -365,7 +366,11 @@ function Uploads() {
       if (mismatches.length > 0 || mismatchedColumns.length > 0) {
         setMismatchData(combinedMismatches);
         setMessage("Column mismatch! Please review the table below.");
-        setIsloading(false)
+        setIsloading(false);
+        toast.warn("Column name mismatch")
+        setTimeout(()=>{
+          window.location.reload();
+        },4000)
         return;
       }
 
@@ -382,18 +387,23 @@ function Uploads() {
         });
 
         setMessage(response.data.message || "File uploaded successfully!");
-    setIsloading(false)
-
+        toast.success("File uploaded successfully!");
+        setIsloading(false);
+        setTimeout(()=>{
+          window.location.reload();
+        },4000)
       } catch (error) {
         console.error("Error uploading file:", error);
         setMessage("Failed to upload file");
-        setIsloading(false)
+        toast.error("Failed Try later")
+        setTimeout(()=>{
+          window.location.reload();
+        },4000)
+        setIsloading(false);
       }
     };
 
     fileReader.readAsArrayBuffer(selectedFile);
-    
-
   };
 
   return (
@@ -403,15 +413,16 @@ function Uploads() {
           theme === "light" ? "bg-gray-100" : "bg-gray-800"
         }`}
       >
-             {isloading && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
-              <div className="flex gap-2 ml-9">
-                <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
-                <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
-                <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
-              </div>
+        <ToastContainer />
+        {isloading && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
+            <div className="flex gap-2 ml-9">
+              <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+              <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+              <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
             </div>
-          )}
+          </div>
+        )}
         <Sidebar theme={theme} />
         <div className="flex-1 flex flex-col">
           <Header onSearch={setSearch} theme={theme} dark={setTheme} />
@@ -494,23 +505,47 @@ function Uploads() {
               </p>
             </label>
 
+            <br></br>
             {message && message === "File uploaded successfully!" ? (
               <div>
-                <p className="m-4 text-green-500">{message} </p>{" "}
-                <p className="m-4 text-red-500">
-                  Attention Please!!! : If You want to upload another file or
-                  reupload any file Please!! reload or refresh the Current Page
-                </p>
+                {message && 
+                <div className={`p-3 w-96 items-center justify-center mx-auto ${theme === 'light'?'bg-gray-200':'bg-gray-700'}`}>
+                  <div className="p-4 h-20 w-20 justify-center mx-auto">
+                    <IoCheckmarkDoneCircle
+                      className="text-green-500"
+                      size={50}
+                    />
+                  </div>
+                  <p className="m-4 text-green-500 justify-center items-center mx-auto text-center text-lg font-semibold">
+                    {message}{" "}
+                  </p>{" "}
+                </div>
+}
+                <div className="flex justify-center items-center w-full mx-auto">
+                  <p className="m-4 text-yellow-500 text-center">
+                  Please Wait It will reload by automatically !
+
+                  </p>
+                </div>
               </div>
             ) : (
               <div>
                 {" "}
-                <p className="m-4 text-red-500">{message} </p>{" "}
+               {message &&
+                <div className={`p-3 w-96 items-center justify-center mx-auto ${theme === 'light'?'bg-gray-200':'bg-gray-700'}`}>
+                <div className="p-4 h-20 w-20 justify-center mx-auto">
+                  <MdSmsFailed className="text-red-500" size={50} />
+
+                </div>
+                <p className="m-4 text-red-500 text-center">{message} </p>{" "}
+
+              </div>
+              
+}
+
                 {message && message !== "File uploaded successfully!" && (
-                  <p className="m-4 text-green-500">
-                    Attention Please!!! : Please Correct the Column Name that
-                    are Mismatched and try to reupload the file after refreshing
-                    or reloading the current Page
+                  <p className="m-4 text-yellow-500 text-center">
+                    Please Wait It will reload by automatically !
                   </p>
                 )}{" "}
               </div>
