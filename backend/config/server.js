@@ -462,32 +462,52 @@ const initializeDepartments = () => {
       // Prepare department names for insertion into Dept_Target
       const departmentsToInsert = Object.keys(result).filter(dept => dept !== 'null');
 
-      // Insert departments into Dept_Target one by one
-      const insertPromises = departmentsToInsert.map(dept => {
-        return new Promise((resolve, reject) => {
-          const insertSql = `INSERT INTO Dept_Target (department_name, target) VALUES ('${dept}', 100) ON DUPLICATE KEY UPDATE target = 100;`;
-          db.query(insertSql, (insertErr) => {
-            if (insertErr) {
-              console.error("Error inserting department:", insertErr);
-              reject(insertErr);
-            } else {
-              resolve();
-            }
-          });
-        });
-      });
+      // Check existing departments
+      const existingDepartmentsQuery = `
+        SELECT department_name FROM Dept_Target WHERE department_name IN (${departmentsToInsert.map(dept => `'${dept}'`).join(',')})
+      `;
 
-      // Execute all insert promises
-      Promise.all(insertPromises)
-        .then(() => {
-         
-        })
-        .catch((error) => {
-          console.error("Error during department inserts:", error);
+      db.query(existingDepartmentsQuery, (err, existingRows) => {
+        if (err) {
+          console.error("Error checking existing departments:", err);
+          return; // Handle error appropriately
+        }
+
+        // Create a set of existing department names for quick lookup
+        const existingDepartmentsSet = new Set(existingRows.map(row => row.department_name));
+
+        // Insert departments into Dept_Target if they don't exist
+        const insertPromises = departmentsToInsert.map(dept => {
+          if (!existingDepartmentsSet.has(dept)) {
+            return new Promise((resolve, reject) => {
+              const insertSql = `INSERT INTO Dept_Target (department_name, target) VALUES ('${dept}', 100);`;
+              db.query(insertSql, (insertErr) => {
+                if (insertErr) {
+                  console.error("Error inserting department:", insertErr);
+                  reject(insertErr);
+                } else {
+                  resolve();
+                }
+              });
+            });
+          }
+          // If the department already exists, resolve immediately
+          return Promise.resolve();
         });
+
+        // Execute all insert promises
+        Promise.all(insertPromises)
+          .then(() => {
+            console.log("Departments initialized successfully.");
+          })
+          .catch((error) => {
+            console.error("Error during department inserts:", error);
+          });
+      });
     });
   });
 };
+
 
 
 

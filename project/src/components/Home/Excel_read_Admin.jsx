@@ -412,7 +412,7 @@ function Dashboard() {
             Production and Pending Data
           </h1>
         </div>
-
+  
         <div className="overflow-x-auto">
           <table
             className={`min-w-full table-auto text-sm ${
@@ -429,7 +429,7 @@ function Dashboard() {
                   rowSpan="2"
                   className={`border ${
                     theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-4 py-2 text-center font-semibold text-base`}
+                  } px-2 py-2 text-center font-semibold text-base`}
                 >
                   Dept
                 </th>
@@ -437,7 +437,7 @@ function Dashboard() {
                   rowSpan="2"
                   className={`border ${
                     theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-4 py-2 text-center font-semibold text-base`}
+                  } px-2 py-2 text-center font-semibold text-base`}
                 >
                   Align
                 </th>
@@ -445,7 +445,7 @@ function Dashboard() {
                   rowSpan="2"
                   className={`border ${
                     theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-4 py-2 text-center font-semibold text-base`}
+                  } px-2 py-2 text-center font-semibold text-base`}
                 >
                   Capacity/Plan
                 </th>
@@ -453,7 +453,7 @@ function Dashboard() {
                   rowSpan="2"
                   className={`border ${
                     theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-4 py-2 text-center font-semibold text-base`}
+                  } px-2 py-2 text-center font-semibold text-base`}
                 >
                   Total Pro
                 </th>
@@ -461,7 +461,7 @@ function Dashboard() {
                   rowSpan="2"
                   className={`border ${
                     theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-4 py-2 text-center font-semibold text-base`}
+                  } px-2 py-2 text-center font-semibold text-base`}
                 >
                   Balance Pro
                 </th>
@@ -469,7 +469,7 @@ function Dashboard() {
                   rowSpan="2"
                   className={`border ${
                     theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-4 py-2 text-center font-semibold text-base`}
+                  } px-2 py-2 text-center font-semibold text-base`}
                 >
                   Avg Pro QTY/Day
                 </th>
@@ -477,7 +477,7 @@ function Dashboard() {
                   colSpan="2"
                   className={`border ${
                     theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-4 py-2 text-center font-semibold text-base text-red-600`}
+                  } px-2 py-2 text-center font-semibold text-base text-red-600`}
                 >
                   {yesterdayFormatted}
                 </th>
@@ -485,7 +485,7 @@ function Dashboard() {
                   colSpan="2"
                   className={`border ${
                     theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-4 py-2 text-center font-semibold text-base text-red-600`}
+                  } px-2 py-2 text-center font-semibold text-base text-red-600`}
                 >
                   {dayBeforeYesterdayFormatted}
                 </th>
@@ -493,7 +493,7 @@ function Dashboard() {
                   rowSpan="2"
                   className={`border ${
                     theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-4 py-2 text-center font-semibold text-base`}
+                  } px-2 py-2 text-center font-semibold text-base`}
                 >
                   Remarks
                 </th>
@@ -506,28 +506,28 @@ function Dashboard() {
                 <th
                   className={`border ${
                     theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-4 py-2 text-center font-semibold text-base`}
+                  } px-2 py-2 text-center font-semibold text-base`}
                 >
                   Pro
                 </th>
                 <th
                   className={`border ${
                     theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-4 py-2 text-center font-semibold text-base`}
+                  } px-2 py-2 text-center font-semibold text-base`}
                 >
                   Pen
                 </th>
                 <th
                   className={`border ${
                     theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-4 py-2 text-center font-semibold text-base`}
+                  } px-2 py-2 text-center font-semibold text-base`}
                 >
                   Pro
                 </th>
                 <th
                   className={`border ${
                     theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-4 py-2 text-center font-semibold text-base`}
+                  } px-2 py-2 text-center font-semibold text-base`}
                 >
                   Pen
                 </th>
@@ -540,8 +540,8 @@ function Dashboard() {
                   className={`${
                     index % 2 === 0
                       ? theme === "dark"
-                        ? "bg-gray-700 hover:bg-gray-800 "
-                        : "bg-white hover:bg-gray-200 "
+                        ? "bg-gray-700 hover:bg-gray-800"
+                        : "bg-white hover:bg-gray-200"
                       : theme === "dark"
                       ? "bg-gray-800"
                       : "bg-gray-50"
@@ -550,42 +550,42 @@ function Dashboard() {
                   <td
                     className={`border ${
                       theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-4 py-2 text-center text-base font-medium`}
+                    } px-2 py-2 text-center text-base font-medium`}
                   >
                     {row.dept}
                   </td>
                   <td
                     className={`border ${
                       theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-4 py-2 text-center text-base`}
+                    } px-2 py-2 text-center text-base`}
                   >
                     {row.align}%
                   </td>
                   <td
                     className={`border ${
                       theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-4 py-2 text-center text-base`}
+                    } px-2 py-2 text-center text-base`}
                   >
                     {row.capacity}
                   </td>
                   <td
                     className={`border ${
                       theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-4 py-2 text-center text-base`}
+                    } px-2 py-2 text-center text-base`}
                   >
                     {row.totalPro}
                   </td>
                   <td
                     className={`border ${
                       theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-4 py-2 text-center text-base`}
+                    } px-2 py-2 text-center text-base`}
                   >
                     {row.balancePro}
                   </td>
                   <td
                     className={`border ${
                       theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-4 py-2 text-center text-base`}
+                    } px-2 py-2 text-center text-base`}
                   >
                     {row.avgProPerDay}
                   </td>
@@ -594,16 +594,16 @@ function Dashboard() {
                       theme === "dark"
                         ? "border-gray-600 bg-green-700 text-gray-200"
                         : "border-gray-300 bg-green-200"
-                    } px-4 py-2 text-center text-base font-medium`}
+                    } px-2 py-2 text-center text-base font-medium`}
                   >
                     {row.protoday}
                   </td>
                   <td
                     className={`border  ${
                       theme === "dark"
-                        ? "border-gray-600 text-gray-200 bg-yellow-600 "
-                        : "border-gray-300 bg-yellow-100 "
-                    } px-4 py-2 text-center text-base font-medium`}
+                        ? "border-gray-600 text-gray-200 bg-yellow-600"
+                        : "border-gray-300 bg-yellow-100"
+                    } px-2 py-2 text-center text-base font-medium`}
                   >
                     {row.pentoday}
                   </td>
@@ -612,23 +612,23 @@ function Dashboard() {
                       theme === "dark"
                         ? "border-gray-600 bg-green-700 text-gray-200"
                         : "border-gray-300 bg-green-200"
-                    } px-4 py-2 text-center text-base font-medium`}
+                    } px-2 py-2 text-center text-base font-medium`}
                   >
                     {row.proprev}
                   </td>
                   <td
                     className={`border  ${
                       theme === "dark"
-                        ? "border-gray-600 text-gray-200 bg-yellow-600 "
-                        : "border-gray-300 bg-yellow-100 "
-                    } px-4 py-2 text-center text-base font-medium`}
+                        ? "border-gray-600 text-gray-200 bg-yellow-600"
+                        : "border-gray-300 bg-yellow-100"
+                    } px-2 py-2 text-center text-base font-medium`}
                   >
                     {row.penprev}
                   </td>
                   <td
                     className={`border ${
                       theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-4 py-2 text-center`}
+                    } px-2 py-2 text-center`}
                   >
                     {role === "admin" ? (
                       <div>
@@ -641,11 +641,11 @@ function Dashboard() {
                                 : "bg-white text-black border-gray-300"
                             } resize-none`}
                             placeholder="Enter remarks..."
-                            value={remarks[row.dept] || ""} // Bind the textarea to remarks state
+                            value={remarks[row.dept] || ""}
                             onChange={(e) =>
                               handleRemarksChange(row.dept, e.target.value)
                             }
-                            onBlur={() => saveRemarks(row.dept)} // Save remarks when textarea loses focus
+                            onBlur={() => saveRemarks(row.dept)}
                           />
                         ) : (
                           <div
@@ -666,34 +666,39 @@ function Dashboard() {
             </tbody>
           </table>
         </div>
-
+  
         {/* Pagination Controls */}
         {/* <div className="flex justify-center space-x-2 m-4">
-    <button
-      className={`text-base font-semibold px-5 py-3 rounded-lg border ${
-        currentPage1 === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'
-      }`}
-      onClick={() => handlePageChange(currentPage1 - 1)}
-      disabled={currentPage1 === 1}
-    >
-      Previous
-    </button>
-
-    <button className="text-base px-5 py-3 rounded-lg border bg-gray-300">{currentPage1}</button>
-
-    <button
-      className={`text-base font-semibold px-5 py-3 rounded-lg border ${
-        currentPage1 === totalPages ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'
-      }`}
-      onClick={() => handlePageChange(currentPage1 + 1)}
-      disabled={currentPage1 === totalPages}
-    >
-      Next
-    </button>
-  </div> */}
+          <button
+            className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+              currentPage1 === 1
+                ? 'bg-gray-200 cursor-not-allowed'
+                : 'bg-gray-300 hover:bg-gray-400'
+            }`}
+            onClick={() => handlePageChange(currentPage1 - 1)}
+            disabled={currentPage1 === 1}
+          >
+            Previous
+          </button>
+  
+          <button className="text-base px-5 py-3 rounded-lg border bg-gray-300">{currentPage1}</button>
+  
+          <button
+            className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+              currentPage1 === totalPages
+                ? 'bg-gray-200 cursor-not-allowed'
+                : 'bg-gray-300 hover:bg-gray-400'
+            }`}
+            onClick={() => handlePageChange(currentPage1 + 1)}
+            disabled={currentPage1 === totalPages}
+          >
+            Next
+          </button>
+        </div> */}
       </div>
     </div>
   );
+  
 
 
 
@@ -829,7 +834,8 @@ function Dashboard() {
     const storedTargets =
       JSON.parse(localStorage.getItem("targetValues")) || {};
     const Target =targets[dept] || 100; 
-    const efficiency = (productionQty / Target).toFixed(2) * 100;
+    const efficiency = ((productionQty / Target) * 100).toFixed(2);
+
 
     const toDayProduction =
       (twodays_production &&
