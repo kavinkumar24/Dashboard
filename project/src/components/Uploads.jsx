@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
+import Select from 'react-select';
+
 import axios from "axios";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
@@ -47,6 +49,18 @@ function Uploads() {
     }
   };
 
+  const options = [
+    { value: '', label: 'Choose the File Type' },
+    { value: 'production1', label: 'Production1 - non Gold' },
+    { value: 'production2', label: 'Production2 - new' },
+    { value: 'pending1', label: 'Pending1 - PDD' },
+    { value: 'pending2', label: 'Pending2 - new' },
+    { value: 'rejection', label: 'Rejection' },
+    { value: 'orderRece_newDesi', label: 'Order Receiving & New Design' },
+    { value: 'task', label: 'Task' },
+    { value: 'target', label: 'Target' },
+  ];
+
   const generateFileID = async (fileType) => {
     const currentDate = new Date();
     const day = String(currentDate.getDate()).padStart(2, "0");
@@ -84,8 +98,7 @@ function Uploads() {
     console.log(newFileID);
   });
 
-  const handleFileType = async (event) => {
-    const selectedFileType = event.target.value;
+  const handleFileType = async (selectedFileType) => {
     setFileType(selectedFileType);
     if (selectedFileType) {
       setTypeMsg("");
@@ -300,6 +313,35 @@ function Uploads() {
     }
   };
 
+  const customStyles = {
+    control: (provided) => ({
+      ...provided,
+      backgroundColor: theme === "light" ? "white" : "#374151",
+      padding: "5px 10px",
+      border: theme === "light" ? "1px solid #e2e8f0" : "1px solid #4a5568",
+      color: theme === "light" ? "black" : "white",
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: theme === "light" ? "black" : "white",
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      borderBottom: "1px dotted blue",
+      color: state.isSelected ? "white" : theme === "light" ? "black" : "white",
+      backgroundColor: state.isSelected
+        ? theme === "light"
+          ? "#3b82f6"
+          : "#1e3a8a"
+        : state.isFocused
+        ? theme === "light"
+          ? "#e2e8f0"
+          : "#4a5568"
+        : theme === "light"
+        ? "white"
+        : "#0f172a",
+    }),
+  };
   const handleFileChange = async (event) => {
     setIsloading(true);
     if (fileType === "") {
@@ -329,6 +371,8 @@ function Uploads() {
       },4000)
       return;
     }
+    
+    
 
     const fileReader = new FileReader();
 
@@ -406,6 +450,17 @@ function Uploads() {
     fileReader.readAsArrayBuffer(selectedFile);
   };
 
+  const selectedOption = options.find(option => option.value === fileType) || options[0];
+  const [uploadValue, setUploadValue] = useState('');
+
+  const handleUpload_select = (selectedOption)=>{
+    const value = selectedOption ? selectedOption.value : "";
+   
+    setUploadValue(value);
+    console.log("uploadedvalue",uploadValue)
+    handleFileType(value)
+
+  }
   return (
     <>
       <div
@@ -443,29 +498,17 @@ function Uploads() {
           >
             Select the Type of file to be Upload
           </label>
-          <select
-            id="file-type"
-            className={`mx-4 ${
-              theme === "light"
-                ? "bg-gray-50 border-gray-300 text-gray-900"
-                : "bg-gray-700 border-gray-600 text-gray-200"
-            } border-2 text-base rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-1/3 p-2.5`}
-            onChange={handleFileType}
-            value={fileType}
-          >
-            <option value="">Choose the File Type</option>
-            <option value="production1">Production1 - non Gold</option>
-            <option value="production2">Production2 - new </option>
-            <option value="pending1">Pending1 - PDD</option>
-            <option value="pending2">Pending2 - new</option>
-            <option value="rejection">Rejection</option>
-            <option value="orderRece_newDesi">
-              Order Receiving & New Design
-            </option>
-            <option value="task">Task</option>
-            <option value="target">Target</option>
-          </select>
-
+          <div className="p-4">
+          <Select
+  id="file-type"
+  classNamePrefix="react-select"
+  styles={customStyles}
+  options={options}
+  onChange={handleUpload_select}
+  value={options.find((option) => option.value === uploadValue) || null}
+  isSearchable
+/>
+</div>
           {typeMsg && <p className="text-red-600 mx-4 mt-2">{typeMsg}</p>}
           <div className="upload-container pt-5">
             <label

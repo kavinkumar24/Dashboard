@@ -227,10 +227,12 @@ function ViewTasks() {
 
   return (
     <div
-      className={`min-h-screen flex ${
-        theme === "light" ? "bg-gray-100" : "bg-gray-800"
-      }`}
-    >
+    className={`min-h-screen min-w-full flex flex-col md:flex-row ${
+      theme === "light"
+        ? "bg-gray-100 text-gray-900"
+        : "bg-gray-800 text-gray-100"
+    }`}
+  >
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <Header
@@ -241,7 +243,7 @@ function ViewTasks() {
           filter={filter_on}
         />
         <main
-          className={`flex-1 p-0 overflow-y-auto  ${
+          className={`flex-1 p-0 overflow-y-auto overflow-hidden ${
             filter_on === true ? "opacity-10" : "opacity-100"
           }`}
         >
@@ -300,9 +302,7 @@ function ViewTasks() {
               className={`text-xl font-bold ${
                 theme === "light" ? "text-gray-800" : "text-white"
               }`}
-            >
-              
-            </h1>
+            ></h1>
             <button
               onClick={handleDownload}
               className="bg-blue-600 text-white px-4 py-2 rounded shadow hover:bg-blue-700 mr-10"
@@ -312,13 +312,13 @@ function ViewTasks() {
           </div>
 
           <div
-            className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-14 my-5 ${
-              theme === "light" ? "bg-white" : "bg-gray-900 text-white"
-            } max-w-full md:max-w-lg lg:max-w-xl xl:max-w-screen-5xl 2xl:max-w-screen-7xl`}
+            className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-10 my-5 ${
+              theme === "light" ? "bg-white" : "bg-gray-900"
+            } max-w-[90%] md:max-w-lg lg:max-w-4xl xl:max-w-screen-lg 2xl:max-w-screen-8xl`}
           >
             <h1 className="text-xl font-semibold p-2 pl-10 py-5">Task List</h1>
 
-            <div className={`overflow-x-auto`}>
+            <div className="overflow-x-auto">
               <table
                 className={`min-w-full justify-center items-center table-auto text-sm ${
                   theme === "light" ? "text-gray-800" : "text-gray-200"
@@ -486,8 +486,7 @@ function ViewTasks() {
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {loggedInEmail === task.Assign_Name &&
                         userRole !== "admin" ? (
-                          <input 
-                          
+                          <input
                             type="text"
                             value={task.Remarks}
                             onChange={(e) => {
@@ -502,8 +501,10 @@ function ViewTasks() {
                               // Call the function to update remarks on the backend
                               updateTaskRemarks(task.Task_ID, updatedRemarks); // Send the string directly
                             }}
-                            className={`border rounded-lg px-2 py-1 ${theme==='light'?'bg-white border-gray-200':
-                             'bg-gray-700 border-gray-500' 
+                            className={`border rounded-lg px-2 py-1 ${
+                              theme === "light"
+                                ? "bg-white border-gray-200"
+                                : "bg-gray-700 border-gray-500"
                             }`}
                             placeholder="Enter your remarks"
                           />

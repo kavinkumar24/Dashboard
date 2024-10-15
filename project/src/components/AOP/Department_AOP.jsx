@@ -172,6 +172,13 @@ function Department_AOP() {
   }, []);
   
 
+  const getWeekOfMonth = (date) => {
+    const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+    const weekOfMonth = Math.ceil((date.getDate() + firstDay.getDay()) / 7);
+    return weekOfMonth;
+  };
+
+  
   const fetchData = async (selectedDeptName) => {
     try {
       const response = await fetch(
@@ -179,47 +186,48 @@ function Department_AOP() {
       );
       const data = await response.json();
       console.log("Raw Filtered Production Data:", data);
-
+  
       const departmentMapping = departmentMappings[selectedDeptName] || {};
       const photoMapping = departmentMappings["PHOTO"] || {};
-
-      // Extract from and to departments for the selected department and PHOTO
       const fromDepartments = departmentMapping.from || [];
       const toDepartments = departmentMapping.to || [];
       const photoFromDepartments = photoMapping.from || [];
       const photoToDepartments = photoMapping.to || [];
-
-      // Initialize an object to hold counts for each allowed project
+  
       const achievedCounts = ALLOWED_PROJECTS.reduce((acc, project) => {
         acc[project.toUpperCase()] = 0; // Initialize each project count to 0
         return acc;
       }, {});
-
-      // Calculate achieved counts based on the selected department and PHOTO mappings
+  
       data.forEach((item) => {
         const fromDept = item["From Dept"]?.toUpperCase() || "";
         const toDept = item["To Dept"]?.toUpperCase() || "";
         const project = item["Project"]?.toUpperCase() || ""; // Get the project name
-
+  
         // Check if the fromDept and toDept match the selected department mappings
         const isMatchingDept =
           fromDepartments.includes(fromDept) && toDepartments.includes(toDept);
-
+  
         // Check if the fromDept and toDept match the PHOTO mappings
         const isMatchingPhoto =
           photoFromDepartments.includes(fromDept) &&
           photoToDepartments.includes(toDept);
-
+  
+        // Calculate the week number based on uploadedDateTime
+        const uploadedDate = new Date(item.uploadedDateTime);
+        const weekNumber = getWeekOfMonth(uploadedDate);
+  
         // If either department mapping matches, check allowed projects
         if (
           (isMatchingDept || isMatchingPhoto) &&
           ALLOWED_PROJECTS.includes(project)
-          
         ) {
           achievedCounts[project] += 1;
+          // You can also store the week number if needed for further processing
+          item.weekNumber = weekNumber; // Optional: Add the week number to the item
         }
       });
-
+  
       console.log("Achieved Counts:", achievedCounts);
       setAchieved(achievedCounts); // Update the achieved state
       setRawFilteredData(data);
@@ -227,6 +235,7 @@ function Department_AOP() {
       console.error("Error fetching data:", error);
     }
   };
+  
 
   const [rawFilteredPendingData, setRawFilteredPendingData] = useState([]);
   const [groupedData, setGroupedData] = useState({});
@@ -349,89 +358,73 @@ function Department_AOP() {
   };
 
   const updateTableData = () => {
+    // Normalize pending data
     const normalizedData = pendingData.map((item) => ({
       ...item,
       PLTCODE1: item.PLTCODE1?.toUpperCase() || "",
-      Wip:
-        pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)
-          ?.total_quantity || 0,
+      Wip: pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)?.total_quantity || 0,
     }));
-
+  
+    // Check if a department is selected
     if (!selectedDeptName) {
       setTableData([]);
       return;
     }
-
+  
     const deptMapping = departmentMappings[selectedDeptName];
     if (deptMapping && deptMapping.to) {
-      const fromDeptSet = new Set(
-        deptMapping.from.map((dept) => dept.toUpperCase())
-      );
-      const toDeptSet = new Set(
-        deptMapping.to.map((dept) => dept.toUpperCase())
-      );
-
+      const fromDeptSet = new Set(deptMapping.from.map((dept) => dept.toUpperCase()));
+      const toDeptSet = new Set(deptMapping.to.map((dept) => dept.toUpperCase()));
+  
+      // Aggregate project totals
       const projectTotals = rawFilteredData.reduce((acc, item) => {
         const fromDept = item["From Dept"]?.toUpperCase() || "";
         const toDept = item["To Dept"]?.toUpperCase() || "";
-
+  
         if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
           const project = item.Project || "Unknown Project";
-          const cwQty = item["CW Qty"] || 0;
-
-          if (!acc[project]) {
-            acc[project] = 0;
-          }
-          acc[project] += 1; // or if sum = acc[project] += cwQty;
+          acc[project] = (acc[project] || 0) + 1; // Increment project count
         }
-
+  
         return acc;
       }, {});
-
+  
       const pltcodePendingData = aggregatePendingData(rawFilteredPendingData);
-
+  
+      // Filter pending data based on department selection
       const filteredPendingData = normalizedData.filter((item) => {
         return (
           toDeptSet.has(item.TODEPT?.toUpperCase() || "") &&
-          (selectedDepartments.length === 0 ||
-            selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
+          (selectedDepartments.length === 0 || selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
         );
       });
-
+  
+      // Initialize counts and aggregates
       const pltcodeCounts = filteredPendingData.reduce((acc, item) => {
-        if (!acc[item.PLTCODE1]) {
-          acc[item.PLTCODE1] = { count: 0, totalJCPDSCWQTY1: 0, totalWIP: 0 };
+        const pltcode = item.PLTCODE1;
+        if (!acc[pltcode]) {
+          acc[pltcode] = { count: 0, totalJCPDSCWQTY1: 0, totalWIP: 0 };
         }
-        acc[item.PLTCODE1].count += 1;
-        acc[item.PLTCODE1].totalJCPDSCWQTY1 += item.JCPDSCWQTY1 || 0;
-        acc[item.PLTCODE1].totalWIP = item.Wip;
+        acc[pltcode].count += 1;
+        acc[pltcode].totalJCPDSCWQTY1 += item.JCPDSCWQTY1 || 0;
+        acc[pltcode].totalWIP = item.Wip;
         return acc;
       }, {});
-
-      // Make sure to access `achieved` from state
-      const achievedCounts = achieved; // Assuming `achieved` is your state variable holding the counts
-
-      // Create the updated table data with allowed projects
+  
+      const achievedCounts = achieved; // Access achieved counts from state
+  
+      // Create updated table data for allowed projects
       const updatedTableData = AllowedProjects.map((project) => {
         const pltcode = project.toUpperCase();
-        const totalJCPDSCWQTY1 = pltcodePendingData[pltcode] || 0; // Use aggregated data
-        const target = Math.round(groupedData[pltcode])
-          ? Math.round(groupedData[pltcode])
-          : 0;
-
-        // Access achieved directly from state
+        const totalJCPDSCWQTY1 = pltcodePendingData[pltcode] || 0;
+        const target = Math.round(groupedData[pltcode]) || 0;
         const achieved = achievedCounts[pltcode] || 0;
-
-        // Calculate pending
-        const pending = target - achieved; // This should now not be NaN
-        const week1Count = projectTotals[pltcode] || 0;
-        const week2Count = 0;
-        const week3Count = 0;
-        const week4Count = 0;
-
-        const percentageAchieved = target > 0 ? (week1Count / target) * 100 : 0;
-        const sum_of_weeks = week1Count + week2Count + week3Count + week4Count;
-        
+  
+        const pending = target - achieved;
+        const weekCounts = projectTotals[pltcode] || 0; // Count of projects for this PLTCODE
+  
+        const percentageAchieved = target > 0 ? (weekCounts / target) * 100 : 0;
+  
         return {
           PLTCODE1: pltcode,
           TotalJCPDSCWQTY1: totalJCPDSCWQTY1,
@@ -441,33 +434,29 @@ function Department_AOP() {
           PercentageAchieved: percentageAchieved,
           Wip: pltcodeCounts[pltcode]?.totalWIP || 0,
           AOP: target,
-          completed:sum_of_weeks,
-          Week1: week1Count,
-          Week2: week2Count,
-          Week3: week3Count,
-          Week4: week4Count,
-        }
-        
+          completed: weekCounts, // Simplified to just weekCounts for clarity
+          Week1: weekCounts, // Assuming all counts map to Week 1 for simplicity
+          Week2: 0,
+          Week3: 0,
+          Week4: 0,
+        };
       })
-      .filter((data)=> data.Target!==0)
+      .filter((data) => data.Target !== 0)
       .sort((a, b) => a.PLTCODE1.localeCompare(b.PLTCODE1));
-
-      // Calculate the total percentage
+  
+      // Calculate total percentage achieved
       const totalPercentage = updatedTableData.reduce(
         (acc, item) => acc + (parseFloat(item.PercentageAchieved) || 0),
         0
       );
-
-      // Set the total
+  
       setTotal(totalPercentage);
-
-      // Update table data
       setTableData(updatedTableData);
     } else {
       setTableData([]);
     }
   };
-
+  
   const handleDepartmentChange = (selectedOptions) => {
     if (selectedOptions.length === 0) {
       setSelectedDepartments([]);
@@ -675,7 +664,7 @@ function Department_AOP() {
 <div
   className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-10 my-5 ${
     theme === "light" ? "bg-white" : "bg-gray-900"
-  } max-w-[90%] md:max-w-lg lg:max-w-xl xl:max-w-screen-lg 2xl:max-w-screen-8xl`}
+  } max-w-[90%] md:max-w-lg lg:max-w-4xl xl:max-w-screen-lg 2xl:max-w-screen-8xl`}
 >
   
   {selectedDeptName && (
@@ -867,9 +856,9 @@ function Department_AOP() {
                 <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>
                   {row.PercentageAchieved.toFixed(2)}%
                 </td>
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>-</td>
+                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>-</td>
                 <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>{row.Week1}</td>
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>-</td>
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>-</td>
                 <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>-</td>
               </tr>
             ))}

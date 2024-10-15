@@ -332,6 +332,40 @@ app.use("/api/", Cellmaster);
 app.use("/api", party_Visit);
 
 
+app.get('/api/dept_targets', (req, res) => {
+  const query = 'SELECT department_name, target FROM Dept_Target';
+
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error('Error fetching targets:', err);
+      return res.status(500).send('Server error');
+    }
+
+    res.json(results);
+  });
+});
+
+
+// Assuming you're using Express and have a database connection setup
+app.post('/api/depart_targets', (req, res) => {
+  const { department_name, target } = req.body;
+
+  // Basic validation
+  if (!department_name || target === undefined) {
+    return res.status(400).send('Department name and target are required');
+  }
+
+  const query = 'UPDATE Dept_Target SET target = ? WHERE department_name = ?';
+  db.query(query, [target, department_name], (err, results) => {
+    if (err) {
+      console.error('Error updating target:', err);
+      return res.status(500).send('Server error');
+    }
+
+    res.json({ success: true, department_name, target });
+  });
+});
+
 const createOperationalTaskTableQuery = `CREATE TABLE IF NOT EXISTS operational_task (
     task_id VARCHAR(10) PRIMARY KEY,
     project_name VARCHAR(255),
@@ -380,6 +414,80 @@ db.query(createTeamDetailsTableQuery, (err) => {
 });
 
 
+// Function to run when the server starts
+const initializeDepartments = () => {
+  // SQL to create the Dept_Target table if it doesn't exist
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS Dept_Target (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      department_name VARCHAR(255) NOT NULL UNIQUE,
+      target INT DEFAULT 100
+    );
+  `;
+
+  // First, create the table
+  db.query(createTableQuery, (err) => {
+    if (err) {
+      console.error("Error creating Dept_Target table:", err);
+      return; // Handle error appropriately
+    }
+
+    // Now proceed to fetch department mappings
+    const departmentTarget = `
+      SELECT * FROM Production_master_deparment_mapping
+    `;
+
+    db.query(departmentTarget, (err, rows) => {
+      if (err) {
+        console.error("Error fetching department mappings:", err);
+        return; // Handle error appropriately
+      }
+
+      // Transform the data into the desired format
+      const result = {};
+
+      rows.forEach((row) => {
+        const groupWh = row["Group Wh"];
+        if (!result[groupWh]) {
+          result[groupWh] = { from: [], to: [] };
+        }
+        if (row["From Dept"] && !result[groupWh].from.includes(row["From Dept"])) {
+          result[groupWh].from.push(row["From Dept"]);
+        }
+        if (row["To Dept"] && !result[groupWh].to.includes(row["To Dept"])) {
+          result[groupWh].to.push(row["To Dept"]);
+        }
+      });
+
+      // Prepare department names for insertion into Dept_Target
+      const departmentsToInsert = Object.keys(result).filter(dept => dept !== 'null');
+
+      // Insert departments into Dept_Target one by one
+      const insertPromises = departmentsToInsert.map(dept => {
+        return new Promise((resolve, reject) => {
+          const insertSql = `INSERT INTO Dept_Target (department_name, target) VALUES ('${dept}', 100) ON DUPLICATE KEY UPDATE target = 100;`;
+          db.query(insertSql, (insertErr) => {
+            if (insertErr) {
+              console.error("Error inserting department:", insertErr);
+              reject(insertErr);
+            } else {
+              resolve();
+            }
+          });
+        });
+      });
+
+      // Execute all insert promises
+      Promise.all(insertPromises)
+        .then(() => {
+         
+        })
+        .catch((error) => {
+          console.error("Error during department inserts:", error);
+        });
+    });
+  });
+};
 
 
 
@@ -430,4 +538,5 @@ app.use("/api", User_get)
 
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
+  initializeDepartments(); 
 });

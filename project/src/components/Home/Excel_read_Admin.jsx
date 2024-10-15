@@ -95,21 +95,26 @@ function Dashboard() {
     }
   };
 
+  const [targetValues, setTargetValues] = useState(null);
+
   useEffect(() => {
-    // Fetch initial targets from the database
     const fetchTargets = async () => {
       try {
-        const response = await axios.get("/api/targets"); // Adjust the API endpoint
-        const targets = response.data; // Assume this returns an object with department targets
+        const response = await axios.get("http://localhost:8081/api/dept_targets"); // Adjust the API endpoint
+        const targets = response.data; 
         setTargetValues(targets);
+        console.log("Fetched target values", targetValues); // Log the fetched targets directly
       } catch (error) {
         console.error("Error fetching targets:", error);
       }
     };
-
+  
     fetchTargets();
   }, []);
+  
+  
 
+  
   const saveTarget = async (dept, newTarget) => {
     try {
       // Check if the target exists
@@ -690,46 +695,29 @@ function Dashboard() {
     </div>
   );
 
-  const [targetValues, setTargetValues] = useState(null);
+
+
+
+  const [targets, setTargets] = useState({});
+
+
   useEffect(() => {
-    const storedTargets = localStorage.getItem("targetValues");
-    if (storedTargets) {
-      setTargetValues(JSON.parse(storedTargets));
-    } else {
-      setTargetValues({}); // or set a default value if needed
-    }
+    // Fetch targets from Dept_Target table
+    const fetchTargets = async () => {
+      try {
+        const response = await axios.get("/api/dept_targets"); // Adjust the endpoint as necessary
+        const targetValues = response.data.reduce((acc, { department_name, target }) => {
+          acc[department_name] = target;
+          return acc;
+        }, {});
+        setTargets(targetValues);
+      } catch (error) {
+        console.error("Error fetching targets:", error);
+      }
+    };
+
+    fetchTargets();
   }, []);
-
-  const saveTarget_local = (dept, newTarget) => {
-    console.log("New target input:", newTarget);
-    console.log("Current target value:", dept);
-
-    const targetValue = parseInt(newTarget, 10);
-    console.log("Parsed target value:", targetValue);
-    if (isNaN(targetValue)) {
-      console.error("Invalid target value:", newTarget);
-      return; // Exit if the value is invalid
-    }
-
-    // Log current targets before updating
-    console.log("Current targetValues before update:", targetValues);
-
-    // Merge updated target with existing targets
-    const updatedTargets = { ...targetValues, [dept]: targetValue };
-    console.log("Updated targets:", updatedTargets);
-
-    // Save updated targets to local storage
-    try {
-      localStorage.setItem("targetValues", JSON.stringify(updatedTargets));
-      console.log("Successfully saved updated targets to local storage.");
-    } catch (error) {
-      console.error("Error saving to localStorage:", error);
-    }
-
-    // Update state to trigger re-render
-    setTargetValues(updatedTargets);
-    console.log("State updated with new targets:", updatedTargets);
-  };
 
   const renderCards = () => {
     const departments = Object.keys(productionData).filter((dept) =>
@@ -745,108 +733,77 @@ function Dashboard() {
         productionQty > 0
           ? (((productionQty + pendingQty) / productionQty) * 1).toFixed(1)
           : "N/A";
-      const locally = JSON.parse(localStorage.getItem("targetValues")) || {};
-      const target = locally[dept] || 100;
-      //
+
+          const departmentTarget = targetValues.find(item => item.department_name === dept);
+          const target = departmentTarget ? departmentTarget.target : 100; // Default to 100 if not found
+           // Use fetched target or default to 100
+
       const efficiency = ((productionQty / target) * 100).toFixed(2);
-      const handleTargetChange = () => {
+
+      const handleTargetChange = async () => {
         const newTarget = prompt("Enter new target:", target);
-        console.log("New target input:", newTarget); // Log the raw input
-        console.log("Current target value:", dept); // Log the current target value
+        
         if (newTarget !== null) {
-          saveTarget_local(dept, newTarget);
+          const numericTarget = Number(newTarget);
+          
+          // Validate if the input is a number
+          if (isNaN(numericTarget) || numericTarget < 0) {
+            alert("Please enter a valid number for the target.");
+            return; // Exit the function if the input is not valid
+          }
+      
+          const updatedTargets = targetValues.map(item => 
+            item.department_name === dept ? { ...item, target: numericTarget } : item
+          );
+      
+          setTargetValues(updatedTargets);
+      
+          try {
+            await axios.post("http://localhost:8081/api/depart_targets", { department_name: dept, target: numericTarget });
+          } catch (error) {
+            console.error('Error updating target:', error);
+          }
         }
       };
-
+      
+      
+      
       return (
-        <div
-          key={dept}
-          className={`p-4 rounded-lg shadow-md flex flex-col justify-between 
-          ${theme === "light" ? "bg-white" : "bg-slate-600"}`}
-          style={{ minWidth: "150px", minHeight: "180px" }}
-        >
-          <h2
-            className={`font-bold text-lg uppercase text-center rounded-md shadow-md 
-            ${
-              theme === "light"
-                ? "bg-gray-200 text-gray-700"
-                : "bg-slate-900 text-gray-100"
-            }`}
-          >
+        <div key={dept} className={`p-4 rounded-lg shadow-md flex flex-col justify-between ${theme === "light" ? "bg-white" : "bg-slate-600"}`} style={{ minWidth: "150px", minHeight: "180px" }}>
+          <h2 className={`font-bold text-lg uppercase text-center rounded-md shadow-md ${theme === "light" ? "bg-gray-200 text-gray-700" : "bg-slate-900 text-gray-100"}`}>
             {dept}
           </h2>
-
           <div className="flex mt-3 space-x-2 justify-between">
             <Link to={`/department/${dept}/production`} className="w-1/2">
-              <div
-                className={`rounded-lg shadow-md border-solid border w-[100%] mr-1 hover:scale-95
-                ${
-                  theme === "light"
-                    ? "bg-[#c1fbce92] border-[rgba(0,255,55,0.62)]"
-                    : "bg-gray-800 border-[#0e902a] text-green-300 shadow-xl shadow-gray-700 hover:shadow-none"
-                }`}
-              >
+              <div className={`rounded-lg shadow-md border-solid border w-[100%] mr-1 hover:scale-95 ${theme === "light" ? "bg-[#c1fbce92] border-[rgba(0,255,55,0.62)]" : "bg-gray-800 border-[#0e902a] text-green-300 shadow-xl shadow-gray-700 hover:shadow-none"}`}>
                 <p className="font-normal text-sm text-center p-2">
                   Production: <span className="font-bold">{productionQty}</span>
                 </p>
               </div>
             </Link>
             <Link to={`/department/${dept}/pending`} className="w-1/2">
-              <div
-                className={`rounded-lg shadow-md border-solid border w-[100%] ml-1 hover:scale-95
-                ${
-                  theme === "light"
-                    ? "bg-[#feffd1] border-[#e5ff00]"
-                    : "bg-gray-800 border-[#7d8808] text-amber-300 shadow-xl shadow-gray-700 hover:shadow-none"
-                }`}
-              >
+              <div className={`rounded-lg shadow-md border-solid border w-[100%] ml-1 hover:scale-95 ${theme === "light" ? "bg-[#feffd1] border-[#e5ff00]" : "bg-gray-800 border-[#7d8808] text-amber-300 shadow-xl shadow-gray-700 hover:shadow-none"}`}>
                 <p className="font-normal text-sm text-center p-2">
                   Pending: <span className="font-bold">{pendingQty}</span>
                 </p>
               </div>
             </Link>
           </div>
-
           <div className="flex justify-between mt-3">
-            <div
-              className={`rounded-lg shadow-md border-solid border w-[80%] mr-1 h-7
-              ${
-                theme === "light"
-                  ? "bg-[#fbc6c191] border-[#ff00009e]"
-                  : "bg-gray-800 border-[#7a0e0e] text-red-300"
-              }`}
-            >
+            <div className={`rounded-lg shadow-md border-solid border w-[80%] mr-1 h-7 ${theme === "light" ? "bg-[#fbc6c191] border-[#ff00009e]" : "bg-gray-800 border-[#7a0e0e] text-red-300"}`}>
               <p className="font-normal text-sm text-center py-1">
                 Target: <span className="font-bold">{target}</span>
-                <FaEdit
-                  className="inline-block ml-2 cursor-pointer"
-                  onClick={handleTargetChange}
-                />
+                <FaEdit className="inline-block ml-2 cursor-pointer" onClick={handleTargetChange} />
               </p>
             </div>
-            <div
-              className={`rounded-lg shadow-md border-solid border w-[80%] ml-1 h-7
-              ${
-                theme === "light"
-                  ? "bg-cyan-50 border-cyan-500"
-                  : "bg-gray-800 border-cyan-700 text-cyan-300"
-              }`}
-            >
+            <div className={`rounded-lg shadow-md border-solid border w-[80%] ml-1 h-7 ${theme === "light" ? "bg-cyan-50 border-cyan-500" : "bg-gray-800 border-cyan-700 text-cyan-300"}`}>
               <p className="font-normal text-sm text-center p-1">
                 Avg Prod: <span className="font-bold">{avgProduction}</span>
               </p>
             </div>
           </div>
-
           <div className="flex mt-3 justify-center">
-            <div
-              className={`rounded-lg shadow-md border-solid border w-full
-              ${
-                theme === "light"
-                  ? "bg-fuchsia-100 border-fuchsia-500"
-                  : "bg-gray-800 border-fuchsia-700 text-fuchsia-300"
-              }`}
-            >
+            <div className={`rounded-lg shadow-md border-solid border w-full ${theme === "light" ? "bg-fuchsia-100 border-fuchsia-500" : "bg-gray-800 border-fuchsia-700 text-fuchsia-300"}`}>
               <p className="font-normal text-sm text-center p-2">
                 Efficiency: <span className="font-bold">{efficiency}%</span>
               </p>
@@ -856,7 +813,6 @@ function Dashboard() {
       );
     });
   };
-
   const departments = Object.keys(productionData).filter((dept) =>
     search.toLowerCase() === ""
       ? dept
@@ -872,7 +828,7 @@ function Dashboard() {
         : "N/A";
     const storedTargets =
       JSON.parse(localStorage.getItem("targetValues")) || {};
-    const Target = storedTargets[dept] || 100;
+    const Target =targets[dept] || 100; 
     const efficiency = (productionQty / Target).toFixed(2) * 100;
 
     const toDayProduction =

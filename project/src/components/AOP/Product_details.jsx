@@ -35,7 +35,8 @@ function ProductDetailsPage() {
     );
     const grouped = filteredData.reduce((acc, item) => {
       const product = item.Product;
-      const subProduct = item.Sub_Product;
+      const subProduct = item.
+      SubProduct;
   
       if (!acc[product]) {
         acc[product] = { count: 0, subProducts: {} };
@@ -43,14 +44,24 @@ function ProductDetailsPage() {
   
       acc[product].count += item.Total;
   
-      if (!acc[product].subProducts[subProduct]) {
-        acc[product].subProducts[subProduct] = {
-          total: 0,
-          achieved: 0,
-          pending: 0,
-        };
-      }
-      acc[product].subProducts[subProduct].total += item.Total;
+      if (!acc[product]) {
+        acc[product] = { count: 0, subProducts: {} };
+    }
+    
+    if (subProduct) { // Only proceed if subProduct is valid
+        acc[product].count += item.Total;
+    
+        if (!acc[product].subProducts[subProduct]) {
+            acc[product].subProducts[subProduct] = {
+                total: 0,
+                achieved: 0,
+                pending: 0,
+            };
+        }
+        acc[product].subProducts[subProduct].total += item.Total;
+    }
+    
+     
   
       return acc;
     }, {});
@@ -76,6 +87,7 @@ function ProductDetailsPage() {
       setJewelMasterData(jewelMasterDataArray);
   
       // Group products and update achieved values immediately after data is fetched
+      console.log("tttt", targetResponse.data);
       const grouped = groupProducts(targetResponse.data);
       setGroupedProducts(grouped);
       updateAchievedValues(grouped);
@@ -99,6 +111,7 @@ function ProductDetailsPage() {
     }
   
     setGroupedProducts(updatedGrouped);
+
   };
   
   

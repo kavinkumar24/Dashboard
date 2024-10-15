@@ -13,7 +13,7 @@ router.get("/raw_filtered_production_data", async (req, res) => {
     );
   
     const sql = `
-           SELECT \`From Dept\`,\`To Dept\`, \`CW Qty\`,Project
+           SELECT \`From Dept\`,\`To Dept\`, \`CW Qty\`,Project, uploadedDateTime
            FROM Production_sample_data
            WHERE \`From Dept\` IN (?)
            AND DATE(uploadedDateTime) = CURDATE()
