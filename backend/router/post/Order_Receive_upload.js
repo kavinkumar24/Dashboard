@@ -43,6 +43,43 @@ const parseMonthString = (monthString) => {
   return null;
 };
 
+function formatDateToMMMYY(date) {
+  const options = { month: "short", year: "2-digit" };
+  return new Intl.DateTimeFormat("en-US", options)
+    .format(date)
+    .replace(/\s/g, "-"); // Format and replace space with hyphen
+}
+
+
+function convertMMMYYToDateString(mmmYY) {
+  const [monthAbbr, year] = mmmYY.split('-');
+  const monthMap = {
+    Jan: '01',
+    Feb: '02',
+    Mar: '03',
+    Apr: '04',
+    May: '05',
+    Jun: '06',
+    Jul: '07',
+    Aug: '08',
+    Sep: '09',
+    Oct: '10',
+    Nov: '11',
+    Dec: '12',
+  };
+
+  const month = monthMap[monthAbbr];
+  const fullYear = `20${year}`; // Assuming YY is in the 2000s
+
+  // Constructing the final date string
+  return `${fullYear}-${month}-01 00:00:00.000000`;
+}
+
+// Example usage
+const inputDate = "Aug-22";
+const outputDate = convertMMMYYToDateString(inputDate);
+console.log(outputDate); // Output: "2022-08-01 00:00:00.000000"
+
 
 router.post("/order/upload", upload.single("file"), (req, res) => {
   if (!req.file) {
@@ -50,7 +87,6 @@ router.post("/order/upload", upload.single("file"), (req, res) => {
   }
 
   const fileBuffer = req.file.buffer;
-
   try {
     const workbook = xlsx.read(fileBuffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
@@ -65,11 +101,31 @@ router.post("/order/upload", upload.single("file"), (req, res) => {
             ? formatDateForMySQL(excelSerialDateToDate(transDate))
             : null;
 
-        const ddDate = parseDateString(row["DD"]); // This will return null if not valid
-        const formattedDdDate = ddDate ? formatDateForMySQL(ddDate) : null;
+       const ddValue = row["DD"];
+       let formattedDdDate = null;
 
-        const ddMonth = parseMonthString(row["DD&month"]); // This will now handle both string and serial formats
-        const formattedDdMonth = ddMonth ? formatDateForMySQL(ddMonth) : null;
+       if (typeof ddValue === "number") {
+         const ddDate = excelSerialDateToDate(ddValue); // Convert Excel serial date to Date
+         formattedDdDate = formatDateForMySQL(ddDate); // Format it for MySQL
+       } else if (typeof ddValue === "string") {
+         const parsedDate = parseDateString(ddValue); // For string formats like "DD-MM-YYYY"
+         formattedDdDate = parsedDate ? formatDateForMySQL(parsedDate) : null;
+       }
+
+        const parseDdAndMonth = (value) => {
+          if (typeof value === "string") {
+            console.log("String value:", value);
+            return parseMonthString(value); // Use existing function for string format
+          } else if (typeof value === "number") {
+            // console.log("Number value:", value);
+            const date = excelSerialDateToDate(value); // Convert Excel serial date
+            return convertMMMYYToDateString(formatDateToMMMYY(date)); // Return formatted "MMM-YY"
+          }
+          return null;
+        };
+
+        // Get the ddMonth formatted as "MMM-YY"
+        const formattedDdMonth = parseDdAndMonth(row["DD&month"]);
 
         return [
           row["NAME1"],
@@ -103,7 +159,7 @@ router.post("/order/upload", upload.single("file"), (req, res) => {
           row["GENDER"],
           row["2024 Set Photo"],
           row["Po-new"],
-          row["DD&month"],
+          formattedDdMonth, // This is now a string in "MMM-YY" format
           row["Dyr"],
           row["Brief"],
           row["Maketype"],
@@ -114,16 +170,16 @@ router.post("/order/upload", upload.single("file"), (req, res) => {
       });
 
       const query = `
-        INSERT INTO Order_receiving_log_sample 
-        (\`NAME1\`, \`SUB PARTY\`, \`Group party\`, \`JCID\`, \`TRANSDATE\`, \`ORDERNO\`,
-         \`OrderType\`, \`ZONE\`, \`OGPG\`, \`Purity\`, \`Color\`, \`PHOTO NO\`,
-         \`PHOTO NO 2\`, \`PROJECT\`, \`TYPE\`, \`ITEM\`, \`PRODUCT\`, \`SUB PRODUCT\`,
-         \`QTY\`, \`WT\`, \`Avg\`, \`Wt range\`, \`PL-ST\`, \`DD\`, \`SKCHNI\`,
-         \`EMP\`, \`Name\`, \`CODE\`, \`GENDER\`, \`2024_Set_Photo\`, \`Po_new\`,
-         \`DD&month\`, \`Dyr\`, \`Brief\`, \`Maketype\`, \`collection\`, \`Collection_1\`,
-         \`Collection_2\`)
-        VALUES ?
-      `;
+      INSERT INTO Order_receiving_log_sample 
+      (\`NAME1\`, \`SUB PARTY\`, \`Group party\`, \`JCID\`, \`TRANSDATE\`, \`ORDERNO\`,
+       \`OrderType\`, \`ZONE\`, \`OGPG\`, \`Purity\`, \`Color\`, \`PHOTO NO\`,
+       \`PHOTO NO 2\`, \`PROJECT\`, \`TYPE\`, \`ITEM\`, \`PRODUCT\`, \`SUB PRODUCT\`,
+       \`QTY\`, \`WT\`, \`Avg\`, \`Wt range\`, \`PL-ST\`, \`DD\`, \`SKCHNI\`,
+       \`EMP\`, \`Name\`, \`CODE\`, \`GENDER\`, \`2024_Set_Photo\`, \`Po_new\`,
+       \`DD&month\`, \`Dyr\`, \`Brief\`, \`Maketype\`, \`collection\`, \`Collection_1\`,
+       \`Collection_2\`)
+      VALUES ?
+    `;
 
       const batchSize = 1000;
       let index = 0;
@@ -146,8 +202,9 @@ router.post("/order/upload", upload.single("file"), (req, res) => {
         }
       };
 
-      // Start inserting batches
-      insertNextBatch();
+      insertNextBatch(); // Start the recursive batch insertion
+
+      // Continue with your database insertion logic...
     } else {
       res.status(400).send("No data found in Excel file");
     }

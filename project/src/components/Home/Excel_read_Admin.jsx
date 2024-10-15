@@ -680,19 +680,56 @@ function Dashboard() {
     </div>
   );
 
-  const [targetValues, setTargetValues] = useState({}); 
-
+  const [targetValues, setTargetValues] = useState(null); 
   useEffect(() => {
-    const storedTargets = JSON.parse(localStorage.getItem('targetValues')) || {};
-    setTargetValues(storedTargets);
+    const storedTargets = localStorage.getItem('targetValues');
+    if (storedTargets) {
+      setTargetValues(JSON.parse(storedTargets));
+    } else {
+      setTargetValues({}); // or set a default value if needed
+    }
   }, []);
+  
 
+
+
+
+  
   const saveTarget_local = (dept, newTarget) => {
-    // Update target in localStorage
-    const updatedTargets = { ...targetValues, [dept]: newTarget };
-    localStorage.setItem('targetValues', JSON.stringify(updatedTargets));
-    setTargetValues(updatedTargets); // Update state to trigger re-render
+    console.log("New target input:", newTarget);
+    console.log("Current target value:", dept);
+  
+    const targetValue = parseInt(newTarget, 10);
+    console.log("Parsed target value:", targetValue);
+    if (isNaN(targetValue)) {
+      console.error("Invalid target value:", newTarget);
+      return; // Exit if the value is invalid
+    }
+  
+    // Log current targets before updating
+    console.log("Current targetValues before update:", targetValues);
+  
+    // Merge updated target with existing targets
+    const updatedTargets = { ...targetValues, [dept]: targetValue };
+    console.log("Updated targets:", updatedTargets);
+  
+    // Save updated targets to local storage
+    try {
+      localStorage.setItem('targetValues', JSON.stringify(updatedTargets));
+      console.log("Successfully saved updated targets to local storage.");
+    } catch (error) {
+      console.error("Error saving to localStorage:", error);
+    }
+  
+    // Update state to trigger re-render
+    setTargetValues(updatedTargets);
+    console.log("State updated with new targets:", updatedTargets);
   };
+  
+
+  
+  
+  
 
   const renderCards = () => {
     const departments = Object.keys(productionData).filter((dept) =>
@@ -708,15 +745,19 @@ function Dashboard() {
         productionQty > 0
           ? (((productionQty + pendingQty) / productionQty) * 1).toFixed(1)
           : "N/A";
-      const target = targetValues[dept] || 100; // Use stored value or default to 100
+          const locally = JSON.parse(localStorage.getItem('targetValues')) || {};
+      const target = locally[dept] || 100; 
+      // 
       const efficiency = (((productionQty / target) * 100).toFixed(2));
-
       const handleTargetChange = () => {
         const newTarget = prompt("Enter new target:", target);
-        if (newTarget !== null && !isNaN(newTarget)) {
-          saveTarget_local(dept, parseInt(newTarget, 10));
+        console.log("New target input:", newTarget); // Log the raw input
+        console.log("Current target value:", dept); // Log the current target value
+        if (newTarget !== null) {
+          saveTarget_local(dept, newTarget);
         }
       };
+      
 
       return (
         <div
@@ -808,7 +849,8 @@ function Dashboard() {
       productionQty > 0
         ? (((productionQty + pendingQty) / productionQty) * 1).toFixed(1)
         : "N/A";
-    const Target = 100;
+        const storedTargets = JSON.parse(localStorage.getItem('targetValues')) || {};
+        const Target = storedTargets[dept] || 100;
     const efficiency = (productionQty / Target).toFixed(2) * 100;
 
     const toDayProduction =

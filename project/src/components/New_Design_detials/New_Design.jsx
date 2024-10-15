@@ -906,6 +906,7 @@ function New_Design() {
     });
     setIsLoading(false);
 
+    console.log("dhhvcbcb hd c", allYears, allMonths, allDates);
     setYears(Array.from(allYears).sort((a, b) => b - a));
     setMonths(Array.from(allMonths).sort((a, b) => a - b));
     setDates(Array.from(allDates).sort((a, b) => a - b));
@@ -1309,6 +1310,7 @@ function New_Design() {
     console.log("Filtered Data:", filteredData);
   };
 
+  
   // const getMonthName = (index) => {
   //   const months = [
   //     "January", "February", "March", "April", "May", "June",
