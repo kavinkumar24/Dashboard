@@ -197,7 +197,7 @@ function Sidebar({ theme }) {
         <div className={`fixed inset-0 bg-gray-900 bg-opacity-75 z-40`}>
           <div className={`fixed top-0 left-0 w-64 h-full p-4 ${theme==='light'?'bg-white':'bg-gray-700'} z-50`}>
           <nav className="mt-5 ">
-        { role == 'admin' && <a
+         <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('home')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
             onClick={() => handleNavigation('/', 'home')}
@@ -208,7 +208,7 @@ function Sidebar({ theme }) {
               </div>
               Home
             </div>
-          </a>}
+          </a>
 
          
           { role == 'admin' &&  <a
@@ -264,17 +264,17 @@ function Sidebar({ theme }) {
             </div>
           </a>}
           <a
-            href="#"
-            className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('task')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
-            onClick={handleTaskClick} 
-          >
-            <div className='flex flex-row p-2'>
-              <div className='mt-1 px-2'>
-                <BsListTask />
-              </div>
-              Task
-            </div>
-          </a>
+    href="#"
+    className={`block py-1 px-2 rounded transition duration-200 ${getActiveClass('task')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
+    onClick={handleTaskClick} 
+  >
+    <div className='flex flex-row p-2'>
+      <div className='mt-1 px-2'>
+        <BsListTask />
+      </div>
+      Task
+    </div>
+  </a>
           
           {taskExpanded && (
             <div className="ml-2">
@@ -452,7 +452,7 @@ function Sidebar({ theme }) {
         </div>
         <nav className="mt-5">
         <nav className="mt-5">
-        { role == 'admin' && <a
+       <a
             href="#"
             className={`block py-2 px-4 rounded transition duration-200 ${getActiveClass('home')} ${theme === 'light' ? 'text-black hover:bg-slate-100 hover:text-gray-600' : ' text-slate-300 hover:bg-gray-900'}`}
             onClick={() => handleNavigation('/', 'home')}
@@ -463,7 +463,7 @@ function Sidebar({ theme }) {
               </div>
               Home
             </div>
-          </a>}
+          </a>
 
          
           { role == 'admin' &&  <a

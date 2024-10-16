@@ -22,7 +22,68 @@ function Dashboard() {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem("theme") || "light";
   });
-  const role = localStorage.getItem("role");
+  const emailToMatch = localStorage.getItem("Email");
+
+  const [userDepartments, setUserDepartments] = useState([]); // State to store the departments
+  const [role, setRole] = useState("");
+
+  const [userData, setUserData] = useState({
+    emp_id: "",
+    Email: "",
+    role: "",
+    departments: [],
+  });
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const emailToMatch = localStorage.getItem("Email");
+      try {
+        const response = await fetch(
+          "http://localhost:8081/api/user/loggedin/data",
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          const user = data.find((user) => user.Email === emailToMatch);
+
+          if (user) {
+            setUserData({
+              emp_id: user.emp_id,
+              Email: user.Email,
+              role: user.role,
+              departments: user.dept || [], // Use the parsed 'dept' array
+            });
+          }
+        } else {
+          console.error("Failed to fetch user data");
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } finally {
+        setLoading(false); // Set loading to false after fetching data
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  useEffect(() => {
+    setUserDepartments(userData.departments);
+
+    setRole(userData.role);
+  }, [userData]);
+
+  // Monitor userData changes
+
   const [sortConfig, setSortConfig] = useState({
     key: "Production Qty",
     direction: "ascending",
@@ -100,21 +161,20 @@ function Dashboard() {
   useEffect(() => {
     const fetchTargets = async () => {
       try {
-        const response = await axios.get("http://localhost:8081/api/dept_targets"); // Adjust the API endpoint
-        const targets = response.data; 
+        const response = await axios.get(
+          "http://localhost:8081/api/dept_targets"
+        ); // Adjust the API endpoint
+        const targets = response.data;
         setTargetValues(targets);
         console.log("Fetched target values", targetValues); // Log the fetched targets directly
       } catch (error) {
         console.error("Error fetching targets:", error);
       }
     };
-  
+
     fetchTargets();
   }, []);
-  
-  
 
-  
   const saveTarget = async (dept, newTarget) => {
     try {
       // Check if the target exists
@@ -395,341 +455,338 @@ function Dashboard() {
   }, []);
 
   const renderTable = () => (
-    <div>
-      <div
-        className={`m-4 mt-7 border rounded-lg ${
-          theme === "dark"
-            ? "border-gray-600 bg-gray-800"
-            : "border-gray-300 bg-white"
-        } shadow-lg`}
+<div className="max-w-96 md:max-w-lg lg:max-w-4xl xl:max-w-screen-lg 2xl:max-w-screen-8xl ">
+  <div
+    className={`m-0 md:m-4 mt-7 border rounded-lg ${
+      theme === "dark" ? "border-gray-600 bg-gray-800" : "border-gray-300 bg-white"
+    } shadow-lg`}
+  >
+    <div className="flex justify-between p-2 m-2">
+      <h1
+        className={`text-xl font-semibold pt-2 ${
+          theme === "dark" ? "text-white" : "text-black"
+        }`}
       >
-        <div className="flex justify-between p-2 m-2">
-          <h1
-            className={`text-xl font-semibold pt-2 ${
-              theme === "dark" ? "text-white" : "text-black"
-            }`}
-          >
-            Production and Pending Data
-          </h1>
-        </div>
-  
-        <div className="overflow-x-auto">
-          <table
-            className={`min-w-full table-auto text-sm ${
-              theme === "dark" ? "text-gray-200" : "text-gray-700"
-            }`}
-          >
-            <thead>
-              <tr
-                className={`${
-                  theme === "dark" ? "bg-gray-900" : "bg-gray-300"
-                }`}
-              >
-                <th
-                  rowSpan="2"
-                  className={`border ${
-                    theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-2 py-2 text-center font-semibold text-base`}
-                >
-                  Dept
-                </th>
-                <th
-                  rowSpan="2"
-                  className={`border ${
-                    theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-2 py-2 text-center font-semibold text-base`}
-                >
-                  Align
-                </th>
-                <th
-                  rowSpan="2"
-                  className={`border ${
-                    theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-2 py-2 text-center font-semibold text-base`}
-                >
-                  Capacity/Plan
-                </th>
-                <th
-                  rowSpan="2"
-                  className={`border ${
-                    theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-2 py-2 text-center font-semibold text-base`}
-                >
-                  Total Pro
-                </th>
-                <th
-                  rowSpan="2"
-                  className={`border ${
-                    theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-2 py-2 text-center font-semibold text-base`}
-                >
-                  Balance Pro
-                </th>
-                <th
-                  rowSpan="2"
-                  className={`border ${
-                    theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-2 py-2 text-center font-semibold text-base`}
-                >
-                  Avg Pro QTY/Day
-                </th>
-                <th
-                  colSpan="2"
-                  className={`border ${
-                    theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-2 py-2 text-center font-semibold text-base text-red-600`}
-                >
-                  {yesterdayFormatted}
-                </th>
-                <th
-                  colSpan="2"
-                  className={`border ${
-                    theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-2 py-2 text-center font-semibold text-base text-red-600`}
-                >
-                  {dayBeforeYesterdayFormatted}
-                </th>
-                <th
-                  rowSpan="2"
-                  className={`border ${
-                    theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-2 py-2 text-center font-semibold text-base`}
-                >
-                  Remarks
-                </th>
-              </tr>
-              <tr
-                className={`${
-                  theme === "dark" ? "bg-gray-600" : "bg-gray-200"
-                }`}
-              >
-                <th
-                  className={`border ${
-                    theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-2 py-2 text-center font-semibold text-base`}
-                >
-                  Pro
-                </th>
-                <th
-                  className={`border ${
-                    theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-2 py-2 text-center font-semibold text-base`}
-                >
-                  Pen
-                </th>
-                <th
-                  className={`border ${
-                    theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-2 py-2 text-center font-semibold text-base`}
-                >
-                  Pro
-                </th>
-                <th
-                  className={`border ${
-                    theme === "dark" ? "border-gray-600" : "border-gray-300"
-                  } px-2 py-2 text-center font-semibold text-base`}
-                >
-                  Pen
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {tableData.map((row, index) => (
-                <tr
-                  key={index}
-                  className={`${
-                    index % 2 === 0
-                      ? theme === "dark"
-                        ? "bg-gray-700 hover:bg-gray-800"
-                        : "bg-white hover:bg-gray-200"
-                      : theme === "dark"
-                      ? "bg-gray-800"
-                      : "bg-gray-50"
-                  } transition-colors duration-200`}
-                >
-                  <td
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center text-base font-medium`}
-                  >
-                    {row.dept}
-                  </td>
-                  <td
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center text-base`}
-                  >
-                    {row.align}%
-                  </td>
-                  <td
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center text-base`}
-                  >
-                    {row.capacity}
-                  </td>
-                  <td
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center text-base`}
-                  >
-                    {row.totalPro}
-                  </td>
-                  <td
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center text-base`}
-                  >
-                    {row.balancePro}
-                  </td>
-                  <td
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center text-base`}
-                  >
-                    {row.avgProPerDay}
-                  </td>
-                  <td
-                    className={`border  ${
-                      theme === "dark"
-                        ? "border-gray-600 bg-green-700 text-gray-200"
-                        : "border-gray-300 bg-green-200"
-                    } px-2 py-2 text-center text-base font-medium`}
-                  >
-                    {row.protoday}
-                  </td>
-                  <td
-                    className={`border  ${
-                      theme === "dark"
-                        ? "border-gray-600 text-gray-200 bg-yellow-600"
-                        : "border-gray-300 bg-yellow-100"
-                    } px-2 py-2 text-center text-base font-medium`}
-                  >
-                    {row.pentoday}
-                  </td>
-                  <td
-                    className={`border  ${
-                      theme === "dark"
-                        ? "border-gray-600 bg-green-700 text-gray-200"
-                        : "border-gray-300 bg-green-200"
-                    } px-2 py-2 text-center text-base font-medium`}
-                  >
-                    {row.proprev}
-                  </td>
-                  <td
-                    className={`border  ${
-                      theme === "dark"
-                        ? "border-gray-600 text-gray-200 bg-yellow-600"
-                        : "border-gray-300 bg-yellow-100"
-                    } px-2 py-2 text-center text-base font-medium`}
-                  >
-                    {row.penprev}
-                  </td>
-                  <td
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center`}
-                  >
-                    {role === "admin" ? (
-                      <div>
-                        <FiEdit2 onClick={handleShow_text_area} />
-                        {show_text_Area ? (
-                          <textarea
-                            className={`w-full h-10 p-2 rounded ${
-                              theme === "dark"
-                                ? "bg-gray-900 text-gray-200 border-gray-600"
-                                : "bg-white text-black border-gray-300"
-                            } resize-none`}
-                            placeholder="Enter remarks..."
-                            value={remarks[row.dept] || ""}
-                            onChange={(e) =>
-                              handleRemarksChange(row.dept, e.target.value)
-                            }
-                            onBlur={() => saveRemarks(row.dept)}
-                          />
-                        ) : (
-                          <div
-                            className={`w-full h-10 p-2 rounded ${
-                              theme === "dark"
-                                ? "bg-gray-800 text-gray-200 border-gray-600"
-                                : "bg-gray-200 text-black border-gray-300"
-                            }`}
-                          >
-                            {remarks[row.dept] || "N/A"}
-                          </div>
-                        )}
-                      </div>
-                    ) : null}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-  
-        {/* Pagination Controls */}
-        {/* <div className="flex justify-center space-x-2 m-4">
-          <button
-            className={`text-base font-semibold px-5 py-3 rounded-lg border ${
-              currentPage1 === 1
-                ? 'bg-gray-200 cursor-not-allowed'
-                : 'bg-gray-300 hover:bg-gray-400'
-            }`}
-            onClick={() => handlePageChange(currentPage1 - 1)}
-            disabled={currentPage1 === 1}
-          >
-            Previous
-          </button>
-  
-          <button className="text-base px-5 py-3 rounded-lg border bg-gray-300">{currentPage1}</button>
-  
-          <button
-            className={`text-base font-semibold px-5 py-3 rounded-lg border ${
-              currentPage1 === totalPages
-                ? 'bg-gray-200 cursor-not-allowed'
-                : 'bg-gray-300 hover:bg-gray-400'
-            }`}
-            onClick={() => handlePageChange(currentPage1 + 1)}
-            disabled={currentPage1 === totalPages}
-          >
-            Next
-          </button>
-        </div> */}
-      </div>
+        Production and Pending Data
+      </h1>
     </div>
+
+    <div className="overflow-x-auto">
+      <table
+        className={`min-w-full table-auto text-sm ${
+          theme === "dark" ? "text-gray-200" : "text-gray-700"
+        }`}
+      >
+        <thead>
+          <tr className={`${theme === "dark" ? "bg-gray-900" : "bg-gray-300"}`}>
+            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+              Dept
+            </th>
+            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+              Align
+            </th>
+            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+              Capacity/Plan
+            </th>
+            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+              Total Pro
+            </th>
+            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+              Balance Pro
+            </th>
+            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+              Avg Pro QTY/Day
+            </th>
+            <th colSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base text-red-600`}>
+              {yesterdayFormatted}
+            </th>
+            <th colSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base text-red-600`}>
+              {dayBeforeYesterdayFormatted}
+            </th>
+            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+              Remarks
+            </th>
+          </tr>
+          <tr className={`${theme === "dark" ? "bg-gray-600" : "bg-gray-200"}`}>
+            <th className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+              Pro
+            </th>
+            <th className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+              Pen
+            </th>
+            <th className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+              Pro
+            </th>
+            <th className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+              Pen
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {tableData.map((row, index) => (
+            <tr
+              key={index}
+              className={`${
+                index % 2 === 0
+                  ? theme === "dark"
+                    ? "bg-gray-700 hover:bg-gray-800"
+                    : "bg-white hover:bg-gray-200"
+                  : theme === "dark"
+                  ? "bg-gray-800"
+                  : "bg-gray-50"
+              } transition-colors duration-200`}
+            >
+              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center text-base font-medium`}>
+                {row.dept}
+              </td>
+              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center text-base`}>
+                {row.align}%
+              </td>
+              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center text-base`}>
+                {row.capacity}
+              </td>
+              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center text-base`}>
+                {row.totalPro}
+              </td>
+              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center text-base`}>
+                {row.balancePro}
+              </td>
+              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center text-base`}>
+                {row.avgProPerDay}
+              </td>
+              <td className={`border ${theme === "dark" ? "border-gray-600 bg-green-700 text-gray-200" : "border-gray-300 bg-green-200"} px-2 py-2 text-center text-base font-medium`}>
+                {row.protoday}
+              </td>
+              <td className={`border ${theme === "dark" ? "border-gray-600 text-gray-200 bg-yellow-600" : "border-gray-300 bg-yellow-100"} px-2 py-2 text-center text-base font-medium`}>
+                {row.pentoday}
+              </td>
+              <td className={`border ${theme === "dark" ? "border-gray-600 bg-green-700 text-gray-200" : "border-gray-300 bg-green-200"} px-2 py-2 text-center text-base font-medium`}>
+                {row.proprev}
+              </td>
+              <td className={`border ${theme === "dark" ? "border-gray-600 text-gray-200 bg-yellow-600" : "border-gray-300 bg-yellow-100"} px-2 py-2 text-center text-base font-medium`}>
+                {row.penprev}
+              </td>
+              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center`}>
+                <div>
+                  {role === "admin" ? (
+                    <>
+                      <FiEdit2 onClick={handleShow_text_area} />
+                      {show_text_Area ? (
+                        <textarea
+                          className={`w-full h-10 p-2 rounded ${
+                            theme === "dark" ? "bg-gray-900 text-gray-200 border-gray-600" : "bg-white text-black border-gray-300"
+                          } resize-none`}
+                          placeholder="Enter remarks..."
+                          value={remarks[row.dept] || ""}
+                          onChange={(e) => handleRemarksChange(row.dept, e.target.value)}
+                          onBlur={() => saveRemarks(row.dept)}
+                        />
+                      ) : (
+                        <div className={`w-full h-10 p-2 rounded ${theme === "dark" ? "bg-gray-800 text-gray-200 border-gray-600" : "bg-gray-200 text-black border-gray-300"}`}>
+                          {remarks[row.dept] || "N/A"}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className={`w-full h-10 p-2 rounded ${theme === "dark" ? "bg-gray-800 text-gray-200 border-gray-600" : "bg-gray-200 text-black border-gray-300"}`}>
+                      {remarks[row.dept] || "N/A"}
+                    </div>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {/* Pagination Controls */}
+    {/* <div className="flex justify-center space-x-2 m-4">
+      <button className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage1 === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`} onClick={() => handlePageChange(currentPage1 - 1)} disabled={currentPage1 === 1}>
+        Previous
+      </button>
+
+      <button className="text-base px-5 py-3 rounded-lg border bg-gray-300">{currentPage1}</button>
+
+      <button className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage1 === totalPages ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`} onClick={() => handlePageChange(currentPage1 + 1)} disabled={currentPage1 === totalPages}>
+        Next
+      </button>
+    </div> */}
+  </div>
+</div>
+
   );
   
-
-
-
-
   const [targets, setTargets] = useState({});
 
-
   useEffect(() => {
-    // Fetch targets from Dept_Target table
     const fetchTargets = async () => {
       try {
-        const response = await axios.get("/api/dept_targets"); // Adjust the endpoint as necessary
-        const targetValues = response.data.reduce((acc, { department_name, target }) => {
-          acc[department_name] = target;
-          return acc;
-        }, {});
-        setTargets(targetValues);
+        const response = await axios.get("http://localhost:8081/api/dept_targets");
+  
+        if (typeof response.data === "string") {
+          try {
+            // Try to parse JSON
+            const jsonData = JSON.parse(response.data);
+            if (Array.isArray(jsonData)) {
+              const targetValues = jsonData.reduce((acc, { department_name, target }) => {
+                acc[department_name] = target;
+                return acc;
+              }, {});
+              setTargets(targetValues);
+            } else {
+              console.error("Expected array, got:", jsonData);
+            }
+          } catch (e) {
+            console.error("Error parsing JSON:", e);
+          }
+        } else {
+          console.error("Unexpected response format:", response.data);
+        }
       } catch (error) {
         console.error("Error fetching targets:", error);
       }
     };
-
+  
     fetchTargets();
   }, []);
+  
 
   const renderCards = () => {
-    const departments = Object.keys(productionData).filter((dept) =>
-      search.toLowerCase() === ""
-        ? dept
-        : dept.toLowerCase().includes(search.toLowerCase())
-    );
+    if (loading) {
+      return (
+        <div className="flex flex-row">
+          <div
+            role="status"
+            className="space-y-2.5 animate-pulse max-w-lg lg:max-w-4xl xl:max-w-6xl"
+          >
+            <div className="flex items-center w-full">
+              <div
+                className={`h-2.5 rounded-full ${
+                  theme === "light" ? "bg-gray-200" : "bg-gray-700"
+                } w-32 lg:w-64 xl:w-80`}
+              ></div>
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-300" : "bg-gray-600"
+                } w-24 lg:w-40 xl:w-56`}
+              ></div>
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-300" : "bg-gray-600"
+                } w-full`}
+              ></div>
+            </div>
+
+            <div className="flex items-center w-full max-w-[480px] lg:max-w-[800px] xl:max-w-[1000px]">
+              <div
+                className={`h-2.5 rounded-full ${
+                  theme === "light" ? "bg-gray-200" : "bg-gray-700"
+                } w-full`}
+              ></div>
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-300" : "bg-gray-600"
+                } w-full`}
+              ></div>
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-300" : "bg-gray-600"
+                } w-24 lg:w-40 xl:w-56`}
+              ></div>
+            </div>
+
+            <div className="flex items-center w-full max-w-[400px] lg:max-w-[700px] xl:max-w-[900px]">
+              <div
+                className={`h-2.5 rounded-full ${
+                  theme === "light" ? "bg-gray-300" : "bg-gray-600"
+                } w-full`}
+              ></div>
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-200" : "bg-gray-700"
+                } w-80 lg:w-96 xl:w-[400px]`}
+              ></div>
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-300" : "bg-gray-600"
+                } w-full`}
+              ></div>
+            </div>
+
+            <div className="flex items-center w-full max-w-[480px] lg:max-w-[800px] xl:max-w-[1000px]">
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-200" : "bg-gray-700"
+                } w-full`}
+              ></div>
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-300" : "bg-gray-600"
+                } w-full`}
+              ></div>
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-300" : "bg-gray-600"
+                } w-24 lg:w-40 xl:w-56`}
+              ></div>
+            </div>
+
+            <div className="flex items-center w-full max-w-[440px] lg:max-w-[750px] xl:max-w-[900px]">
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-300" : "bg-gray-600"
+                } w-32 lg:w-48 xl:w-64`}
+              ></div>
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-300" : "bg-gray-600"
+                } w-24 lg:w-40 xl:w-56`}
+              ></div>
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-200" : "bg-gray-700"
+                } w-full`}
+              ></div>
+            </div>
+
+            <div className="flex items-center w-full max-w-[360px] lg:max-w-[600px] xl:max-w-[800px]">
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-300" : "bg-gray-600"
+                } w-full`}
+              ></div>
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-200" : "bg-gray-700"
+                } w-80 lg:w-96 xl:w-[400px]`}
+              ></div>
+              <div
+                className={`h-2.5 ms-2 rounded-full ${
+                  theme === "light" ? "bg-gray-300" : "bg-gray-600"
+                } w-full`}
+              ></div>
+            </div>
+
+            <span className="sr-only">Loading...</span>
+          </div>
+        </div>
+      );
+    }
+    // Get departments based on user role
+    const departments = Object.keys(productionData)
+      .filter((dept) => {
+        // If the user is 'user', filter based on userDepartments
+        if (role === "user") {
+          return userDepartments.includes(dept);
+        }
+        return true; // Allow all departments for non-user roles
+      })
+      .filter((dept) =>
+        search.toLowerCase() === ""
+          ? dept
+          : dept.toLowerCase().includes(search.toLowerCase())
+      );
 
     return departments.map((dept) => {
       const productionQty = productionData[dept];
@@ -739,55 +796,83 @@ function Dashboard() {
           ? (((productionQty + pendingQty) / productionQty) * 1).toFixed(1)
           : "N/A";
 
-          const departmentTarget = targetValues.find(item => item.department_name === dept);
-          const target = departmentTarget ? departmentTarget.target : 100; // Default to 100 if not found
-           // Use fetched target or default to 100
+      const departmentTarget = targetValues.find(
+        (item) => item.department_name === dept
+      );
+      const target = departmentTarget ? departmentTarget.target : 100; // Default to 100 if not found
 
       const efficiency = ((productionQty / target) * 100).toFixed(2);
 
       const handleTargetChange = async () => {
         const newTarget = prompt("Enter new target:", target);
-        
+
         if (newTarget !== null) {
           const numericTarget = Number(newTarget);
-          
+
           // Validate if the input is a number
           if (isNaN(numericTarget) || numericTarget < 0) {
             alert("Please enter a valid number for the target.");
-            return; // Exit the function if the input is not valid
+            return;
           }
-      
-          const updatedTargets = targetValues.map(item => 
-            item.department_name === dept ? { ...item, target: numericTarget } : item
+
+          const updatedTargets = targetValues.map((item) =>
+            item.department_name === dept
+              ? { ...item, target: numericTarget }
+              : item
           );
-      
+
           setTargetValues(updatedTargets);
-      
+
           try {
-            await axios.post("http://localhost:8081/api/depart_targets", { department_name: dept, target: numericTarget });
+            await axios.post("http://localhost:8081/api/depart_targets", {
+              department_name: dept,
+              target: numericTarget,
+            });
           } catch (error) {
-            console.error('Error updating target:', error);
+            console.error("Error updating target:", error);
           }
         }
       };
-      
-      
-      
+
       return (
-        <div key={dept} className={`p-4 rounded-lg shadow-md flex flex-col justify-between ${theme === "light" ? "bg-white" : "bg-slate-600"}`} style={{ minWidth: "150px", minHeight: "180px" }}>
-          <h2 className={`font-bold text-lg uppercase text-center rounded-md shadow-md ${theme === "light" ? "bg-gray-200 text-gray-700" : "bg-slate-900 text-gray-100"}`}>
+        <div
+          key={dept}
+          className={`p-4 rounded-lg shadow-md flex flex-col justify-between ${
+            theme === "light" ? "bg-white" : "bg-slate-600"
+          }`}
+          style={{ minWidth: "150px", minHeight: "180px" }}
+        >
+          <h2
+            className={`font-bold text-lg uppercase text-center rounded-md shadow-md ${
+              theme === "light"
+                ? "bg-gray-200 text-gray-700"
+                : "bg-slate-900 text-gray-100"
+            }`}
+          >
             {dept}
           </h2>
           <div className="flex mt-3 space-x-2 justify-between">
             <Link to={`/department/${dept}/production`} className="w-1/2">
-              <div className={`rounded-lg shadow-md border-solid border w-[100%] mr-1 hover:scale-95 ${theme === "light" ? "bg-[#c1fbce92] border-[rgba(0,255,55,0.62)]" : "bg-gray-800 border-[#0e902a] text-green-300 shadow-xl shadow-gray-700 hover:shadow-none"}`}>
+              <div
+                className={`rounded-lg shadow-md border-solid border w-[100%] mr-1 hover:scale-95 ${
+                  theme === "light"
+                    ? "bg-[#c1fbce92] border-[rgba(0,255,55,0.62)]"
+                    : "bg-gray-800 border-[#0e902a] text-green-300 shadow-xl shadow-gray-700 hover:shadow-none"
+                }`}
+              >
                 <p className="font-normal text-sm text-center p-2">
                   Production: <span className="font-bold">{productionQty}</span>
                 </p>
               </div>
             </Link>
             <Link to={`/department/${dept}/pending`} className="w-1/2">
-              <div className={`rounded-lg shadow-md border-solid border w-[100%] ml-1 hover:scale-95 ${theme === "light" ? "bg-[#feffd1] border-[#e5ff00]" : "bg-gray-800 border-[#7d8808] text-amber-300 shadow-xl shadow-gray-700 hover:shadow-none"}`}>
+              <div
+                className={`rounded-lg shadow-md border-solid border w-[100%] ml-1 hover:scale-95 ${
+                  theme === "light"
+                    ? "bg-[#feffd1] border-[#e5ff00]"
+                    : "bg-gray-800 border-[#7d8808] text-amber-300 shadow-xl shadow-gray-700 hover:shadow-none"
+                }`}
+              >
                 <p className="font-normal text-sm text-center p-2">
                   Pending: <span className="font-bold">{pendingQty}</span>
                 </p>
@@ -795,20 +880,41 @@ function Dashboard() {
             </Link>
           </div>
           <div className="flex justify-between mt-3">
-            <div className={`rounded-lg shadow-md border-solid border w-[80%] mr-1 h-7 ${theme === "light" ? "bg-[#fbc6c191] border-[#ff00009e]" : "bg-gray-800 border-[#7a0e0e] text-red-300"}`}>
+            <div
+              className={`rounded-lg shadow-md border-solid border w-[80%] mr-1 h-7 ${
+                theme === "light"
+                  ? "bg-[#fbc6c191] border-[#ff00009e]"
+                  : "bg-gray-800 border-[#7a0e0e] text-red-300"
+              }`}
+            >
               <p className="font-normal text-sm text-center py-1">
                 Target: <span className="font-bold">{target}</span>
-                <FaEdit className="inline-block ml-2 cursor-pointer" onClick={handleTargetChange} />
+                <FaEdit
+                  className="inline-block ml-2 cursor-pointer"
+                  onClick={handleTargetChange}
+                />
               </p>
             </div>
-            <div className={`rounded-lg shadow-md border-solid border w-[80%] ml-1 h-7 ${theme === "light" ? "bg-cyan-50 border-cyan-500" : "bg-gray-800 border-cyan-700 text-cyan-300"}`}>
+            <div
+              className={`rounded-lg shadow-md border-solid border w-[80%] ml-1 h-7 ${
+                theme === "light"
+                  ? "bg-cyan-50 border-cyan-500"
+                  : "bg-gray-800 border-cyan-700 text-cyan-300"
+              }`}
+            >
               <p className="font-normal text-sm text-center p-1">
                 Avg Prod: <span className="font-bold">{avgProduction}</span>
               </p>
             </div>
           </div>
           <div className="flex mt-3 justify-center">
-            <div className={`rounded-lg shadow-md border-solid border w-full ${theme === "light" ? "bg-fuchsia-100 border-fuchsia-500" : "bg-gray-800 border-fuchsia-700 text-fuchsia-300"}`}>
+            <div
+              className={`rounded-lg shadow-md border-solid border w-full ${
+                theme === "light"
+                  ? "bg-fuchsia-100 border-fuchsia-500"
+                  : "bg-gray-800 border-fuchsia-700 text-fuchsia-300"
+              }`}
+            >
               <p className="font-normal text-sm text-center p-2">
                 Efficiency: <span className="font-bold">{efficiency}%</span>
               </p>
@@ -818,62 +924,68 @@ function Dashboard() {
       );
     });
   };
+
   const departments = Object.keys(productionData).filter((dept) =>
     search.toLowerCase() === ""
       ? dept
       : dept.toLowerCase().includes(search.toLowerCase())
   );
 
-  const tableData = departments.map((dept) => {
-    const productionQty = productionData[dept];
-    const pendingQty = pendingDepartmentData[dept] || 0;
-    const avgProduction =
-      productionQty > 0
-        ? (((productionQty + pendingQty) / productionQty) * 1).toFixed(1)
-        : "N/A";
-    const storedTargets =
-      JSON.parse(localStorage.getItem("targetValues")) || {};
-    const Target =targets[dept] || 100; 
-    const efficiency = ((productionQty / Target) * 100).toFixed(2);
+const tableData = departments
+    .filter((dept) => {
+      if (role === "user") {
+        console.log("User departments:", userDepartments);
+        return userDepartments.includes(dept);
+      }
+      return true;
+    })
+    .map((dept) => {
+      const productionQty = productionData[dept] || 0; // Default to 0 if not present
+      const pendingQty = pendingDepartmentData[dept] || 0;
+      const avgProduction =
+        productionQty > 0
+          ? (((productionQty + pendingQty) / productionQty) * 1).toFixed(1)
+          : "N/A";
+      const storedTargets =
+        JSON.parse(localStorage.getItem("targetValues")) || {};
+      const Target = targets[dept] || 100;
+      const efficiency = ((productionQty / Target) * 100).toFixed(2);
 
+      const toDayProduction =
+        (twodays_production &&
+          twodays_production.today &&
+          twodays_production.today[dept]) ||
+        0;
+      const toDayPending =
+        (twodays_pending &&
+          twodays_pending.today &&
+          twodays_pending.today[dept]) ||
+        0;
+      const prevDayProduction =
+        (twodays_production &&
+          twodays_production.previous_day &&
+          twodays_production.previous_day[dept]) ||
+        0;
+      const prevDayPending =
+        (twodays_pending &&
+          twodays_pending.previous_day &&
+          twodays_pending.previous_day[dept]) ||
+        0;
 
-    const toDayProduction =
-      (twodays_production &&
-        twodays_production.today &&
-        twodays_production.today[dept]) ||
-      0;
-    const toDayPending =
-      (twodays_pending &&
-        twodays_pending.today &&
-        twodays_pending.today[dept]) ||
-      0;
-    const prevDayProduction =
-      (twodays_production &&
-        twodays_production.previous_day &&
-        twodays_production.previous_day[dept]) ||
-      0;
-    const prevDayPending =
-      (twodays_pending &&
-        twodays_pending.previous_day &&
-        twodays_pending.previous_day[dept]) ||
-      0;
-
-    //    const todayProduction = 0;
-    // const prevDayProduction = 0;
-    return {
-      dept,
-      align: efficiency,
-      capacity: Target,
-      totalPro: productionQty,
-      balancePro: pendingQty,
-      avgProPerDay: avgProduction,
-      protoday: toDayProduction,
-      pentoday: toDayPending,
-      proprev: prevDayProduction,
-      penprev: prevDayPending,
-      remarks: "N/A",
-    };
-  });
+      return {
+        dept,
+        align: efficiency,
+        capacity: Target,
+        totalPro: productionQty,
+        balancePro: pendingQty,
+        avgProPerDay: avgProduction,
+        protoday: toDayProduction,
+        pentoday: toDayPending,
+        proprev: prevDayProduction,
+        penprev: prevDayPending,
+        remarks: "N/A",
+      };
+    });
 
   return (
     <div
@@ -896,7 +1008,7 @@ function Dashboard() {
           onDateRangeChange={handleDateRangeChange}
         />
         <main
-          className={`flex-1 px-4 overflow-y-auto ${
+          className={`flex-1 px-4 overflow-y-auto overflow-hidden ${
             filter_on === true ? "opacity-10" : "opacity-100"
           }`}
         >

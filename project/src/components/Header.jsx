@@ -118,7 +118,7 @@ function Header({
       </div>
       <div className="flex items-center gap-5 m-0">
         <p
-          className={`hidden sm:block md:block lg:block sl:block ${
+          className={`hidden sm:block md:block lg:block sl:block mr-10 ${
             theme === "light" ? "text-gray-500" : "text-gray-400"
           }`}
         >
