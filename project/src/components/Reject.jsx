@@ -64,6 +64,7 @@ function Reject() {
 
   const [uniqueDepartments, setUniqueDepartments] = useState([]);
   const [deptPercentage, setDeptPercentage] = useState([]);
+  const [filter_on, setFilter_on] = useState(false);
 
   useEffect(() => {
     const intervalId = setInterval(() => {
@@ -634,8 +635,13 @@ function Reject() {
     >
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
-        <Header onSearch={setSearch} theme={theme} dark={setTheme} />
-
+        <Header onSearch={setSearch} theme={theme} dark={setTheme}  on_filter={setFilter_on}
+          filter={filter_on}/>
+        <main
+          className={`flex-1 px-4 overflow-y-auto ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}
+        >
         <div
           className={`flex justify-between mx-4 mt-4 ${
             theme === "light" ? "text-gray-800" : "text-gray-200"
@@ -835,7 +841,7 @@ function Reject() {
               <div
                 className={`w-1/2 m-6 border rounded-lg  shadow-lg ${
                   theme === "dark"
-                    ? "bg-gray-700 text-white border-gray-600"
+                    ? "bg-gray-900 text-white border-gray-600"
                     : "bg-white text-gray-800 border-gray-300"
                 }`}
               >
@@ -912,7 +918,7 @@ function Reject() {
               <div
                 className={`w-1/2 m-6 border rounded-lg shadow-lg ${
                   theme === "dark"
-                    ? "bg-gray-700 text-white border-gray-600"
+                    ? "bg-gray-900 text-white border-gray-600"
                     : "bg-white text-gray-800 border-gray-300"
                 }`}
               >
@@ -979,7 +985,7 @@ function Reject() {
               <div
                 className={`w-1/2 m-6 border rounded-lg  shadow-lg ${
                   theme === "dark"
-                    ? "bg-gray-700 text-white border-gray-600"
+                    ? "bg-gray-900 text-white border-gray-600"
                     : "bg-white text-gray-800 border-gray-300"
                 }`}
               >
@@ -1097,7 +1103,7 @@ function Reject() {
               <div
                 className={`w-1/2 m-6 px-10 border rounded-lg shadow-lg ${
                   theme === "dark"
-                    ? "bg-gray-700 text-white border-gray-600"
+                    ? "bg-gray-900 text-white border-gray-600"
                     : "bg-white text-gray-800 border-gray-300"
                 }`}
               >
@@ -1117,6 +1123,7 @@ function Reject() {
                       data={chartData4}
                       options={{
                         ...chartOptions4,
+                        maintainAspectRatio: true,
                         plugins: {
                           tooltip: {
                             backgroundColor:
@@ -1161,7 +1168,7 @@ function Reject() {
             <div
               className={`m-6 px-10 border rounded-lg shadow-lg ${
                 theme === "dark"
-                  ? "bg-gray-700 text-white border-gray-600"
+                  ? "bg-gray-900 text-white border-gray-600"
                   : "bg-white text-gray-800 border-gray-300"
               }`}
             >
@@ -1169,7 +1176,7 @@ function Reject() {
                 Detailed Top <span className="text-red-500">Rejections</span>
               </h1>
 
-              <div className="border-b border-slate-200">
+              <div className={`border-b  ${theme==='light'?'border-slate-200':'border-slate-600'}`}>
                 <button
                   onClick={() => toggleAccordion(1)}
                   className={`w-full flex justify-between items-center py-5 ${
@@ -1348,7 +1355,7 @@ function Reject() {
                 </div>
               </div>
 
-              <div className="border-b border-slate-200">
+              <div className={`border-b  ${theme==='light'?'border-slate-200':'border-slate-600'}`}>
                 <button
                   onClick={() => toggleAccordion(2)}
                   className={`w-full flex justify-between items-center py-5 ${
@@ -1686,6 +1693,7 @@ function Reject() {
             </div>
           </div>
         )}
+        </main>
       </div>
     </div>
   );

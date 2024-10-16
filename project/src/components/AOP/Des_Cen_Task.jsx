@@ -18,6 +18,7 @@ function Des_Cen_Task() {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10); // Change as needed
+  const [filter_on, setFilter_on] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -295,7 +296,13 @@ const closeModal_total = () => {
       >
         <Sidebar theme={theme} />
         <div className="flex-1 flex flex-col">
-          <Header onSearch={setSearch} theme={theme} dark={setTheme} />
+          <Header onSearch={setSearch} theme={theme} dark={setTheme} on_filter={setFilter_on}
+          filter={filter_on} />
+          <main
+          className={`flex-1 px-4 overflow-y-auto ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}
+        >
           <h1
             className={`font-bold text-xl mx-4 mt-4 ${
               theme === "light" ? "text-gray-800" : "text-gray-200"
@@ -646,6 +653,7 @@ const closeModal_total = () => {
               </div>
             </div>
           )}
+          </main>
         </div>
       </div>
     </>

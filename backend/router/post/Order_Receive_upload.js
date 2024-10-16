@@ -50,22 +50,21 @@ function formatDateToMMMYY(date) {
     .replace(/\s/g, "-"); // Format and replace space with hyphen
 }
 
-
 function convertMMMYYToDateString(mmmYY) {
-  const [monthAbbr, year] = mmmYY.split('-');
+  const [monthAbbr, year] = mmmYY.split("-");
   const monthMap = {
-    Jan: '01',
-    Feb: '02',
-    Mar: '03',
-    Apr: '04',
-    May: '05',
-    Jun: '06',
-    Jul: '07',
-    Aug: '08',
-    Sep: '09',
-    Oct: '10',
-    Nov: '11',
-    Dec: '12',
+    Jan: "01",
+    Feb: "02",
+    Mar: "03",
+    Apr: "04",
+    May: "05",
+    Jun: "06",
+    Jul: "07",
+    Aug: "08",
+    Sep: "09",
+    Oct: "10",
+    Nov: "11",
+    Dec: "12",
   };
 
   const month = monthMap[monthAbbr];
@@ -79,7 +78,6 @@ function convertMMMYYToDateString(mmmYY) {
 const inputDate = "Aug-22";
 const outputDate = convertMMMYYToDateString(inputDate);
 console.log(outputDate); // Output: "2022-08-01 00:00:00.000000"
-
 
 router.post("/order/upload", upload.single("file"), (req, res) => {
   if (!req.file) {
@@ -101,16 +99,16 @@ router.post("/order/upload", upload.single("file"), (req, res) => {
             ? formatDateForMySQL(excelSerialDateToDate(transDate))
             : null;
 
-       const ddValue = row["DD"];
-       let formattedDdDate = null;
+        const ddValue = row["DD"];
+        let formattedDdDate = null;
 
-       if (typeof ddValue === "number") {
-         const ddDate = excelSerialDateToDate(ddValue); // Convert Excel serial date to Date
-         formattedDdDate = formatDateForMySQL(ddDate); // Format it for MySQL
-       } else if (typeof ddValue === "string") {
-         const parsedDate = parseDateString(ddValue); // For string formats like "DD-MM-YYYY"
-         formattedDdDate = parsedDate ? formatDateForMySQL(parsedDate) : null;
-       }
+        if (typeof ddValue === "number") {
+          const ddDate = excelSerialDateToDate(ddValue); // Convert Excel serial date to Date
+          formattedDdDate = formatDateForMySQL(ddDate); // Format it for MySQL
+        } else if (typeof ddValue === "string") {
+          const parsedDate = parseDateString(ddValue); // For string formats like "DD-MM-YYYY"
+          formattedDdDate = parsedDate ? formatDateForMySQL(parsedDate) : null;
+        }
 
         const parseDdAndMonth = (value) => {
           if (typeof value === "string") {
@@ -166,6 +164,8 @@ router.post("/order/upload", upload.single("file"), (req, res) => {
           row["collection"],
           row["Collection-1"],
           row["Collection-2"],
+          null,
+          new Date().toISOString().slice(0, 19).replace("T", " "),
         ];
       });
 
@@ -177,11 +177,11 @@ router.post("/order/upload", upload.single("file"), (req, res) => {
        \`QTY\`, \`WT\`, \`Avg\`, \`Wt range\`, \`PL-ST\`, \`DD\`, \`SKCHNI\`,
        \`EMP\`, \`Name\`, \`CODE\`, \`GENDER\`, \`2024_Set_Photo\`, \`Po_new\`,
        \`DD&month\`, \`Dyr\`, \`Brief\`, \`Maketype\`, \`collection\`, \`Collection_1\`,
-       \`Collection_2\`)
+       \`Collection_2\`,fileId , uploadedDateTime)
       VALUES ?
     `;
 
-      const batchSize = 1000;
+      const batchSize = 10000;
       let index = 0;
 
       const insertNextBatch = () => {

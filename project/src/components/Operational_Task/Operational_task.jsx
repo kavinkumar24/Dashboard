@@ -15,6 +15,7 @@ function Operational_task() {
   const [activeRow, setActiveRow] = useState(null);
   const [assigneeOptions, setAssigneeOptions] = useState([]);
   // const [phaseData, setPhaseData] = useState([]);
+  const [filter_on, setFilter_on] = useState(false);
 
   const [tableData, setTableData] = useState([]);
   useEffect(() => {
@@ -334,7 +335,13 @@ useEffect(() => {
       >
         <Sidebar theme={theme} />
         <div className="flex-1 flex flex-col">
-          <Header onSearch={setSearch} theme={theme} dark={setTheme} />
+          <Header onSearch={setSearch} theme={theme} dark={setTheme} on_filter={setFilter_on}
+          filter={filter_on}/>
+          <main
+          className={`flex-1 px-4 overflow-y-auto ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}
+        >
           <div className="flex justify-between mx-6">
             <h1 className="  font-bold text-xl">Operational Task overview </h1>
           </div>
@@ -943,6 +950,7 @@ useEffect(() => {
               </div>
             </div>
           )}
+          </main>
         </div>
       </div>
     </>

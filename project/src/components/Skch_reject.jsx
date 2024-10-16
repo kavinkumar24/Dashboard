@@ -42,7 +42,9 @@ function Skch_reject() {
   const location = useLocation();
   const { skch, overAllData, status } = location.state || {};
   const [search, setSearch] = useState(null);
-  const [theme, setTheme] = useState("light");
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("theme") || "light"
+  );
   const [chartData, setChartData] = useState(null);
   const [chartData2, setChartData2] = useState(null);
   const [chartData3, setChartData3] = useState(null);
@@ -50,8 +52,13 @@ function Skch_reject() {
   const [chartData5, setChartData5] = useState(null);
   const [chartData6, setChartData6] = useState(null);
   const [tableData, setTableData] = useState([]);
+  const [filter_on, setFilter_on] = useState(false);
+
 
   
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+  }, [theme]);
   const colors = [
     "rgba(153, 102, 255, 0.2)",
     "rgba(54, 162, 235, 0.2)",
@@ -286,9 +293,16 @@ function Skch_reject() {
     >
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
-        <Header onSearch={setSearch} theme={theme} dark={setTheme} />
+        <Header onSearch={setSearch} theme={theme} dark={setTheme}  on_filter={setFilter_on}
+          filter={filter_on}/>
+             <main
+          className={`flex-1 px-4 overflow-y-auto ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}
+        >
 <div id="pdf-content"> 
-        <div className="flex justify-between mx-4 mt-4">
+        <div className={`flex justify-between mx-4 mt-4 ${theme === 'light'?'text-gray-900':'text-gray-200'
+        }`}>
           {status === "Sketch" ? 
           <h1 className="font-bold text-xl">
           Overview of Rejected Sketch ID - <span className='text-[#879FFF] text-2xl'>{skch}</span>
@@ -311,18 +325,20 @@ function Skch_reject() {
         </div>
 
 
-        <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
-
+        <div className={`m-6 border rounded-lg  shadow-lg ${theme === 'light'?'bg-white border-gray-300':'bg-slate-900 border-gray-800 text-slate-300'
+        }`}>
+ 
         {status === "Sketch" ? 
         <h1 className="text-lg font-semibold p-2 pl-10 py-5">Detailed View of Sketch ID <span className='text-red-400'>{skch}</span></h1>
           :  
           <h1 className="text-lg font-semibold p-2 pl-10 py-5">Detailed View of Type Of Reason <span className='text-red-400 text-xl'>{skch.charAt(0).toUpperCase() + skch.slice(1).toLowerCase()}</span></h1>
         }
 
-
+<div className="overflow-x-auto">
         <table className="w-full table-auto text-sm ">
     <thead> 
-      <tr className="bg-gray-300 text-gray-700">
+    <tr className={`${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-950 text-gray-200'}`}>
+
         <th className="py-3 text-center font-semibold text-base">SI no</th>
         <th className="py-3 text-center font-semibold text-base">RaisedDate</th>
         <th className="py-3 text-center font-semibold text-base">RaisedDept</th>
@@ -333,7 +349,8 @@ function Skch_reject() {
     </thead>
     <tbody>
       {currentData.map((item, index) => (
-        <tr key={index} className="bg-white even:bg-gray-50 hover:bg-gray-200 transition-colors duration-200">
+      <tr key={index} className={`transition-colors duration-200 ${theme === 'light' ? 'bg-white even:bg-gray-50 hover:bg-gray-200' : 'bg-gray-800 even:bg-gray-700 hover:bg-gray-600'}`}>
+
           <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">
             {(currentPage - 1) * itemsPerPage + index + 1}
           </td>
@@ -363,68 +380,137 @@ function Skch_reject() {
       ))}
     </tbody>
   </table> 
+  </div>
   {/* Pagination Controls */}
-  <div className="flex justify-center space-x-2 m-4 ">
-        <button
-          className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          Previous
-        </button>
-        
-      
-          <button
-            className="text-base px-5 py-3 rounded-lg border bg-gray-300"
-          >
-            {currentPage}
-          </button>
-      
-        
-        <button
-          className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage === totalPages ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          Next
-        </button>
-      </div>
+  <div className="flex justify-center space-x-2 m-4">
+  <button
+    className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+      currentPage === 1
+        ? theme === 'light'
+          ? 'bg-gray-200 cursor-not-allowed'
+          : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+        : theme === 'light'
+        ? 'bg-gray-300 hover:bg-gray-400'
+        : 'bg-gray-700 hover:bg-gray-600 text-white'
+    }`}
+    onClick={() => handlePageChange(currentPage - 1)}
+    disabled={currentPage === 1}
+  >
+    Previous
+  </button>
+  <button
+  className={`text-base px-5 py-3 rounded-lg border ${theme === 'light' ? 'bg-gray-300' : 'bg-gray-700 text-white'}`}
+>
+  {currentPage}
+</button>
+
+  <button
+    className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+      currentPage === totalPages
+        ? theme === 'light'
+          ? 'bg-gray-200 cursor-not-allowed'
+          : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+        : theme === 'light'
+        ? 'bg-gray-300 hover:bg-gray-400 border-gray-200'
+        : 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
+    }`}
+    onClick={() => handlePageChange(currentPage + 1)}
+    disabled={currentPage === totalPages}
+  >
+    Next
+  </button>
+</div>
+
 </div>
 
 
 
-        <div className="flex">
-          <div className="bg-white w-1/2 m-6 border rounded-lg border-gray-300 shadow-lg">
-          <h1 className="text-lg font-semibold p-2 pl-10">Rejection Counts Based on Year</h1>
-            <div className=" px-10">
-              {chartData ? (
-                <Bar data={chartData} />
-              ) : (
-                <p className="text-center text-gray-500">
-                  Loading chart data...
-                </p>
-              )}
-            </div>
-          </div>
+        <div className="flex flex-col md:flex-row">
+        <div className={`w-1/2 m-6 border rounded-lg shadow-lg ${theme === 'light' ? 'bg-white border-gray-300' : 'bg-gray-900 border-gray-700'}`}>
+  <h1 className={`text-lg font-semibold p-2 pl-10 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>Rejection Counts Based on Year</h1>
+  <div className="px-10">
+    {chartData ? (
+      <Bar 
+        data={chartData} 
+        options={{
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              labels: {
+                color: theme === 'light' ? 'black' : 'white'
+              }
+            },
+            tooltip: {
+              backgroundColor: theme === 'light' ? 'white' : 'gray',
+              titleColor: theme === 'light' ? 'black' : 'white',
+              bodyColor: theme === 'light' ? 'black' : 'white'
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Count By Months',
+                color: theme === 'light' ? '#555' : '#bbb',
+                font: {
+                  size: 14
+                }
+              },
+              ticks: {
+                color: theme === 'light' ? '#555' : '#bbb'
+              },
+              grid: {
+                display: true,
+                color: theme === 'light' ? '#eee' : '#444'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Year',
+                color: theme === 'light' ? '#555' : '#bbb',
+                font: {
+                  size: 14
+                }
+              },
+              ticks: {
+                autoSkip: true,
+                color: theme === 'light' ? '#555' : '#bbb'
+              },
+              grid: {
+                display: true,
+                color: theme === 'light' ? '#eee' : '#444'
+              }
+            }
+          }
+        }}
+      />
+    ) : (
+      <p className={`text-center ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+        Loading chart data...
+      </p>
+    )}
+  </div>
+</div>
 
-          <div className="bg-white w-1/2 mx-auto my-6 mr-6 border border-gray-300 rounded-lg shadow-lg">
-  <h1 className="text-xl font-bold text-left text-gray-700 mb-4 px-6">Rejections Count by Month</h1>
-  
-  <div className="px-6 " style={{ height: '300px' }}>
+          <div className={`w-1/2 mx-auto my-6 mr-6 border rounded-lg shadow-lg ${theme === 'light' ? 'bg-white border-gray-300' : 'bg-gray-900 border-gray-700'}`}>
+  <h1 className={`text-xl font-bold text-left mb-4 px-6 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>Rejections Count by Month</h1>
+  <div className="px-6" style={{ height: '300px' }}>
     {chartData3 ? (
       <Line
         data={chartData3}
         options={{
           responsive: true,
           maintainAspectRatio: false,
-          
           plugins: {
             datalabels: {
               display: true,
               align: "end",
               anchor: "end",
               formatter: (value) => `${value.toFixed(2)}`,
-              color: "black",
+              color: theme === 'light' ? 'black' : 'white',
               font: {
                 weight: "normal",
               },
@@ -435,6 +521,7 @@ function Skch_reject() {
               labels: {
                 boxWidth: 15,
                 padding: 10,
+                color: theme === 'light' ? 'black' : 'white'
               },
             },
             tooltip: {
@@ -443,6 +530,9 @@ function Skch_reject() {
                   return `${context.raw.toFixed(2)}`;
                 },
               },
+              backgroundColor: theme === 'light' ? 'white' : 'gray',
+              titleColor: theme === 'light' ? 'black' : 'white',
+              bodyColor: theme === 'light' ? 'black' : 'white'
             },
           },
           scales: {
@@ -450,7 +540,7 @@ function Skch_reject() {
               title: {
                 display: true,
                 text: "Count By Months",
-                color: "#555",
+                color: theme === 'light' ? '#555' : '#bbb',
                 font: {
                   size: 14,
                 },
@@ -458,24 +548,25 @@ function Skch_reject() {
               beginAtZero: true,
               grid: {
                 display: true,
-                color: "#eee",
+                color: theme === 'light' ? '#eee' : '#444',
               },
             },
             y: {
               title: {
                 display: true,
                 text: "Year",
-                color: "#555",
+                color: theme === 'light' ? '#555' : '#bbb',
                 font: {
                   size: 14,
                 },
               },
               ticks: {
                 autoSkip: true,
+                color: theme === 'light' ? '#555' : '#bbb',
               },
               grid: {
                 display: true,
-                color: "#eee",
+                color: theme === 'light' ? '#eee' : '#444',
               },
             },
           },
@@ -483,75 +574,171 @@ function Skch_reject() {
         plugins={[ChartDataLabels]}
       />
     ) : (
-      <p className="text-gray-500 text-center">Loading chart data...</p>
+      <p className={`text-center ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>Loading chart data...</p>
     )}
   </div>
 </div>
 
+
         </div>
         <div className="flex">
-          <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
-          <h1 className="text-lg font-semibold p-2">Rejections Count by To Department </h1>
-            
-            <div className="chart-container">
-              {chartData2 ? (
-                <Bar data={chartData2} />
-              ) : (
-                <p>Loading chart data...</p>
-              )}
-            </div>
-          </div>
-          <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
-          <h1 className="text-lg font-semibold p-2">Rejections Count by Raised Department </h1>
-          <div className="chart-container">
-            {chartData5 ? (
-              <Line
-              data={chartData5}
-              options={{
-                legend: {
-                  display: true,
-                  position: "top",
-                  labels: {
-                    boxWidth: 15,
-                    padding: 10,
-                  },
-                },
-                plugins: {
-                  legend: {
-                    display: true,
-                    position: "top",
-                    labels: {
-                      boxWidth: 15,
-                      padding: 10,
-                    },
-                  },
-                  tooltip: {
-                    callbacks: {
-                      label: function (context) {
-                        return `${context.raw}`;
-                      },
-                    },
-                  },
-                  datalabels: {
-                    display: true,
-                    align: 'top',
-                    formatter: function (value) {
-                      return value;
-                    },
-                    font: {
-                      weight: 'bold',
-                    },
-                  },
-                },
-              }}
-            />
-            
-            ) : (
-              <p>Loading chart data...</p>
-            )}
-          </div>
+        <div className={`w-1/2 m-6 px-10 border rounded-lg shadow-lg ${theme === 'light' ? 'bg-white border-gray-300' : 'bg-gray-900 border-gray-700'}`}>
+  <h1 className={`text-lg font-semibold p-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>Rejections Count by To Department</h1>
+  <div className="chart-container">
+    {chartData2 ? (
+      <Bar 
+        data={chartData2} 
+        options={{
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              labels: {
+                color: theme === 'light' ? 'black' : 'white'
+              }
+            },
+            tooltip: {
+              backgroundColor: theme === 'light' ? 'white' : 'gray',
+              titleColor: theme === 'light' ? 'black' : 'white',
+              bodyColor: theme === 'light' ? 'black' : 'white'
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Departments',
+                color: theme === 'light' ? '#555' : '#bbb',
+                font: {
+                  size: 14
+                }
+              },
+              ticks: {
+                color: theme === 'light' ? '#555' : '#bbb'
+              },
+              grid: {
+                display: true,
+                color: theme === 'light' ? '#eee' : '#444'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Rejections',
+                color: theme === 'light' ? '#555' : '#bbb',
+                font: {
+                  size: 14
+                }
+              },
+              ticks: {
+                autoSkip: true,
+                color: theme === 'light' ? '#555' : '#bbb'
+              },
+              grid: {
+                display: true,
+                color: theme === 'light' ? '#eee' : '#444'
+              }
+            }
+          }
+        }}
+      />
+    ) : (
+      <p className={`text-center ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+        Loading chart data...
+      </p>
+    )}
+  </div>
+</div>
 
-          </div>
+<div className={`w-1/2 m-6 px-10 border rounded-lg shadow-lg ${theme === 'light' ? 'bg-white border-gray-300' : 'bg-gray-900 border-gray-700'}`}>
+  <h1 className={`text-lg font-semibold p-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>Rejections Count by Raised Department</h1>
+  <div className="chart-container">
+    {chartData5 ? (
+      <Line 
+        data={chartData5} 
+        options={{
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                boxWidth: 15,
+                padding: 10,
+                color: theme === 'light' ? 'black' : 'white'
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  return `${context.raw}`;
+                },
+              },
+              backgroundColor: theme === 'light' ? 'white' : 'gray',
+              titleColor: theme === 'light' ? 'black' : 'white',
+              bodyColor: theme === 'light' ? 'black' : 'white'
+            },
+            datalabels: {
+              display: true,
+              align: 'top',
+              formatter: function (value) {
+                return value;
+              },
+              color: theme === 'light' ? 'black' : 'white',
+              font: {
+                weight: 'bold'
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Departments',
+                color: theme === 'light' ? '#555' : '#bbb',
+                font: {
+                  size: 14
+                }
+              },
+              ticks: {
+                color: theme === 'light' ? '#555' : '#bbb'
+              },
+              grid: {
+                display: true,
+                color: theme === 'light' ? '#eee' : '#444'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Rejections',
+                color: theme === 'light' ? '#555' : '#bbb',
+                font: {
+                  size: 14
+                }
+              },
+              ticks: {
+                autoSkip: true,
+                color: theme === 'light' ? '#555' : '#bbb'
+              },
+              grid: {
+                display: true,
+                color: theme === 'light' ? '#eee' : '#444'
+              }
+            }
+          }
+        }}
+      />
+    ) : (
+      <p className={`text-center ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+        Loading chart data...
+      </p>
+    )}
+  </div>
+</div>
+
         </div>
 
         <div className="flex">
@@ -566,23 +753,91 @@ function Skch_reject() {
               )}
             </div>
           </div> */}
-          <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
-          <h1 className="text-lg font-semibold p-2">Problem Arised for Rejections</h1>
-          {/* <div className="chart-container">
-              {chartData4 ? (
-                <Pie data={chartData4}  />
-              ) : (
-                <p>Loading chart data...</p>
-              )}
-            </div> */}
-            <div className="chart-container">
-              {chartData6 ? (
-                <Bar data={chartData6}  />
-              ) : (
-                <p>Loading chart data...</p>
-              )}
-            </div>
-          </div>
+     <div className={`w-1/2 m-6 px-10 border rounded-lg shadow-lg ${theme === 'light' ? 'bg-white border-gray-300' : 'bg-gray-900 border-gray-700'}`}>
+  <h1 className={`text-lg font-semibold p-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>Problem Arised for Rejections</h1>
+  <div className="chart-container">
+    {chartData6 ? (
+      <Bar 
+        data={chartData6} 
+        options={{
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              labels: {
+                color: theme === 'light' ? 'black' : 'white'
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function (context) {
+                  return `${context.raw}`;
+                },
+              },
+              backgroundColor: theme === 'light' ? 'white' : 'gray',
+              titleColor: theme === 'light' ? 'black' : 'white',
+              bodyColor: theme === 'light' ? 'black' : 'white'
+            },
+            datalabels: {
+              display: true,
+              align: 'top',
+              formatter: function (value) {
+                return value;
+              },
+              color: theme === 'light' ? 'black' : 'white',
+              font: {
+                weight: 'bold'
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Departments',
+                color: theme === 'light' ? '#555' : '#bbb',
+                font: {
+                  size: 14
+                }
+              },
+              ticks: {
+                color: theme === 'light' ? '#555' : '#bbb'
+              },
+              grid: {
+                display: true,
+                color: theme === 'light' ? '#eee' : '#444'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Rejections',
+                color: theme === 'light' ? '#555' : '#bbb',
+                font: {
+                  size: 14
+                }
+              },
+              ticks: {
+                autoSkip: true,
+                color: theme === 'light' ? '#555' : '#bbb'
+              },
+              grid: {
+                display: true,
+                color: theme === 'light' ? '#eee' : '#444'
+              }
+            }
+          }
+        }}
+      />
+    ) : (
+      <p className={`text-center ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+        Loading chart data...
+      </p>
+    )}
+  </div>
+</div>
+
         </div>
 
 {/* //////////////////////////////////////////// */}
@@ -600,6 +855,7 @@ function Skch_reject() {
           <div><pre>{JSON.stringify(skchData, null, 2)}</pre></div>
         </div> */}
       </div>
+      </main>
     </div>
     </div>
 

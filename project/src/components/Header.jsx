@@ -274,50 +274,38 @@ function Header({
         )}
 
         {showProfileModal && userData && (
-          <div className="fixed inset-0 flex items-center justify-center z-20">
-           <div
-  className={`relative w-[60%] max-w-md ${
-    theme === "light" ? "bg-white" : "bg-gray-700"
-  } shadow-lg rounded-lg p-6`} 
->
-  <h2
-    className={`${theme === "light" ? "text-black" : "text-white"} text-lg font-semibold`}
-  >
-    User Profile
-  </h2>
-  <p className="text-sm text-gray-400 mt-1">Details about the user:</p>
-  <div className="mt-4 space-y-2"> {/* Added space between paragraphs */}
-    <p
-      className={`${
-        theme === "light" ? "text-black" : "text-white"
-      }`}
-    >
-      <strong>Emp ID:</strong> {userData.emp_id}
-    </p>
-    <p
-      className={`${
-        theme === "light" ? "text-black" : "text-white"
-      }`}
-    >
-      <strong>Email:</strong> {userData.Email}
-    </p>
-    <p
-      className={`${
-        theme === "light" ? "text-black" : "text-white"
-      }`}
-    >
-      <strong>Role:</strong> {userData.role}
-    </p>
-  </div>
-  <button
-    className="mt-6 bg-gray-400 text-white p-2 rounded-md hover:bg-gray-600 transition"
-    onClick={profile_modal}
-  >
-    Close
-  </button>
-</div>
-
-          </div>
+         <div className="fixed inset-0 flex items-center justify-center z-20 w-full p-4">
+         <div
+           className={`relative w-full max-w-lg sm:w-[60%] sm:max-w-md ${
+             theme === "light" ? "bg-white" : "bg-gray-700"
+           } shadow-lg rounded-lg p-6 sm:p-6`} // Responsive padding for mobile
+         >
+           <h2
+             className={`${theme === "light" ? "text-black" : "text-white"} text-lg font-semibold`}
+           >
+             User Profile
+           </h2>
+           <p className="text-sm text-gray-400 mt-1">Details about the user:</p>
+           <div className="mt-4 space-y-2">
+             <p className={`${theme === "light" ? "text-black" : "text-white"}`}>
+               <strong>Emp ID:</strong> {userData.emp_id}
+             </p>
+             <p className={`${theme === "light" ? "text-black" : "text-white"}`}>
+               <strong>Email:</strong> {userData.Email}
+             </p>
+             <p className={`${theme === "light" ? "text-black" : "text-white"}`}>
+               <strong>Role:</strong> {userData.role}
+             </p>
+           </div>
+           <button
+             className="mt-6 bg-gray-400 text-white p-2 rounded-md hover:bg-gray-600 transition"
+             onClick={profile_modal}
+           >
+             Close
+           </button>
+         </div>
+       </div>
+       
         )}
       </div>
     </header>

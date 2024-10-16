@@ -26,6 +26,8 @@ function Phase_view() {
   });
 
   const [showModal, setShowModal] = useState(false); // State to control modal visibility
+  const [filter_on, setFilter_on] = useState(false);
+
 
   const toggleModal = (task_id) => {
     setGraceUpdate(task_id);
@@ -455,7 +457,13 @@ function Phase_view() {
       >
         <Sidebar theme={theme} />
         <div className="flex-1 flex flex-col">
-          <Header onSearch={setSearch} theme={theme} dark={setTheme} />
+          <Header onSearch={setSearch} theme={theme} dark={setTheme} on_filter={setFilter_on}
+          filter={filter_on} />
+        <main
+          className={`flex-1 px-4 overflow-y-auto ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}
+        >
           {/* <main */}
           {/* className={`flex-1 overflow-y-auto overflow-x-auto p-4 ml-20  md:px-8 lg:px-4  md:max-w-screen-xl 2xl:max-w-screen-2xl`} 
 >*/}
@@ -1092,6 +1100,7 @@ function Phase_view() {
             </h1>
           )}
           {/* </main> */}
+          </main>
         </div>
       </div>
     </>

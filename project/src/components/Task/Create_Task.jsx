@@ -285,6 +285,7 @@ function CreateTask() {
     }),
   };
 
+  const [filter_on, setFilter_on] = useState(false);
 
   
   return (
@@ -296,8 +297,17 @@ function CreateTask() {
     >
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
-        <main className="flex-1 overflow-y-auto">
-          <Header onSearch={setSearch} theme={theme} dark={setTheme} />
+      <Header onSearch={setSearch} theme={theme} dark={setTheme} 
+           on_filter={setFilter_on}
+           filter={filter_on}
+          
+          />
+      <main
+          className={`flex-1 px-4 overflow-y-auto ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}
+        >
+         
           <div
             className={`p-5 relative shadow-xl rounded-lg mx-5 lg:mx-10 mb-10 lg:mb-20 ${
               theme === "light" ? "bg-white" : "bg-gray-900"

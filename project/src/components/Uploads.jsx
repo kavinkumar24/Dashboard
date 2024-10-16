@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
-import Select from 'react-select';
+import Select from "react-select";
 
 import axios from "axios";
 import Sidebar from "./Sidebar";
@@ -50,15 +50,15 @@ function Uploads() {
   };
 
   const options = [
-    { value: '', label: 'Choose the File Type' },
-    { value: 'production1', label: 'Production1 - non Gold' },
-    { value: 'production2', label: 'Production2 - new' },
-    { value: 'pending1', label: 'Pending1 - PDD' },
-    { value: 'pending2', label: 'Pending2 - new' },
-    { value: 'rejection', label: 'Rejection' },
-    { value: 'orderRece_newDesi', label: 'Order Receiving & New Design' },
-    { value: 'task', label: 'Task' },
-    { value: 'target', label: 'Target' },
+    { value: "", label: "Choose the File Type" },
+    { value: "production1", label: "Production1 - non Gold" },
+    { value: "production2", label: "Production2 - new" },
+    { value: "pending1", label: "Pending1 - PDD" },
+    { value: "pending2", label: "Pending2 - new" },
+    { value: "rejection", label: "Rejection" },
+    { value: "orderRece_newDesi", label: "Order Receiving & New Design" },
+    { value: "task", label: "Task" },
+    { value: "target", label: "Target" },
   ];
 
   const generateFileID = async (fileType) => {
@@ -365,14 +365,12 @@ function Uploads() {
   const handleUpload = async (selectedFile) => {
     if (!selectedFile) {
       setMessage("Please select a file first.");
-      toast.warn("Select File !")
-      setTimeout(()=>{
+      toast.warn("Select File !");
+      setTimeout(() => {
         window.location.reload();
-      },4000)
+      }, 4000);
       return;
     }
-    
-    
 
     const fileReader = new FileReader();
 
@@ -411,10 +409,10 @@ function Uploads() {
         setMismatchData(combinedMismatches);
         setMessage("Column mismatch! Please review the table below.");
         setIsloading(false);
-        toast.warn("Column name mismatch")
-        setTimeout(()=>{
+        toast.warn("Column name mismatch");
+        setTimeout(() => {
           window.location.reload();
-        },4000)
+        }, 4000);
         return;
       }
 
@@ -433,16 +431,16 @@ function Uploads() {
         setMessage(response.data.message || "File uploaded successfully!");
         toast.success("File uploaded successfully!");
         setIsloading(false);
-        setTimeout(()=>{
+        setTimeout(() => {
           window.location.reload();
-        },4000)
+        }, 4000);
       } catch (error) {
         console.error("Error uploading file:", error);
         setMessage("Failed to upload file");
-        toast.error("Failed Try later")
-        setTimeout(()=>{
+        toast.error("Failed Try later");
+        setTimeout(() => {
           window.location.reload();
-        },4000)
+        }, 4000);
         setIsloading(false);
       }
     };
@@ -450,17 +448,19 @@ function Uploads() {
     fileReader.readAsArrayBuffer(selectedFile);
   };
 
-  const selectedOption = options.find(option => option.value === fileType) || options[0];
-  const [uploadValue, setUploadValue] = useState('');
+  const selectedOption =
+    options.find((option) => option.value === fileType) || options[0];
+  const [uploadValue, setUploadValue] = useState("");
 
-  const handleUpload_select = (selectedOption)=>{
+  const handleUpload_select = (selectedOption) => {
     const value = selectedOption ? selectedOption.value : "";
-   
-    setUploadValue(value);
-    console.log("uploadedvalue",uploadValue)
-    handleFileType(value)
 
-  }
+    setUploadValue(value);
+    console.log("uploadedvalue", uploadValue);
+    handleFileType(value);
+  };
+  const [filter_on, setFilter_on] = useState(false);
+
   return (
     <>
       <div
@@ -480,7 +480,13 @@ function Uploads() {
         )}
         <Sidebar theme={theme} />
         <div className="flex-1 flex flex-col">
-          <Header onSearch={setSearch} theme={theme} dark={setTheme} />
+          <Header onSearch={setSearch} theme={theme} dark={setTheme} on_filter={setFilter_on}
+          filter={filter_on}/>
+          <main
+          className={`flex-1 px-4 overflow-y-auto ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}
+        >
           <div className="flex justify-between mx-4 mt-4">
             <h1
               className={`${
@@ -499,16 +505,18 @@ function Uploads() {
             Select the Type of file to be Upload
           </label>
           <div className="p-4">
-          <Select
-  id="file-type"
-  classNamePrefix="react-select"
-  styles={customStyles}
-  options={options}
-  onChange={handleUpload_select}
-  value={options.find((option) => option.value === uploadValue) || null}
-  isSearchable
-/>
-</div>
+            <Select
+              id="file-type"
+              classNamePrefix="react-select"
+              styles={customStyles}
+              options={options}
+              onChange={handleUpload_select}
+              value={
+                options.find((option) => option.value === uploadValue) || null
+              }
+              isSearchable
+            />
+          </div>
           {typeMsg && <p className="text-red-600 mx-4 mt-2">{typeMsg}</p>}
           <div className="upload-container pt-5">
             <label
@@ -551,41 +559,44 @@ function Uploads() {
             <br></br>
             {message && message === "File uploaded successfully!" ? (
               <div>
-                {message && 
-                <div className={`p-3 w-96 items-center justify-center mx-auto ${theme === 'light'?'bg-gray-200':'bg-gray-700'}`}>
-                  <div className="p-4 h-20 w-20 justify-center mx-auto">
-                    <IoCheckmarkDoneCircle
-                      className="text-green-500"
-                      size={50}
-                    />
+                {message && (
+                  <div
+                    className={`p-3 w-96 items-center justify-center mx-auto ${
+                      theme === "light" ? "bg-gray-200" : "bg-gray-700"
+                    }`}
+                  >
+                    <div className="p-4 h-20 w-20 justify-center mx-auto">
+                      <IoCheckmarkDoneCircle
+                        className="text-green-500"
+                        size={50}
+                      />
+                    </div>
+                    <p className="m-4 text-green-500 justify-center items-center mx-auto text-center text-lg font-semibold">
+                      {message}{" "}
+                    </p>{" "}
                   </div>
-                  <p className="m-4 text-green-500 justify-center items-center mx-auto text-center text-lg font-semibold">
-                    {message}{" "}
-                  </p>{" "}
-                </div>
-}
+                )}
                 <div className="flex justify-center items-center w-full mx-auto">
                   <p className="m-4 text-yellow-500 text-center">
-                  Please Wait It will reload by automatically !
-
+                    Please Wait It will reload by automatically !
                   </p>
                 </div>
               </div>
             ) : (
               <div>
                 {" "}
-               {message &&
-                <div className={`p-3 w-96 items-center justify-center mx-auto ${theme === 'light'?'bg-gray-200':'bg-gray-700'}`}>
-                <div className="p-4 h-20 w-20 justify-center mx-auto">
-                  <MdSmsFailed className="text-red-500" size={50} />
-
-                </div>
-                <p className="m-4 text-red-500 text-center">{message} </p>{" "}
-
-              </div>
-              
-}
-
+                {message && (
+                  <div
+                    className={`p-3 w-96 items-center justify-center mx-auto ${
+                      theme === "light" ? "bg-gray-200" : "bg-gray-700"
+                    }`}
+                  >
+                    <div className="p-4 h-20 w-20 justify-center mx-auto">
+                      <MdSmsFailed className="text-red-500" size={50} />
+                    </div>
+                    <p className="m-4 text-red-500 text-center">{message} </p>{" "}
+                  </div>
+                )}
                 {message && message !== "File uploaded successfully!" && (
                   <p className="m-4 text-yellow-500 text-center">
                     Please Wait It will reload by automatically !
@@ -656,6 +667,7 @@ function Uploads() {
               </table>
             </div>
           )}
+          </main>
         </div>
       </div>
     </>

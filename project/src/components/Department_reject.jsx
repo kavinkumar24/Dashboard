@@ -68,6 +68,7 @@ function Department_reject() {
   const [chartOptions2, setChartOptions2] = useState(null);
   const [chartOptions3, setChartOptions3] = useState(null);
   const [chartOptions4, setChartOptions4] = useState(null);
+  const [filter_on, setFilter_on] = useState(false);
 
   const [tableViewStatus, settableViewStatus]= useState('');
 
@@ -502,77 +503,62 @@ setChartData2({
   return (
     <div
       className={`min-h-screen w-full flex ${
-        theme === "light" ? "bg-gray-100" : "bg-gray-800"
+        theme === "light" ? "bg-gray-100 text-gray-800" : "bg-gray-800 text-gray-200"
       }`}
     >
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
-        <Header onSearch={setSearch} theme={theme} dark={setTheme} />
+        <Header onSearch={setSearch} theme={theme} dark={setTheme} on_filter={setFilter_on}
+          filter={filter_on} />
+           <main
+          className={`flex-1 px-4 overflow-y-auto ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}
+        >
         
         <div className="flex justify-between mx-4 mt-4">
           <h1 className="font-bold text-xl">Rejected Details of <span className='text-[#879FFF] text-2xl'>{clickedLabel}</span> Department </h1>
         </div>
         
-
-    <div className="m-6 px-10 border rounded-lg border-gray-300 bg-white shadow-lg">
-
-<div className="border-b border-slate-200">
-  <button
-    onClick={() => toggleAccordion1(1)}
-    className="w-full flex justify-between items-center py-5 text-slate-800"
-  >
-    <span className="text-lg font-semibold">Rejection Percentage of {clickedLabel} Department Based on Months</span>
-    <span className="text-slate-800 transition-transform duration-300">
-      {activeIndex1 === 1 ? (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          className="w-4 h-4"
-        >
-          <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
-        </svg>
-      ) : (
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 16 16"
-          fill="currentColor"
-          className="w-4 h-4"
-        >
-          <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
-        </svg>
-      )}
-    </span>
-  </button>
-  <div
-    className={`${
-      activeIndex1 === 1 ? "max-h-screen" : "max-h-0"
-    } overflow-hidden transition-all duration-300 ease-in-out`}
-  >
-    {/* <div className="pb-5 text-sm text-slate-500">
-  Material Tailwind is a framework that enhances Tailwind CSS with additional styles and components.
-</div> */}
-            <div className="p-6 grid grid-cols-1 md:grid-cols-6 gap-4">
-      {uniqueMonths.length > 0 ? (
-        uniqueMonths.map((month, index) => (
-          <div
-            key={index}
-            className={`shadow-md rounded-lg p-6 cursor-pointer bg-blue-100 border-2 border-blue-300`}
-          >
-            <h2 className="text-xl font-semibold mb-2">{month}</h2>
-            <p className="text-gray-500 font-bold text-xl">
-              {monthPercentage[index]}%
-            </p>
-          </div>
-        ))
-      ) : (
-        <p className="text-red-500 text-lg font-bold">No data available</p>
-      )}
+        <div className={`m-6 px-10 border rounded-lg shadow-lg max-w-[90%] md:max-w-lg lg:max-w-4xl xl:max-w-screen-lg 2xl:max-w-screen-8xl ${theme === 'light' ? 'bg-white border-gray-300' : 'bg-slate-900 border-gray-800 text-slate-300'}`}>
+  <div className={`border-b ${theme === 'light' ? 'border-slate-200' : 'border-gray-700'}`}>
+    <button
+      onClick={() => toggleAccordion1(1)}
+      className={`w-full flex justify-between items-center py-5 ${theme === 'light' ? 'text-slate-800' : 'text-slate-300'}`}
+    >
+      <span className="text-lg font-semibold">Rejection Percentage of {clickedLabel} Department Based on Months</span>
+      <span className={`transition-transform duration-300 ${theme === 'light' ? 'text-slate-800' : 'text-slate-300'}`}>
+        {activeIndex1 === 1 ? (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+            <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
+          </svg>
+        ) : (
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+            <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
+          </svg>
+        )}
+      </span>
+    </button>
+    <div className={`${activeIndex1 === 1 ? 'max-h-screen' : 'max-h-0'} overflow-hidden transition-all duration-300 ease-in-out`}>
+      <div className="p-6 grid grid-cols-1 md:grid-cols-6 gap-4">
+        {uniqueMonths.length > 0 ? (
+          uniqueMonths.map((month, index) => (
+            <div
+              key={index}
+              className={`shadow-md rounded-lg p-6 cursor-pointer ${theme === 'light' ? 'bg-blue-100 border-2 border-blue-300' : 'bg-blue-900 border-2 border-blue-600'}`}
+            >
+              <h2 className={`text-xl font-semibold mb-2 ${theme === 'light' ? 'text-gray-700' : 'text-slate-200'}`}>{month}</h2>
+              <p className={`font-bold text-xl ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>{monthPercentage[index]}%</p>
+            </div>
+          ))
+        ) : (
+          <p className={`text-lg font-bold ${theme === 'light' ? 'text-red-500' : 'text-red-400'}`}>No data available</p>
+        )}
+      </div>
     </div>
-    
   </div>
 </div>
-</div>
+
 
         {/* Main content */}
         {/* <div className="p-4">
@@ -580,127 +566,300 @@ setChartData2({
         </div> */}
 
 <div className="flex">
-          <div className="bg-white w-1/2 m-6 border rounded-lg border-gray-300 shadow-lg">
-          <h1 className="text-lg font-semibold p-2 pl-10">Rejection Counts Based on Year</h1>
-            <div className=" px-10">
-              {chartData ? (
-                <Bar data={chartData} options={chartOptions}/>
-              ) : (
-                <p className="text-center text-gray-500">
-                  Loading chart data...
-                </p>
-              )}
-            </div>
-          </div>
+<div className={`w-full md:w-1/2 m-6 px-4 border rounded-lg shadow-lg ${theme === 'light' ? 'bg-white border-gray-300' : 'bg-gray-900 border-gray-700'}`}>
+  <h1 className={`text-lg font-semibold p-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>Rejection Counts Based on Year</h1>
+  <div className="flex-grow px-4 max-h-full" style={{ height: '300px' }}> {/* Set a height for the chart container */}
+    {chartData ? (
+      <Bar 
+        data={chartData} 
+        options={{
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: true,
+              labels: {
+                color: theme === 'light' ? 'black' : 'white'
+              }
+            },
+            tooltip: {
+              backgroundColor: theme === 'light' ? 'white' : 'gray',
+              titleColor: theme === 'light' ? 'black' : 'white',
+              bodyColor: theme === 'light' ? 'black' : 'white'
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Count By Months',
+                color: theme === 'light' ? '#555' : '#bbb',
+                font: {
+                  size: 14
+                }
+              },
+              ticks: {
+                color: theme === 'light' ? '#555' : '#bbb'
+              },
+              grid: {
+                display: true,
+                color: theme === 'light' ? '#eee' : '#444'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Year',
+                color: theme === 'light' ? '#555' : '#bbb',
+                font: {
+                  size: 14
+                }
+              },
+              ticks: {
+                autoSkip: true,
+                color: theme === 'light' ? '#555' : '#bbb'
+              },
+              grid: {
+                display: true,
+                color: theme === 'light' ? '#eee' : '#444'
+              }
+            }
+          }
+        }}
+      />
+    ) : (
+      <p className={`text-center ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+        Loading chart data...
+      </p>
+    )}
+  </div>
+</div>
 
-          <div className="bg-white w-1/2 m-6 border rounded-lg border-gray-300 shadow-lg">
-          <h1 className="text-lg font-semibold p-2 pl-10">Rejections Count by Department</h1>
-            <div className="px-10">
-              {chartData2 ? (
-                <Bar data={chartData2} />
-              ) : (
-                <p className="text-center text-gray-500">
-                  Loading chart data...
-                </p>
-              )}
-            </div>
-            
-          </div>
+
+
+<div className={`w-1/2 m-6 px-10 border rounded-lg shadow-lg ${theme === 'light' ? 'bg-white border-gray-300' : 'bg-gray-900 border-gray-700'}`}>
+  <h1 className={`text-lg font-semibold p-2 pl-10 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>Rejections Count by Department</h1>
+  <div className="px-10">
+    {chartData2 ? (
+      <Bar 
+        data={chartData2} 
+        options={{
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              labels: {
+                color: theme === 'light' ? 'black' : 'white'
+              }
+            },
+            tooltip: {
+              backgroundColor: theme === 'light' ? 'white' : 'gray',
+              titleColor: theme === 'light' ? 'black' : 'white',
+              bodyColor: theme === 'light' ? 'black' : 'white'
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Departments',
+                color: theme === 'light' ? '#555' : '#bbb',
+                font: {
+                  size: 14
+                }
+              },
+              ticks: {
+                color: theme === 'light' ? '#555' : '#bbb'
+              },
+              grid: {
+                display: true,
+                color: theme === 'light' ? '#eee' : '#444'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Rejections',
+                color: theme === 'light' ? '#555' : '#bbb',
+                font: {
+                  size: 14
+                }
+              },
+              ticks: {
+                autoSkip: true,
+                color: theme === 'light' ? '#555' : '#bbb'
+              },
+              grid: {
+                display: true,
+                color: theme === 'light' ? '#eee' : '#444'
+              }
+            }
+          }
+        }}
+      />
+    ) : (
+      <p className={`text-center ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+        Loading chart data...
+      </p>
+    )}
+  </div>
+</div>
+
         </div>
         <div className="flex">
-          <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
-          <h1 className="text-lg font-semibold p-2">Rejections Count by Month</h1>
-            
-            <div className="chart-container "style={{ height: '300px' }}>
-            {chartData3 ? (
-    <Line
-      data={chartData3}
-      options={{
-        responsive: true,
-        maintainAspectRatio: false, 
-        plugins: {
-          datalabels: {
-            display: true,
-            align: "end",
-            anchor: "end",
-            formatter: (value) => `${value.toFixed(2)}`,
-            color: "black",
-            font: {
-              weight: "normal",
-            },
-          },
-          legend: {
-            display: true,  // Show legend
-          },
-          tooltip: {
-            callbacks: {
-              label: function (context) {
-                return `${context.raw.toFixed(2)}`;  // Custom tooltip formatting
+  <div className={`w-1/2 m-6 px-10 border rounded-lg shadow-lg ${theme === 'light' ? 'bg-white border-gray-300' : 'bg-gray-900 border-gray-700'}`}>
+    <h1 className={`text-lg font-semibold p-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>Rejections Count by Month</h1>
+    <div className="chart-container" style={{ height: '300px' }}>
+      {chartData3 ? (
+        <Line
+          data={chartData3}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              datalabels: {
+                display: true,
+                align: "end",
+                anchor: "end",
+                formatter: (value) => `${value.toFixed(2)}`,
+                color: theme === 'light' ? 'black' : 'white',
+                font: {
+                  weight: "normal",
+                },
+              },
+              legend: {
+                display: true,  // Show legend
+                labels: {
+                  color: theme === 'light' ? 'black' : 'white'
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    return `${context.raw.toFixed(2)}`;  // Custom tooltip formatting
+                  },
+                },
+                backgroundColor: theme === 'light' ? 'white' : 'gray',
+                titleColor: theme === 'light' ? 'black' : 'white',
+                bodyColor: theme === 'light' ? 'black' : 'white'
               },
             },
-          },
-        },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: "Count By months",  // X-axis title
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "Count By months",  // X-axis title
+                  color: theme === 'light' ? '#555' : '#bbb',
+                },
+                beginAtZero: true,
+                grid: {
+                  display: true,
+                  color: theme === 'light' ? '#eee' : '#444'
+                },
+                ticks: {
+                  color: theme === 'light' ? '#555' : '#bbb'
+                }
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "Year",  // Y-axis title
+                  color: theme === 'light' ? '#555' : '#bbb',
+                },
+                ticks: {
+                  autoSkip: true,
+                  color: theme === 'light' ? '#555' : '#bbb'
+                },
+                grid: {
+                  display: true,
+                  color: theme === 'light' ? '#eee' : '#444'
+                },
+              },
             },
-            beginAtZero: true,
-            grid: {
-              display: true,
+          }}
+          plugins={[ChartDataLabels]}
+        />
+      ) : (
+        <p className={`text-center ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>Loading chart data...</p>
+      )}
+    </div>
+  </div>
+  <div className={`w-1/2 m-6 px-10 border rounded-lg shadow-lg ${theme === 'light' ? 'bg-white border-gray-300' : 'bg-gray-900 border-gray-700'}`}>
+    <h1 className={`text-lg font-semibold p-2 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>Reasons for Rejections</h1>
+    <div className="chart-container">
+      {chartData4 ? (
+        <Bar 
+          data={chartData4}
+          options={{
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                labels: {
+                  color: theme === 'light' ? 'black' : 'white'
+                }
+              },
+              tooltip: {
+                backgroundColor: theme === 'light' ? 'white' : 'gray',
+                titleColor: theme === 'light' ? 'black' : 'white',
+                bodyColor: theme === 'light' ? 'black' : 'white'
+              }
             },
-          },
-          y: {
-            title: {
-              display: true,
-              text: "Year",  // Y-axis title
+            scales: {
+              x: {
+                title: {
+                  display: true,
+                  text: "Reasons",
+                  color: theme === 'light' ? '#555' : '#bbb',
+                },
+                beginAtZero: true,
+                grid: {
+                  display: true,
+                  color: theme === 'light' ? '#eee' : '#444'
+                },
+                ticks: {
+                  color: theme === 'light' ? '#555' : '#bbb'
+                }
+              },
+              y: {
+                title: {
+                  display: true,
+                  text: "Count",
+                  color: theme === 'light' ? '#555' : '#bbb',
+                },
+                ticks: {
+                  autoSkip: true,
+                  color: theme === 'light' ? '#555' : '#bbb'
+                },
+                grid: {
+                  display: true,
+                  color: theme === 'light' ? '#eee' : '#444'
+                },
+              },
             },
-            ticks: {
-              autoSkip: true,
-            },
-            grid: {
-              display: true,
-            },
-          },
-        },
-      }}
-      plugins={[ChartDataLabels]}
-    />
-  ) : (
-    <p>Loading chart data...</p>
-  )}
-            </div>
-          </div>
-          <div className="bg-white w-1/2 m-6 px-10 border rounded-lg border-gray-300 shadow-lg">
-          <h1 className="text-lg font-semibold p-2">Reasons for Rejections</h1>
-          {/* <div className="chart-container">
-              {chartData4 ? (
-                <Pie data={chartData4}  />
-              ) : (
-                <p>Loading chart data...</p>
-              )}
-            </div> */}
-            <div className="chart-container">
-              {chartData4 ? (
-                <Bar data={chartData4}  />
-              ) : (
-                <p>Loading chart data...</p>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="m-6 px-10 border rounded-lg border-gray-300 bg-white shadow-lg">
+          }}
+        />
+      ) : (
+        <p className={`text-center ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>Loading chart data...</p>
+      )}
+    </div>
+  </div>
+</div>
+
+        <div className={`m-6 px-10 border rounded-lg ${theme==='light'?'border-gray-300 text-gray-800 bg-white':'border-gray-900 bg-gray-900 text-gray-200'} shadow-lg`}>
 <h1 className="text-xl font-semibold pt-5">Detailed Top <span className="text-red-500">Rejections</span> </h1>
 
        {/* Accordion Sketches */}
-       <div className="border-b border-slate-200">
+       <div className={`border-b ${theme==='light'?'border-gray-300':'border-gray-500'}`}>
+       
         <button
           onClick={() => toggleAccordion(1)}
           className="w-full flex justify-between items-center py-5 text-slate-800"
         >
-          <span className="text-lg font-semibold">Based on Sketches</span>
-          <span className="text-slate-800 transition-transform duration-300">
+          <span className={`text-lg font-semibold ${theme==='light'?'text-gray-800':'text-gray-200'}`}>Based on Sketches</span>
+          <span className={`transition-transform duration-300 ${theme === 'light' ? 'text-slate-800' : 'text-slate-300'}`}>
             {activeIndex === 1 ? (
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
                 <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
@@ -722,7 +881,7 @@ setChartData2({
           </div> */}
 
 
-          <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
+          <div className={`m-6 border rounded-lg ${theme==='light'?'border-gray-300 bg-white':'border-gray-600 bg-gray-700'} shadow-lg`}>
           <div className="flex justify-between">
                 <h1 className="text-xl font-semibold p-2 pl-10 py-5">
                   Top <span className="text-red-500">25</span> Rejected Sketches
@@ -737,173 +896,184 @@ setChartData2({
                 </div>
                 </div>
 
-  <table className="w-full table-auto text-sm ">
-    <thead >
-      <tr className="bg-gray-300 text-gray-700 ">
-        <th className="px-6 py-3 text-center font-semibold text-base">SI no.</th>
-        <th className="px-6 py-3 text-center font-semibold text-base">Sketch IDs</th>
-        <th className="py-3 text-center font-semibold text-base">Number of Rejections</th>
-        <th className="py-3 text-center font-semibold text-base">Detailed View</th>
-      </tr>
-    </thead>
-    <tbody>
-      {currentData.map(([skch, count], index) => (
-        <tr key={index} className="bg-white even:bg-gray-50 hover:bg-gray-200 transition-colors duration-200" >
-          <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{(currentPage1 - 1) * itemsPerPage + index + 1}</td>
-          <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{skch}</td>
-          <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">{count}</td>
-          <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-            <button  className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
-              theme === "light"
-                ? "bg-blue-500 hover:bg-blue-700"
-                : "bg-blue-600 hover:bg-blue-800"
-            }`} onClick={() => handleTableClick(skch, overAllData, "Sketch")} disabled={!overAllData} > View </button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>  
-  {/* Pagination Controls */}
-  <div className="flex justify-center space-x-2 m-4 ">
-        <button
-          className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage1 === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
-          onClick={() => handlePageChange(currentPage1 - 1)}
-          disabled={currentPage1 === 1}
-        >
-          Previous
-        </button>
-        
-      
-          <button
-            className="text-base px-5 py-3 rounded-lg border bg-gray-300"
-          >
-            {currentPage1}
+                <table className="w-full table-auto text-sm">
+  <thead>
+    <tr className={`${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-900 text-gray-200'}`}>
+      <th className="px-6 py-3 text-center font-semibold text-base">SI no.</th>
+      <th className="px-6 py-3 text-center font-semibold text-base">Sketch IDs</th>
+      <th className="py-3 text-center font-semibold text-base">Number of Rejections</th>
+      <th className="py-3 text-center font-semibold text-base">Detailed View</th>
+    </tr>
+  </thead>
+  <tbody>
+    {currentData.map(([skch, count], index) => (
+      <tr key={index} className={`transition-colors duration-200 ${theme === 'light' ? 'bg-white even:bg-gray-50 hover:bg-gray-200' : 'bg-gray-800 even:bg-gray-700 hover:bg-gray-600'}`}>
+        <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{(currentPage1 - 1) * itemsPerPage + index + 1}</td>
+        <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{skch}</td>
+        <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">{count}</td>
+        <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
+          <button className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${theme === "light" ? "bg-blue-500 hover:bg-blue-700" : "bg-blue-600 hover:bg-blue-800"}`} onClick={() => handleTableClick(skch, overAllData, "Sketch")} disabled={!overAllData}>
+            View
           </button>
-      
-        
-        <button
-          className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage1 === totalPages ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
-          onClick={() => handlePageChange(currentPage1 + 1)}
-          disabled={currentPage1 === totalPages}
-        >
-          Next
-        </button>
-      </div>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+  {/* Pagination Controls */}
+  <div className="flex justify-center space-x-2 m-4">
+  <button
+    className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+      currentPage1 === 1
+        ? theme === 'light'
+          ? 'bg-gray-200 cursor-not-allowed'
+          : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+        : theme === 'light'
+        ? 'bg-gray-300 hover:bg-gray-400'
+        : 'bg-gray-700 hover:bg-gray-600 text-white'
+    }`}
+    onClick={() => handlePageChange(currentPage1 - 1)}
+    disabled={currentPage1 === 1}
+  >
+    Previous
+  </button>
+  <button
+    className={`text-base px-5 py-3 rounded-lg border ${
+      theme === 'light' ? 'bg-gray-300' : 'bg-gray-700 text-white'
+    }`}
+  >
+    {currentPage1}
+  </button>
+  <button
+    className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+      currentPage1 === totalPages
+        ? theme === 'light'
+          ? 'bg-gray-200 cursor-not-allowed'
+          : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+        : theme === 'light'
+        ? 'bg-gray-300 hover:bg-gray-400'
+        : 'bg-gray-700 hover:bg-gray-600 text-white'
+    }`}
+    onClick={() => handlePageChange(currentPage1 + 1)}
+    disabled={currentPage1 === totalPages}
+  >
+    Next
+  </button>
+</div>
+
 </div>
 
         </div>
       </div>
 
       {/* Accordion Item 2 */}
-      <div className="border-b border-slate-200">
+      <div className={`border-b ${theme === 'light' ? 'border-slate-200' : 'border-gray-500'}`}>
+  <button
+    onClick={() => toggleAccordion(2)}
+    className={`w-full flex justify-between items-center py-5 ${theme === 'light' ? 'text-slate-800' : 'text-slate-300'}`}
+  >
+    <span className="text-lg font-semibold">Based on Type of Reasons</span>
+    <span className={`transition-transform duration-300 ${theme === 'light' ? 'text-slate-800' : 'text-slate-300'}`}>
+      {activeIndex === 2 ? (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+          <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
+        </svg>
+      ) : (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
+          <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
+        </svg>
+      )}
+    </span>
+  </button>
+  <div className={`${activeIndex === 2 ? "max-h-screen" : "max-h-0"} overflow-hidden transition-all duration-300 ease-in-out`}>
+    <div className={`m-6 border rounded-lg shadow-lg ${theme === 'light' ? 'bg-white border-gray-300' : 'bg-gray-800 border-gray-700'}`}>
+      <div className="flex justify-between">
+        <h1 className={`text-xl font-semibold p-2 pl-10 py-5 ${theme === 'light' ? 'text-gray-700' : 'text-gray-200'}`}>
+          Top <span className="text-red-500">Type of Reasons</span> Rejections
+        </h1>
+        <div className="m-4">
+          <button
+            className={`px-5 py-3 rounded-lg font-semibold text-white ${theme === 'light' ? 'bg-blue-500 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-800'}`}
+            onClick={() => downloadExcel("Type of Reasons Rejections")}
+          >
+            Download as Excel
+          </button>
+        </div>
+      </div>
+      <table className="w-full table-auto text-sm">
+        <thead>
+          <tr className={`${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-900 text-gray-200'}`}>
+            <th className="px-6 py-3 text-center font-semibold text-base">SI no.</th>
+            <th className="px-6 py-3 text-center font-semibold text-base">Reasons</th>
+            <th className="py-3 text-center font-semibold text-base">Number of Rejections</th>
+            <th className="py-3 text-center font-semibold text-base">Detailed View</th>
+          </tr>
+        </thead>
+        <tbody>
+          {currentData2.map(([skch, count], index) => (
+            <tr key={index} className={`transition-colors duration-200 ${theme === 'light' ? 'bg-white even:bg-gray-50 hover:bg-gray-200' : 'bg-gray-800 even:bg-gray-700 hover:bg-gray-600'}`}>
+              <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{(currentPage2 - 1) * itemsPerPage2 + index + 1}</td>
+              <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{skch}</td>
+              <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">{count}</td>
+              <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                <button className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${theme === "light" ? "bg-blue-500 hover:bg-blue-700" : "bg-blue-600 hover:bg-blue-800"}`} onClick={() => handleTableClick(skch, overAllData, "Rejection")} disabled={!overAllData}>
+                  View
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="flex justify-center space-x-2 m-4">
         <button
-          onClick={() => toggleAccordion(2)}
-          className="w-full flex justify-between items-center py-5 text-slate-800"
-        >
-        <span className="text-lg font-semibold">Based on Type of Reasons</span>
-
-          <span className="text-slate-800 transition-transform duration-300">
-            {activeIndex === 2 ? (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
-                <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
-              </svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
-                <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
-              </svg>
-            )}
-          </span>
-        </button>
-        <div
-          className={`${
-            activeIndex === 2 ? "max-h-screen" : "max-h-0"
-          } overflow-hidden transition-all duration-300 ease-in-out`}
-        >
-          {/* Table View */}
-
-          <div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
-          <div className="flex justify-between">
-                <h1 className="text-xl font-semibold p-2 pl-10 py-5">
-                  Top <span className="text-red-500"> Type of Reasons</span>{" "}
-                  Rejections
-                </h1>
-                <div className="m-4">
-            <button
-              className="px-5 py-3 bg-blue-500 text-white rounded-lg font-semibold"
-              onClick={() => downloadExcel("Type of Reasons Rejections")}
-            >
-              Download as Excel
-            </button>
-            </div>
-                </div>
-
-  <table className="w-full table-auto text-sm ">
-    <thead >
-      <tr className="bg-gray-300 text-gray-700 ">
-        <th className="px-6 py-3 text-center font-semibold text-base">SI no.</th>
-        <th className="px-6 py-3 text-center font-semibold text-base">Reasons</th>
-        <th className="py-3 text-center font-semibold text-base">Number of Rejections</th>
-        <th className="py-3 text-center font-semibold text-base">Detailed View</th>
-      </tr>
-    </thead>
-    <tbody>
-      {currentData2.map(([skch, count], index) => (
-        <tr key={index} className="bg-white even:bg-gray-50 hover:bg-gray-200 transition-colors duration-200" >
-          <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{(currentPage2 - 1) * itemsPerPage2 + index + 1}</td>
-          <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{skch}</td>
-          <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">{count}</td>
-          <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-            <button  className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
-              theme === "light"
-                ? "bg-blue-500 hover:bg-blue-700"
-                : "bg-blue-600 hover:bg-blue-800"
-            }`} onClick={() => handleTableClick(skch, overAllData, "Rejection")} disabled={!overAllData} > View </button>
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>  
-
-  <div className="flex justify-center space-x-2 m-4 ">
-        <button
-          className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage2 === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
+          className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage2 === 1
+            ? theme === 'light'
+              ? 'bg-gray-200 cursor-not-allowed'
+              : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+            : theme === 'light'
+            ? 'bg-gray-300 hover:bg-gray-400'
+            : 'bg-gray-700 hover:bg-gray-600 text-white'
+          }`}
           onClick={() => handlePageChange2(currentPage2 - 1)}
           disabled={currentPage2 === 1}
         >
           Previous
         </button>
-        
-      
-          <button
-            className="text-base px-5 py-3 rounded-lg border bg-gray-300"
-          >
-            {currentPage2}
-          </button>
-      
-        
         <button
-          className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage2 === totalPages2 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
+          className={`text-base px-5 py-3 rounded-lg border ${theme === 'light' ? 'bg-gray-300' : 'bg-gray-700 text-white'}`}
+        >
+          {currentPage2}
+        </button>
+        <button
+          className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage2 === totalPages2
+            ? theme === 'light'
+              ? 'bg-gray-200 cursor-not-allowed'
+              : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+            : theme === 'light'
+            ? 'bg-gray-300 hover:bg-gray-400'
+            : 'bg-gray-700 hover:bg-gray-600 text-white'
+          }`}
           onClick={() => handlePageChange2(currentPage2 + 1)}
           disabled={currentPage2 === totalPages2}
         >
           Next
         </button>
       </div>
+    </div>
+  </div>
 </div>
 
-        </div>
-      </div>
 
       {/* Accordion Item 3 */}
-
-      <div className="border-b border-slate-200 ">
-        <button
-          onClick={() => toggleAccordion(3)}
-          className="w-full flex justify-between items-center py-5 text-slate-800"
-        >
+      <div className={`border-b ${theme === 'light' ? 'border-slate-200' : 'border-gray-500'}`}>
+      <button
+    onClick={() => toggleAccordion(3)}
+    className={`w-full flex justify-between items-center py-5 ${theme === 'light' ? 'text-slate-800' : 'text-slate-300'}`}
+  >
         <span className="text-lg font-semibold">Based on Problem Arised</span>
 
-          <span className="text-slate-800 transition-transform duration-300">
+        <span className={`transition-transform duration-300 ${theme === 'light' ? 'text-slate-800' : 'text-slate-300'}`}> 
             {activeIndex === 3 ? (
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4">
                 <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
@@ -924,7 +1094,7 @@ setChartData2({
             Material Tailwind allows you to quickly build modern, responsive websites with a focus on design.
           </div> */}
 
-<div className="m-6 border rounded-lg border-gray-300 bg-white shadow-lg">
+<div className={`m-6 border rounded-lg shadow-lg ${theme === 'light' ? 'bg-white border-gray-300' : 'bg-gray-800 border-gray-700'}`}>
 <div className="flex justify-between">
                <h1 className="text-xl font-semibold p-2 pl-10 py-5">
                   Top <span className="text-red-500">Problems Arised</span> for
@@ -942,7 +1112,7 @@ setChartData2({
 
   <table className="w-full table-auto text-sm ">
     <thead >
-      <tr className="bg-gray-300 text-gray-700 ">
+    <tr className={`${theme === 'light' ? 'bg-gray-300 text-gray-700' : 'bg-gray-900 text-gray-200'}`}>
         <th className="px-6 py-3 text-center font-semibold text-base">SI no.</th>
         <th className="px-6 py-3 text-center font-semibold text-base">Problem Arised</th>
         <th className="py-3 text-center font-semibold text-base">Number of Rejections</th>
@@ -951,7 +1121,7 @@ setChartData2({
     </thead>
     <tbody>
       {currentData3.map(([skch, count], index) => (
-        <tr key={index} className="bg-white even:bg-gray-50 hover:bg-gray-200 transition-colors duration-200" >
+        <tr key={index} className={`transition-colors duration-200 ${theme === 'light' ? 'bg-white even:bg-gray-50 hover:bg-gray-200' : 'bg-gray-800 even:bg-gray-700 hover:bg-gray-600'}`}>
           <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{(currentPage3 - 1) * itemsPerPage3 + index + 1}</td>
           <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">{skch.charAt(0).toUpperCase() + skch.slice(1).toLowerCase()}</td>
           <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">{count}</td>
@@ -969,7 +1139,14 @@ setChartData2({
   {/* Pagination Controls */}
   <div className="flex justify-center space-x-2 m-4 ">
         <button
-          className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage3 === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
+          className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage3 === 1
+            ? theme === 'light'
+              ? 'bg-gray-200 cursor-not-allowed'
+              : 'bg-gray-600 text-gray-400 border-gray-600 cursor-not-allowed'
+            : theme === 'light'
+            ? 'bg-gray-300 hover:bg-gray-400' 
+            : 'bg-gray-700 hover:bg-gray-600 text-white'
+          }`}
           onClick={() => handlePageChange3(currentPage3 - 1)}
           disabled={currentPage3 === 1}
         >
@@ -978,14 +1155,21 @@ setChartData2({
         
       
           <button
-            className="text-base px-5 py-3 rounded-lg border bg-gray-300"
+            className={`text-base px-5 py-3 rounded-lg border ${theme === 'light' ? 'bg-gray-300' : 'bg-gray-700 text-white'}`}
           >
             {currentPage3}
           </button>
       
         
         <button
-          className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage3 === totalPages3 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`}
+         className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage3 === totalPages3
+          ? theme === 'light'
+            ? 'bg-gray-200 cursor-not-allowed'
+            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+          : theme === 'light'
+          ? 'bg-gray-300 hover:bg-gray-400'
+          : 'bg-gray-700 hover:bg-gray-600 text-white'
+        }`}
           onClick={() => handlePageChange3(currentPage3 + 1)}
           disabled={currentPage3 === totalPages3}
         >
@@ -998,6 +1182,7 @@ setChartData2({
       </div>
 
 </div>
+</main>
       </div>
     </div>
   );

@@ -19,6 +19,8 @@ function Order_rev() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
+  const [filter_on, setFilter_on] = useState(false);
+
   const [openDropdown, setOpenDropdown] = useState(null);
   const [orderData, setOrderData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -2248,7 +2250,8 @@ function Order_rev() {
 
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
-        <Header theme={theme} dark={setTheme} />
+        <Header theme={theme} dark={setTheme} on_filter={setFilter_on}
+          filter={filter_on}/>
         {/* <div
           className={`p-4 ${
             theme == "light" ? "bg-white" : "bg-slate-900"
@@ -2429,7 +2432,9 @@ function Order_rev() {
             theme === "light"
               ? "bg-white border-gray-300"
               : "bg-slate-900 border-zinc-800"
-          }  shadow-lg`}
+          }  shadow-lg ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}
         >
           <h1
             className={`text-xl font-semibold p-2 pl-0 py-5 ${
@@ -2617,7 +2622,9 @@ function Order_rev() {
           </div>
         </div>
 
-        <main className="flex-1 p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <main className={`flex-1 p-5 grid grid-cols-1 lg:grid-cols-2 gap-6 ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}>
           {isLoading && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
               <div className="flex gap-2 ml-40">

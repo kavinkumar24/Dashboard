@@ -60,6 +60,10 @@ function Problem_Arised() {
           setCurrentPage1(newPage);
         }
       };
+        
+  useEffect(() => {
+    localStorage.setItem("theme", theme);
+  }, [theme]);  
     
   return (
     <>
@@ -69,21 +73,23 @@ function Problem_Arised() {
         }`}
       >
         <Sidebar theme={theme} />
-        <div className="flex-1 flex flex-col">
+        <div className={`flex-1 flex flex-col ${theme === 'light'?'text-gray-800':'text-gray-200'
+        }`}>
           <Header onSearch={setSearch} theme={theme} dark={setTheme} />
 
           <h1 className=" mx-4 font-bold text-xl">
             Problem Arised
           </h1>
 
-        <div className="m-4 mt-7 border rounded-lg border-gray-300 bg-white shadow-lg">
+        <div className={`m-4 mt-7 border rounded-lg shadow-lg ${theme === 'light'?'bg-white border-gray-300 text-gray-800':'bg-slate-900 border-gray-800 text-slate-300'
+        }`}>
         <div className="flex justify-between p-2 m-2">
             <h1 className="text-xl font-semibold pt-2">Detailed View of <span className="text-[#879FFF]">{skch}</span> Problem</h1>
         </div>
 
         <table className="w-full table-auto text-sm">
             <thead>
-            <tr className="bg-gray-300 text-gray-700">
+            <tr className={`  ${theme==='light'?'bg-gray-300 text-gray-800':'bg-gray-950 text-gray-200'}`}>
                 <th className="py-3 pl-2 text-center font-semibold text-base">SI no.</th>
                 <th className="py-3 text-center font-semibold text-base">SketchNo</th>
                 <th className="py-3 text-center font-semibold text-base">ToDept</th>
@@ -94,7 +100,9 @@ function Problem_Arised() {
             </thead>
             <tbody>
             {currentData.map((item, index) => (
-                <tr key={index} className="bg-white even:bg-gray-50 hover:bg-gray-200 transition-colors duration-200">
+                <tr key={index} className={` hover:bg-gray-200 
+                ${theme==='light'?'text-gray-800 bg-white even:bg-gray-50':'text-gray-200 bg-gray-700 even:bg-gray-600 hover:bg-gray-800 '}
+                transition-colors duration-200`}>
                 <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
                     {(currentPage1 - 1) * itemsPerPage + index + 1}
                 </td>
@@ -121,17 +129,33 @@ function Problem_Arised() {
         {/* Pagination Controls */}
         <div className="flex justify-center space-x-2 m-4">
             <button
-            className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage1 === 1 ? "bg-gray-200 cursor-not-allowed" : "bg-gray-300 hover:bg-gray-400"}`}
+           className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+            currentPage1 === 1
+              ? theme === 'light'
+                ? 'bg-gray-200 cursor-not-allowed'
+                : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+              : theme === 'light'
+              ? 'bg-gray-300 hover:bg-gray-400 border-gray-200'
+              : 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600' 
+          }`}
             onClick={() => handlePageChange(currentPage1 - 1)}
             disabled={currentPage1 === 1}
             >
             Previous
             </button>
 
-            <button className="text-base px-5 py-3 rounded-lg border bg-gray-300">{currentPage1}</button>
+            <button   className={`text-base px-5 py-3 rounded-lg border ${theme === 'light' ? 'bg-gray-300' : 'bg-gray-700 text-white'}`}>{currentPage1}</button>
 
             <button
-            className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage1 === totalPages ? "bg-gray-200 cursor-not-allowed" : "bg-gray-300 hover:bg-gray-400"}`}
+           className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+            currentPage1 === totalPages
+              ? theme === 'light'
+                ? 'bg-gray-200 cursor-not-allowed'
+                : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+              : theme === 'light'
+              ? 'bg-gray-300 hover:bg-gray-400 border-gray-200'
+              : 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
+          }`}
             onClick={() => handlePageChange(currentPage1 + 1)}
             disabled={currentPage1 === totalPages}
             >

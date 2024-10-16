@@ -15,6 +15,8 @@ function Party_visit_view() {
   const [selectedBriefs, setSelectedBriefs] = useState({});
   const [weights, setWeights] = useState({});
   const [activeRow, setActiveRow] = useState(null); // Track the active row
+  const [filter_on, setFilter_on] = useState(false);
+
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -236,8 +238,14 @@ function Party_visit_view() {
     >
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
-  <main className="flex-1 overflow-y-auto">
-    <Header onSearch={setSearch} theme={theme} dark={setTheme} />
+    <Header onSearch={setSearch} theme={theme} dark={setTheme} 
+    on_filter={setFilter_on}
+    filter={filter_on} />
+ <main
+          className={`flex-1 px-4 overflow-y-auto ${
+            filter_on === true ? "opacity-10" : "opacity-100"
+          }`}
+        >
 <div
   className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-10 my-5 ${
     theme === "light" ? "bg-white" : "bg-gray-900"

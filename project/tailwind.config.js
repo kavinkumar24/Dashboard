@@ -15,7 +15,7 @@ export default {
         'screen-3xl':'48rem',
         'screen-5xl':'65rem',
         'screen-7xl': '110rem', // Adjust as needed
-        'screen-8xl': '128rem', // Adjust as needed
+        'screen-8xl': '110rem', // Adjust as needed
       },
     },
   },
