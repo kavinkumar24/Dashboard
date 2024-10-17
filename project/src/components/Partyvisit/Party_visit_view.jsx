@@ -51,6 +51,37 @@ function Party_visit_view() {
     }
   };
 
+
+
+
+  const handleDeleteTask = async (taskId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this task?"
+    );
+
+    if (confirmDelete) {
+      try {
+        const response = await fetch(
+          `http://localhost:8081/api/delete-party-visit/${taskId}`,
+          {
+            method: "DELETE",
+          }
+        );
+        if(response.ok){
+          window.location.reload()
+        }
+
+        else if (!response.ok) {
+          throw new Error("Failed to delete task");
+        }
+
+      } catch (error) {
+        console.error("Error deleting task:", error);
+        alert("Failed to delete task. Please try again.");
+      }
+    }
+  };
+
   const handleBriefSelect = async (selectedOption, index) => {
     const value = selectedOption ? selectedOption.value : "";
 
@@ -258,6 +289,9 @@ function Party_visit_view() {
         <table className="min-w-full divide-y divide-gray-200 table-auto">
           <thead className={theme === "light" ? "bg-gray-200" : "bg-gray-800"}>
             <tr>
+
+
+
               {[
                 "SL NO",
                 "Visit Date",
@@ -270,6 +304,7 @@ function Party_visit_view() {
                 "Complete Date",
                 "Order rec Wt",
                 "Image",
+                userRole == "admin" ? "Delete" : ""
               ].map((header) => (
                 <th
                   key={header}
@@ -406,6 +441,18 @@ function Party_visit_view() {
                       </span>
                     )}
                   </td>
+                  {userRole === "admin" && (
+                  <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                       
+                          <button
+                             onClick={() => handleDeleteTask(item.SL_NO)}
+                            className="bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700"
+                          >
+                            Delete
+                          </button>
+                        
+                      </td>
+                  )}
                 </tr>
               );
             })}

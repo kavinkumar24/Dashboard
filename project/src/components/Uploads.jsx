@@ -412,7 +412,7 @@ function Uploads() {
         toast.warn("Column name mismatch");
         setTimeout(() => {
           window.location.reload();
-        }, 4000);
+        }, 7000);
         return;
       }
 

@@ -8,11 +8,14 @@ import Datepicker from "react-tailwindcss-datepicker";
 import "./Datepicker.css";
 
 import { light } from "@mui/material/styles/createPalette";
+import axios from "axios";
 
 function Party_form() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
+  
+  const [isloading, setIsloading] = useState(false);
   const [search, setSearch] = useState("");
   const [no_of_qty, setNo_of_qty] = useState("");
   const [status_data, setStatus_data] = useState("");
@@ -27,6 +30,7 @@ function Party_form() {
     startDate: null,
     endDate: null,
   });
+  const loggedemail = localStorage.getItem("Email");
   const [filter_on, setFilter_on] = useState(false);
 
   const [assignToCount, setAssignToCount] = useState(1); // Number of assignees
@@ -110,9 +114,7 @@ function Party_form() {
         matchingEntries.length > 0 ? matchingEntries[0]["Out Date"] : null;
 
       if (!complete_date) {
-        toast.warn(
-          "No Out Date found for the selected Brief No, using Visit Date as Complete Date."
-        );
+        
         data.complete_date = visit_date;
       } else {
         data.complete_date = complete_date;
@@ -150,9 +152,33 @@ function Party_form() {
       setStatus_data(null);
       setAx_brief_data(null);
       setNo_of_qty("");
+      setAssignToEmails([""]);
+      setAssignToCount(0)
+
+      try{
+        const response = await axios.post('http://localhost:8081/api/send-email/Party-vist', {
+          loggedemail: loggedemail,
+          assignToPersonEmails: assignToEmails,
+          visit_date: visit_date,
+          partyname: partyname,
+          description: description,
+          status_data: status_data,
+          imagelink: imagelink,
+      });
+      console.log(response)
+
+      toast.success("Email sent successfully");
+    }
+      catch(error){
+        console.error("Error sending email:", error);
+        toast.error("Error sending email");
+        setIsloading(false)
+      }
+      setIsloading(false)
     } catch (error) {
       console.error("Error storing data:", error);
       toast.error("Error storing data");
+      setIsloading(false)
     }
   };
 
@@ -174,6 +200,15 @@ function Party_form() {
         theme === "light" ? "bg-gray-100" : "bg-gray-800"
       }`}
     >
+        {isloading && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
+            <div className="flex gap-2 ml-9">
+              <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+              <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+              <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+            </div>
+          </div>
+        )}
       <ToastContainer />
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
@@ -274,11 +309,11 @@ function Party_form() {
                       label: num,
                     }))}
                     onChange={handleAssignToCountChange}
-                    className={`appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
-                      theme === "light"
-                        ? "bg-gray-100 text-gray-700 border-gray-300"
-                        : "bg-gray-700 text-gray-100 border-gray-600"
-                    }`}
+                    className={`mt-2 lg:mt-0 w-full lg:w-full  ${
+                    theme === "light"
+                      ? "border-gray-300 text-black "
+                      : "bg-gray-700 text-gray-100 border-gray-600"
+                  } w-full md:w-full`}
                   />
                 </div>
 
@@ -345,11 +380,11 @@ function Party_form() {
                   </label>
 
                   <Select
-                    className={`appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
+                     className={`mt-2 lg:mt-0 w-full lg:w-full  ${
                       theme === "light"
-                        ? "bg-gray-100 text-gray-700 border-gray-300"
+                        ? "border-gray-300 text-black "
                         : "bg-gray-700 text-gray-100 border-gray-600"
-                    }`}
+                    } w-full md:w-full`}
                     isClearable
                     options={status}
                     styles={customStyles}

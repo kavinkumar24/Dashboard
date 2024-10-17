@@ -48,6 +48,23 @@ router.post("/party-visit", (req, res) => {
     );
   });
 
+  router.delete("/delete-party-visit/:taskId",(req,res)=>{
+    const taskId = req.params.taskId;
+    const sql = "DELETE FROM Party_Visit WHERE SL_NO = ?";
+    db.query(sql,[taskId],(err,result)=>{
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Failed to delete task", error: err });
+      }
+  
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+  
+      res.status(200).json({ message: "Task deleted successfully" });
+    })
+  })
+
 
 
 

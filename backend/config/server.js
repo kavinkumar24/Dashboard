@@ -665,7 +665,7 @@ async function getPasswordForEmail(email) {
   }
 }
 
-async function getusernameForEmail(email) {
+async function getUsernameForEmail(email) {
   try{
     const response = await axios.get('http://localhost:8081/api/user/loggedin/data', {
       params: { email }
@@ -683,16 +683,17 @@ catch (error) {
   throw error; // Rethrow or handle as necessary
 }
 }
+
 const nodemailer = require('nodemailer');
 
 app.post('/api/send-email', async (req, res) => {
   const { assignToEmail, assignToPersonEmails, hodemail, ax_brief, collection_name, project, no_of_qty, assign_date, target_date, priority } = req.body;
   console.log("Assigned to Email:", assignToEmail);
   console.log("Person Emails:", assignToPersonEmails);
-  
+
   try {
       const password = await getPasswordForEmail(assignToEmail);
-      const username = await getUsernameForEmail(assignToEmail); // Ensure this function is defined and retrieves the username
+      const username = await getUsernameForEmail(assignToEmail);
       console.log("Password:", password);
       console.log("Username:", username);
 
@@ -706,7 +707,6 @@ app.post('/api/send-email', async (req, res) => {
           }
       });
 
-      // Combine hodemail and assignToPersonEmails into one array
       const toEmails = [hodemail, ...assignToPersonEmails];
 
       const mailOptions = {
@@ -730,6 +730,62 @@ app.post('/api/send-email', async (req, res) => {
                   <li><b>Assigned Date:</b> ${assign_date}</li>
                   <li><b>Target Date:</b> ${target_date}</li>
                   <li><b>Priority:</b> ${priority}</li>
+              </ul>`
+      };
+
+      await transporter.sendMail(mailOptions);
+      res.status(200).send('Email sent successfully!');
+  } catch (error) {
+      console.error("Failed to send email:", error);
+      res.status(500).send('Failed to send email.');
+  }
+});
+
+
+
+
+app.post('/api/send-email/Party-vist', async (req, res) => {
+  const { loggedemail, assignToPersonEmails, visit_date, partyname, description, status_data, imagelink } = req.body;
+  console.log("logged to Email:", loggedemail);
+  console.log("Person Emails:", assignToPersonEmails);
+
+  try {
+      const password = await getPasswordForEmail(assignToEmail);
+      const username = await getUsernameForEmail(assignToEmail);
+      console.log("Password:", password);
+      console.log("Username:", username);
+
+      const transporter = nodemailer.createTransport({
+          host: 'your.zimbra.server',
+          port: 587,
+          secure: false,
+          auth: {
+              user: assignToEmail,
+              pass: password
+          }
+      });
+
+      const toEmails = [assignToPersonEmails];
+      console.log("toEmails",toEmails)
+
+      const mailOptions = {
+          from: `"${username}" <${assignToEmail}>`, 
+          to: toEmails.join(','), 
+          subject: 'Task Assignment Notification',
+          text: `Task Details:
+              Visit Date: ${visit_date}
+              Party Name: ${partyname}
+              Description: ${description}
+               Status: ${status_data}
+              imagelink: ${imagelink}`,
+          html: `<b>Task Details:</b>
+              <ul>
+                  <li><b>Visit Date:</b> ${visit_date}</li>
+                  <li><b>Party Name:</b> ${partyname}</li>
+                  <li><b>Description:</b> ${description}</li>
+                  <li><b>Status:</b> ${status_data}</li>
+                  <li><b>Image ref link:</b> ${imagelink}</li>
+                 
               </ul>`
       };
 

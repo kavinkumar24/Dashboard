@@ -64,6 +64,9 @@ function CreateTask() {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
+  const [isloading, setIsloading] = useState(false);
+
+
   // const [sketchOptions, setSketchOptions] = useState([]);
   const [image_upload, setImage_upload] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
@@ -173,6 +176,7 @@ function CreateTask() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsloading(true);
     if (!isAutoFilled) {
       setError("Please enter a correct AX Brief ID");
       return;
@@ -233,6 +237,15 @@ function CreateTask() {
         setPriority("");
         setRef_images("");
         setIsChecked(false);
+        setAssignToCount(0)
+        setBriefOptions([]);
+        setAxBriefMapping({});
+        setPerson("");
+        setFileName("");
+        setImagePreviewUrl(null);
+        setSelectedImage(null);
+        setdepart(null);
+        setPriority("");
 
 
         try{
@@ -254,11 +267,14 @@ function CreateTask() {
         console.error(error);
         setError("An error occurred while send emails");
       }
+      setIsloading(false)
       }
       catch (error) {
         console.error(error);
         setError("An error occurred while creating the task");
+        setIsloading(false)
       }
+
     };
   };
 
@@ -333,6 +349,15 @@ function CreateTask() {
         theme === "light" ? "bg-gray-100" : "bg-gray-800"
       }`}
     >
+       {isloading && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
+            <div className="flex gap-2 ml-9">
+              <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+              <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+              <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+            </div>
+          </div>
+        )}
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
       <Header onSearch={setSearch} theme={theme} dark={setTheme} 
@@ -738,7 +763,7 @@ function CreateTask() {
               <div className="md:col-span-2 flex justify-center">
                 <button
                   type="submit"
-                  className={`w-1/3 py-3 px-4 font-bold text-white rounded-lg ${
+                  className={`w-full sm:w-1/3 py-3 px-4 font-bold text-white rounded-lg ${
                     theme === "light"
                       ? "bg-blue-500 hover:bg-blue-700"
                       : "bg-blue-600 hover:bg-blue-800"
