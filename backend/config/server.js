@@ -368,50 +368,7 @@ app.post('/api/depart_targets', (req, res) => {
 
 
 // Function to group the target data by unique Project (PLTCODE)
-const groupDataByProject = (data) => {
-  const groupedProjects = new Set();
 
-  data.forEach((item) => {
-    const { Project } = item;
-    groupedProjects.add(Project); // Add unique project names to the Set
-  });
-
-  return Array.from(groupedProjects); // Convert the Set back to an array
-};
-
-// Route to fetch and store unique target projects with zeroed weeks
-const intializeAop = async () => {
-  try {
-    console.log('Initializing department data...');
-
-    // Fetch the target data from the external API
-    const response = await axios.get('http://localhost:8081/api/targets');
-    const targetData = response.data;
-
-    // Group the target data by unique Project (PLTCODE)
-    const uniqueProjects = groupDataByProject(targetData);
-
-    // Define the departments
-    const departments = ['CAD', 'CAM', 'MFD', 'PD-TEXTURING', 'PHOTO'];
-
-    // Iterate over the departments first
-    for (const dept of departments) {
-      // For each department, insert all unique projects
-      for (const project of uniqueProjects) {
-        // Insert the unique project with Week1, Week2, Week3, Week4 as 0
-        await db.query(
-          `INSERT INTO AOP_PLTCODE_Data_Week_wise (PLTCODE1, Week1, Week2, Week3, Week4, dept)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-          [project, 0, 0, 0, 0, dept]  // Set the weeks to 0 and include the department
-        );
-      }
-    }
-
-    console.log('Unique projects initialized and stored with zeroed weeks for all departments.');
-  } catch (error) {
-    console.error('Error initializing project data:', error);
-  }
-};
 
 
 
@@ -799,9 +756,228 @@ app.post('/api/send-email/Party-vist', async (req, res) => {
 
 
 
+
+app.get("/filtered_production_data_with_dates", async (req, res) => {
+  try {
+    // Get department mappings
+    const response = await axios.get(
+      "http://localhost:8081/api/department-mappings"
+    );
+    const departmentMappings = response.data;
+    const { startDate, endDate } = req.query;
+    // const startDate = '2024-10-12';
+    // const endDate = '2024-10-16';
+
+    // Validate the provided dates
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: "Please provide valid startDate and endDate" });
+    }
+
+    // Parse the start and end dates
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    // Check the difference between start and end dates should be 5 days
+    const dayDifference = (end - start) / (1000 * 60 * 60 * 24);
+    if (dayDifference !== 4) {
+      return res.status(400).json({ error: "Please provide a range of 5 days" });
+    }
+
+    // Generate date ranges for each of the 5 days
+    const dateRanges = [];
+    for (let i = 0; i < 5; i++) {
+      const dayStart = new Date(start);
+      dayStart.setDate(start.getDate() + i);
+
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayStart.getDate() + 1);
+
+      dateRanges.push({ dayStart, dayEnd });
+    }
+
+    // Extract department mappings
+    const deptFromFilter = Object.values(departmentMappings).flatMap(
+      (mapping) => mapping.from
+    );
+    const deptToFilter = Object.values(departmentMappings).flatMap(
+      (mapping) => mapping.to
+    );
+    const lowerDeptFromFilter = deptFromFilter.map((dept) =>
+      dept.toLowerCase()
+    );
+    const lowerDeptToFilter = deptToFilter.map((dept) =>
+      dept.toLowerCase()
+    );
+
+    // SQL query to get total quantity for each day
+    const sql = `
+      SELECT \`From Dept\`, \`To Dept\`, COUNT(\`CW Qty\`) AS total_qty, 
+             CASE 
+               ${dateRanges.map((_, i) => `WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'day${i + 1}'`).join("\n")}
+               ELSE NULL
+             END AS day_type
+      FROM Production_sample_data
+      WHERE LOWER(\`From Dept\`) IN (?) 
+        AND LOWER(\`To Dept\`) IN (?) 
+        AND (${dateRanges.map(() => "(UploadedDateTime >= ? AND UploadedDateTime < ?)").join(" OR ")})
+      GROUP BY \`From Dept\`, \`To Dept\`, day_type
+    `;
+
+    // Flatten the params for all days
+    const params = [
+      ...dateRanges.flatMap(({ dayStart, dayEnd }) => [dayStart, dayEnd]),
+      lowerDeptFromFilter,
+      lowerDeptToFilter,
+      ...dateRanges.flatMap(({ dayStart, dayEnd }) => [dayStart, dayEnd]),
+    ];
+
+    db.query(sql, params, (err, data) => {
+      if (err) return res.json(err);
+
+      // Initialize the result object with all departments set to 0 for all 5 days
+      const results = {
+        day1: {},
+        day2: {},
+        day3: {},
+        day4: {},
+        day5: {},
+      };
+
+      // Set all departments to 0 initially
+      Object.keys(departmentMappings).forEach((group) => {
+        for (let i = 1; i <= 5; i++) {
+          results[`day${i}`][group] = 0;
+        }
+      });
+
+      // Update the total_qty based on the actual query results
+      data.forEach((row) => {
+        const fromDept = row["From Dept"].toUpperCase();
+        const toDept = row["To Dept"].toUpperCase();
+        const qty = row.total_qty;
+        const dayType = row.day_type; // 'day1', 'day2', ..., 'day5'
+
+        for (const [group, { from, to }] of Object.entries(departmentMappings)) {
+          if (from.includes(fromDept) && to.includes(toDept)) {
+            results[dayType][group] += qty; // Add quantity to the respective day
+          }
+        }
+      });
+
+      return res.json(results);
+    });
+  } catch (error) {
+    console.error("Error fetching production data:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+app.get("/filtered_pending_data_with_dates", async (req, res) => {
+try {
+  // Get department mappings
+  const response = await axios.get("http://localhost:8081/api/department-mappings");
+  const departmentMappings = response.data;
+
+  // Get startDate and endDate from query params
+  const { startDate, endDate } = req.query;
+  // const startDate = '2024-10-12';
+  // const endDate = '2024-10-16';
+
+  // Validate the provided dates
+  if (!startDate || !endDate) {
+  return res.status(400).json({ error: "Please provide valid startDate and endDate" });
+  }
+
+  // Parse the start and end dates
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+
+  // Check that the difference between start and end dates is exactly 5 days
+  const dayDifference = (end - start) / (1000 * 60 * 60 * 24);
+  if (dayDifference !== 4) {
+  return res.status(400).json({ error: "Please provide a range of 5 days" });
+  }
+
+  // Generate date ranges for each of the 5 days
+  const dateRanges = [];
+  for (let i = 0; i < 5; i++) {
+  const dayStart = new Date(start);
+  dayStart.setDate(start.getDate() + i);
+
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayStart.getDate() + 1);
+
+  dateRanges.push({ dayStart, dayEnd });
+  }
+
+  // Extract department mappings
+  const toDeptFilter = Object.values(departmentMappings).flatMap((mapping) => mapping.from);
+  const lowerToDeptFilter = toDeptFilter.map((dept) => dept.toLowerCase());
+
+  // SQL query to get total quantity for each day
+  const sql = `
+  SELECT todept, COUNT(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty,
+          CASE 
+              ${dateRanges.map((_, i) => `WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'day${i + 1}'`).join("\n")}
+              ELSE NULL
+          END AS day_type
+  FROM Pending_sample_data
+  WHERE LOWER(todept) IN (?) 
+      AND (${dateRanges.map(() => "(UploadedDateTime >= ? AND UploadedDateTime < ?)").join(" OR ")})
+  GROUP BY todept, day_type
+  `;
+
+  // Flatten the params for all days
+  const params = [
+  ...dateRanges.flatMap(({ dayStart, dayEnd }) => [dayStart, dayEnd]),
+  lowerToDeptFilter,
+  ...dateRanges.flatMap(({ dayStart, dayEnd }) => [dayStart, dayEnd]),
+  ];
+
+  db.query(sql, params, (err, data) => {
+  if (err) return res.json(err);
+
+  // Initialize the result object with all departments set to 0 for all 5 days
+  const results = {
+      day1: {},
+      day2: {},
+      day3: {},
+      day4: {},
+      day5: {},
+  };
+
+  // Set all departments to 0 initially
+  Object.keys(departmentMappings).forEach((group) => {
+      for (let i = 1; i <= 5; i++) {
+      results[`day${i}`][group] = 0;
+      }
+  });
+
+  // Update the total_qty based on the actual query results
+  data.forEach((row) => {
+      const toDept = row.todept ? row.todept.toUpperCase() : null;
+      const qty = row.total_qty;
+      const dayType = row.day_type; // 'day1', 'day2', ..., 'day5'
+
+      if (toDept) {
+      for (const [group, { from }] of Object.entries(departmentMappings)) {
+          if (from.includes(toDept)) {
+          results[dayType][group] += qty; // Add quantity to the respective day
+          }
+      }
+      }
+  });
+
+  return res.json(results);
+  });
+} catch (error) {
+  console.error("Error fetching pending data:", error);
+  res.status(500).json({ error: "Internal server error" });
+}
+});
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
   initializeDepartments(); 
-  intializeAop();
+
   
 });

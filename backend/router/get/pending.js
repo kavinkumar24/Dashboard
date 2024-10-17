@@ -41,15 +41,15 @@ router.get("/pending", (req, res) => {
       return res.json(formattedData);
     });
   });
-
   router.get("/pending_data", (req, res) => {
-    const sql = "SELECT * FROM Pending_sample_data";
+    const sql = "SELECT * FROM Pending_sample_data WHERE DATE(uploadedDateTime) = CURDATE()";
     db.query(sql, (err, data) => {
-      if (err) return res.json(err);
-      return res.json(data);
+        if (err) return res.json(err);
+        return res.json(data);
     });
-  });
+});
 
+  
   router.get("/raw_filtered_pending_data", async (req, res) => {
     const response = await axios.get("http://localhost:8081/api/department-mappings");
     const departmentMappings = response.data;
@@ -250,9 +250,11 @@ router.get("/pending", (req, res) => {
 
   router.get("/pending-sum", (req, res) => {
     const query = `
-      SELECT PLTCODE1, COUNT(JCPDSCWQTY1) AS total_quantity
-      FROM Pending_sample_data
-      GROUP BY PLTCODE1;
+  SELECT PLTCODE1, COUNT(JCPDSCWQTY1) AS total_quantity
+FROM Pending_sample_data
+WHERE DATE(uploadedDateTime) = CURDATE()
+GROUP BY PLTCODE1;
+
     `;
   
     db.query(query, (err, result) => {

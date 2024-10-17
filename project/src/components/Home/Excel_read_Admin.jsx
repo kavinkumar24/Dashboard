@@ -454,11 +454,160 @@ function Dashboard() {
     fetchRemarks();
   }, []);
 
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [error, setError] = useState('');
+  const [productionFiveDaysData, setProductionFiveDaysData] = useState([]);
+  const [pendingFiveDaysData, setPendingFiveDaysData] = useState([]);
+  const [IsFilterOn, setIsFilterOn] = useState(false);
+  const [fiveDaysTableData, setFiveDaysTableData] = useState([]);
+
+  const handleFilterTable = async () => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    // Calculate the difference in days
+    const dayDifference = (end - start) / (1000 * 60 * 60 * 24);
+
+    if (dayDifference === 4) {  // Ensure exactly 5 days including start and end dates
+      setError('');  // Clear any previous error
+
+      try {
+        // Call both endpoints
+        const production = await axios.get(`http://localhost:8081/filtered_production_data_with_dates`, {
+          params: { startDate, endDate }
+        });
+        const pending =  await axios.get(`http://localhost:8081/filtered_pending_data_with_dates`, {
+          params: { startDate, endDate }
+        });
+        console.log('Data fetched successfully!');
+        console.log('Data fetched successfully! Production data:', production.data);
+        console.log('Data fetched successfully! Pending data:', pending.data);
+        setProductionFiveDaysData(production.data);
+        setPendingFiveDaysData(pending.data);
+        // alert('Data fetched successfully!');
+        setIsFilterOn(true);
+      } catch (err) {
+        console.error(err);
+        alert('Error fetching data.');
+      }
+    } else {
+      setError('Please select a date range of exactly 5 days.');
+    }
+  };
+
+  const handleFilterTableCancel = ()=>{
+    setIsFilterOn(false);
+    setStartDate('');
+    setEndDate('');
+  }
+useEffect(() => {
+  const tableData = departments.map((dept) => {
+    // Retrieve production and pending quantities for the 5 days
+    const day1Pro = productionFiveDaysData.day1 ? productionFiveDaysData.day1[dept] || 0 : 0;
+    const day2Pro = productionFiveDaysData.day2 ? productionFiveDaysData.day2[dept] || 0 : 0;
+    const day3Pro = productionFiveDaysData.day3 ? productionFiveDaysData.day3[dept] || 0 : 0;
+    const day4Pro = productionFiveDaysData.day4 ? productionFiveDaysData.day4[dept] || 0 : 0;
+    const day5Pro = productionFiveDaysData.day5 ? productionFiveDaysData.day5[dept] || 0 : 0;
+  
+    const day1Pen = pendingFiveDaysData.day1 ? pendingFiveDaysData.day1[dept] || 0 : 0;
+    const day2Pen = pendingFiveDaysData.day2 ? pendingFiveDaysData.day2[dept] || 0 : 0;
+    const day3Pen = pendingFiveDaysData.day3 ? pendingFiveDaysData.day3[dept] || 0 : 0;
+    const day4Pen = pendingFiveDaysData.day4 ? pendingFiveDaysData.day4[dept] || 0 : 0;
+    const day5Pen = pendingFiveDaysData.day5 ? pendingFiveDaysData.day5[dept] || 0 : 0;
+  
+    const totalPro = day1Pro + day2Pro + day3Pro + day4Pro + day5Pro;
+    const totalPen = day1Pen + day2Pen + day3Pen + day4Pen + day5Pen;
+  
+    const avgProduction = totalPro > 0 ? (totalPro / 5).toFixed(1) : "N/A";
+  
+    // Retrieve target values from local storage or use default
+    const storedTargets = JSON.parse(localStorage.getItem("targetValues")) || {};
+    const Target = storedTargets[dept] || 100;
+    const efficiency = ((totalPro / Target) * 100).toFixed(2);
+  
+    return {
+      dept,
+      align: efficiency,
+      capacity: Target,
+      totalPro: totalPro,
+      balancePro: totalPen,
+      avgProPerDay: avgProduction,
+      day1Pro: day1Pro,
+      day1Pen: day1Pen,
+      day2Pro: day2Pro,
+      day2Pen: day2Pen,
+      day3Pro: day3Pro,
+      day3Pen: day3Pen,
+      day4Pro: day4Pro,
+      day4Pen: day4Pen,
+      day5Pro: day5Pro,
+      day5Pen: day5Pen,
+      remarks: "N/A",
+    };
+  });
+  setFiveDaysTableData(tableData);
+}, [productionFiveDaysData, pendingFiveDaysData]);
+
+  // /////////////////////////////////////////////////
+  const getDateArray = (start, end) => {
+    const arr = [];
+    const dt = new Date(start);
+    while (dt <= new Date(end)) {
+      arr.push(new Date(dt).toISOString().split('T')[0]); // Format date as 'YYYY-MM-DD'
+      dt.setDate(dt.getDate() + 1);
+    }
+    return arr;
+  };
+
   const renderTable = () => (
-<div className="max-w-96 md:max-w-lg lg:max-w-4xl xl:max-w-screen-lg 2xl:max-w-screen-8xl ">
-  <div
-    className={`m-0 md:m-4 mt-7 border rounded-lg ${
-      theme === "dark" ? "border-gray-600 bg-gray-800" : "border-gray-300 bg-white"
+    <div>
+
+    <div className="flex flex-row gap-4 items-end justify-end">
+      <div className="flex space-x-4">
+        <div className="flex flex-col">
+          <label className="text-sm font-bold mb-1">Start Date</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="border border-gray-300 rounded-md p-2"
+          />
+        </div>
+        <div className="flex flex-col">
+          <label className="text-sm font-bold mb-1">End Date</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="border border-gray-300 rounded-md p-2"
+          />
+        </div>
+      </div>
+      
+      <button
+        onClick={handleFilterTable}
+        className="bg-blue-100 text-blue-500 border font-semibold border-blue-500 px-4 py-2 rounded-md mt-4 hover:bg-blue-200"
+      >
+        Filter Data
+      </button>
+      {IsFilterOn && (
+        <button
+        onClick={handleFilterTableCancel}
+        className="bg-red-100 text-red-500 border font-semibold border-red-500 px-4 py-2 rounded-md mt-4 hover:bg-red-200"
+      >
+        Remove Filter
+      </button>
+      )}
+    </div>
+    {error && <p  className="text-red-500 mt-2 text-right">{error}</p>}
+
+    {!IsFilterOn ? 
+    <div
+    className={`m-4 mt-7 border rounded-lg ${
+      theme === "dark"
+        ? "border-gray-600 bg-gray-800"
+        : "border-gray-300 bg-white"
     } shadow-lg`}
   >
     <div className="flex justify-between p-2 m-2">
@@ -478,46 +627,115 @@ function Dashboard() {
         }`}
       >
         <thead>
-          <tr className={`${theme === "dark" ? "bg-gray-900" : "bg-gray-300"}`}>
-            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+          <tr
+            className={`${
+              theme === "dark" ? "bg-gray-900" : "bg-gray-300"
+            }`}
+          >
+            <th
+              rowSpan="2"
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base`}
+            >
               Dept
             </th>
-            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+            <th
+              rowSpan="2"
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base`}
+            >
               Align
             </th>
-            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+            <th
+              rowSpan="2"
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base`}
+            >
               Capacity/Plan
             </th>
-            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+            <th
+              rowSpan="2"
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base`}
+            >
               Total Pro
             </th>
-            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+            <th
+              rowSpan="2"
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base`}
+            >
               Balance Pro
             </th>
-            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+            <th
+              rowSpan="2"
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base`}
+            >
               Avg Pro QTY/Day
             </th>
-            <th colSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base text-red-600`}>
+            <th
+              colSpan="2"
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base text-red-600`}
+            >
               {yesterdayFormatted}
             </th>
-            <th colSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base text-red-600`}>
+            <th
+              colSpan="2"
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base text-red-600`}
+            >
               {dayBeforeYesterdayFormatted}
             </th>
-            <th rowSpan="2" className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+            <th
+              rowSpan="2"
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base`}
+            >
               Remarks
             </th>
           </tr>
-          <tr className={`${theme === "dark" ? "bg-gray-600" : "bg-gray-200"}`}>
-            <th className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+          <tr
+            className={`${
+              theme === "dark" ? "bg-gray-600" : "bg-gray-200"
+            }`}
+          >
+            <th
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base`}
+            >
               Pro
             </th>
-            <th className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+            <th
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base`}
+            >
               Pen
             </th>
-            <th className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+            <th
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base`}
+            >
               Pro
             </th>
-            <th className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center font-semibold text-base`}>
+            <th
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base`}
+            >
               Pen
             </th>
           </tr>
@@ -536,87 +754,277 @@ function Dashboard() {
                   : "bg-gray-50"
               } transition-colors duration-200`}
             >
-              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center text-base font-medium`}>
+              <td
+                className={`border ${
+                  theme === "dark" ? "border-gray-600" : "border-gray-300"
+                } px-2 py-2 text-center text-base font-medium`}
+              >
                 {row.dept}
               </td>
-              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center text-base`}>
+              <td
+                className={`border ${
+                  theme === "dark" ? "border-gray-600" : "border-gray-300"
+                } px-2 py-2 text-center text-base`}
+              >
                 {row.align}%
               </td>
-              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center text-base`}>
+              <td
+                className={`border ${
+                  theme === "dark" ? "border-gray-600" : "border-gray-300"
+                } px-2 py-2 text-center text-base`}
+              >
                 {row.capacity}
               </td>
-              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center text-base`}>
+              <td
+                className={`border ${
+                  theme === "dark" ? "border-gray-600" : "border-gray-300"
+                } px-2 py-2 text-center text-base`}
+              >
                 {row.totalPro}
               </td>
-              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center text-base`}>
+              <td
+                className={`border ${
+                  theme === "dark" ? "border-gray-600" : "border-gray-300"
+                } px-2 py-2 text-center text-base`}
+              >
                 {row.balancePro}
               </td>
-              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center text-base`}>
+              <td
+                className={`border ${
+                  theme === "dark" ? "border-gray-600" : "border-gray-300"
+                } px-2 py-2 text-center text-base`}
+              >
                 {row.avgProPerDay}
               </td>
-              <td className={`border ${theme === "dark" ? "border-gray-600 bg-green-700 text-gray-200" : "border-gray-300 bg-green-200"} px-2 py-2 text-center text-base font-medium`}>
+              <td
+                className={`border  ${
+                  theme === "dark"
+                    ? "border-gray-600 bg-green-700 text-gray-200"
+                    : "border-gray-300 bg-green-200"
+                } px-2 py-2 text-center text-base font-medium`}
+              >
                 {row.protoday}
               </td>
-              <td className={`border ${theme === "dark" ? "border-gray-600 text-gray-200 bg-yellow-600" : "border-gray-300 bg-yellow-100"} px-2 py-2 text-center text-base font-medium`}>
+              <td
+                className={`border  ${
+                  theme === "dark"
+                    ? "border-gray-600 text-gray-200 bg-yellow-600"
+                    : "border-gray-300 bg-yellow-100"
+                } px-2 py-2 text-center text-base font-medium`}
+              >
                 {row.pentoday}
               </td>
-              <td className={`border ${theme === "dark" ? "border-gray-600 bg-green-700 text-gray-200" : "border-gray-300 bg-green-200"} px-2 py-2 text-center text-base font-medium`}>
+              <td
+                className={`border  ${
+                  theme === "dark"
+                    ? "border-gray-600 bg-green-700 text-gray-200"
+                    : "border-gray-300 bg-green-200"
+                } px-2 py-2 text-center text-base font-medium`}
+              >
                 {row.proprev}
               </td>
-              <td className={`border ${theme === "dark" ? "border-gray-600 text-gray-200 bg-yellow-600" : "border-gray-300 bg-yellow-100"} px-2 py-2 text-center text-base font-medium`}>
+              <td
+                className={`border  ${
+                  theme === "dark"
+                    ? "border-gray-600 text-gray-200 bg-yellow-600"
+                    : "border-gray-300 bg-yellow-100"
+                } px-2 py-2 text-center text-base font-medium`}
+              >
                 {row.penprev}
               </td>
-              <td className={`border ${theme === "dark" ? "border-gray-600" : "border-gray-300"} px-2 py-2 text-center`}>
-                <div>
-                  {role === "admin" ? (
-                    <>
-                      <FiEdit2 onClick={handleShow_text_area} />
-                      {show_text_Area ? (
-                        <textarea
-                          className={`w-full h-10 p-2 rounded ${
-                            theme === "dark" ? "bg-gray-900 text-gray-200 border-gray-600" : "bg-white text-black border-gray-300"
-                          } resize-none`}
-                          placeholder="Enter remarks..."
-                          value={remarks[row.dept] || ""}
-                          onChange={(e) => handleRemarksChange(row.dept, e.target.value)}
-                          onBlur={() => saveRemarks(row.dept)}
-                        />
-                      ) : (
-                        <div className={`w-full h-10 p-2 rounded ${theme === "dark" ? "bg-gray-800 text-gray-200 border-gray-600" : "bg-gray-200 text-black border-gray-300"}`}>
-                          {remarks[row.dept] || "N/A"}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <div className={`w-full h-10 p-2 rounded ${theme === "dark" ? "bg-gray-800 text-gray-200 border-gray-600" : "bg-gray-200 text-black border-gray-300"}`}>
-                      {remarks[row.dept] || "N/A"}
-                    </div>
-                  )}
-                </div>
+              <td
+                className={`border ${
+                  theme === "dark" ? "border-gray-600" : "border-gray-300"
+                } px-2 py-2 text-center`}
+              >
+                {role === "admin" ? (
+                  <div>
+                    <FiEdit2 onClick={handleShow_text_area} />
+                    {show_text_Area ? (
+                      <textarea
+                        className={`w-full h-10 p-2 rounded ${
+                          theme === "dark"
+                            ? "bg-gray-900 text-gray-200 border-gray-600"
+                            : "bg-white text-black border-gray-300"
+                        } resize-none`}
+                        placeholder="Enter remarks..."
+                        value={remarks[row.dept] || ""}
+                        onChange={(e) =>
+                          handleRemarksChange(row.dept, e.target.value)
+                        }
+                        onBlur={() => saveRemarks(row.dept)}
+                      />
+                    ) : (
+                      <div
+                        className={`w-full h-10 p-2 rounded ${
+                          theme === "dark"
+                            ? "bg-gray-800 text-gray-200 border-gray-600"
+                            : "bg-gray-200 text-black border-gray-300"
+                        }`}
+                      >
+                        {remarks[row.dept] || "N/A"}
+                      </div>
+                    )}
+                  </div>
+                ) : null}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+  </div> 
+  :
+  <div>
 
-    {/* Pagination Controls */}
-    {/* <div className="flex justify-center space-x-2 m-4">
-      <button className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage1 === 1 ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`} onClick={() => handlePageChange(currentPage1 - 1)} disabled={currentPage1 === 1}>
-        Previous
-      </button>
+      <div className={`m-4 mt-7 border rounded-lg ${theme === 'dark' ? 'border-gray-600 bg-gray-800' : 'border-gray-300 bg-white'} shadow-lg`}>
+        <div className="flex justify-between p-2 m-2">
+          <h1 className={`text-xl font-semibold pt-2 ${theme === 'dark' ? 'text-white' : 'text-black'}`}>
+            Production and Pending Data For 5 Days <span className="text-red-500">{`${startDate}`}</span> to <span className="text-red-500">{`${endDate}`}</span> 
+          </h1>
+        </div>
 
-      <button className="text-base px-5 py-3 rounded-lg border bg-gray-300">{currentPage1}</button>
+        <div className="overflow-x-auto">
+          <table className={`min-w-full table-auto text-sm ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+            <thead>
+              <tr className={`${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-300'}`}>
+                <th rowSpan="2" className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-2 py-2 text-center font-semibold text-base`}>
+                  Dept
+                </th>
+                <th rowSpan="2" className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-2 py-2 text-center font-semibold text-base`}>
+                  Align
+                </th>
+                <th rowSpan="2" className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-2 py-2 text-center font-semibold text-base`}>
+                  Capacity/Plan
+                </th>
+                <th
+              rowSpan="2"
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base text-wrap`}
+            >
+              Total Pro 
+            </th>
+            <th
+              rowSpan="2"
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base`}
+            >
+              Balance Pro
+            </th>
+            <th
+              rowSpan="2"
+              className={`border ${
+                theme === "dark" ? "border-gray-600" : "border-gray-300"
+              } px-2 py-2 text-center font-semibold text-base`}
+            >
+              Avg Pro QTY/Day
+            </th>
 
-      <button className={`text-base font-semibold px-5 py-3 rounded-lg border ${currentPage1 === totalPages ? 'bg-gray-200 cursor-not-allowed' : 'bg-gray-300 hover:bg-gray-400'}`} onClick={() => handlePageChange(currentPage1 + 1)} disabled={currentPage1 === totalPages}>
-        Next
-      </button>
-    </div> */}
-  </div>
-</div>
+                {getDateArray(startDate, endDate).map((date, index) => (
+                  <th key={index} colSpan="2" className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-2 py-2 text-center font-semibold text-base text-red-500`}>
+                    {date}
+                  </th>
+                ))}
+                
+              </tr>
+              <tr className={`${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-200'}`}>
+                {getDateArray(startDate, endDate).map((_, index) => (
+                  <>
+                    <th key={`pro-${index}`} className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-2 py-2 text-center font-semibold text-base`}>
+                      Pro
+                    </th>
+                    <th key={`pen-${index}`} className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-2 py-2 text-center font-semibold text-base`}>
+                      Pen
+                    </th>
+                  </>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {fiveDaysTableData.map((row, index) => (
+                <tr
+                  key={index}
+                  className={`${
+                    index % 2 === 0 ? (theme === 'dark' ? 'bg-gray-700 hover:bg-gray-800' : 'bg-white hover:bg-gray-200') : theme === 'dark' ? 'bg-gray-800' : 'bg-gray-50'
+                  } transition-colors duration-200`}
+                >
+                  <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-2 py-2 text-center text-base font-medium`}>
+                    {row.dept}
+                  </td>
+                  <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-2 py-2 text-center text-base`}>{row.align}%</td>
+                  <td className={`border ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'} px-2 py-2 text-center text-base`}>{row.capacity}</td>
+              <td
+                className={`border ${
+                  theme === "dark" ? "border-gray-600" : "border-gray-300"
+                } px-2 py-2 text-center text-base`}
+              >
+                {row.totalPro}
+              </td>
+              <td
+                className={`border ${
+                  theme === "dark" ? "border-gray-600" : "border-gray-300"
+                } px-2 py-2 text-center text-base`}
+              >
+                {row.balancePro}
+              </td>
+              <td
+                className={`border ${
+                  theme === "dark" ? "border-gray-600" : "border-gray-300"
+                } px-2 py-2 text-center text-base`}
+              >
+                {row.avgProPerDay}
+              </td>
+              {getDateArray(startDate, endDate).map((_, dayIndex) => (
+                <>
+                  <td
+                    key={`pro-day-${dayIndex}`}
+                    className={`border ${
+                      theme === 'dark'
+                        ? dayIndex % 2 === 0
+                          ? 'border-gray-600 bg-green-700 text-gray-200'
+                          : 'border-gray-600 bg-green-800 text-gray-300'
+                        : dayIndex % 2 === 0
+                        ? 'border-gray-300 bg-green-200'
+                        : 'border-gray-300 bg-indigo-100'
+                    } px-2 py-2 text-center text-base font-medium`}
+                  >
+                    {row[`day${dayIndex + 1}Pro`] || 0}
+                  </td>
+                  <td
+                    key={`pen-day-${dayIndex}`}
+                    className={`border ${
+                      theme === 'dark'
+                        ? dayIndex % 2 === 0
+                          ? 'border-gray-600 bg-yellow-600 text-gray-200'
+                          : 'border-gray-600 bg-yellow-700 text-gray-300'
+                        : dayIndex % 2 === 0
+                        ? 'border-gray-300 bg-green-200'
+                        : 'border-gray-300 bg-indigo-100'
+                    } px-2 py-2 text-center text-base font-medium`}
+                  >
+                    {row[`day${dayIndex + 1}Pen`] || 0}
+                  </td>
+                </>
+              ))}
 
+
+                  
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+
+    </div>
   );
   
+
+
   const [targets, setTargets] = useState({});
 
   useEffect(() => {

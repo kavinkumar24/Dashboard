@@ -7,6 +7,8 @@ import { FiLogOut } from "react-icons/fi";
 import { FaRegUser } from "react-icons/fa";
 import { CiGrid41 } from "react-icons/ci";
 import { useRef } from "react";
+import UserProfile from '../assests/user.png'
+import DarkUserProfile from '../assests/user_dark.png'
 
 function Header({
   onSearch,
@@ -50,6 +52,7 @@ function Header({
             emp_id: user.emp_id,
             Email: user.Email,
             role: user.role,
+            emp_name: user.emp_name,
           });
         }
       })
@@ -280,15 +283,22 @@ function Header({
              theme === "light" ? "bg-white" : "bg-gray-700"
            } shadow-lg rounded-lg p-6 sm:p-6`} // Responsive padding for mobile
          >
+          <div className="items-center justify-center w-1/2 m-auto">
+          <img  src={theme==='light'?UserProfile: DarkUserProfile} className="justify-center items-center"  />
+          </div>
            <h2
-             className={`${theme === "light" ? "text-black" : "text-white"} text-lg font-semibold`}
+             className={`mx-auto justify-center text-center ${theme === "light" ? "text-black" : "text-white"} text-lg font-semibold`}
            >
              User Profile
            </h2>
+           <br></br>
            <p className="text-sm text-gray-400 mt-1">Details about the user:</p>
            <div className="mt-4 space-y-2">
              <p className={`${theme === "light" ? "text-black" : "text-white"}`}>
                <strong>Emp ID:</strong> {userData.emp_id}
+             </p>
+             <p className={`${theme === "light" ? "text-black" : "text-white"}`}>
+               <strong>Name:</strong> {userData.emp_name}
              </p>
              <p className={`${theme === "light" ? "text-black" : "text-white"}`}>
                <strong>Email:</strong> {userData.Email}

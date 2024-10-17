@@ -730,10 +730,17 @@ const updatedTableData = AllowedProjects.map((project) => {
                 <h2 className="text-xl font-bold mb-4">
                   Department: {selectedDeptName}
                 </h2>
-
+<div className="flex  flex-1 justify-between">
                 <h2 className="text-sm font-normal mb-4 p-1">
-                  Percentage: {total.toFixed(2)}%
+                  Weekly Percentage: {total.toFixed(2)}%
                 </h2>
+                <h2 className="text-sm font-normal mb-4 p-1">
+                  Monthly Percentage: {total.toFixed(2)}%
+                </h2>
+                </div>
+
+                
+              
                 <div className="overflow-x-auto">
                   <table
                     className={`min-w-full divide-y ${
@@ -935,7 +942,7 @@ const updatedTableData = AllowedProjects.map((project) => {
                               theme === "dark" ? "border-gray-600" : ""
                             }`}
                           >
-                            {row.Wip}
+                            {row.Wip? row.Wip : 0}
                           </td>
                           <td
                             className={`px-6 py-4 border-b ${
