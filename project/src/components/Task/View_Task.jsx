@@ -74,6 +74,34 @@ function ViewTasks() {
     setUploadedImage(imageUrl);
     setshowimage(true);
   };
+  const handleDeleteTask = async (taskId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this task?"
+    );
+
+    if (confirmDelete) {
+      try {
+        const response = await fetch(
+          `http://localhost:8081/api/delete-task/${taskId}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to delete task");
+        }
+
+        // Optionally, refresh the task list or remove the deleted task from state
+        setTasks((prevTasks) =>
+          prevTasks.filter((task) => task.Task_ID !== taskId)
+        );
+      } catch (error) {
+        console.error("Error deleting task:", error);
+        alert("Failed to delete task. Please try again.");
+      }
+    }
+  };
 
   const closeModal = () => {
     setshowimage(false);
@@ -120,6 +148,12 @@ function ViewTasks() {
       [task.Assign_Name, task.Person, task.OWNER].includes(loggedInEmail) ||
       userRole === "admin";
 
+      const Project_view = task.Project_View;
+      if(Project_view === "No"){
+        return (
+          false
+        );
+      }
     return (
       emailMatch &&
       (searchRegex.test(task.Ax_Brief.toLowerCase()) ||
@@ -227,12 +261,12 @@ function ViewTasks() {
 
   return (
     <div
-    className={`min-h-screen min-w-full flex flex-col md:flex-row ${
-      theme === "light"
-        ? "bg-gray-100 text-gray-900"
-        : "bg-gray-800 text-gray-100"
-    }`}
-  >
+      className={`min-h-screen min-w-full flex flex-col md:flex-row ${
+        theme === "light"
+          ? "bg-gray-100 text-gray-900"
+          : "bg-gray-800 text-gray-100"
+      }`}
+    >
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
         <Header
@@ -402,7 +436,9 @@ function ViewTasks() {
                         {task.Assign_Name}
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
-                        {task.Person}
+                        {task.Person.split(",").map((email, idx) => (
+                          <div key={idx}>{email.trim()}</div>
+                        ))}
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {task.OWNER}
@@ -522,6 +558,16 @@ function ViewTasks() {
                         >
                           View
                         </button>
+                      </td>
+                      <td className="px-6 py-4 text-center whitespace-nowrap text-base">
+                        {userRole === "admin" && (
+                          <button
+                            onClick={() => handleDeleteTask(task.Task_ID)}
+                            className="bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

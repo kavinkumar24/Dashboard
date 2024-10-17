@@ -366,6 +366,97 @@ app.post('/api/depart_targets', (req, res) => {
   });
 });
 
+
+// Function to group the target data by unique Project (PLTCODE)
+const groupDataByProject = (data) => {
+  const groupedProjects = new Set();
+
+  data.forEach((item) => {
+    const { Project } = item;
+    groupedProjects.add(Project); // Add unique project names to the Set
+  });
+
+  return Array.from(groupedProjects); // Convert the Set back to an array
+};
+
+// Route to fetch and store unique target projects with zeroed weeks
+const intializeAop = async () => {
+  try {
+    console.log('Initializing department data...');
+
+    // Fetch the target data from the external API
+    const response = await axios.get('http://localhost:8081/api/targets');
+    const targetData = response.data;
+
+    // Group the target data by unique Project (PLTCODE)
+    const uniqueProjects = groupDataByProject(targetData);
+
+    // Define the departments
+    const departments = ['CAD', 'CAM', 'MFD', 'PD-TEXTURING', 'PHOTO'];
+
+    // Iterate over the departments first
+    for (const dept of departments) {
+      // For each department, insert all unique projects
+      for (const project of uniqueProjects) {
+        // Insert the unique project with Week1, Week2, Week3, Week4 as 0
+        await db.query(
+          `INSERT INTO AOP_PLTCODE_Data_Week_wise (PLTCODE1, Week1, Week2, Week3, Week4, dept)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [project, 0, 0, 0, 0, dept]  // Set the weeks to 0 and include the department
+        );
+      }
+    }
+
+    console.log('Unique projects initialized and stored with zeroed weeks for all departments.');
+  } catch (error) {
+    console.error('Error initializing project data:', error);
+  }
+};
+
+
+
+app.post('/api/update-week-data', async (req, res) => {
+  try {
+    const updatedProjects = req.body; // Array of updated PLTCODE1 data
+
+    // Iterate over each project to update the week data in the database
+    for (const project of updatedProjects) {
+      const { PLTCODE1, Dept, Week1, Week2, Week3, Week4 } = project;
+
+      // Check if the PLTCODE1 and Dept combination exists
+      const existingEntry = await db.query(
+        'SELECT * FROM AOP_PLTCODE_Data_Week_wise WHERE PLTCODE1 = ? AND dept = ?',
+        [PLTCODE1, Dept]
+      );
+
+      if (existingEntry.length > 0) {
+        // If the entry exists, update only the week data
+        await db.query(
+          `UPDATE AOP_PLTCODE_Data_Week_wise 
+           SET Week1 = ?, Week2 = ?, Week3 = ?, Week4 = ? 
+           WHERE PLTCODE1 = ? AND dept = ?`,
+          [Week1, Week2, Week3, Week4, PLTCODE1, Dept]
+        );
+      } else {
+        // If no entry exists, create a new one with week data (optional)
+        await db.query(
+          `INSERT INTO AOP_PLTCODE_Data_Week_wise 
+           (PLTCODE1, dept, Week1, Week2, Week3, Week4) 
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [PLTCODE1, Dept, Week1, Week2, Week3, Week4]
+        );
+      }
+    }
+
+    res.status(200).json({ message: 'Week data successfully updated!' });
+  } catch (error) {
+    console.error('Error updating week data:', error);
+    res.status(500).json({ message: 'Error updating week data.' });
+  }
+});
+
+
+
 const createOperationalTaskTableQuery = `CREATE TABLE IF NOT EXISTS operational_task (
     task_id VARCHAR(10) PRIMARY KEY,
     project_name VARCHAR(255),
@@ -553,10 +644,108 @@ app.use("/api", User_get)
 
 
 
+async function getPasswordForEmail(email) {
+  try {
+      const response = await axios.get('http://localhost:8081/api/user/loggedin/data', {
+          params: { email }
+      });
+      
+      const user = response.data.find(user => user.Email === email);
+      // console.log(user,"user")
+      
+      if (user) {
+          // console.log(user,"yeah")
+          return user.password; // Return the password if user found
+      } else {
+          throw new Error('User not found');
+      }
+  } catch (error) {
+      console.error("Error fetching password:", error);
+      throw error; // Rethrow or handle as necessary
+  }
+}
+
+async function getusernameForEmail(email) {
+  try{
+    const response = await axios.get('http://localhost:8081/api/user/loggedin/data', {
+      params: { email }
+  });
+  const user = response.data.find(user => user.Email === email);
+  if(user){
+    return user.emp_name;
+  }
+  else{
+    throw new Error('User not found');
+  }
+}
+catch (error) {
+  console.error("Error fetching username:", error);
+  throw error; // Rethrow or handle as necessary
+}
+}
+const nodemailer = require('nodemailer');
+
+app.post('/api/send-email', async (req, res) => {
+  const { assignToEmail, assignToPersonEmails, hodemail, ax_brief, collection_name, project, no_of_qty, assign_date, target_date, priority } = req.body;
+  console.log("Assigned to Email:", assignToEmail);
+  console.log("Person Emails:", assignToPersonEmails);
+  
+  try {
+      const password = await getPasswordForEmail(assignToEmail);
+      const username = await getUsernameForEmail(assignToEmail); // Ensure this function is defined and retrieves the username
+      console.log("Password:", password);
+      console.log("Username:", username);
+
+      const transporter = nodemailer.createTransport({
+          host: 'your.zimbra.server',
+          port: 587,
+          secure: false,
+          auth: {
+              user: assignToEmail,
+              pass: password
+          }
+      });
+
+      // Combine hodemail and assignToPersonEmails into one array
+      const toEmails = [hodemail, ...assignToPersonEmails];
+
+      const mailOptions = {
+          from: `"${username}" <${assignToEmail}>`, 
+          to: toEmails.join(','), 
+          subject: 'Task Assignment Notification',
+          text: `Task Details:
+              AX Brief: ${ax_brief}
+              Collection Name: ${collection_name}
+              Project: ${project}
+              Number of Quantities: ${no_of_qty}
+              Assigned Date: ${assign_date}
+              Target Date: ${target_date}
+              Priority: ${priority}`,
+          html: `<b>Task Details:</b>
+              <ul>
+                  <li><b>AX Brief:</b> ${ax_brief}</li>
+                  <li><b>Collection Name:</b> ${collection_name}</li>
+                  <li><b>Project:</b> ${project}</li>
+                  <li><b>Number of Quantities:</b> ${no_of_qty}</li>
+                  <li><b>Assigned Date:</b> ${assign_date}</li>
+                  <li><b>Target Date:</b> ${target_date}</li>
+                  <li><b>Priority:</b> ${priority}</li>
+              </ul>`
+      };
+
+      await transporter.sendMail(mailOptions);
+      res.status(200).send('Email sent successfully!');
+  } catch (error) {
+      console.error("Failed to send email:", error);
+      res.status(500).send('Failed to send email.');
+  }
+});
 
 
 
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
   initializeDepartments(); 
+  intializeAop();
+  
 });

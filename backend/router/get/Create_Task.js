@@ -31,6 +31,26 @@ router.get("/create-task", (req, res) => {
   });
 });
 
+
+router.delete("/delete-task/:taskId", (req, res) => {
+  const taskId = req.params.taskId;
+  const sql = "DELETE FROM Created_task WHERE Task_ID = ?";
+
+  db.query(sql, [taskId], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Failed to delete task", error: err });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    res.status(200).json({ message: "Task deleted successfully" });
+  });
+});
+
+
 router.post("/create-task", async (req, res) => {
   console.log("Request Body:", req.body);
   const imageBuf = Buffer.from(req.body.image) || [];
@@ -45,7 +65,7 @@ router.post("/create-task", async (req, res) => {
     priority,
     depart,
     assignTo,
-    person,
+    assignToPersonEmails,
     hodemail,
     ref_images,
     isChecked,
@@ -64,6 +84,7 @@ router.post("/create-task", async (req, res) => {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
+  const assignToEmails = Array.isArray(assignToPersonEmails)? assignToPersonEmails.join(", ") : assignToPersonEmails;
   const sql = `
         INSERT INTO Created_task (
             Ax_Brief, Collection_Name, References_Image, Project, Assign_Name,
@@ -79,7 +100,7 @@ router.post("/create-task", async (req, res) => {
     ref_images,
     project,
     assignTo,
-    person,
+    assignToEmails,
     hodemail,
     no_of_qty,
     depart,

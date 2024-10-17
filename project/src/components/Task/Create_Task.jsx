@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "../Sidebar";
 import Header from "../Header";
 import Select from "react-select";
-
+import axios from "axios";
 function CreateTask() {
   const [axBriefMapping, setAxBriefMapping] = useState({});
   const [briefOptions, setBriefOptions] = useState([]);
@@ -46,7 +46,7 @@ function CreateTask() {
   const [no_of_qty, setNo_of_qty] = useState("");
   const [priority, setPriority] = useState("medium");
   const [ref_images, setRef_images] = useState("no");
-  const [assignTo, setassignTo] = useState("");
+  const [assignTo, setassignTo] = useState(localStorage.getItem("Email") || "");
   const [person, setPerson] = useState("");
   const [hodemail, setHodemail] = useState("");
   const [isUrgent, setIsUrgent] = useState(false);
@@ -157,8 +157,16 @@ function CreateTask() {
     console.log(person);
     console.log(hodemail);
     console.log(priority);
+    console.log(assignToPersonEmails,"kookoko")
     console.log(ref_images);
     console.log(isChecked);
+  };
+
+
+  const handleEmailChange = (index, value) => {
+    const updatedEmails = [...assignToPersonEmails];
+    updatedEmails[index] = value;
+    setAssignToPersonEmails(updatedEmails);
   };
 
   // const remainingDays = calculateRemainingDays(target_date);
@@ -185,7 +193,7 @@ function CreateTask() {
         target_date,
         depart,
         assignTo,
-        person,
+        assignToPersonEmails,
         hodemail,
         priority,
         ref_images,
@@ -220,16 +228,46 @@ function CreateTask() {
         setTarget_date("");
         setdepart("");
         setassignTo("");
-        setPerson("");
+        setAssignToPersonEmails("");
         setHodemail("");
         setPriority("");
         setRef_images("");
         setIsChecked(false);
+
+
+        try{
+          const response = await axios.post('http://localhost:8081/api/send-email', {
+            assignToEmail: assignTo,
+            assignToPersonEmails: assignToPersonEmails,
+            hodemail: hodemail,
+            ax_brief: ax_brief,
+            collection_name: collection_name,
+            project: project,
+            no_of_qty: no_of_qty,
+            assign_date: assign_date,
+            target_date: target_date,
+            priority: priority,
+            
+        });
+        console.log(response)
       } catch (error) {
+        console.error(error);
+        setError("An error occurred while send emails");
+      }
+      }
+      catch (error) {
         console.error(error);
         setError("An error occurred while creating the task");
       }
     };
+  };
+
+  const [assignToCount, setAssignToCount] = useState(1);
+  const [assignToPersonEmails, setAssignToPersonEmails] = useState(Array(assignToCount).fill(""));
+  const handleAssignToCountChange = (selectedOption) => {
+    const count = selectedOption.value;
+    setAssignToCount(count);
+    setAssignToPersonEmails(Array(count).fill("")); 
   };
   const deptOptions = [
     { value: "cad", label: "CAD" },
@@ -499,30 +537,57 @@ function CreateTask() {
                 />
               </div>
 
-              <div className="flex flex-col lg:flex-row lg:space-x-4 py-4">
-                <label
-                  className={`block text-base font-bold ${
-                     theme === "light" ? "text-gray-700" : "text-gray-200"
-                   } w-full lg:w-1/5 px-2`}
-                  htmlFor="targetDate"
-                >
-                  Person Email
-                </label>
-                <input
-                  type="email"
-                  id="personemail"
-                  value={person}
-                  onChange={(e) => setPerson(e.target.value)}
-                  className={`mt-2 lg:mt-0 w-full lg:w-4/5 border rounded py-2 px-3 leading-tight focus:outline-none ${
-                    theme === "light"
-                      ? "bg-gray-100 text-gray-700 border-gray-300"
-                      : "bg-gray-700 text-gray-100 border-gray-600"
-                  }`}
-                  placeholder="Enter valid email ID"
-                  required
-                />
-              </div>
 
+              
+              <div className="flex flex-col lg:flex-row lg:space-x-4 py-4 " >
+                  <label
+                       className={`block mt-4 text-base font-bold ${
+                        theme === "light" ? "text-gray-700" : "text-gray-200"
+                      } w-full lg:w-1/5 px-2`}
+                    htmlFor="axBriefId"
+                  >
+                    No of Persons
+                  </label>
+                  <Select
+                    styles={customStyles}
+                    options={[1, 2, 3, 4, 5, 6].map((num) => ({
+                      value: num,
+                      label: num,
+                    }))}
+                    onChange={handleAssignToCountChange}
+                    className={`mt-2 lg:mt-0 w-full lg:w-4/5 ${
+                      theme === "light"
+                        ? "border-gray-300 text-black "
+                        : "bg-gray-700 text-gray-100 border-gray-600"
+                    } w-full md:w-3/5`}
+                  />
+                </div>
+
+                {Array.from({ length: assignToCount }).map((_, index) => (
+                 
+                 <div className="flex flex-col lg:flex-row lg:space-x-4 py-4"  key={index}>
+                 <label
+                      className={`block text-base font-bold ${
+                       theme === "light" ? "text-gray-700" : "text-gray-200"
+                     } w-full lg:w-1/5 px-2`}
+                 >
+                   Assign Person {index + 1} Email
+                 </label>
+
+                 <input
+                   type="email"
+                   value={assignToPersonEmails[index] || ""}
+                   onChange={(e) => handleEmailChange(index, e.target.value)}
+                   className={`mt-2 lg:mt-0 w-full lg:w-4/5 border rounded py-2 px-3 leading-tight focus:outline-none ${
+                     theme === "light"
+                       ? "bg-gray-100 text-gray-700 border-gray-300"
+                       : "bg-gray-700 text-gray-100 border-gray-600"
+                   }`}
+                   placeholder="Enter valid email ID"
+                   required
+                 />
+               </div>
+             ))}
               <div className="flex flex-col lg:flex-row lg:space-x-4 py-4">
                 <label
                   className={`block text-base font-bold ${

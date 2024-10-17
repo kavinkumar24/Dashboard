@@ -19,26 +19,38 @@ function Daily_Report() {
     ])
       .then(([deptMappings, pending]) => {
         const normalizedMappings = Object.entries(deptMappings).reduce((acc, [key, value]) => {
+          // Process "to" departments
           if (value.to) {
             value.to.forEach((dept) => {
-              acc[dept] = key;
+              acc[dept] = key; // Map each "to" department to its key
             });
           }
+  
+          // Process "from" departments
+          if (value.from) {
+            value.from.forEach((dept) => {
+              acc[dept] = key; // Map each "from" department to its key as well
+            });
+          }
+  
           return acc;
         }, {});
-
+  
         setDepartmentMappings(normalizedMappings);
         setPendingData(Array.isArray(pending) ? pending : []);
         setIsDataLoaded(true);
       })
       .catch((error) => console.error("Error fetching data:", error));
   }, [theme]);
-
+  
   const isValidDate = (dateString) => {
     const date = new Date(dateString);
     return !isNaN(date.getTime()) && date.getFullYear() > 1900;
   };
 
+  useEffect(()=>{
+    console.log("kkpk",pendingData.filter((i)=> i.TODEPT === "U1PHOTO"));
+  },[pendingData])
   const filteredPendingData = pendingData.filter((item) => isValidDate(item.RECVDATE1));
 
   const getDaysRange = (recvdate1) => {
@@ -61,7 +73,12 @@ function Daily_Report() {
   const groupedData = filteredPendingData.reduce((acc, item) => {
     const range = getDaysRange(item.Textbox56);
     const toDept = item.TODEPT;
+    if(toDept === 'U1PHOTO'){
+      console.log(toDept)
+    }
     const departmentName = departmentMappings[toDept] || "Unknown";
+    if(departmentName ==='PHOTO')
+    console.log(departmentName,"kkkk;l")
 
     if (!acc[departmentName]) {
       acc[departmentName] = {
@@ -273,7 +290,8 @@ function Daily_Report() {
                     </div>
                   </div>
                 </div>
-              </div>           
+              </div>    
+                     {/*  loading skeleton end*/}
               </div>
             </div>
           ) : (

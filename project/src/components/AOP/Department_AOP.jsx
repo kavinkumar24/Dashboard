@@ -72,8 +72,9 @@ function Department_AOP() {
   const [calender, setcalender] = useState(false);
   const [filter_on, setFilter_on] = useState(false);
   const [achieved, setAchieved] = useState({});
-  const[AllowedProjects, setAllowedProjects] = useState(ALLOWED_PROJECTS);
-  const[sortedAllowedTargets,setSortedAllowedTargets ] = useState(ALLOWED_PROJECTS);
+  const [AllowedProjects, setAllowedProjects] = useState(ALLOWED_PROJECTS);
+  const [sortedAllowedTargets, setSortedAllowedTargets] =
+    useState(ALLOWED_PROJECTS);
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -123,33 +124,39 @@ function Department_AOP() {
   useEffect(() => {
     const fetchData = async () => {
       setisloading(true);
-  
+
       const defaultDepartments = DEFAULT_DEPARTMENTS.map((dept) => ({
         name: dept,
       }));
       setDepartments(defaultDepartments);
-  
+
       try {
-        const [pendingDataResponse, pendingSumResponse, departmentMappingsResponse, targetsResponse, productionDataResponse] = await Promise.all([
+        const [
+          pendingDataResponse,
+          pendingSumResponse,
+          departmentMappingsResponse,
+          targetsResponse,
+          productionDataResponse,
+        ] = await Promise.all([
           fetch("http://localhost:8081/api/pending_data"),
           fetch("http://localhost:8081/api/pending-sum"),
           fetch("http://localhost:8081/api/department-mappings"),
           fetch("http://localhost:8081/api/targets"),
           fetch("http://localhost:8081/api/production_data"),
         ]);
-  
+
         const pendingData = await pendingDataResponse.json();
         console.log("Pending Data Response:", pendingData);
         setPendingData(pendingData);
-  
+
         const pendingSumData = await pendingSumResponse.json();
         console.log("Pending Sum Data:", pendingSumData);
         setPendingSumData(pendingSumData);
-  
+
         const departmentMappings = await departmentMappingsResponse.json();
         console.log("Department Mappings Response:", departmentMappings);
         setDepartmentMappings(departmentMappings);
-  
+
         const targetsData = await targetsResponse.json();
         console.log("Targets Data:", targetsData);
         const targetsMap = targetsData.reduce((acc, item) => {
@@ -157,7 +164,7 @@ function Department_AOP() {
           return acc;
         }, {});
         setTargets(targetsMap);
-  
+
         const productionData = await productionDataResponse.json();
         console.log("Production Data Response:", productionData);
         setProductionData(productionData);
@@ -167,10 +174,9 @@ function Department_AOP() {
         setisloading(false);
       }
     };
-  
+
     fetchData();
   }, []);
-  
 
   const getWeekOfMonth = (date) => {
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -178,7 +184,6 @@ function Department_AOP() {
     return weekOfMonth;
   };
 
-  
   const fetchData = async (selectedDeptName) => {
     try {
       const response = await fetch(
@@ -186,37 +191,37 @@ function Department_AOP() {
       );
       const data = await response.json();
       console.log("Raw Filtered Production Data:", data);
-  
+
       const departmentMapping = departmentMappings[selectedDeptName] || {};
       const photoMapping = departmentMappings["PHOTO"] || {};
       const fromDepartments = departmentMapping.from || [];
       const toDepartments = departmentMapping.to || [];
       const photoFromDepartments = photoMapping.from || [];
       const photoToDepartments = photoMapping.to || [];
-  
+
       const achievedCounts = ALLOWED_PROJECTS.reduce((acc, project) => {
         acc[project.toUpperCase()] = 0; // Initialize each project count to 0
         return acc;
       }, {});
-  
+
       data.forEach((item) => {
         const fromDept = item["From Dept"]?.toUpperCase() || "";
         const toDept = item["To Dept"]?.toUpperCase() || "";
         const project = item["Project"]?.toUpperCase() || ""; // Get the project name
-  
+
         // Check if the fromDept and toDept match the selected department mappings
         const isMatchingDept =
           fromDepartments.includes(fromDept) && toDepartments.includes(toDept);
-  
+
         // Check if the fromDept and toDept match the PHOTO mappings
         const isMatchingPhoto =
           photoFromDepartments.includes(fromDept) &&
           photoToDepartments.includes(toDept);
-  
+
         // Calculate the week number based on uploadedDateTime
         const uploadedDate = new Date(item.uploadedDateTime);
         const weekNumber = getWeekOfMonth(uploadedDate);
-  
+
         // If either department mapping matches, check allowed projects
         if (
           (isMatchingDept || isMatchingPhoto) &&
@@ -224,10 +229,10 @@ function Department_AOP() {
         ) {
           achievedCounts[project] += 1;
           // You can also store the week number if needed for further processing
-          item.weekNumber = weekNumber; // Optional: Add the week number to the item
+          item.weekNumber = weekNumber;
         }
       });
-  
+
       console.log("Achieved Counts:", achievedCounts);
       setAchieved(achievedCounts); // Update the achieved state
       setRawFilteredData(data);
@@ -235,7 +240,6 @@ function Department_AOP() {
       console.error("Error fetching data:", error);
     }
   };
-  
 
   const [rawFilteredPendingData, setRawFilteredPendingData] = useState([]);
   const [groupedData, setGroupedData] = useState({});
@@ -356,50 +360,53 @@ function Department_AOP() {
 
     return aggregatedData;
   };
-
-  const updateTableData = () => {
+  const updateTableData = async () => {
     // Normalize pending data
     const normalizedData = pendingData.map((item) => ({
       ...item,
       PLTCODE1: item.PLTCODE1?.toUpperCase() || "",
-      Wip: pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)?.total_quantity || 0,
+      Wip:
+        pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)
+          ?.total_quantity || 0,
     }));
-  
+
     // Check if a department is selected
     if (!selectedDeptName) {
       setTableData([]);
       return;
     }
-  
+
     const deptMapping = departmentMappings[selectedDeptName];
     if (deptMapping && deptMapping.to) {
-      const fromDeptSet = new Set(deptMapping.from.map((dept) => dept.toUpperCase()));
-      const toDeptSet = new Set(deptMapping.to.map((dept) => dept.toUpperCase()));
-  
-      // Aggregate project totals
+      const fromDeptSet = new Set(
+        deptMapping.from.map((dept) => dept.toUpperCase())
+      );
+      const toDeptSet = new Set(
+        deptMapping.to.map((dept) => dept.toUpperCase())
+      );
+
       const projectTotals = rawFilteredData.reduce((acc, item) => {
         const fromDept = item["From Dept"]?.toUpperCase() || "";
         const toDept = item["To Dept"]?.toUpperCase() || "";
-  
+
         if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
           const project = item.Project || "Unknown Project";
-          acc[project] = (acc[project] || 0) + 1; // Increment project count
+          acc[project] = (acc[project] || 0) + 1;
         }
-  
+
         return acc;
       }, {});
-  
+
       const pltcodePendingData = aggregatePendingData(rawFilteredPendingData);
-  
-      // Filter pending data based on department selection
+
       const filteredPendingData = normalizedData.filter((item) => {
         return (
           toDeptSet.has(item.TODEPT?.toUpperCase() || "") &&
-          (selectedDepartments.length === 0 || selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
+          (selectedDepartments.length === 0 ||
+            selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
         );
       });
-  
-      // Initialize counts and aggregates
+
       const pltcodeCounts = filteredPendingData.reduce((acc, item) => {
         const pltcode = item.PLTCODE1;
         if (!acc[pltcode]) {
@@ -410,53 +417,109 @@ function Department_AOP() {
         acc[pltcode].totalWIP = item.Wip;
         return acc;
       }, {});
-  
-      const achievedCounts = achieved; // Access achieved counts from state
-  
-      // Create updated table data for allowed projects
-      const updatedTableData = AllowedProjects.map((project) => {
+
+      const achievedCounts = achieved;
+
+      // Calculate week number based on the upload date
+      const getWeekNumber = (uploadDate) => {
+        const date = new Date(uploadDate);
+        const dayOfMonth = date.getDate();
+        return Math.ceil(dayOfMonth / 7); // Dividing by 7 to get the week of the month
+      };
+
+      // Fetch existing data for summing with new data
+      let existingData = [];
+      try {
+        const existingResponse = await fetch(
+          "http://localhost:8081/api/project-data"
+        );
+        if (!existingResponse.ok) {
+          throw new Error("Failed to fetch existing data from the database");
+        }
+        existingData = await existingResponse.json();
+      } catch (error) {
+        console.error("Error fetching existing data:", error);
+      }
+
+const updatedTableData = AllowedProjects.map((project) => {
         const pltcode = project.toUpperCase();
         const totalJCPDSCWQTY1 = pltcodePendingData[pltcode] || 0;
         const target = Math.round(groupedData[pltcode]) || 0;
         const achieved = achievedCounts[pltcode] || 0;
-  
+
         const pending = target - achieved;
-        const weekCounts = projectTotals[pltcode] || 0; // Count of projects for this PLTCODE
-  
+        const weekCounts = projectTotals[pltcode] || 0;
+
         const percentageAchieved = target > 0 ? (weekCounts / target) * 100 : 0;
-  
+
+        // Determine which week column to update based on uploadeDatetime
+        const weekNumber = getWeekNumber(new Date()); // Use current date or specific date for the project
+
+        // Check if there's existing data for this pltcode and sum the values
+        const existingEntry = existingData.find(
+          (item) => item.PLTCODE1 === pltcode
+        );
+
+        const weekData = {
+          Week1: weekNumber === 1 ? weekCounts : existingEntry?.Week1 || 0,
+          Week2: weekNumber === 2 ? weekCounts : existingEntry?.Week2 || 0,
+          Week3: weekNumber === 3 ? weekCounts : existingEntry?.Week3 || 0,
+          Week4: weekNumber === 4 ? weekCounts : existingEntry?.Week4 || 0,
+        };
+
+        // Sum the new values with the existing ones if available
+        const summedAchieved = achieved + (existingEntry?.Achieved || 0);
+        const summedPending = target - summedAchieved;
+        const summedWip =
+          pltcodeCounts[pltcode]?.totalWIP + (existingEntry?.Wip || 0);
+
         return {
           PLTCODE1: pltcode,
           TotalJCPDSCWQTY1: totalJCPDSCWQTY1,
           Target: target,
-          Achieved: achieved,
-          Pending: pending,
+          Achieved: summedAchieved,
+          Pending: summedPending,
           PercentageAchieved: percentageAchieved,
-          Wip: pltcodeCounts[pltcode]?.totalWIP || 0,
-          AOP: target,
-          completed: weekCounts, // Simplified to just weekCounts for clarity
-          Week1: weekCounts, // Assuming all counts map to Week 1 for simplicity
-          Week2: 0,
-          Week3: 0,
-          Week4: 0,
+          Wip: summedWip,
+          completed: weekCounts,
+          Dept: selectedDeptName, // Add selectedDeptName as Dept
+          ...weekData, // Spread the calculated week data
         };
       })
-      .filter((data) => data.Target !== 0)
-      .sort((a, b) => a.PLTCODE1.localeCompare(b.PLTCODE1));
-  
-      // Calculate total percentage achieved
+        .filter((data) => data.Target !== 0)
+        .sort((a, b) => a.PLTCODE1.localeCompare(b.PLTCODE1));
+
       const totalPercentage = updatedTableData.reduce(
         (acc, item) => acc + (parseFloat(item.PercentageAchieved) || 0),
         0
       );
-  
+
       setTotal(totalPercentage);
       setTableData(updatedTableData);
+
+      try {
+        const response = await fetch("http://localhost:8081/api/project-data", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedTableData),
+        });
+
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+
+        const responseData = await response.json();
+        console.log("Data successfully saved to the database:", responseData);
+      } catch (error) {
+        console.error("Error saving data to the database:", error);
+      }
     } else {
       setTableData([]);
     }
   };
-  
+
   const handleDepartmentChange = (selectedOptions) => {
     if (selectedOptions.length === 0) {
       setSelectedDepartments([]);
@@ -558,10 +621,6 @@ function Department_AOP() {
           : "bg-gray-800 text-gray-100"
       }`}
     >
-      
-
-
-
       <Sidebar theme={theme} className="w-1/6 h-screen p-0" />
 
       <div className="flex-1 flex flex-col p-0">
@@ -660,215 +719,281 @@ function Department_AOP() {
           </div>
 
           {/* Display Table */}
-         {/* Display Table */}
-<div
-  className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-10 my-5 ${
-    theme === "light" ? "bg-white" : "bg-gray-900"
-  } max-w-[90%] md:max-w-lg lg:max-w-4xl xl:max-w-screen-lg 2xl:max-w-screen-8xl`}
->
-  
-  {selectedDeptName && (
-    <>
-      <h2 className="text-xl font-bold mb-4">
-        Department: {selectedDeptName}
-      </h2>
-
-      <h2 className="text-sm font-normal mb-4 p-1">
-        Percentage: {total.toFixed(2)}%
-      </h2>
-      <div className="overflow-x-auto">
-        <table className={`min-w-full divide-y ${theme === "light" ? "divide-gray-200" : "divide-gray-700"} table-auto`}>
-          <thead
-            className={`${
-              theme === "light" ? "bg-gray-200" : "bg-gray-700"
-            } text-white`}
+          {/* Display Table */}
+          <div
+            className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-10 my-5 ${
+              theme === "light" ? "bg-white" : "bg-gray-900"
+            } max-w-[90%] md:max-w-lg lg:max-w-4xl xl:max-w-screen-lg 2xl:max-w-screen-8xl`}
           >
-            <tr>
-              <th
-                rowSpan="2"
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-300"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                Project wise
-              </th>
-              <th
-                rowSpan="2"
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-300"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                Project wise Target
-              </th>
-              <th
-                colSpan="2"
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-400"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                AOP Achieved
-              </th>
-              <th
-                colSpan="1"
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-400"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                Assignment AOP
-              </th>
-              <th
-                rowSpan="2"
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-300"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                {selectedDeptName}
-              </th>
-              <th
-                rowSpan="2"
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-300"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                {selectedDeptName} Completed
-              </th>
-              <th
-                rowSpan="2"
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-300"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                Weekly Percentage
-              </th>
-              <th
-                rowSpan="2"
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-300"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                Week1
-              </th>
-              <th
-                rowSpan="2"
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-300"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                Week2
-              </th>
-              <th
-                rowSpan="2"
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-300"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                Week3
-              </th>
-              <th
-                rowSpan="2"
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-300"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                Week4
-              </th>
-            </tr>
-            <tr>
-              <th
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-400"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                Achieved
-              </th>
-              <th
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-400"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                Pending
-              </th>
-              <th
-                className={`px-6 py-3 border-b ${
-                  theme === "light"
-                    ? "text-gray-800 border-gray-400"
-                    : "text-gray-300 border-gray-600"
-                }`}
-              >
-                WIP
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {tableData.map((row, index) => (
-              <tr
-                key={index}
-                onClick={() => handleRowClick(row.PLTCODE1)}
-                className={`hover:transition cursor-pointer ${
-                  index % 2 === 0
-                    ? theme === "light"
-                      ? "bg-gray-100 hover:bg-gray-400 hover:text-white"
-                      : "bg-gray-600 hover:bg-gray-900"
-                    : theme === "light"
-                    ? "bg-white hover:bg-gray-400 hover:text-white"
-                    : "bg-gray-800 hover:bg-gray-900"
-                }`}
-              >
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>{row.PLTCODE1}</td>
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>{row.Target}</td>
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>
-                  {achieved[row.PLTCODE1] || 0}
-                </td>
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>{row.Pending}</td>
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>{row.Wip}</td>
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>
-                  {row.TotalJCPDSCWQTY1}
-                </td>
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>
-                  {row.completed}
-                </td>
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>
-                  {row.PercentageAchieved.toFixed(2)}%
-                </td>
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>-</td>
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>-</td>
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>{row.Week1}</td>
-                <td className={`px-6 py-4 border-b ${theme === "dark" ? "border-gray-600" : ""}`}>-</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </>
-  )}
-</div>
+            {selectedDeptName && (
+              <>
+                <h2 className="text-xl font-bold mb-4">
+                  Department: {selectedDeptName}
+                </h2>
 
+                <h2 className="text-sm font-normal mb-4 p-1">
+                  Percentage: {total.toFixed(2)}%
+                </h2>
+                <div className="overflow-x-auto">
+                  <table
+                    className={`min-w-full divide-y ${
+                      theme === "light" ? "divide-gray-200" : "divide-gray-700"
+                    } table-auto`}
+                  >
+                    <thead
+                      className={`${
+                        theme === "light" ? "bg-gray-200" : "bg-gray-700"
+                      } text-white`}
+                    >
+                      <tr>
+                        <th
+                          rowSpan="2"
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-300"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          Project wise
+                        </th>
+                        <th
+                          rowSpan="2"
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-300"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          Project wise Target
+                        </th>
+                        <th
+                          colSpan="2"
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-400"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          AOP Achieved
+                        </th>
+                        <th
+                          colSpan="1"
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-400"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          Assignment AOP
+                        </th>
+                        <th
+                          rowSpan="2"
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-300"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          {selectedDeptName}
+                        </th>
+                        <th
+                          rowSpan="2"
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-300"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          {selectedDeptName} Completed
+                        </th>
+                        <th
+                          rowSpan="2"
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-300"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          Weekly Percentage
+                        </th>
+                        <th
+                          rowSpan="2"
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-300"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          Week1
+                        </th>
+                        <th
+                          rowSpan="2"
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-300"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          Week2
+                        </th>
+                        <th
+                          rowSpan="2"
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-300"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          Week3
+                        </th>
+                        <th
+                          rowSpan="2"
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-300"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          Week4
+                        </th>
+                      </tr>
+                      <tr>
+                        <th
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-400"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          Achieved
+                        </th>
+                        <th
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-400"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          Pending
+                        </th>
+                        <th
+                          className={`px-6 py-3 border-b ${
+                            theme === "light"
+                              ? "text-gray-800 border-gray-400"
+                              : "text-gray-300 border-gray-600"
+                          }`}
+                        >
+                          WIP
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tableData.map((row, index) => (
+                        <tr
+                          key={index}
+                          onClick={() => handleRowClick(row.PLTCODE1)}
+                          className={`hover:transition cursor-pointer ${
+                            index % 2 === 0
+                              ? theme === "light"
+                                ? "bg-gray-100 hover:bg-gray-400 hover:text-white"
+                                : "bg-gray-600 hover:bg-gray-900"
+                              : theme === "light"
+                              ? "bg-white hover:bg-gray-400 hover:text-white"
+                              : "bg-gray-800 hover:bg-gray-900"
+                          }`}
+                        >
+                          <td
+                            className={`px-6 py-4 border-b ${
+                              theme === "dark" ? "border-gray-600" : ""
+                            }`}
+                          >
+                            {row.PLTCODE1}
+                          </td>
+                          <td
+                            className={`px-6 py-4 border-b ${
+                              theme === "dark" ? "border-gray-600" : ""
+                            }`}
+                          >
+                            {row.Target}
+                          </td>
+                          <td
+                            className={`px-6 py-4 border-b ${
+                              theme === "dark" ? "border-gray-600" : ""
+                            }`}
+                          >
+                            {achieved[row.PLTCODE1] || 0}
+                          </td>
+                          <td
+                            className={`px-6 py-4 border-b ${
+                              theme === "dark" ? "border-gray-600" : ""
+                            }`}
+                          >
+                            {row.Pending}
+                          </td>
+                          <td
+                            className={`px-6 py-4 border-b ${
+                              theme === "dark" ? "border-gray-600" : ""
+                            }`}
+                          >
+                            {row.Wip}
+                          </td>
+                          <td
+                            className={`px-6 py-4 border-b ${
+                              theme === "dark" ? "border-gray-600" : ""
+                            }`}
+                          >
+                            {row.TotalJCPDSCWQTY1}
+                          </td>
+                          <td
+                            className={`px-6 py-4 border-b ${
+                              theme === "dark" ? "border-gray-600" : ""
+                            }`}
+                          >
+                            {row.completed}
+                          </td>
+                          <td
+                            className={`px-6 py-4 border-b ${
+                              theme === "dark" ? "border-gray-600" : ""
+                            }`}
+                          >
+                            {row.PercentageAchieved.toFixed(2)}%
+                          </td>
+                          <td
+                            className={`px-6 py-4 border-b ${
+                              theme === "dark" ? "border-gray-600" : ""
+                            }`}
+                          >
+                            -
+                          </td>
+                          <td
+                            className={`px-6 py-4 border-b ${
+                              theme === "dark" ? "border-gray-600" : ""
+                            }`}
+                          >
+                            -
+                          </td>
+                          <td
+                            className={`px-6 py-4 border-b ${
+                              theme === "dark" ? "border-gray-600" : ""
+                            }`}
+                          >
+                            {row.Week3}
+                          </td>
+                          <td
+                            className={`px-6 py-4 border-b ${
+                              theme === "dark" ? "border-gray-600" : ""
+                            }`}
+                          >
+                            -
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
         </main>
       </div>
     </div>
