@@ -315,6 +315,8 @@ function Department_AOP() {
         console.error("Error fetching raw filtered pending data:", error);
       });
   }
+
+  const[getMonth, setMonth] = useState(0);
   const groupDataByDept = (data) => {
     if (Array.isArray(data)) {
       return data.reduce((acc, item) => {
@@ -361,164 +363,186 @@ function Department_AOP() {
     return aggregatedData;
   };
   const updateTableData = async () => {
+    const getWeekNumber = (uploadDate) => {
+        const date = new Date(uploadDate);
+        const dayOfMonth = date.getDate();
+        return Math.ceil(dayOfMonth / 7); // Dividing by 7 to get the week of the month
+    };
+
     // Normalize pending data
     const normalizedData = pendingData.map((item) => ({
-      ...item,
-      PLTCODE1: item.PLTCODE1?.toUpperCase() || "",
-      Wip:
-        pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)
-          ?.total_quantity || 0,
+        ...item,
+        PLTCODE1: item.PLTCODE1?.toUpperCase() || "",
+        Wip: pendingSumData.find((p) => p.PLTCODE1 === item.PLTCODE1)?.total_quantity || 0,
     }));
 
     // Check if a department is selected
     if (!selectedDeptName) {
-      setTableData([]);
-      return;
+        setTableData([]);
+        return;
     }
 
     const deptMapping = departmentMappings[selectedDeptName];
     if (deptMapping && deptMapping.to) {
-      const fromDeptSet = new Set(
-        deptMapping.from.map((dept) => dept.toUpperCase())
-      );
-      const toDeptSet = new Set(
-        deptMapping.to.map((dept) => dept.toUpperCase())
-      );
+        const fromDeptSet = new Set(deptMapping.from.map((dept) => dept.toUpperCase()));
+        const toDeptSet = new Set(deptMapping.to.map((dept) => dept.toUpperCase()));
 
-      const projectTotals = rawFilteredData.reduce((acc, item) => {
-        const fromDept = item["From Dept"]?.toUpperCase() || "";
-        const toDept = item["To Dept"]?.toUpperCase() || "";
+        const projectTotals = rawFilteredData.reduce((acc, item) => {
+            const fromDept = item["From Dept"]?.toUpperCase() || "";
+            const toDept = item["To Dept"]?.toUpperCase() || "";
 
-        if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
-          const project = item.Project || "Unknown Project";
-          acc[project] = (acc[project] || 0) + 1;
-        }
+            if (fromDeptSet.has(fromDept) && toDeptSet.has(toDept)) {
+                const project = item.Project || "Unknown Project";
+                acc[project] = (acc[project] || 0) + 1;
+            }
 
-        return acc;
-      }, {});
+            return acc;
+        }, {});
 
-      const pltcodePendingData = aggregatePendingData(rawFilteredPendingData);
+        const pltcodePendingData = aggregatePendingData(rawFilteredPendingData);
 
-      const filteredPendingData = normalizedData.filter((item) => {
-        return (
-          toDeptSet.has(item.TODEPT?.toUpperCase() || "") &&
-          (selectedDepartments.length === 0 ||
-            selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
-        );
-      });
-
-      const pltcodeCounts = filteredPendingData.reduce((acc, item) => {
-        const pltcode = item.PLTCODE1;
-        if (!acc[pltcode]) {
-          acc[pltcode] = { count: 0, totalJCPDSCWQTY1: 0, totalWIP: 0 };
-        }
-        acc[pltcode].count += 1;
-        acc[pltcode].totalJCPDSCWQTY1 += item.JCPDSCWQTY1 || 0;
-        acc[pltcode].totalWIP = item.Wip;
-        return acc;
-      }, {});
-
-      const achievedCounts = achieved;
-
-      // Calculate week number based on the upload date
-      const getWeekNumber = (uploadDate) => {
-        const date = new Date(uploadDate);
-        const dayOfMonth = date.getDate();
-        return Math.ceil(dayOfMonth / 7); // Dividing by 7 to get the week of the month
-      };
-
-      // Fetch existing data for summing with new data
-      let existingData = [];
-      try {
-        const existingResponse = await fetch(
-          "http://localhost:8081/api/project-data"
-        );
-        if (!existingResponse.ok) {
-          throw new Error("Failed to fetch existing data from the database");
-        }
-        existingData = await existingResponse.json();
-      } catch (error) {
-        console.error("Error fetching existing data:", error);
-      }
-
-const updatedTableData = AllowedProjects.map((project) => {
-        const pltcode = project.toUpperCase();
-        const totalJCPDSCWQTY1 = pltcodePendingData[pltcode] || 0;
-        const target = Math.round(groupedData[pltcode]) || 0;
-        const achieved = achievedCounts[pltcode] || 0;
-
-        const pending = target - achieved;
-        const weekCounts = projectTotals[pltcode] || 0;
-
-        const percentageAchieved = target > 0 ? (weekCounts / target) * 100 : 0;
-
-        // Determine which week column to update based on uploadeDatetime
-        const weekNumber = getWeekNumber(new Date()); // Use current date or specific date for the project
-
-        // Check if there's existing data for this pltcode and sum the values
-        const existingEntry = existingData.find(
-          (item) => item.PLTCODE1 === pltcode
-        );
-
-        const weekData = {
-          Week1: weekNumber === 1 ? weekCounts : existingEntry?.Week1 || 0,
-          Week2: weekNumber === 2 ? weekCounts : existingEntry?.Week2 || 0,
-          Week3: weekNumber === 3 ? weekCounts : existingEntry?.Week3 || 0,
-          Week4: weekNumber === 4 ? weekCounts : existingEntry?.Week4 || 0,
-        };
-
-        // Sum the new values with the existing ones if available
-        const summedAchieved = achieved + (existingEntry?.Achieved || 0);
-        const summedPending = target - summedAchieved;
-        const summedWip =
-          pltcodeCounts[pltcode]?.totalWIP + (existingEntry?.Wip || 0);
-
-        return {
-          PLTCODE1: pltcode,
-          TotalJCPDSCWQTY1: totalJCPDSCWQTY1,
-          Target: target,
-          Achieved: summedAchieved,
-          Pending: summedPending,
-          PercentageAchieved: percentageAchieved,
-          Wip: summedWip,
-          completed: weekCounts,
-          Dept: selectedDeptName, // Add selectedDeptName as Dept
-          ...weekData, // Spread the calculated week data
-        };
-      })
-        .filter((data) => data.Target !== 0)
-        .sort((a, b) => a.PLTCODE1.localeCompare(b.PLTCODE1));
-
-      const totalPercentage = updatedTableData.reduce(
-        (acc, item) => acc + (parseFloat(item.PercentageAchieved) || 0),
-        0
-      );
-
-      setTotal(totalPercentage);
-      setTableData(updatedTableData);
-
-      try {
-        const response = await fetch("http://localhost:8081/api/project-data", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(updatedTableData),
+        const filteredPendingData = normalizedData.filter((item) => {
+            return (
+                toDeptSet.has(item.TODEPT?.toUpperCase() || "") &&
+                (selectedDepartments.length === 0 || selectedDepartments.includes(item.PLTCODE1?.toUpperCase()))
+            );
         });
 
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
+        const pltcodeCounts = filteredPendingData.reduce((acc, item) => {
+            const pltcode = item.PLTCODE1;
+            if (!acc[pltcode]) {
+                acc[pltcode] = { count: 0, totalJCPDSCWQTY1: 0, totalWIP: 0 };
+            }
+            acc[pltcode].count += 1;
+            acc[pltcode].totalJCPDSCWQTY1 += item.JCPDSCWQTY1 || 0;
+            acc[pltcode].totalWIP = item.Wip;
+            return acc;
+        }, {});
+
+        const achievedCounts = achieved;
+
+        // Fetch existing data for summing with new data
+        let existingData = [];
+        try {
+            const existingResponse = await fetch("http://localhost:8081/aop/WeeklyData");
+            if (!existingResponse.ok) {
+                throw new Error("Failed to fetch existing data from the database");
+            }
+            existingData = await existingResponse.json();
+            console.log("Existing Data:", existingData);
+            
+        } catch (error) {
+            console.error("Error fetching existing data:", error);
         }
 
-        const responseData = await response.json();
-        console.log("Data successfully saved to the database:", responseData);
-      } catch (error) {
-        console.error("Error saving data to the database:", error);
-      }
+        // Ensure existingData is an array
+        if (!Array.isArray(existingData)) {
+            console.error("existingData is not an array:", existingData);
+            existingData = [];  // Set it to an empty array to prevent further errors
+        }
+
+        // Fetch weekly data from the new API
+        let weeklyData = [];
+        try {
+            const weeklyResponse = await fetch("http://localhost:8081/aop/WeeklyData");
+            if (!weeklyResponse.ok) {
+                throw new Error("Failed to fetch weekly data");
+            }
+            weeklyData = await weeklyResponse.json();
+            if (weeklyData[selectedDeptName]) {
+              const departmentData = weeklyData[selectedDeptName]; // Get the data for the selected department
+          
+              departmentData.forEach(item => {
+                  const monthName = item.Month_data; // Access Month_data
+                  if(monthName!=null){
+                    setMonth(monthName);
+                  }
+              });
+          } else {
+              console.log(`No data available for selected department: ${selectedDeptName}`);
+          }
+        } catch (error) {
+            console.error("Error fetching weekly data:", error);
+        }
+
+        const updatedTableData = AllowedProjects.map((project) => {
+            const pltcode = project.toUpperCase();
+            const totalJCPDSCWQTY1 = pltcodePendingData[pltcode] || 0;
+            const target = Math.round(groupedData[pltcode]) || 0;
+            const achieved = achievedCounts[pltcode] || 0;
+
+            const pending = target - achieved;
+            const weekCounts = projectTotals[pltcode] || 0;
+
+            const percentageAchieved = target > 0 ? (weekCounts / target) * 100 : 0;
+
+            // Determine which week column to update based on current week number
+            const weekNumber = getWeekNumber(new Date());
+
+            // Check if there's weekly data for this pltcode and the selected department
+            const deptData = weeklyData[selectedDeptName] || [];
+            const weeklyDataEntry = deptData.find((entry) => entry.PLTCODE1 === pltcode);
+
+            // Ensure the weeklyDataEntry is valid before proceeding
+            const weekData = weeklyDataEntry
+                ? {
+                    Week1: weeklyDataEntry.data[0]?.Week1 || 0,
+                    Week2: weeklyDataEntry.data[0]?.Week2 || 0,
+                    Week3: weeklyDataEntry.data[0]?.Week3 || 0,
+                    Week4: weeklyDataEntry.data[0]?.Week4 || 0,
+                }
+                : {
+                    Week1: 0,
+                    Week2: 0,
+                    Week3: 0,
+                    Week4: 0,
+                };
+
+            const existingEntry = existingData.find((item) => item.PLTCODE1 === pltcode);
+
+            const summedAchieved = achieved + (existingEntry?.Achieved || 0);
+            const summedPending = target - summedAchieved;
+            const summedWip = pltcodeCounts[pltcode]?.totalWIP + (existingEntry?.Wip || 0);
+            const currentWeekAchieved = weekData[`Week${weekNumber}`] || 0;
+            const weeklyPercentageAchieved = target > 0 ? (currentWeekAchieved / target) * 100 : 0;
+
+            console.log("hhh",weeklyPercentageAchieved)
+
+            
+            // Calculate total percentage for the month (based on all weeks)
+            const totalWeeklyAchieved = weekData.Week1 + weekData.Week2 + weekData.Week3 + weekData.Week4;
+            console.log("Total Weekly Achieved:", totalWeeklyAchieved);
+            const monthlyPercentageAchieved = target > 0 ? (totalWeeklyAchieved / target) * 100 : 0;
+            return {
+                PLTCODE1: pltcode,
+                TotalJCPDSCWQTY1: totalJCPDSCWQTY1,
+                Target: target,
+                Achieved: summedAchieved,
+                Pending: summedPending,
+                PercentageAchieved: percentageAchieved,
+                MonthlyPercentage: monthlyPercentageAchieved,
+                Wip: summedWip,
+                completed: weekCounts,
+                Dept: selectedDeptName,
+                ...weekData, // Spread the week data
+            };
+        })
+            .filter((data) => data.Target !== 0)
+            .sort((a, b) => a.PLTCODE1.localeCompare(b.PLTCODE1));
+
+        const totalPercentage = updatedTableData.reduce(
+            (acc, item) => acc + (parseFloat(item.PercentageAchieved) || 0),
+            0
+        );
+    
+
+        setTotal(totalPercentage);
+        setTableData(updatedTableData);
     } else {
-      setTableData([]);
+        setTableData([]);
     }
-  };
+};
+
 
   const handleDepartmentChange = (selectedOptions) => {
     if (selectedOptions.length === 0) {
@@ -730,17 +754,15 @@ const updatedTableData = AllowedProjects.map((project) => {
                 <h2 className="text-xl font-bold mb-4">
                   Department: {selectedDeptName}
                 </h2>
-<div className="flex  flex-1 justify-between">
-                <h2 className="text-sm font-normal mb-4 p-1">
-                  Weekly Percentage: {total.toFixed(2)}%
-                </h2>
-                <h2 className="text-sm font-normal mb-4 p-1">
-                  Monthly Percentage: {total.toFixed(2)}%
-                </h2>
+                <div className="flex  flex-1 justify-between">
+                  <h2 className="text-sm font-normal mb-4 p-1">
+                    Weekly Percentage: {total.toFixed(2)}%
+                  </h2>
+                  <h2 className="text-sm font-normal mb-4 p-1">
+                    <span className="text-blue-500 text-lg font-bold">{getMonth} </span>Monthly Percentage: {total.toFixed(2)}%
+                  </h2>
                 </div>
 
-                
-              
                 <div className="overflow-x-auto">
                   <table
                     className={`min-w-full divide-y ${
@@ -942,7 +964,7 @@ const updatedTableData = AllowedProjects.map((project) => {
                               theme === "dark" ? "border-gray-600" : ""
                             }`}
                           >
-                            {row.Wip? row.Wip : 0}
+                            {row.Wip ? row.Wip : 0}
                           </td>
                           <td
                             className={`px-6 py-4 border-b ${
@@ -970,14 +992,14 @@ const updatedTableData = AllowedProjects.map((project) => {
                               theme === "dark" ? "border-gray-600" : ""
                             }`}
                           >
-                            -
+                            {row.Week1}
                           </td>
                           <td
                             className={`px-6 py-4 border-b ${
                               theme === "dark" ? "border-gray-600" : ""
                             }`}
                           >
-                            -
+                            {row.Week2}
                           </td>
                           <td
                             className={`px-6 py-4 border-b ${
@@ -991,7 +1013,7 @@ const updatedTableData = AllowedProjects.map((project) => {
                               theme === "dark" ? "border-gray-600" : ""
                             }`}
                           >
-                            -
+                            {row.Week4}
                           </td>
                         </tr>
                       ))}

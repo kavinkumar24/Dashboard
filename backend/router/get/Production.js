@@ -11,9 +11,32 @@ router.get("/production_data", (req, res) => {
     });
   });
   
+  const getWeekNumber = (date) => {
+    const day = date.getDate();
+    return Math.ceil(day / 7);
+  };
+
+  const getMonthName = (date) => {
+    const monthNames = [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
+    ];
+    return monthNames[date.getMonth()];
+  
+  };
   
 
-router.get("/filtered_production_data", async (req, res) => {
+  router.get("/filtered_production_data", async (req, res) => {
     const response = await axios.get("http://localhost:8081/api/department-mappings");
     const departmentMappings = response.data;
     const { startDate, endDate } = req.query;
@@ -28,21 +51,12 @@ router.get("/filtered_production_data", async (req, res) => {
     const lowerDeptFromFilter = deptFromFilter.map((dept) => dept.toLowerCase());
     const lowerDeptToFilter = deptToFilter.map((dept) => dept.toLowerCase());
   
-    // Get today's date in the required format for your SQL database
     const today = new Date();
-    const startOfDay = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    );
-    const endOfDay = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate() + 1
-    );
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
   
     let sql = `
-      SELECT \`From Dept\`, \`To Dept\`, COUNT(\`CW Qty\`) AS total_qty
+      SELECT \`From Dept\`, \`To Dept\`, Project, UploadedDateTime, COUNT(\`CW Qty\`) AS total_qty
       FROM Production_sample_data
       WHERE LOWER(\`From Dept\`) IN (?)
         AND LOWER(\`To Dept\`) IN (?)
@@ -60,24 +74,39 @@ router.get("/filtered_production_data", async (req, res) => {
       params.push(new Date(endDate));
     }
   
-    sql += ` GROUP BY \`From Dept\`, \`To Dept\``;
+    sql += ` GROUP BY \`From Dept\`, \`To Dept\`, Project`;
   
     db.query(sql, params, (err, data) => {
       if (err) return res.json(err);
   
       const results = Object.keys(departmentMappings).reduce((acc, group) => {
-        acc[group] = { total_qty: 0 };
+        acc[group] = { total_qty:0, projects: {} };
         return acc;
       }, {});
   
       data.forEach((row) => {
         const fromDept = row["From Dept"].toUpperCase();
         const toDept = row["To Dept"].toUpperCase();
+        const project = row.Project;
         const qty = row.total_qty;
+        const uploadedDateTime = row.UploadedDateTime;
   
         for (const [group, { from, to }] of Object.entries(departmentMappings)) {
           if (from.includes(fromDept) && to.includes(toDept)) {
             results[group].total_qty += qty;
+          }
+          if (from.includes(fromDept) && to.includes(toDept)) {
+            // Initialize the project if it doesn't exist in this group
+            if (!results[group].projects[project]) {
+              results[group].projects[project] = {
+                total_qty: 0,
+                Week_count: getWeekNumber(uploadedDateTime),
+                monthname:getMonthName(uploadedDateTime)
+              };
+            }
+
+            // Add the qty to the project under this group
+            results[group].projects[project].total_qty += qty;
           }
         }
       });
@@ -85,7 +114,7 @@ router.get("/filtered_production_data", async (req, res) => {
       return res.json(results);
     });
   });
-
+  
   router.get("/filtered_production_data_with_date", async (req, res) => {
     try {
       // Get department mappings

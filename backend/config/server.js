@@ -367,9 +367,93 @@ app.post('/api/depart_targets', (req, res) => {
 });
 
 
-// Function to group the target data by unique Project (PLTCODE)
+  // Function to group the target data by unique Project (PLTCODE)
+  app.get("/aop/WeeklyData", async (req, res) => {
+    const sql = `SELECT dept, PLTCODE1, Week1, Week2, Week3, Week4, Month_data
+                 FROM AOP_PLTCODE_Data_Week_wise;`;
 
+    db.query(sql, (err, data) => {
+        if (err) {
+            console.error("Error fetching AOP data:", err);
+            return res.status(500).json({ error: "Internal server error" });
+        }
 
+        // Initialize the output structure
+        const output = {};
+
+        // Process each row
+        data.forEach(row => {
+            const { dept, PLTCODE1, Week1, Week2, Week3, Week4, Month_data } = row;
+
+            // Initialize the department if it doesn't exist
+            if (!output[dept]) {
+                output[dept] = [];
+            }
+
+            // Find or create the PLTCODE1 entry in the department
+            let pltCodeEntry = output[dept].find(entry => entry.PLTCODE1 === PLTCODE1);
+
+            if (!pltCodeEntry) {
+                pltCodeEntry = { PLTCODE1: PLTCODE1, data: [],
+                 };
+                output[dept].push(pltCodeEntry);
+
+            }
+
+            // Add the weekly data
+            pltCodeEntry.data.push({
+                Week1: Week1,
+                Week2: Week2,
+                Week3: Week3,
+                Week4: Week4,
+                Month_data: Month_data
+            });
+            output[dept].push({ Month_data: Month_data });
+
+        });
+
+        // Send the response
+        res.json(output);
+    });
+});
+
+app.post("/api/week-wise-data", async (req, res) => {
+  const updates = req.body;
+
+  const updateQueries = updates.map(update => {
+    const { PLTCODE1, Week1, Week2, Week3, Week4, Dept } = update;
+
+    return new Promise((resolve, reject) => {
+      const sql = `
+        INSERT INTO AOP_PLTCODE_Data_Week_wise (PLTCODE1, Dept, Week1, Week2, Week3, Week4)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+          Week1 = Week1 + VALUES(Week1),
+          Week2 = Week2 + VALUES(Week2),
+          Week3 = Week3 + VALUES(Week3),
+          Week4 = Week4 + VALUES(Week4)
+      `;
+
+      const values = [PLTCODE1, Dept, Week1, Week2, Week3, Week4];
+
+      db.query(sql, values, (err, result) => {
+        if (err) {
+          console.error("Error updating week data:", err);
+          reject(err);
+        } else {
+          resolve(result);
+        }
+      });
+    });
+  });
+
+  try {
+    await Promise.all(updateQueries);
+    res.status(200).json({ message: "Weeks updated successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update weeks" });
+  }
+});
 
 
 app.post('/api/update-week-data', async (req, res) => {
@@ -872,6 +956,20 @@ app.get("/filtered_production_data_with_dates", async (req, res) => {
   }
 });
 
+
+
+app.get("/aop", async (req, res) => {
+  const sql = `SELECT * FROM AOP_PLTCODE_Data_Week_wise`;
+  db.query(sql, (err, data) => {
+    if (err) {
+      console.error("Error fetching AOP data:", err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
+
+    res.json(data);
+  });
+});
+
 app.get("/filtered_pending_data_with_dates", async (req, res) => {
 try {
   // Get department mappings
@@ -926,6 +1024,7 @@ try {
       AND (${dateRanges.map(() => "(UploadedDateTime >= ? AND UploadedDateTime < ?)").join(" OR ")})
   GROUP BY todept, day_type
   `;
+
 
   // Flatten the params for all days
   const params = [

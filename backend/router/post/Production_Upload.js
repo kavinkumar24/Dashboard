@@ -4,13 +4,13 @@ const multer = require("multer");
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 const router = express.Router();
+const axios = require("axios");
 const db = require("../../config/DB/Db");
 const formatDateForMySQL =
   require("../../Helpers/Date_Serialize").formatDateForMySQL;
 const excelSerialDateToDate =
   require("../../Helpers/Date_Serialize").excelSerialDateToDate;
 const isDaysValid = require("../../Helpers/Date_Serialize").isDaysValid;
-
 router.post("/production/upload", upload.single("file"), async (req, res) => {
   if (!req.file) {
     return res.status(400).send("No file uploaded.");
@@ -63,7 +63,7 @@ router.post("/production/upload", upload.single("file"), async (req, res) => {
               const daysValue = row["Days"];
               const daysToInsert = isDaysValid(daysValue)
                 ? parseInt(daysValue)
-                : null; // Insert NULL for invalid values
+                : null;
 
               if (!isDaysValid(daysValue)) {
                 console.warn(
@@ -72,12 +72,6 @@ router.post("/production/upload", upload.single("file"), async (req, res) => {
                   }. It will be set to NULL.`
                 );
               }
-
-              console.log(
-                `Row ${index + 1}: JC ID: ${
-                  row["JC ID"] || row["JCID"]
-                }, Days: ${daysValue}, Valid: ${isDaysValid(daysValue)}`
-              );
 
               if (Object.keys(row)[0] === "JC ID") {
                 return [
@@ -100,7 +94,7 @@ router.post("/production/upload", upload.single("file"), async (req, res) => {
                   formattedInDate,
                   formattedOutDate,
                   row["Hours"],
-                  daysToInsert, // Use validated daysToInsert
+                  daysToInsert,
                   row["Description"],
                   row["Design specification"],
                   row["PRODUNITID"],
@@ -129,7 +123,7 @@ router.post("/production/upload", upload.single("file"), async (req, res) => {
                   formattedInDate,
                   formattedOutDate,
                   row["Hours       "],
-                  daysToInsert, // Use validated daysToInsert
+                  daysToInsert,
                   row["DESCRIPTION"],
                   row["DESIGNSPECIFICATION"],
                   row["PRODUNITID"],
@@ -139,10 +133,7 @@ router.post("/production/upload", upload.single("file"), async (req, res) => {
                 ];
               }
             })
-            .filter((value) => value); // Filter out any undefined values due to invalid rows
-
-          // Log the values before inserting
-          console.log("Inserting values:", values);
+            .filter((value) => value);
 
           const query = `
               INSERT INTO Production_sample_data 
@@ -155,12 +146,62 @@ router.post("/production/upload", upload.single("file"), async (req, res) => {
               VALUES ?;
             `;
 
-          db.query(query, [values], function (error, results) {
+          db.query(query, [values], async (error, results) => {
             if (error) {
               console.error("Database error:", error);
               return res.status(500).send("Database error");
             }
-            res.send("File uploaded and new data inserted successfully.");
+
+            try {
+              const response = await axios.get(
+                "http://localhost:8081/api/filtered_production_data"
+              );
+              const filteredData = response.data;
+              const allowedDepartments = [
+                "CAD",
+                "CAM",
+                "MFD",
+                "PD-TEXTURING",
+                "PHOTO",
+              ];
+              const filteredDataFromAllowed = Object.entries(
+                filteredData
+              ).filter(([dept]) => allowedDepartments.includes(dept));
+
+              for (const [dept, deptData] of filteredDataFromAllowed) {
+                const { projects } = deptData;
+
+                for (const [projectName, projectData] of Object.entries(
+                  projects
+                )) {
+                  const { total_qty, Week_count,monthname } = projectData;
+                  const query = `
+    INSERT INTO AOP_PLTCODE_Data_Week_wise (PLTCODE1, dept, Week${Week_count}, CreatedAt, Month_data)
+    VALUES (?, ?, ?, NOW(), ?)
+    ON DUPLICATE KEY UPDATE 
+        Week${Week_count} = VALUES(Week${Week_count}), 
+        CreatedAt = NOW(), 
+        Month_data = VALUES(Month_data)
+`;
+
+                  const params = [projectName, dept, total_qty, monthname];
+
+                  db.query(query, params, (err, result) => {
+                    if (err) {
+                      console.error("Database error:", err);
+                      return res.status(500).json({ error: "Database error" });
+                    }
+                  });
+                }
+              }
+
+              return res.json({
+                message: "File uploaded successfully!",
+              });
+            } catch (error) {
+              console.error("Error fetching or processing data:", error);
+              return res.status(500).json({ error: "Error processing data" });
+            }
           });
         });
       });
@@ -172,5 +213,15 @@ router.post("/production/upload", upload.single("file"), async (req, res) => {
     res.status(500).send("Error processing file");
   }
 });
+
+// Helper functions for date conversion and week number extraction
+const getWeekNumber = (date) => {
+  const day = date.getDate();
+  return Math.ceil(day / 7);
+};
+
+const derivePltCode = (fromDept, toDept) => {
+  return `${fromDept}-${toDept}`;
+};
 
 module.exports = router;
