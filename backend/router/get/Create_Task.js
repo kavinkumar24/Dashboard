@@ -31,7 +31,6 @@ router.get("/create-task", (req, res) => {
   });
 });
 
-
 router.delete("/delete-task/:taskId", (req, res) => {
   const taskId = req.params.taskId;
   const sql = "DELETE FROM Created_task WHERE Task_ID = ?";
@@ -39,7 +38,9 @@ router.delete("/delete-task/:taskId", (req, res) => {
   db.query(sql, [taskId], (err, result) => {
     if (err) {
       console.error(err);
-      return res.status(500).json({ message: "Failed to delete task", error: err });
+      return res
+        .status(500)
+        .json({ message: "Failed to delete task", error: err });
     }
 
     if (result.affectedRows === 0) {
@@ -49,7 +50,6 @@ router.delete("/delete-task/:taskId", (req, res) => {
     res.status(200).json({ message: "Task deleted successfully" });
   });
 });
-
 
 router.post("/create-task", async (req, res) => {
   console.log("Request Body:", req.body);
@@ -84,7 +84,9 @@ router.post("/create-task", async (req, res) => {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
-  const assignToEmails = Array.isArray(assignToPersonEmails)? assignToPersonEmails.join(", ") : assignToPersonEmails;
+  const assignToEmails = Array.isArray(assignToPersonEmails)
+    ? assignToPersonEmails.join(", ")
+    : assignToPersonEmails;
   const sql = `
         INSERT INTO Created_task (
             Ax_Brief, Collection_Name, References_Image, Project, Assign_Name,
@@ -251,53 +253,52 @@ router.post("/create-task", async (req, res) => {
   });
 });
 
-
 router.put("/update-task/:id", (req, res) => {
-    const taskId = req.params.id;
-    const { Completed_Status, Remarks } = req.body;
-  
-    const updates = [];
-    const params = [];
-  
-    // Only add Completed_Status if it's provided
-    if (Completed_Status !== undefined) {
-      updates.push("Completed_Status = ?");
-      params.push(Completed_Status);
-    }
-  
-    // Only add Remarks if it's provided
-    if (Remarks !== undefined) {
-      updates.push("Remarks = ?");
-      params.push(Remarks);
-    }
-  
-    // If nothing is being updated, return an error
-    if (updates.length === 0) {
-      return res.status(400).send("No fields to update");
-    }
-  
-    const sql = `
+  const taskId = req.params.id;
+  const { Completed_Status, Remarks } = req.body;
+
+  const updates = [];
+  const params = [];
+
+  // Only add Completed_Status if it's provided
+  if (Completed_Status !== undefined) {
+    updates.push("Completed_Status = ?");
+    params.push(Completed_Status);
+  }
+
+  // Only add Remarks if it's provided
+  if (Remarks !== undefined) {
+    updates.push("Remarks = ?");
+    params.push(Remarks);
+  }
+
+  // If nothing is being updated, return an error
+  if (updates.length === 0) {
+    return res.status(400).send("No fields to update");
+  }
+
+  const sql = `
       UPDATE Created_task 
       SET 
         ${updates.join(", ")}
       WHERE 
         Task_ID = ?
     `;
-  
-    params.push(taskId);
-  
-    db.query(sql, params, (err, results) => {
-      if (err) {
-        console.error("Error updating task:", err);
-        return res.status(500).send("Error updating task");
-      }
-  
-      if (results.affectedRows === 0) {
-        return res.status(404).send("Task not found");
-      }
-  
-      res.send("Task updated successfully");
-    });
+
+  params.push(taskId);
+
+  db.query(sql, params, (err, results) => {
+    if (err) {
+      console.error("Error updating task:", err);
+      return res.status(500).send("Error updating task");
+    }
+
+    if (results.affectedRows === 0) {
+      return res.status(404).send("Task not found");
+    }
+
+    res.send("Task updated successfully");
   });
+});
 
 module.exports = router;

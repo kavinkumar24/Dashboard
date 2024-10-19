@@ -12,14 +12,16 @@ function Detailed_task() {
   const navigate = useNavigate();
 
   const [totalData, setTotalData] = useState([]);
-  
+
   useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
     try {
-      const pendingResponse = await fetch("http://localhost:8081/api/pending_data");
+      const pendingResponse = await fetch(
+        "http://localhost:8081/api/pending_data"
+      );
       const pendingData = await pendingResponse.json();
 
       const filteredPendingData = pendingData.reduce((acc, curr) => {
@@ -87,22 +89,19 @@ function Detailed_task() {
         <div className="flex-1 flex flex-col">
           <Header onSearch={setSearch} theme={theme} dark={setTheme} />
 
-          <h1 className=" mx-4 font-bold text-xl">
-            Task Management Home Page
-          </h1>
+          <h1 className=" mx-4 font-bold text-xl">Task Management Home Page</h1>
 
           <div className="m-4 mt-7 border rounded-lg border-gray-300 bg-white shadow-lg">
             <div className="flex justify-between p-2  m-2">
-            <h1 className="text-xl font-semibold pt-2">Tasks</h1>
-            <input
-              type="text"
-              placeholder="Search by BRIEF NUMBER"
-              value={searchTable}
-              onChange={(e) => setTableSearch(e.target.value)}
-              className=" rounded-lg p-1 px-3 border-gray-400 bg-gray-100"
-            />
+              <h1 className="text-xl font-semibold pt-2">Tasks</h1>
+              <input
+                type="text"
+                placeholder="Search by BRIEF NUMBER"
+                value={searchTable}
+                onChange={(e) => setTableSearch(e.target.value)}
+                className=" rounded-lg p-1 px-3 border-gray-400 bg-gray-100"
+              />
             </div>
-            
 
             <table className="w-full table-auto text-sm">
               <thead>

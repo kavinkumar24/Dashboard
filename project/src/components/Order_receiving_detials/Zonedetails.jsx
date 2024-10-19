@@ -224,8 +224,6 @@ const ProjectDetails = () => {
         setGroupPartyAcc(groupPartyAcc);
         setYearAcc(yearAcc);
         setMonthAcc(monthAcc);
-
-        
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -891,8 +889,10 @@ const ProjectDetails = () => {
               theme === "light" ? "bg-white" : "bg-gray-900"
             } p-4 rounded shadow-lg h-[400px] overflow-auto`}
           >
-            <Pie data={plainstone} options={chartOptions} 
-            plugins={[ChartDataLabels]}
+            <Pie
+              data={plainstone}
+              options={chartOptions}
+              plugins={[ChartDataLabels]}
             />
           </div>
 

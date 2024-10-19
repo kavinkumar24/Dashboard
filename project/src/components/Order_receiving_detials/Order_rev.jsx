@@ -277,8 +277,8 @@ function Order_rev() {
 
       clickTimeout.current = setTimeout(() => {
         console.log("Single click detected:", clickedProduct);
-        handleProductClick(event, elements); 
-      }, 250); 
+        handleProductClick(event, elements);
+      }, 250);
     }
   };
 
@@ -288,23 +288,29 @@ function Order_rev() {
       const clickedProduct = product.labels[elementIndex];
       console.log("Double click detected:", clickedProduct);
 
-      let productDetilUrl = `/product-detail-order_receiving/${encodeURIComponent( clickedProduct)}`;
+      let productDetilUrl = `/product-detail-order_receiving/${encodeURIComponent(
+        clickedProduct
+      )}`;
 
       if (years) {
         productDetilUrl += `?year=${encodeURIComponent(selectedYear)}`;
       }
       if (months) {
-       
-        productDetilUrl += `${years ? '&' : '?'}month=${encodeURIComponent(selectedMonth)}`;
-      }   
-      if(dates){
-        productDetilUrl += `${years ? '&' : '?'}date=${encodeURIComponent(selectedDate)}`;
-      }            
+        productDetilUrl += `${years ? "&" : "?"}month=${encodeURIComponent(
+          selectedMonth
+        )}`;
+      }
+      if (dates) {
+        productDetilUrl += `${years ? "&" : "?"}date=${encodeURIComponent(
+          selectedDate
+        )}`;
+      }
       if (totalWeight) {
-        productDetilUrl += `${years || months || dates ? '&' : '?'}totalweight=${encodeURIComponent(totalWeight)}`;
+        productDetilUrl += `${
+          years || months || dates ? "&" : "?"
+        }totalweight=${encodeURIComponent(totalWeight)}`;
       }
       navigate(productDetilUrl);
-      
     }
   };
 
@@ -658,11 +664,9 @@ function Order_rev() {
     return top15;
   };
 
-
-
-  const handleview = () =>{
-    setfilter(!filter)
-  }
+  const handleview = () => {
+    setfilter(!filter);
+  };
   const fetchedDataRef = useRef(null);
 
   useEffect(() => {
@@ -987,92 +991,94 @@ function Order_rev() {
           Year
         </h2>
         {!isLoading && (
-        <div className="w-full h-[98%]">
+          <div className="w-full h-[98%]">
+            <Bar
+              data={chartData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: true,
 
-          <Bar
-            data={chartData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  display: true,
-
-                  labels: {
-                    color: theme === "light" ? "black" : "white",
+                    labels: {
+                      color: theme === "light" ? "black" : "white",
+                    },
                   },
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function (context) {
-                      return `KG: ${context.raw.toFixed(2)}`;
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        return `KG: ${context.raw.toFixed(2)}`;
+                      },
+                    },
+                  },
+                  datalabels: {
+                    display: true,
+                    align: "end",
+                    anchor: "end",
+                    formatter: (value) => value.toFixed(2),
+                    color: theme === "light" ? "black" : "white",
+
+                    font: {
+                      weight: "normal",
                     },
                   },
                 },
-                datalabels: {
-                  display: true,
-                  align: "end",
-                  anchor: "end",
-                  formatter: (value) => value.toFixed(2),
-                  color: theme === "light" ? "black" : "white",
-
-                  font: {
-                    weight: "normal",
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+                      text: "Year",
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    grid: {
+                      display: true,
+                      color: theme === "light" ? "#e5e7eb" : "#374151",
+                    },
+                    ticks: {
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    border: {
+                      color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                    },
+                  },
+                  y: {
+                    title: {
+                      display: true,
+                      text: "KG Count",
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    beginAtZero: true,
+                    color: theme === "light" ? "black" : "red",
+                    grid: {
+                      display: true,
+                      color: theme === "light" ? "#e5e7eb" : "#374151",
+                    },
+                    ticks: {
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    border: {
+                      color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                    },
                   },
                 },
-              },
-              scales: {
-                x: {
-                  title: {
-                    display: true,
-                    text: "Year",
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  grid: {
-                    display: true,
-                    color: theme === "light" ? "#e5e7eb" : "#374151",
-                  },
-                  ticks: {
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  border: {
-                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                  },
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: "KG Count",
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  beginAtZero: true,
-                  color: theme === "light" ? "black" : "red",
-                  grid: {
-                    display: true,
-                    color: theme === "light" ? "#e5e7eb" : "#374151",
-                  },
-                  ticks: {
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  border: {
-                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                  },
-                },
-              },
-            }}
-            plugins={[ChartDataLabels]}
-          />
+              }}
+              plugins={[ChartDataLabels]}
+            />
           </div>
         )}
       </div>
     </div>,
-    <div className="w-[50%] sm:w-full md:w-full lg:w-full" key="total-weight-month">
+    <div
+      className="w-[50%] sm:w-full md:w-full lg:w-full"
+      key="total-weight-month"
+    >
       <div
         className={`order-1 col-span-1 w-[200%] md:w-full ${
           theme === "light" ? "bg-white" : "bg-slate-900"
         }  p-4 rounded shadow-md  h-[450px]`}
       >
-            <h2
+        <h2
           className={`text-md font-bold ${
             theme === "light" ? "text-slate-800" : "text-slate-400"
           }`}
@@ -1080,86 +1086,89 @@ function Order_rev() {
           Month
         </h2>
         {!isLoading && (
-          <div className="w-full h-[98%]"> 
-          <Bar
-            data={chartmonthData}
-            options={{
-              responsive: true,
-              maintainAspectRatio: false,
-              plugins: {
-                legend: {
-                  display: true,
+          <div className="w-full h-[98%]">
+            <Bar
+              data={chartmonthData}
+              options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                  legend: {
+                    display: true,
 
-                  labels: {
-                    color: theme === "light" ? "black" : "white",
+                    labels: {
+                      color: theme === "light" ? "black" : "white",
+                    },
                   },
-                },
-                tooltip: {
-                  callbacks: {
-                    label: function (context) {
-                      return `KG: ${context.raw.toFixed(2)}`;
+                  tooltip: {
+                    callbacks: {
+                      label: function (context) {
+                        return `KG: ${context.raw.toFixed(2)}`;
+                      },
+                    },
+                  },
+                  datalabels: {
+                    display: true,
+                    align: "end",
+                    anchor: "end",
+                    formatter: (value) => value.toFixed(2),
+                    color: theme === "light" ? "black" : "white",
+
+                    font: {
+                      weight: "normal",
                     },
                   },
                 },
-                datalabels: {
-                  display: true,
-                  align: "end",
-                  anchor: "end",
-                  formatter: (value) => value.toFixed(2),
-                  color: theme === "light" ? "black" : "white",
-
-                  font: {
-                    weight: "normal",
+                scales: {
+                  x: {
+                    title: {
+                      display: true,
+                      text: "Year",
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    grid: {
+                      display: true,
+                      color: theme === "light" ? "#e5e7eb" : "#374151",
+                    },
+                    ticks: {
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    border: {
+                      color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                    },
+                  },
+                  y: {
+                    title: {
+                      display: true,
+                      text: "KG Count",
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    beginAtZero: true,
+                    color: theme === "light" ? "black" : "red",
+                    grid: {
+                      display: true,
+                      color: theme === "light" ? "#e5e7eb" : "#374151",
+                    },
+                    ticks: {
+                      color: theme === "light" ? "black" : "#94a3b8",
+                    },
+                    border: {
+                      color: theme === "light" ? "#e5e7eb" : "#94a3b8",
+                    },
                   },
                 },
-              },
-              scales: {
-                x: {
-                  title: {
-                    display: true,
-                    text: "Year",
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  grid: {
-                    display: true,
-                    color: theme === "light" ? "#e5e7eb" : "#374151",
-                  },
-                  ticks: {
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  border: {
-                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                  },
-                },
-                y: {
-                  title: {
-                    display: true,
-                    text: "KG Count",
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  beginAtZero: true,
-                  color: theme === "light" ? "black" : "red",
-                  grid: {
-                    display: true,
-                    color: theme === "light" ? "#e5e7eb" : "#374151",
-                  },
-                  ticks: {
-                    color: theme === "light" ? "black" : "#94a3b8",
-                  },
-                  border: {
-                    color: theme === "light" ? "#e5e7eb" : "#94a3b8",
-                  },
-                },
-              },
-            }}
-            plugins={[ChartDataLabels]}
-          />
+              }}
+              plugins={[ChartDataLabels]}
+            />
           </div>
         )}
       </div>
     </div>,
 
-    <div className="w-[50%] sm:w-full md:w-full lg:w-full md:over" key="kg-per-year-chart">
+    <div
+      className="w-[50%] sm:w-full md:w-full lg:w-full md:over"
+      key="kg-per-year-chart"
+    >
       <div
         className={`order-2 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
@@ -1253,8 +1262,7 @@ function Order_rev() {
                       },
                     },
                   },
-                 
-                  
+
                   datalabels: {
                     display: true,
                     align: "end",
@@ -1317,7 +1325,10 @@ function Order_rev() {
         )}
       </div>
     </div>,
-    <div className="w-[50%] sm:w-full md:w-full lg:w-full" key="purity-wise-chart">
+    <div
+      className="w-[50%] sm:w-full md:w-full lg:w-full"
+      key="purity-wise-chart"
+    >
       <div
         className={`order-2 col-span-1 ${
           theme === "light" ? "bg-white" : "bg-slate-900"
@@ -1467,7 +1478,7 @@ function Order_rev() {
           theme === "light" ? "bg-white" : "bg-slate-900"
         } p-4 rounded shadow-md h-[700px] flex flex-col`}
       >
-       <h2
+        <h2
           className={`text-md font-bold ${
             theme === "light" ? "text-slate-800" : "text-slate-400"
           }`}
@@ -1606,7 +1617,7 @@ function Order_rev() {
           theme === "light" ? "bg-white " : "bg-slate-900"
         } p-4 rounded shadow-md overflow-auto h-[700px] custom-scrollbar`}
       >
-         <h2
+        <h2
           className={`text-md font-bold ${
             theme === "light" ? "text-slate-800" : "text-slate-400"
           }`}
@@ -1745,7 +1756,7 @@ function Order_rev() {
           theme === "light" ? "bg-white" : "bg-slate-900"
         }`}
       >
-         <h2
+        <h2
           className={`text-md font-bold ${
             theme === "light" ? "text-slate-800" : "text-slate-400"
           }`}
@@ -1764,7 +1775,7 @@ function Order_rev() {
               } else {
                 clickTimeout.current = setTimeout(() => {
                   handleChartClick(event, elements);
-                  clickTimeout.current = null; 
+                  clickTimeout.current = null;
                 }, 300);
               }
             },
@@ -1861,11 +1872,11 @@ function Order_rev() {
         } p-4 rounded shadow-md overflow-auto h-[790px] custom-scrollbar`}
       >
         <div className="flex flex-row justify-between">
-        <h2
-          className={`text-md font-bold ${
-            theme === "light" ? "text-slate-800" : "text-slate-400"
-          }`}
-        >
+          <h2
+            className={`text-md font-bold ${
+              theme === "light" ? "text-slate-800" : "text-slate-400"
+            }`}
+          >
             Sub Product Distribution
           </h2>
           <button
@@ -1885,20 +1896,27 @@ function Order_rev() {
                 const clickedZone = subproduct.labels[elementIndex];
                 let subproductDetailUrl = `/subproduct-detail-order_receiving/${encodeURIComponent(
                   clickedZone
-                )}`
+                )}`;
 
                 if (years) {
-                  subproductDetailUrl += `?year=${encodeURIComponent(selectedYear)}`;
+                  subproductDetailUrl += `?year=${encodeURIComponent(
+                    selectedYear
+                  )}`;
                 }
                 if (months) {
-                 
-                  subproductDetailUrl += `${years ? '&' : '?'}month=${encodeURIComponent(selectedMonth)}`;
-                }   
-                if(dates){
-                  subproductDetailUrl += `${years ? '&' : '?'}date=${encodeURIComponent(selectedDate)}`;
-                }            
+                  subproductDetailUrl += `${
+                    years ? "&" : "?"
+                  }month=${encodeURIComponent(selectedMonth)}`;
+                }
+                if (dates) {
+                  subproductDetailUrl += `${
+                    years ? "&" : "?"
+                  }date=${encodeURIComponent(selectedDate)}`;
+                }
                 if (totalWeight) {
-                  subproductDetailUrl += `${years || months || dates ? '&' : '?'}totalweight=${encodeURIComponent(totalWeight)}`;
+                  subproductDetailUrl += `${
+                    years || months || dates ? "&" : "?"
+                  }totalweight=${encodeURIComponent(totalWeight)}`;
                 }
                 navigate(subproductDetailUrl);
               }
@@ -1990,13 +2008,10 @@ function Order_rev() {
           theme === "light" ? "bg-white" : "bg-slate-900"
         }  p-4 rounded shadow-md overflow-x-auto h-[450px]`}
       >
-        
         {!isLoading && (
           <Line
             data={groupparty}
-            
             options={{
-              
               onClick: (event, elements) => {
                 if (elements.length > 0) {
                   const elementIndex = elements[0].index;
@@ -2242,16 +2257,19 @@ function Order_rev() {
   const getMonthName = (monthIndex) => monthNames[monthIndex];
 
   return (
-<div
-  className={`min-h-screen w-full flex flex-col md:flex-row sm:flex-row ${
-    theme === "light" ? "bg-gray-100" : "bg-gray-800"
-  }`}
->
-
+    <div
+      className={`min-h-screen w-full flex flex-col md:flex-row sm:flex-row ${
+        theme === "light" ? "bg-gray-100" : "bg-gray-800"
+      }`}
+    >
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
-        <Header theme={theme} dark={setTheme} on_filter={setFilter_on}
-          filter={filter_on}/>
+        <Header
+          theme={theme}
+          dark={setTheme}
+          on_filter={setFilter_on}
+          filter={filter_on}
+        />
         {/* <div
           className={`p-4 ${
             theme == "light" ? "bg-white" : "bg-slate-900"
@@ -2432,9 +2450,7 @@ function Order_rev() {
             theme === "light"
               ? "bg-white border-gray-300"
               : "bg-slate-900 border-zinc-800"
-          }  shadow-lg ${
-            filter_on === true ? "opacity-10" : "opacity-100"
-          }`}
+          }  shadow-lg ${filter_on === true ? "opacity-10" : "opacity-100"}`}
         >
           <h1
             className={`text-xl font-semibold p-2 pl-0 py-5 ${
@@ -2622,9 +2638,11 @@ function Order_rev() {
           </div>
         </div>
 
-        <main className={`flex-1 p-5 grid grid-cols-1 lg:grid-cols-2 gap-6 ${
+        <main
+          className={`flex-1 p-5 grid grid-cols-1 lg:grid-cols-2 gap-6 ${
             filter_on === true ? "opacity-10" : "opacity-100"
-          }`}>
+          }`}
+        >
           {isLoading && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
               <div className="flex gap-2 ml-40">
@@ -2646,30 +2664,27 @@ function Order_rev() {
           )}
 
           {currentPageCharts}
-
-   
         </main>
         <div className="col-span-1 lg:col-span-2 flex justify-center mt-6 mb-10">
-  <button
-    onClick={() =>
-      setCurrentPage((prevPage) => Math.max(prevPage - 1, 1))
-    }
-    disabled={currentPage === 1}
-    className="px-2 py-2 bg-blue-500 text-white text-sm rounded mr-2"
-  >
-    Previous
-  </button>
-  <button
-    onClick={() =>
-      setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages))
-    }
-    disabled={currentPage === totalPages}
-    className="px-2 py-1 bg-blue-500 text-white text-sm rounded"
-  >
-    Next
-  </button>
-</div>
-
+          <button
+            onClick={() =>
+              setCurrentPage((prevPage) => Math.max(prevPage - 1, 1))
+            }
+            disabled={currentPage === 1}
+            className="px-2 py-2 bg-blue-500 text-white text-sm rounded mr-2"
+          >
+            Previous
+          </button>
+          <button
+            onClick={() =>
+              setCurrentPage((prevPage) => Math.min(prevPage + 1, totalPages))
+            }
+            disabled={currentPage === totalPages}
+            className="px-2 py-1 bg-blue-500 text-white text-sm rounded"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -154,7 +154,7 @@ router.post("/production/upload", upload.single("file"), async (req, res) => {
 
             try {
               const response = await axios.get(
-                "http://localhost:8081/api/filtered_production_data"
+                "http://localhost:8081/api/filtered_production_data/aop"
               );
               const filteredData = response.data;
               const allowedDepartments = [

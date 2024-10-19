@@ -14,7 +14,7 @@ function Party_form() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
-  
+
   const [isloading, setIsloading] = useState(false);
   const [search, setSearch] = useState("");
   const [no_of_qty, setNo_of_qty] = useState("");
@@ -114,7 +114,6 @@ function Party_form() {
         matchingEntries.length > 0 ? matchingEntries[0]["Out Date"] : null;
 
       if (!complete_date) {
-        
         data.complete_date = visit_date;
       } else {
         data.complete_date = complete_date;
@@ -153,32 +152,34 @@ function Party_form() {
       setAx_brief_data(null);
       setNo_of_qty("");
       setAssignToEmails([""]);
-      setAssignToCount(0)
+      setAssignToCount(0);
 
-      try{
-        const response = await axios.post('http://localhost:8081/api/send-email/Party-vist', {
-          loggedemail: loggedemail,
-          assignToPersonEmails: assignToEmails,
-          visit_date: visit_date,
-          partyname: partyname,
-          description: description,
-          status_data: status_data,
-          imagelink: imagelink,
-      });
-      console.log(response)
+      try {
+        const response = await axios.post(
+          "http://localhost:8081/api/send-email/Party-vist",
+          {
+            loggedemail: loggedemail,
+            assignToPersonEmails: assignToEmails,
+            visit_date: visit_date,
+            partyname: partyname,
+            description: description,
+            status_data: status_data,
+            imagelink: imagelink,
+          }
+        );
+        console.log(response);
 
-      toast.success("Email sent successfully");
-    }
-      catch(error){
+        toast.success("Email sent successfully");
+      } catch (error) {
         console.error("Error sending email:", error);
         toast.error("Error sending email");
-        setIsloading(false)
+        setIsloading(false);
       }
-      setIsloading(false)
+      setIsloading(false);
     } catch (error) {
       console.error("Error storing data:", error);
       toast.error("Error storing data");
-      setIsloading(false)
+      setIsloading(false);
     }
   };
 
@@ -200,21 +201,26 @@ function Party_form() {
         theme === "light" ? "bg-gray-100" : "bg-gray-800"
       }`}
     >
-        {isloading && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
-            <div className="flex gap-2 ml-9">
-              <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
-              <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
-              <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
-            </div>
+      {isloading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
+          <div className="flex gap-2 ml-9">
+            <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+            <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
+            <div className="w-5 h-5 rounded-full animate-pulse bg-blue-600"></div>
           </div>
-        )}
+        </div>
+      )}
       <ToastContainer />
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
-          <Header onSearch={setSearch} theme={theme} dark={setTheme} on_filter={setFilter_on}
-          filter={filter_on}  />
-<main
+        <Header
+          onSearch={setSearch}
+          theme={theme}
+          dark={setTheme}
+          on_filter={setFilter_on}
+          filter={filter_on}
+        />
+        <main
           className={`flex-1 px-4 overflow-y-auto ${
             filter_on === true ? "opacity-10" : "opacity-100"
           }`}
@@ -310,10 +316,10 @@ function Party_form() {
                     }))}
                     onChange={handleAssignToCountChange}
                     className={`mt-2 lg:mt-0 w-full lg:w-full  ${
-                    theme === "light"
-                      ? "border-gray-300 text-black "
-                      : "bg-gray-700 text-gray-100 border-gray-600"
-                  } w-full md:w-full`}
+                      theme === "light"
+                        ? "border-gray-300 text-black "
+                        : "bg-gray-700 text-gray-100 border-gray-600"
+                    } w-full md:w-full`}
                   />
                 </div>
 
@@ -380,7 +386,7 @@ function Party_form() {
                   </label>
 
                   <Select
-                     className={`mt-2 lg:mt-0 w-full lg:w-full  ${
+                    className={`mt-2 lg:mt-0 w-full lg:w-full  ${
                       theme === "light"
                         ? "border-gray-300 text-black "
                         : "bg-gray-700 text-gray-100 border-gray-600"

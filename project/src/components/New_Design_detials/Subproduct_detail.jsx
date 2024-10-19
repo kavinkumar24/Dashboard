@@ -96,7 +96,6 @@ const ProjectDetails = () => {
     }));
 
     // Aggregate function
- 
 
     // Format and sort data
     const formatAndSortData = (data, limit = Infinity) => {
@@ -109,52 +108,50 @@ const ProjectDetails = () => {
         }, {});
     };
 
-// Helper function to extract month and year from "DD&month"
-// Helper function to extract and format month and year from "DD&month"
-const extractMonthYear = (dateString) => {
-  const date = new Date(dateString);
-  const month = date.getMonth() + 1; // Months are 0-indexed in JS, so +1
-  const year = date.getFullYear();
+    // Helper function to extract month and year from "DD&month"
+    // Helper function to extract and format month and year from "DD&month"
+    const extractMonthYear = (dateString) => {
+      const date = new Date(dateString);
+      const month = date.getMonth() + 1; // Months are 0-indexed in JS, so +1
+      const year = date.getFullYear();
 
-  // Return in "YYYY-MM" format
-  return `${year}-${month}`;
-};
+      // Return in "YYYY-MM" format
+      return `${year}-${month}`;
+    };
 
-// Modified aggregate function to handle different fields, including "DD&month"
-const aggregate = (items, key) => {
-  return items.reduce((acc, item) => {
-    let value;
+    // Modified aggregate function to handle different fields, including "DD&month"
+    const aggregate = (items, key) => {
+      return items.reduce((acc, item) => {
+        let value;
 
-    if (key === "DD&month") {
-      // Extract month and year from date string
-      value = extractMonthYear(item[key]);
-    } else {
-      value = item[key];
-    }
+        if (key === "DD&month") {
+          // Extract month and year from date string
+          value = extractMonthYear(item[key]);
+        } else {
+          value = item[key];
+        }
 
-    const weight = item.WT || 0; // Default to 0 if no weight
+        const weight = item.WT || 0; // Default to 0 if no weight
 
-    // Sum weights for each unique value (month-year combination)
-    acc[value] = (acc[value] || 0) + weight;
-    return acc;
-  }, {});
-};
+        // Sum weights for each unique value (month-year combination)
+        acc[value] = (acc[value] || 0) + weight;
+        return acc;
+      }, {});
+    };
 
-// Example usage
+    // Example usage
 
-
-// Example usage with enhancedData
-const purityAcc = aggregate(enhancedData, "Purity");
-const projectAcc = aggregate(enhancedData, "PROJECT");
-const productAcc = aggregate(enhancedData, "PRODUCT");
-const subproductAcc = aggregate(enhancedData, "SUB PRODUCT");
-const colorAcc = aggregate(enhancedData, "Color");
-const groupPartyAcc = aggregate(enhancedData, "Group party");
-const zoneAcc = aggregate(enhancedData, "ZONE");
-const plainAcc = aggregate(enhancedData, "PL-ST");
-const yearAcc = aggregate(enhancedData, "Dyr");
-const monthAcc = aggregate(enhancedData, "DD&month");
-
+    // Example usage with enhancedData
+    const purityAcc = aggregate(enhancedData, "Purity");
+    const projectAcc = aggregate(enhancedData, "PROJECT");
+    const productAcc = aggregate(enhancedData, "PRODUCT");
+    const subproductAcc = aggregate(enhancedData, "SUB PRODUCT");
+    const colorAcc = aggregate(enhancedData, "Color");
+    const groupPartyAcc = aggregate(enhancedData, "Group party");
+    const zoneAcc = aggregate(enhancedData, "ZONE");
+    const plainAcc = aggregate(enhancedData, "PL-ST");
+    const yearAcc = aggregate(enhancedData, "Dyr");
+    const monthAcc = aggregate(enhancedData, "DD&month");
 
     // Format and sort data
     const formattedPurityAcc = formatAndSortData(purityAcc);
@@ -183,18 +180,18 @@ const monthAcc = aggregate(enhancedData, "DD&month");
   }
   const getTopMonths = (monthAcc) => {
     const currentYear = new Date().getFullYear();
-    
+
     // Filter monthAcc for the current year
     const filteredMonths = Object.entries(monthAcc).filter(([key]) => {
-      const [year] = key.split('-'); // Extract year from "YYYY-MM"
+      const [year] = key.split("-"); // Extract year from "YYYY-MM"
       return parseInt(year, 10) === currentYear;
     });
-  
+
     // Sort by weight descending and take top 4
     const sortedMonths = filteredMonths
       .sort((a, b) => b[1] - a[1]) // Sort by weight descending
       .slice(0, 4); // Take top 4
-  
+
     return Object.fromEntries(sortedMonths); // Convert back to an object
   };
 
@@ -227,14 +224,13 @@ const monthAcc = aggregate(enhancedData, "DD&month");
           const months = parseParam(month);
 
           const itemYear = item.Dyr;
-          const itemMonth = new Date(item['DD&month']).getMonth() + 1;
+          const itemMonth = new Date(item["DD&month"]).getMonth() + 1;
 
-          return item["SUB PRODUCT"] === subproduct &&
-        
-
+          return (
+            item["SUB PRODUCT"] === subproduct &&
             (year.length === 0 || years.includes(itemYear)) &&
-            (month.length === 0 || months.includes(itemMonth)) 
-          
+            (month.length === 0 || months.includes(itemMonth))
+          );
         });
         setData(filteredData);
         setFilteredData(filteredData);
@@ -267,10 +263,7 @@ const monthAcc = aggregate(enhancedData, "DD&month");
         setGroupPartyAcc(groupPartyAcc);
         setYearAcc(yearAcc);
 
-        
-     setMonthAcc(displayedMonthAcc);
-
-        
+        setMonthAcc(displayedMonthAcc);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
@@ -410,12 +403,12 @@ const monthAcc = aggregate(enhancedData, "DD&month");
         callbacks: {
           label: function (context) {
             const value = context.raw;
-            console.log(value)
+            console.log(value);
             if (total === 0) return `Percent: 0%`;
             const percentage = ((value / total) * 100).toFixed(0);
             return `KG: ${value} Percent: ${percentage}%`;
           },
-        },  
+        },
       },
     },
     scales: {
@@ -504,11 +497,11 @@ const monthAcc = aggregate(enhancedData, "DD&month");
       },
     ],
   };
-  
+
   console.log();
   const monthChartData = {
     labels: Object.keys(monthAcc).map((monthYear) => {
-      const [year, month] = monthYear.split('-');
+      const [year, month] = monthYear.split("-");
       const monthName = monthNames[parseInt(month, 10) - 1];
       return `${monthName} ${year}`;
     }),
@@ -519,21 +512,21 @@ const monthAcc = aggregate(enhancedData, "DD&month");
         backgroundColor: (context) => {
           const index = context.dataIndex;
           const monthYear = Object.keys(monthAcc)[index];
-          const [year] = monthYear.split('-');
-          return year === selectedYear ? 'rgba(240, 128, 128, 0.3)' : 'rgba(240, 128, 128, 0.1)';
+          const [year] = monthYear.split("-");
+          return year === selectedYear
+            ? "rgba(240, 128, 128, 0.3)"
+            : "rgba(240, 128, 128, 0.1)";
         },
         borderColor: (context) => {
           const index = context.dataIndex;
           const monthYear = Object.keys(monthAcc)[index];
-          const [year] = monthYear.split('-');
-          return year === selectedYear ? '#ec5f5f' : 'rgba(240, 128, 128, 0.1)';
+          const [year] = monthYear.split("-");
+          return year === selectedYear ? "#ec5f5f" : "rgba(240, 128, 128, 0.1)";
         },
         borderWidth: 1,
       },
     ],
   };
-
-
 
   const projectChartData = {
     labels: Object.keys(projectAcc),
@@ -903,11 +896,10 @@ const monthAcc = aggregate(enhancedData, "DD&month");
                 }`}
               >
                 <h1 className="col-span-2">
-                  Details for Sub Product: {subproduct} in {formattedTotalWeight}
+                  Details for Sub Product: {subproduct} in{" "}
+                  {formattedTotalWeight}
                 </h1>
               </div>
-
-            
 
               <div
                 className={`rounded-lg shadow-md p-3 flex items-center ${
@@ -944,8 +936,10 @@ const monthAcc = aggregate(enhancedData, "DD&month");
               theme === "light" ? "bg-white" : "bg-gray-900"
             } p-4 rounded shadow-lg h-[400px] overflow-auto`}
           >
-            <Pie data={plainstone} options={chartOptions} 
-            plugins={[ChartDataLabels]}
+            <Pie
+              data={plainstone}
+              options={chartOptions}
+              plugins={[ChartDataLabels]}
             />
           </div>
 
@@ -956,17 +950,19 @@ const monthAcc = aggregate(enhancedData, "DD&month");
               theme === "light" ? "bg-white" : "bg-gray-900"
             } p-4 rounded shadow-lg h-[400px] overflow-auto`}
           >
-            <Bar data={yearChartData} 
-             options={{
-              ...chartOptions,
-              onClick: (event, elements) => {
-                if (elements.length) {
-                  const index = elements[0].index;
-                  const year = Object.keys(yearAcc)[index];
-                  handleYearClick(year);
-                }
-              }
-            }} />
+            <Bar
+              data={yearChartData}
+              options={{
+                ...chartOptions,
+                onClick: (event, elements) => {
+                  if (elements.length) {
+                    const index = elements[0].index;
+                    const year = Object.keys(yearAcc)[index];
+                    handleYearClick(year);
+                  }
+                },
+              }}
+            />
           </div>
 
           <div

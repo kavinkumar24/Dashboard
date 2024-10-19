@@ -189,7 +189,7 @@ const ProjectDetails = () => {
   console.log("Valid total:", total);
   const getTopMonths = (monthAcc) => {
     const currentYear = new Date().getFullYear();
-  
+
     // Helper to map month names to numeric values
     const monthOrder = {
       January: 1,
@@ -205,26 +205,24 @@ const ProjectDetails = () => {
       November: 11,
       December: 12,
     };
-  
+
     // Filter monthAcc for the current year
     const filteredMonths = Object.entries(monthAcc).filter(([key]) => {
       const [year] = key.split("-");
       return parseInt(year, 10) === currentYear;
     });
-  
+
     // Sort by month names (convert month number to the monthOrder for sorting)
-    const sortedMonths = filteredMonths
-      .sort((a, b) => {
-        const [aYear, aMonth] = a[0].split("-");
-        const [bYear, bMonth] = b[0].split("-");
-  
-        // Compare the month by converting the numeric month values
-        return parseInt(aMonth, 10) - parseInt(bMonth, 10);
-      })
-  
+    const sortedMonths = filteredMonths.sort((a, b) => {
+      const [aYear, aMonth] = a[0].split("-");
+      const [bYear, bMonth] = b[0].split("-");
+
+      // Compare the month by converting the numeric month values
+      return parseInt(aMonth, 10) - parseInt(bMonth, 10);
+    });
+
     return Object.fromEntries(sortedMonths); // Convert back to an object
   };
-  
 
   useEffect(() => {
     const fetchData = async () => {

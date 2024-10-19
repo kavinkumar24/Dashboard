@@ -244,7 +244,7 @@ const ProjectDetails = () => {
         const { groupPartyAcc: originalGroupPartyAcc } =
           aggregateData(originalData);
         const { projectAcc: originalProjectAcc } = aggregateData(originalData);
-        const {productAcc: originalProductAcc} = aggregateData(originalData);
+        const { productAcc: originalProductAcc } = aggregateData(originalData);
 
         setSubproductAcc(limitToTop15(originalSubproductAcc));
         setGroupPartyAcc(limittotop15_group(originalGroupPartyAcc));
@@ -896,8 +896,10 @@ const ProjectDetails = () => {
               theme === "light" ? "bg-white" : "bg-gray-900"
             } p-4 rounded shadow-lg h-[400px] overflow-auto`}
           >
-            <Pie data={plainstone} options={chartOptions} 
-            plugins={[ChartDataLabels]}
+            <Pie
+              data={plainstone}
+              options={chartOptions}
+              plugins={[ChartDataLabels]}
             />
           </div>
 
@@ -968,7 +970,6 @@ const ProjectDetails = () => {
 
           {/* Sub Product Chart */}
           <div
-           
             className={`order-7 col-span-1 ${
               theme === "light" ? "bg-white" : "bg-gray-900"
             } p-4 rounded shadow-md overflow-auto h-[790px] custom-scrollbar`}
@@ -982,7 +983,8 @@ const ProjectDetails = () => {
         </main>
 
         {/* Full-Width Line Chart Below */}
-        <div ref={grouppartyChartRef}
+        <div
+          ref={grouppartyChartRef}
           className={`w-full ${
             theme === "light" ? "bg-white" : "bg-slate-900"
           } p-4 rounded shadow-md h-[450px] overflow-x-auto overflow-y-auto mb-20`}

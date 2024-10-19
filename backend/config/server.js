@@ -281,8 +281,6 @@ app.use("/api", User_Data);
 app.use("/api", Create_Task);
 app.use("/api", Upload_Time);
 
-
-
 const PORT = process.env.PORT || 8081;
 
 app.get("/", (req, res) => {
@@ -331,96 +329,92 @@ app.use("/api", Design_center_brief);
 app.use("/api/", Cellmaster);
 app.use("/api", party_Visit);
 
-
-app.get('/api/dept_targets', (req, res) => {
-  const query = 'SELECT department_name, target FROM Dept_Target';
+app.get("/api/dept_targets", (req, res) => {
+  const query = "SELECT department_name, target FROM Dept_Target";
 
   db.query(query, (err, results) => {
     if (err) {
-      console.error('Error fetching targets:', err);
-      return res.status(500).send('Server error');
+      console.error("Error fetching targets:", err);
+      return res.status(500).send("Server error");
     }
 
     res.json(results);
   });
 });
 
-
 // Assuming you're using Express and have a database connection setup
-app.post('/api/depart_targets', (req, res) => {
+app.post("/api/depart_targets", (req, res) => {
   const { department_name, target } = req.body;
 
   // Basic validation
   if (!department_name || target === undefined) {
-    return res.status(400).send('Department name and target are required');
+    return res.status(400).send("Department name and target are required");
   }
 
-  const query = 'UPDATE Dept_Target SET target = ? WHERE department_name = ?';
+  const query = "UPDATE Dept_Target SET target = ? WHERE department_name = ?";
   db.query(query, [target, department_name], (err, results) => {
     if (err) {
-      console.error('Error updating target:', err);
-      return res.status(500).send('Server error');
+      console.error("Error updating target:", err);
+      return res.status(500).send("Server error");
     }
 
     res.json({ success: true, department_name, target });
   });
 });
 
-
-  // Function to group the target data by unique Project (PLTCODE)
-  app.get("/aop/WeeklyData", async (req, res) => {
-    const sql = `SELECT dept, PLTCODE1, Week1, Week2, Week3, Week4, Month_data
+// Function to group the target data by unique Project (PLTCODE)
+app.get("/aop/WeeklyData", async (req, res) => {
+  const sql = `SELECT dept, PLTCODE1, Week1, Week2, Week3, Week4, Month_data
                  FROM AOP_PLTCODE_Data_Week_wise;`;
 
-    db.query(sql, (err, data) => {
-        if (err) {
-            console.error("Error fetching AOP data:", err);
-            return res.status(500).json({ error: "Internal server error" });
-        }
+  db.query(sql, (err, data) => {
+    if (err) {
+      console.error("Error fetching AOP data:", err);
+      return res.status(500).json({ error: "Internal server error" });
+    }
 
-        // Initialize the output structure
-        const output = {};
+    // Initialize the output structure
+    const output = {};
 
-        // Process each row
-        data.forEach(row => {
-            const { dept, PLTCODE1, Week1, Week2, Week3, Week4, Month_data } = row;
+    // Process each row
+    data.forEach((row) => {
+      const { dept, PLTCODE1, Week1, Week2, Week3, Week4, Month_data } = row;
 
-            // Initialize the department if it doesn't exist
-            if (!output[dept]) {
-                output[dept] = [];
-            }
+      // Initialize the department if it doesn't exist
+      if (!output[dept]) {
+        output[dept] = [];
+      }
 
-            // Find or create the PLTCODE1 entry in the department
-            let pltCodeEntry = output[dept].find(entry => entry.PLTCODE1 === PLTCODE1);
+      // Find or create the PLTCODE1 entry in the department
+      let pltCodeEntry = output[dept].find(
+        (entry) => entry.PLTCODE1 === PLTCODE1
+      );
 
-            if (!pltCodeEntry) {
-                pltCodeEntry = { PLTCODE1: PLTCODE1, data: [],
-                 };
-                output[dept].push(pltCodeEntry);
+      if (!pltCodeEntry) {
+        pltCodeEntry = { PLTCODE1: PLTCODE1, data: [] };
+        output[dept].push(pltCodeEntry);
+      }
 
-            }
-
-            // Add the weekly data
-            pltCodeEntry.data.push({
-                Week1: Week1,
-                Week2: Week2,
-                Week3: Week3,
-                Week4: Week4,
-                Month_data: Month_data
-            });
-            output[dept].push({ Month_data: Month_data });
-
-        });
-
-        // Send the response
-        res.json(output);
+      // Add the weekly data
+      pltCodeEntry.data.push({
+        Week1: Week1,
+        Week2: Week2,
+        Week3: Week3,
+        Week4: Week4,
+        Month_data: Month_data,
+      });
+      output[dept].push({ Month_data: Month_data });
     });
+
+    // Send the response
+    res.json(output);
+  });
 });
 
 app.post("/api/week-wise-data", async (req, res) => {
   const updates = req.body;
 
-  const updateQueries = updates.map(update => {
+  const updateQueries = updates.map((update) => {
     const { PLTCODE1, Week1, Week2, Week3, Week4, Dept } = update;
 
     return new Promise((resolve, reject) => {
@@ -455,8 +449,7 @@ app.post("/api/week-wise-data", async (req, res) => {
   }
 });
 
-
-app.post('/api/update-week-data', async (req, res) => {
+app.post("/api/update-week-data", async (req, res) => {
   try {
     const updatedProjects = req.body; // Array of updated PLTCODE1 data
 
@@ -466,7 +459,7 @@ app.post('/api/update-week-data', async (req, res) => {
 
       // Check if the PLTCODE1 and Dept combination exists
       const existingEntry = await db.query(
-        'SELECT * FROM AOP_PLTCODE_Data_Week_wise WHERE PLTCODE1 = ? AND dept = ?',
+        "SELECT * FROM AOP_PLTCODE_Data_Week_wise WHERE PLTCODE1 = ? AND dept = ?",
         [PLTCODE1, Dept]
       );
 
@@ -489,14 +482,12 @@ app.post('/api/update-week-data', async (req, res) => {
       }
     }
 
-    res.status(200).json({ message: 'Week data successfully updated!' });
+    res.status(200).json({ message: "Week data successfully updated!" });
   } catch (error) {
-    console.error('Error updating week data:', error);
-    res.status(500).json({ message: 'Error updating week data.' });
+    console.error("Error updating week data:", error);
+    res.status(500).json({ message: "Error updating week data." });
   }
 });
-
-
 
 const createOperationalTaskTableQuery = `CREATE TABLE IF NOT EXISTS operational_task (
     task_id VARCHAR(10) PRIMARY KEY,
@@ -517,13 +508,12 @@ db.query(createOperationalTaskTableQuery, (err) => {
   }
 });
 
-const Operational_Task_post = require("../router/post/Operational_Task")
-const Operational_Task_get = require("../router/get/Operational_Task")
+const Operational_Task_post = require("../router/post/Operational_Task");
+const Operational_Task_get = require("../router/get/Operational_Task");
 
 app.use("/api", Operational_Task_post);
 
 app.use("/api", Operational_Task_get);
-
 
 const createTeamDetailsTableQuery = `
   CREATE TABLE IF NOT EXISTS team_member_details (
@@ -544,7 +534,6 @@ db.query(createTeamDetailsTableQuery, (err) => {
     return;
   }
 });
-
 
 // Function to run when the server starts
 const initializeDepartments = () => {
@@ -583,7 +572,10 @@ const initializeDepartments = () => {
         if (!result[groupWh]) {
           result[groupWh] = { from: [], to: [] };
         }
-        if (row["From Dept"] && !result[groupWh].from.includes(row["From Dept"])) {
+        if (
+          row["From Dept"] &&
+          !result[groupWh].from.includes(row["From Dept"])
+        ) {
           result[groupWh].from.push(row["From Dept"]);
         }
         if (row["To Dept"] && !result[groupWh].to.includes(row["To Dept"])) {
@@ -592,11 +584,15 @@ const initializeDepartments = () => {
       });
 
       // Prepare department names for insertion into Dept_Target
-      const departmentsToInsert = Object.keys(result).filter(dept => dept !== 'null');
+      const departmentsToInsert = Object.keys(result).filter(
+        (dept) => dept !== "null"
+      );
 
       // Check existing departments
       const existingDepartmentsQuery = `
-        SELECT department_name FROM Dept_Target WHERE department_name IN (${departmentsToInsert.map(dept => `'${dept}'`).join(',')})
+        SELECT department_name FROM Dept_Target WHERE department_name IN (${departmentsToInsert
+          .map((dept) => `'${dept}'`)
+          .join(",")})
       `;
 
       db.query(existingDepartmentsQuery, (err, existingRows) => {
@@ -606,10 +602,12 @@ const initializeDepartments = () => {
         }
 
         // Create a set of existing department names for quick lookup
-        const existingDepartmentsSet = new Set(existingRows.map(row => row.department_name));
+        const existingDepartmentsSet = new Set(
+          existingRows.map((row) => row.department_name)
+        );
 
         // Insert departments into Dept_Target if they don't exist
-        const insertPromises = departmentsToInsert.map(dept => {
+        const insertPromises = departmentsToInsert.map((dept) => {
           if (!existingDepartmentsSet.has(dept)) {
             return new Promise((resolve, reject) => {
               const insertSql = `INSERT INTO Dept_Target (department_name, target) VALUES ('${dept}', 100);`;
@@ -640,9 +638,6 @@ const initializeDepartments = () => {
   });
 };
 
-
-
-
 const createPhaseTableQuery = `
 CREATE TABLE IF NOT EXISTS phase_tasks (
   task_id VARCHAR(10),
@@ -667,94 +662,102 @@ db.query(createPhaseTableQuery, (err) => {
   }
 });
 
-const Phase_Task_post = require("../router/post/Phase_Task")
-const Phase_Task_get = require("../router/get/Phase_Task")
+const Phase_Task_post = require("../router/post/Phase_Task");
+const Phase_Task_get = require("../router/get/Phase_Task");
 app.use("/api", Phase_Task_post);
-app.use("/api",Phase_Task_get)
-
-
+app.use("/api", Phase_Task_get);
 
 const party_Visit_post = require("../router/post/Party_Visit");
 app.use("/api", party_Visit_post);
 
-
-const User_get = require("../router/get/User")
-app.use("/api", User_get)
-
-
-
-
+const User_get = require("../router/get/User");
+app.use("/api", User_get);
 
 async function getPasswordForEmail(email) {
   try {
-      const response = await axios.get('http://localhost:8081/api/user/loggedin/data', {
-          params: { email }
-      });
-      
-      const user = response.data.find(user => user.Email === email);
-      // console.log(user,"user")
-      
-      if (user) {
-          // console.log(user,"yeah")
-          return user.password; // Return the password if user found
-      } else {
-          throw new Error('User not found');
+    const response = await axios.get(
+      "http://localhost:8081/api/user/loggedin/data",
+      {
+        params: { email },
       }
+    );
+
+    const user = response.data.find((user) => user.Email === email);
+    // console.log(user,"user")
+
+    if (user) {
+      // console.log(user,"yeah")
+      return user.password; // Return the password if user found
+    } else {
+      throw new Error("User not found");
+    }
   } catch (error) {
-      console.error("Error fetching password:", error);
-      throw error; // Rethrow or handle as necessary
+    console.error("Error fetching password:", error);
+    throw error; // Rethrow or handle as necessary
   }
 }
 
 async function getUsernameForEmail(email) {
-  try{
-    const response = await axios.get('http://localhost:8081/api/user/loggedin/data', {
-      params: { email }
-  });
-  const user = response.data.find(user => user.Email === email);
-  if(user){
-    return user.emp_name;
+  try {
+    const response = await axios.get(
+      "http://localhost:8081/api/user/loggedin/data",
+      {
+        params: { email },
+      }
+    );
+    const user = response.data.find((user) => user.Email === email);
+    if (user) {
+      return user.emp_name;
+    } else {
+      throw new Error("User not found");
+    }
+  } catch (error) {
+    console.error("Error fetching username:", error);
+    throw error; // Rethrow or handle as necessary
   }
-  else{
-    throw new Error('User not found');
-  }
-}
-catch (error) {
-  console.error("Error fetching username:", error);
-  throw error; // Rethrow or handle as necessary
-}
 }
 
-const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 
-app.post('/api/send-email', async (req, res) => {
-  const { assignToEmail, assignToPersonEmails, hodemail, ax_brief, collection_name, project, no_of_qty, assign_date, target_date, priority } = req.body;
+app.post("/api/send-email", async (req, res) => {
+  const {
+    assignToEmail,
+    assignToPersonEmails,
+    hodemail,
+    ax_brief,
+    collection_name,
+    project,
+    no_of_qty,
+    assign_date,
+    target_date,
+    priority,
+  } = req.body;
   console.log("Assigned to Email:", assignToEmail);
   console.log("Person Emails:", assignToPersonEmails);
 
   try {
-      const password = await getPasswordForEmail(assignToEmail);
-      const username = await getUsernameForEmail(assignToEmail);
-      console.log("Password:", password);
-      console.log("Username:", username);
+    const password = await getPasswordForEmail(assignToEmail);
+    const username = await getUsernameForEmail(assignToEmail);
+    console.log("Password:", password);
+    console.log("Username:", username);
 
-      const transporter = nodemailer.createTransport({
-          host: 'your.zimbra.server',
-          port: 587,
-          secure: false,
-          auth: {
-              user: assignToEmail,
-              pass: password
-          }
-      });
+    const transporter = nodemailer.createTransport({
+      host: "your.zimbra.server",
+      port: 587,
+      secure: false,
+      auth: {
+        user: assignToEmail,
+        pass: password,
+      },
+    });
 
-      const toEmails = [hodemail, ...assignToPersonEmails];
+    const toEmails = [hodemail, ...assignToPersonEmails];
 
-      const mailOptions = {
-          from: `"${username}" <${assignToEmail}>`, 
-          to: toEmails.join(','), 
-          subject: 'Task Assignment Notification',
-          text: `Task Details:
+    const mailOptions = {
+      from: `"${username}" <${assignToEmail}>`,
+      to: toEmails.join(","),
+      subject: "Task Assignment Notification",
+      text: `Task Details:
               AX Brief: ${ax_brief}
               Collection Name: ${collection_name}
               Project: ${project}
@@ -762,7 +765,7 @@ app.post('/api/send-email', async (req, res) => {
               Assigned Date: ${assign_date}
               Target Date: ${target_date}
               Priority: ${priority}`,
-          html: `<b>Task Details:</b>
+      html: `<b>Task Details:</b>
               <ul>
                   <li><b>AX Brief:</b> ${ax_brief}</li>
                   <li><b>Collection Name:</b> ${collection_name}</li>
@@ -771,55 +774,60 @@ app.post('/api/send-email', async (req, res) => {
                   <li><b>Assigned Date:</b> ${assign_date}</li>
                   <li><b>Target Date:</b> ${target_date}</li>
                   <li><b>Priority:</b> ${priority}</li>
-              </ul>`
-      };
+              </ul>`,
+    };
 
-      await transporter.sendMail(mailOptions);
-      res.status(200).send('Email sent successfully!');
+    await transporter.sendMail(mailOptions);
+    res.status(200).send("Email sent successfully!");
   } catch (error) {
-      console.error("Failed to send email:", error);
-      res.status(500).send('Failed to send email.');
+    console.error("Failed to send email:", error);
+    res.status(500).send("Failed to send email.");
   }
 });
 
-
-
-
-app.post('/api/send-email/Party-vist', async (req, res) => {
-  const { loggedemail, assignToPersonEmails, visit_date, partyname, description, status_data, imagelink } = req.body;
+app.post("/api/send-email/Party-vist", async (req, res) => {
+  const {
+    loggedemail,
+    assignToPersonEmails,
+    visit_date,
+    partyname,
+    description,
+    status_data,
+    imagelink,
+  } = req.body;
   console.log("logged to Email:", loggedemail);
   console.log("Person Emails:", assignToPersonEmails);
 
   try {
-      const password = await getPasswordForEmail(assignToEmail);
-      const username = await getUsernameForEmail(assignToEmail);
-      console.log("Password:", password);
-      console.log("Username:", username);
+    const password = await getPasswordForEmail(assignToEmail);
+    const username = await getUsernameForEmail(assignToEmail);
+    console.log("Password:", password);
+    console.log("Username:", username);
 
-      const transporter = nodemailer.createTransport({
-          host: 'your.zimbra.server',
-          port: 587,
-          secure: false,
-          auth: {
-              user: assignToEmail,
-              pass: password
-          }
-      });
+    const transporter = nodemailer.createTransport({
+      host: "your.zimbra.server",
+      port: 587,
+      secure: false,
+      auth: {
+        user: assignToEmail,
+        pass: password,
+      },
+    });
 
-      const toEmails = [assignToPersonEmails];
-      console.log("toEmails",toEmails)
+    const toEmails = [assignToPersonEmails];
+    console.log("toEmails", toEmails);
 
-      const mailOptions = {
-          from: `"${username}" <${assignToEmail}>`, 
-          to: toEmails.join(','), 
-          subject: 'Task Assignment Notification',
-          text: `Task Details:
+    const mailOptions = {
+      from: `"${username}" <${assignToEmail}>`,
+      to: toEmails.join(","),
+      subject: "Task Assignment Notification",
+      text: `Task Details:
               Visit Date: ${visit_date}
               Party Name: ${partyname}
               Description: ${description}
                Status: ${status_data}
               imagelink: ${imagelink}`,
-          html: `<b>Task Details:</b>
+      html: `<b>Task Details:</b>
               <ul>
                   <li><b>Visit Date:</b> ${visit_date}</li>
                   <li><b>Party Name:</b> ${partyname}</li>
@@ -827,18 +835,74 @@ app.post('/api/send-email/Party-vist', async (req, res) => {
                   <li><b>Status:</b> ${status_data}</li>
                   <li><b>Image ref link:</b> ${imagelink}</li>
                  
-              </ul>`
-      };
+              </ul>`,
+    };
 
-      await transporter.sendMail(mailOptions);
-      res.status(200).send('Email sent successfully!');
+    await transporter.sendMail(mailOptions);
+    res.status(200).send("Email sent successfully!");
   } catch (error) {
-      console.error("Failed to send email:", error);
-      res.status(500).send('Failed to send email.');
+    console.error("Failed to send email:", error);
+    res.status(500).send("Failed to send email.");
   }
 });
 
 
+
+app.post("/api/send-email/Op-task", async (req, res) => {
+  const {
+    assignee,
+    currentEmailid,
+    phase,
+    task,
+    phase_id
+  } = req.body;
+  console.log("Assigned to Email:", assignee);
+  console.log("Person Emails:", task);
+
+  try {
+    const password = await getPasswordForEmail(assignee);
+    const username = await getUsernameForEmail(assignee);
+    console.log("Password:", password);
+    console.log("Username:", username);
+
+    const transporter = nodemailer.createTransport({
+      host: "your.zimbra.server",
+      port: 587,
+      secure: false,
+      auth: {
+        user: assignee,
+        pass: password,
+      },
+    });
+
+    const toEmails = currentEmailid;
+
+    const mailOptions = {
+      from: `"${username}" <${assignee}>`,
+      to: toEmails,
+      subject: "Operational Task Notification",
+      text: `Operational Task Details:
+              Phase Name: ${phase}
+              Task: ${task}
+              Phase: ${phase_id}
+           `,
+      html: `<b>Operational Task Details:</b>
+              <ul>
+
+                  <li><b>Phase Name:</b> ${phase_name}</li>
+                  <li><b>Task:</b> ${task}</li>
+                  <li><b>Phase:</b> ${phase}</li>
+
+              </ul>`,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.status(200).send("Email sent successfully!");
+  } catch (error) {
+    console.error("Failed to send email:", error);
+    res.status(500).send("Failed to send email.");
+  }
+});
 
 
 app.get("/filtered_production_data_with_dates", async (req, res) => {
@@ -854,7 +918,9 @@ app.get("/filtered_production_data_with_dates", async (req, res) => {
 
     // Validate the provided dates
     if (!startDate || !endDate) {
-      return res.status(400).json({ error: "Please provide valid startDate and endDate" });
+      return res
+        .status(400)
+        .json({ error: "Please provide valid startDate and endDate" });
     }
 
     // Parse the start and end dates
@@ -864,7 +930,9 @@ app.get("/filtered_production_data_with_dates", async (req, res) => {
     // Check the difference between start and end dates should be 5 days
     const dayDifference = (end - start) / (1000 * 60 * 60 * 24);
     if (dayDifference !== 4) {
-      return res.status(400).json({ error: "Please provide a range of 5 days" });
+      return res
+        .status(400)
+        .json({ error: "Please provide a range of 5 days" });
     }
 
     // Generate date ranges for each of the 5 days
@@ -889,21 +957,28 @@ app.get("/filtered_production_data_with_dates", async (req, res) => {
     const lowerDeptFromFilter = deptFromFilter.map((dept) =>
       dept.toLowerCase()
     );
-    const lowerDeptToFilter = deptToFilter.map((dept) =>
-      dept.toLowerCase()
-    );
+    const lowerDeptToFilter = deptToFilter.map((dept) => dept.toLowerCase());
 
     // SQL query to get total quantity for each day
     const sql = `
       SELECT \`From Dept\`, \`To Dept\`, COUNT(\`CW Qty\`) AS total_qty, 
              CASE 
-               ${dateRanges.map((_, i) => `WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'day${i + 1}'`).join("\n")}
+               ${dateRanges
+                 .map(
+                   (_, i) =>
+                     `WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'day${
+                       i + 1
+                     }'`
+                 )
+                 .join("\n")}
                ELSE NULL
              END AS day_type
       FROM Production_sample_data
       WHERE LOWER(\`From Dept\`) IN (?) 
         AND LOWER(\`To Dept\`) IN (?) 
-        AND (${dateRanges.map(() => "(UploadedDateTime >= ? AND UploadedDateTime < ?)").join(" OR ")})
+        AND (${dateRanges
+          .map(() => "(UploadedDateTime >= ? AND UploadedDateTime < ?)")
+          .join(" OR ")})
       GROUP BY \`From Dept\`, \`To Dept\`, day_type
     `;
 
@@ -941,7 +1016,9 @@ app.get("/filtered_production_data_with_dates", async (req, res) => {
         const qty = row.total_qty;
         const dayType = row.day_type; // 'day1', 'day2', ..., 'day5'
 
-        for (const [group, { from, to }] of Object.entries(departmentMappings)) {
+        for (const [group, { from, to }] of Object.entries(
+          departmentMappings
+        )) {
           if (from.includes(fromDept) && to.includes(toDept)) {
             results[dayType][group] += qty; // Add quantity to the respective day
           }
@@ -956,8 +1033,6 @@ app.get("/filtered_production_data_with_dates", async (req, res) => {
   }
 });
 
-
-
 app.get("/aop", async (req, res) => {
   const sql = `SELECT * FROM AOP_PLTCODE_Data_Week_wise`;
   db.query(sql, (err, data) => {
@@ -971,112 +1046,126 @@ app.get("/aop", async (req, res) => {
 });
 
 app.get("/filtered_pending_data_with_dates", async (req, res) => {
-try {
-  // Get department mappings
-  const response = await axios.get("http://localhost:8081/api/department-mappings");
-  const departmentMappings = response.data;
+  try {
+    // Get department mappings
+    const response = await axios.get(
+      "http://localhost:8081/api/department-mappings"
+    );
+    const departmentMappings = response.data;
 
-  // Get startDate and endDate from query params
-  const { startDate, endDate } = req.query;
-  // const startDate = '2024-10-12';
-  // const endDate = '2024-10-16';
+    // Get startDate and endDate from query params
+    const { startDate, endDate } = req.query;
+    // const startDate = '2024-10-12';
+    // const endDate = '2024-10-16';
 
-  // Validate the provided dates
-  if (!startDate || !endDate) {
-  return res.status(400).json({ error: "Please provide valid startDate and endDate" });
-  }
+    // Validate the provided dates
+    if (!startDate || !endDate) {
+      return res
+        .status(400)
+        .json({ error: "Please provide valid startDate and endDate" });
+    }
 
-  // Parse the start and end dates
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+    // Parse the start and end dates
+    const start = new Date(startDate);
+    const end = new Date(endDate);
 
-  // Check that the difference between start and end dates is exactly 5 days
-  const dayDifference = (end - start) / (1000 * 60 * 60 * 24);
-  if (dayDifference !== 4) {
-  return res.status(400).json({ error: "Please provide a range of 5 days" });
-  }
+    // Check that the difference between start and end dates is exactly 5 days
+    const dayDifference = (end - start) / (1000 * 60 * 60 * 24);
+    if (dayDifference !== 4) {
+      return res
+        .status(400)
+        .json({ error: "Please provide a range of 5 days" });
+    }
 
-  // Generate date ranges for each of the 5 days
-  const dateRanges = [];
-  for (let i = 0; i < 5; i++) {
-  const dayStart = new Date(start);
-  dayStart.setDate(start.getDate() + i);
+    // Generate date ranges for each of the 5 days
+    const dateRanges = [];
+    for (let i = 0; i < 5; i++) {
+      const dayStart = new Date(start);
+      dayStart.setDate(start.getDate() + i);
 
-  const dayEnd = new Date(dayStart);
-  dayEnd.setDate(dayStart.getDate() + 1);
+      const dayEnd = new Date(dayStart);
+      dayEnd.setDate(dayStart.getDate() + 1);
 
-  dateRanges.push({ dayStart, dayEnd });
-  }
+      dateRanges.push({ dayStart, dayEnd });
+    }
 
-  // Extract department mappings
-  const toDeptFilter = Object.values(departmentMappings).flatMap((mapping) => mapping.from);
-  const lowerToDeptFilter = toDeptFilter.map((dept) => dept.toLowerCase());
+    // Extract department mappings
+    const toDeptFilter = Object.values(departmentMappings).flatMap(
+      (mapping) => mapping.from
+    );
+    const lowerToDeptFilter = toDeptFilter.map((dept) => dept.toLowerCase());
 
-  // SQL query to get total quantity for each day
-  const sql = `
+    // SQL query to get total quantity for each day
+    const sql = `
   SELECT todept, COUNT(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty,
           CASE 
-              ${dateRanges.map((_, i) => `WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'day${i + 1}'`).join("\n")}
+              ${dateRanges
+                .map(
+                  (_, i) =>
+                    `WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'day${
+                      i + 1
+                    }'`
+                )
+                .join("\n")}
               ELSE NULL
           END AS day_type
   FROM Pending_sample_data
   WHERE LOWER(todept) IN (?) 
-      AND (${dateRanges.map(() => "(UploadedDateTime >= ? AND UploadedDateTime < ?)").join(" OR ")})
+      AND (${dateRanges
+        .map(() => "(UploadedDateTime >= ? AND UploadedDateTime < ?)")
+        .join(" OR ")})
   GROUP BY todept, day_type
   `;
 
+    // Flatten the params for all days
+    const params = [
+      ...dateRanges.flatMap(({ dayStart, dayEnd }) => [dayStart, dayEnd]),
+      lowerToDeptFilter,
+      ...dateRanges.flatMap(({ dayStart, dayEnd }) => [dayStart, dayEnd]),
+    ];
 
-  // Flatten the params for all days
-  const params = [
-  ...dateRanges.flatMap(({ dayStart, dayEnd }) => [dayStart, dayEnd]),
-  lowerToDeptFilter,
-  ...dateRanges.flatMap(({ dayStart, dayEnd }) => [dayStart, dayEnd]),
-  ];
+    db.query(sql, params, (err, data) => {
+      if (err) return res.json(err);
 
-  db.query(sql, params, (err, data) => {
-  if (err) return res.json(err);
+      // Initialize the result object with all departments set to 0 for all 5 days
+      const results = {
+        day1: {},
+        day2: {},
+        day3: {},
+        day4: {},
+        day5: {},
+      };
 
-  // Initialize the result object with all departments set to 0 for all 5 days
-  const results = {
-      day1: {},
-      day2: {},
-      day3: {},
-      day4: {},
-      day5: {},
-  };
+      // Set all departments to 0 initially
+      Object.keys(departmentMappings).forEach((group) => {
+        for (let i = 1; i <= 5; i++) {
+          results[`day${i}`][group] = 0;
+        }
+      });
 
-  // Set all departments to 0 initially
-  Object.keys(departmentMappings).forEach((group) => {
-      for (let i = 1; i <= 5; i++) {
-      results[`day${i}`][group] = 0;
-      }
-  });
+      // Update the total_qty based on the actual query results
+      data.forEach((row) => {
+        const toDept = row.todept ? row.todept.toUpperCase() : null;
+        const qty = row.total_qty;
+        const dayType = row.day_type; // 'day1', 'day2', ..., 'day5'
 
-  // Update the total_qty based on the actual query results
-  data.forEach((row) => {
-      const toDept = row.todept ? row.todept.toUpperCase() : null;
-      const qty = row.total_qty;
-      const dayType = row.day_type; // 'day1', 'day2', ..., 'day5'
-
-      if (toDept) {
-      for (const [group, { from }] of Object.entries(departmentMappings)) {
-          if (from.includes(toDept)) {
-          results[dayType][group] += qty; // Add quantity to the respective day
+        if (toDept) {
+          for (const [group, { from }] of Object.entries(departmentMappings)) {
+            if (from.includes(toDept)) {
+              results[dayType][group] += qty; // Add quantity to the respective day
+            }
           }
-      }
-      }
-  });
+        }
+      });
 
-  return res.json(results);
-  });
-} catch (error) {
-  console.error("Error fetching pending data:", error);
-  res.status(500).json({ error: "Internal server error" });
-}
+      return res.json(results);
+    });
+  } catch (error) {
+    console.error("Error fetching pending data:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
 });
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
-  initializeDepartments(); 
-
-  
+  initializeDepartments();
 });

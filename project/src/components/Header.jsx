@@ -7,8 +7,8 @@ import { FiLogOut } from "react-icons/fi";
 import { FaRegUser } from "react-icons/fa";
 import { CiGrid41 } from "react-icons/ci";
 import { useRef } from "react";
-import UserProfile from '../assests/user.png'
-import DarkUserProfile from '../assests/user_dark.png'
+import UserProfile from "../assests/user.png";
+import DarkUserProfile from "../assests/user_dark.png";
 
 function Header({
   onSearch,
@@ -79,22 +79,18 @@ function Header({
     dark(theme === "dark" ? "light" : "dark");
   };
 
-  
-
   const [dropdown, setdropdown] = useState(false);
   const handleprofile = () => {
-
     setdropdown(!dropdown);
   };
 
   const handleClickOutside = (event) => {
     if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-
       if (!showProfileModal) {
-        setdropdown(false); 
+        setdropdown(false);
       }
       if (showProfileModal) {
-        on_filter(true); 
+        on_filter(true);
       }
     }
   };
@@ -277,45 +273,67 @@ function Header({
         )}
 
         {showProfileModal && userData && (
-         <div className="fixed inset-0 flex items-center justify-center z-20 w-full p-4">
-         <div
-           className={`relative w-full max-w-lg sm:w-[60%] sm:max-w-md ${
-             theme === "light" ? "bg-white" : "bg-gray-700"
-           } shadow-lg rounded-lg p-6 sm:p-6`} // Responsive padding for mobile
-         >
-          <div className="items-center justify-center w-1/2 m-auto">
-          <img  src={theme==='light'?UserProfile: DarkUserProfile} className="justify-center items-center"  />
+          <div className="fixed inset-0 flex items-center justify-center z-20 w-full p-4">
+            <div
+              className={`relative w-full max-w-lg sm:w-[60%] sm:max-w-md ${
+                theme === "light" ? "bg-white" : "bg-gray-700"
+              } shadow-lg rounded-lg p-6 sm:p-6`} // Responsive padding for mobile
+            >
+              <div className="items-center justify-center w-1/2 m-auto">
+                <img
+                  src={theme === "light" ? UserProfile : DarkUserProfile}
+                  className="justify-center items-center"
+                />
+              </div>
+              <h2
+                className={`mx-auto justify-center text-center ${
+                  theme === "light" ? "text-black" : "text-white"
+                } text-lg font-semibold`}
+              >
+                User Profile
+              </h2>
+              <br></br>
+              <p className="text-sm text-gray-400 mt-1">
+                Details about the user:
+              </p>
+              <div className="mt-4 space-y-2">
+                <p
+                  className={`${
+                    theme === "light" ? "text-black" : "text-white"
+                  }`}
+                >
+                  <strong>Emp ID:</strong> {userData.emp_id}
+                </p>
+                <p
+                  className={`${
+                    theme === "light" ? "text-black" : "text-white"
+                  }`}
+                >
+                  <strong>Name:</strong> {userData.emp_name}
+                </p>
+                <p
+                  className={`${
+                    theme === "light" ? "text-black" : "text-white"
+                  }`}
+                >
+                  <strong>Email:</strong> {userData.Email}
+                </p>
+                <p
+                  className={`${
+                    theme === "light" ? "text-black" : "text-white"
+                  }`}
+                >
+                  <strong>Role:</strong> {userData.role}
+                </p>
+              </div>
+              <button
+                className="mt-6 bg-gray-400 text-white p-2 rounded-md hover:bg-gray-600 transition"
+                onClick={profile_modal}
+              >
+                Close
+              </button>
+            </div>
           </div>
-           <h2
-             className={`mx-auto justify-center text-center ${theme === "light" ? "text-black" : "text-white"} text-lg font-semibold`}
-           >
-             User Profile
-           </h2>
-           <br></br>
-           <p className="text-sm text-gray-400 mt-1">Details about the user:</p>
-           <div className="mt-4 space-y-2">
-             <p className={`${theme === "light" ? "text-black" : "text-white"}`}>
-               <strong>Emp ID:</strong> {userData.emp_id}
-             </p>
-             <p className={`${theme === "light" ? "text-black" : "text-white"}`}>
-               <strong>Name:</strong> {userData.emp_name}
-             </p>
-             <p className={`${theme === "light" ? "text-black" : "text-white"}`}>
-               <strong>Email:</strong> {userData.Email}
-             </p>
-             <p className={`${theme === "light" ? "text-black" : "text-white"}`}>
-               <strong>Role:</strong> {userData.role}
-             </p>
-           </div>
-           <button
-             className="mt-6 bg-gray-400 text-white p-2 rounded-md hover:bg-gray-600 transition"
-             onClick={profile_modal}
-           >
-             Close
-           </button>
-         </div>
-       </div>
-       
         )}
       </div>
     </header>

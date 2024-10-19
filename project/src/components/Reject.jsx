@@ -635,309 +635,502 @@ function Reject() {
     >
       <Sidebar theme={theme} />
       <div className="flex-1 flex flex-col">
-        <Header onSearch={setSearch} theme={theme} dark={setTheme}  on_filter={setFilter_on}
-          filter={filter_on}/>
+        <Header
+          onSearch={setSearch}
+          theme={theme}
+          dark={setTheme}
+          on_filter={setFilter_on}
+          filter={filter_on}
+        />
         <main
           className={`flex-1 px-4 overflow-y-auto ${
             filter_on === true ? "opacity-10" : "opacity-100"
           }`}
         >
-        <div
-          className={`flex justify-between mx-4 mt-4 ${
-            theme === "light" ? "text-gray-800" : "text-gray-200"
-          }`}
-        >
-          <h1 className="font-bold text-xl">Rejections Overview</h1>
-          <div className="flex">
-            <button
-              onClick={handleFilterClick}
-              className={`mr-3 py-2 px-4 font-bold text-sm text-white rounded-lg flex ${
-                theme === "light"
-                  ? "bg-blue-500 hover:bg-blue-700"
-                  : "bg-blue-600 hover:bg-blue-800"
-              }`}
-            >
-              <IoFilterOutline
-                size={20}
-                className={`${
-                  theme === "light" ? "text-gray-100" : "text-gray-100"
-                } mr-2`}
-              />
-              Filter
-            </button>
-          </div>
-
-          {/* Date Picker Modal */}
-          {showDatePickerModal && (
-            <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
-              <div className="bg-white w-96 mx-auto pl-10 py-4 rounded-xl">
-                <p className="font-bold">Date range</p>
-                <RangeSlider
-                  min={0}
-                  max={31}
-                  onRangeChange={(from, to) =>
-                    handleRangeChange("date", from, to)
-                  }
-                />
-                <p className="font-bold">Month range</p>
-                <RangeSlider
-                  min={0}
-                  max={12}
-                  onRangeChange={(from, to) =>
-                    handleRangeChange("month", from, to)
-                  }
-                />
-                <p className="font-bold">Year range</p>
-                <RangeSlider
-                  min={1999}
-                  max={2024}
-                  onRangeChange={(from, to) =>
-                    handleRangeChange("year", from, to)
-                  }
-                />
-
-                <div>
-                  <h4 className="font-bold">Selected Ranges:</h4>
-                  <p>
-                    {dateRange.from}/{monthRange.from}/{yearRange.from} -{" "}
-                    {dateRange.to}/{monthRange.to}/{yearRange.to}
-                  </p>
-                </div>
-
-                <div className="flex justify-between mt-4 mr-10">
-                  <button
-                    onClick={handleCancelFilter}
-                    className={`py-2 px-4 font-bold text-sm text-white rounded-lg ${
-                      theme === "light"
-                        ? "bg-gray-500 hover:bg-gray-700"
-                        : "bg-gray-600 hover:bg-gray-800"
-                    }`}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleApplyFilter}
-                    className={`py-2 px-4 font-bold text-sm text-white rounded-lg ${
-                      theme === "light"
-                        ? "bg-blue-500 hover:bg-blue-700"
-                        : "bg-blue-600 hover:bg-blue-800"
-                    }`}
-                  >
-                    Apply Filter
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div
-          className={`m-6 px-10 border rounded-lg ${
-            theme === "dark"
-              ? "bg-gray-800 border-gray-600 "
-              : "bg-white border-gray-300 "
-          } shadow-lg`}
-        >
           <div
-            className={`border-b ${
-              theme === "light" ? "border-slate-200" : "border-slate-500"
+            className={`flex justify-between mx-4 mt-4 ${
+              theme === "light" ? "text-gray-800" : "text-gray-200"
             }`}
           >
-            <button
-              onClick={() => toggleAccordion1(1)}
-              className={`w-full flex justify-between items-center py-5 ${
-                theme === "dark" ? "text-white" : "text-slate-800"
+            <h1 className="font-bold text-xl">Rejections Overview</h1>
+            <div className="flex">
+              <button
+                onClick={handleFilterClick}
+                className={`mr-3 py-2 px-4 font-bold text-sm text-white rounded-lg flex ${
+                  theme === "light"
+                    ? "bg-blue-500 hover:bg-blue-700"
+                    : "bg-blue-600 hover:bg-blue-800"
+                }`}
+              >
+                <IoFilterOutline
+                  size={20}
+                  className={`${
+                    theme === "light" ? "text-gray-100" : "text-gray-100"
+                  } mr-2`}
+                />
+                Filter
+              </button>
+            </div>
+
+            {/* Date Picker Modal */}
+            {showDatePickerModal && (
+              <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
+                <div className="bg-white w-96 mx-auto pl-10 py-4 rounded-xl">
+                  <p className="font-bold">Date range</p>
+                  <RangeSlider
+                    min={0}
+                    max={31}
+                    onRangeChange={(from, to) =>
+                      handleRangeChange("date", from, to)
+                    }
+                  />
+                  <p className="font-bold">Month range</p>
+                  <RangeSlider
+                    min={0}
+                    max={12}
+                    onRangeChange={(from, to) =>
+                      handleRangeChange("month", from, to)
+                    }
+                  />
+                  <p className="font-bold">Year range</p>
+                  <RangeSlider
+                    min={1999}
+                    max={2024}
+                    onRangeChange={(from, to) =>
+                      handleRangeChange("year", from, to)
+                    }
+                  />
+
+                  <div>
+                    <h4 className="font-bold">Selected Ranges:</h4>
+                    <p>
+                      {dateRange.from}/{monthRange.from}/{yearRange.from} -{" "}
+                      {dateRange.to}/{monthRange.to}/{yearRange.to}
+                    </p>
+                  </div>
+
+                  <div className="flex justify-between mt-4 mr-10">
+                    <button
+                      onClick={handleCancelFilter}
+                      className={`py-2 px-4 font-bold text-sm text-white rounded-lg ${
+                        theme === "light"
+                          ? "bg-gray-500 hover:bg-gray-700"
+                          : "bg-gray-600 hover:bg-gray-800"
+                      }`}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleApplyFilter}
+                      className={`py-2 px-4 font-bold text-sm text-white rounded-lg ${
+                        theme === "light"
+                          ? "bg-blue-500 hover:bg-blue-700"
+                          : "bg-blue-600 hover:bg-blue-800"
+                      }`}
+                    >
+                      Apply Filter
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div
+            className={`m-6 px-10 border rounded-lg ${
+              theme === "dark"
+                ? "bg-gray-800 border-gray-600 "
+                : "bg-white border-gray-300 "
+            } shadow-lg`}
+          >
+            <div
+              className={`border-b ${
+                theme === "light" ? "border-slate-200" : "border-slate-500"
               }`}
             >
-              <span
-                className={`text-lg font-semibold ${
+              <button
+                onClick={() => toggleAccordion1(1)}
+                className={`w-full flex justify-between items-center py-5 ${
                   theme === "dark" ? "text-white" : "text-slate-800"
                 }`}
               >
-                Rejection Percentage of Departments
-              </span>
-              <span
-                className={`transition-transform duration-300 ${
-                  theme === "dark" ? "text-white" : "text-slate-800"
-                }`}
-              >
-                {activeIndex1 === 1 ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    className="w-4 h-4"
-                  >
-                    <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
-                  </svg>
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 16 16"
-                    fill="currentColor"
-                    className="w-4 h-4"
-                  >
-                    <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
-                  </svg>
-                )}
-              </span>
-            </button>
-            <div
-              className={`${
-                activeIndex1 === 1 ? "max-h-screen" : "max-h-0"
-              } overflow-hidden transition-all duration-300 ease-in-out`}
-            >
-              <div
-                className={`p-6 grid grid-cols-1 md:grid-cols-6 gap-4 ${
-                  theme === "dark" ? "text-white" : "text-gray-800"
-                }`}
-              >
-                {uniqueDepartments.length > 0 ? (
-                  uniqueDepartments.map((month, index) => (
-                    <div
-                      key={index}
-                      className={`shadow-md rounded-lg p-6 cursor-pointer ${
-                        theme === "dark"
-                          ? "bg-gray-700 border-gray-600"
-                          : "bg-blue-100 border-blue-300"
-                      }`}
-                      onClick={() => handleDeptChange(month)}
+                <span
+                  className={`text-lg font-semibold ${
+                    theme === "dark" ? "text-white" : "text-slate-800"
+                  }`}
+                >
+                  Rejection Percentage of Departments
+                </span>
+                <span
+                  className={`transition-transform duration-300 ${
+                    theme === "dark" ? "text-white" : "text-slate-800"
+                  }`}
+                >
+                  {activeIndex1 === 1 ? (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      className="w-4 h-4"
                     >
-                      <h2
-                        className={`text-xl font-semibold mb-2 ${
-                          theme === "dark" ? "text-white" : "text-gray-800"
-                        }`}
-                      >
-                        {month}
-                      </h2>
-                      <p
-                        className={`font-bold text-xl ${
-                          theme === "dark" ? "text-gray-300" : "text-gray-500"
-                        }`}
-                      >
-                        {deptPercentage[index]}%
-                      </p>
-                    </div>
-                  ))
-                ) : (
-                  <p
-                    className={`text-lg font-bold ${
-                      theme === "dark" ? "text-red-400" : "text-red-500"
-                    }`}
-                  >
-                    No data available
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {message !== "" ? (
-          <p>{message}</p>
-        ) : (
-          <div>
-            <div className="flex">
+                      <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
+                    </svg>
+                  ) : (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      fill="currentColor"
+                      className="w-4 h-4"
+                    >
+                      <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
+                    </svg>
+                  )}
+                </span>
+              </button>
               <div
-                className={`w-1/2 m-6 border rounded-lg  shadow-lg ${
-                  theme === "dark"
-                    ? "bg-gray-900 text-white border-gray-600"
-                    : "bg-white text-gray-800 border-gray-300"
-                }`}
+                className={`${
+                  activeIndex1 === 1 ? "max-h-screen" : "max-h-0"
+                } overflow-hidden transition-all duration-300 ease-in-out`}
               >
-                <h1
-                  className={`text-lg font-semibold p-2 pl-10 ${
+                <div
+                  className={`p-6 grid grid-cols-1 md:grid-cols-6 gap-4 ${
                     theme === "dark" ? "text-white" : "text-gray-800"
                   }`}
                 >
-                  Rejection Counts Based on Year
-                </h1>
-                <div className="px-10">
-                  {chartData ? (
-                    <Bar
-                      data={chartData}
-                      options={{
-                        ...chartOptions,
-                        plugins: {
-                          legend: {
-                            display: true,
-                            position: "top",
-                            labels: {
-                              boxWidth: 15,
-                              padding: 10,
-                              color: theme === "dark" ? "white" : "black",
-                            },
-                          },
-                          tooltip: {
-                            backgroundColor:
-                              theme === "dark" ? "#333" : "white",
-                            titleColor: theme === "dark" ? "white" : "black",
-                            bodyColor: theme === "dark" ? "white" : "black",
-                          },
-                          datalabels: {
-                            color: (context) =>
-                              theme === "dark" ? "white" : "black",
-                          },
-                        },
-                        scales: {
-                          x: {
-                            grid: {
-                              color: theme === "dark" ? "#555" : "#eee",
-                            },
-
-                            ticks: {
-                              autoSkip: true,
-                              color: theme === "dark" ? "white" : "black", // Dynamic Y-axis tick color
-                            },
-                          },
-                          y: {
-                            grid: {
-                              color: theme === "dark" ? "#555" : "#eee",
-                            },
-
-                            ticks: {
-                              autoSkip: true,
-                              color: theme === "dark" ? "white" : "black", // Dynamic Y-axis tick color
-                            },
-                          },
-                        },
-                      }}
-                    />
+                  {uniqueDepartments.length > 0 ? (
+                    uniqueDepartments.map((month, index) => (
+                      <div
+                        key={index}
+                        className={`shadow-md rounded-lg p-6 cursor-pointer ${
+                          theme === "dark"
+                            ? "bg-gray-700 border-gray-600"
+                            : "bg-blue-100 border-blue-300"
+                        }`}
+                        onClick={() => handleDeptChange(month)}
+                      >
+                        <h2
+                          className={`text-xl font-semibold mb-2 ${
+                            theme === "dark" ? "text-white" : "text-gray-800"
+                          }`}
+                        >
+                          {month}
+                        </h2>
+                        <p
+                          className={`font-bold text-xl ${
+                            theme === "dark" ? "text-gray-300" : "text-gray-500"
+                          }`}
+                        >
+                          {deptPercentage[index]}%
+                        </p>
+                      </div>
+                    ))
                   ) : (
                     <p
-                      className={`text-center ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-500"
+                      className={`text-lg font-bold ${
+                        theme === "dark" ? "text-red-400" : "text-red-500"
                       }`}
                     >
-                      Loading chart data...
+                      No data available
                     </p>
                   )}
                 </div>
               </div>
+            </div>
+          </div>
 
-              <div
-                className={`w-1/2 m-6 border rounded-lg shadow-lg ${
-                  theme === "dark"
-                    ? "bg-gray-900 text-white border-gray-600"
-                    : "bg-white text-gray-800 border-gray-300"
-                }`}
-              >
-                <h1
-                  className={`text-lg font-semibold p-2 pl-10 ${
-                    theme === "dark" ? "text-white" : "text-gray-800"
+          {message !== "" ? (
+            <p>{message}</p>
+          ) : (
+            <div>
+              <div className="flex">
+                <div
+                  className={`w-1/2 m-6 border rounded-lg  shadow-lg ${
+                    theme === "dark"
+                      ? "bg-gray-900 text-white border-gray-600"
+                      : "bg-white text-gray-800 border-gray-300"
                   }`}
                 >
-                  Rejections Count by Department
-                </h1>
-                <div className="px-10">
-                  {chartData2 ? (
-                    <div style={{ height: "300px", marginBottom: "20px" }}>
-                      <Pie
-                        data={chartData2}
+                  <h1
+                    className={`text-lg font-semibold p-2 pl-10 ${
+                      theme === "dark" ? "text-white" : "text-gray-800"
+                    }`}
+                  >
+                    Rejection Counts Based on Year
+                  </h1>
+                  <div className="px-10">
+                    {chartData ? (
+                      <Bar
+                        data={chartData}
                         options={{
-                          ...optionschartPie,
-                          ...chartOptions2,
+                          ...chartOptions,
+                          plugins: {
+                            legend: {
+                              display: true,
+                              position: "top",
+                              labels: {
+                                boxWidth: 15,
+                                padding: 10,
+                                color: theme === "dark" ? "white" : "black",
+                              },
+                            },
+                            tooltip: {
+                              backgroundColor:
+                                theme === "dark" ? "#333" : "white",
+                              titleColor: theme === "dark" ? "white" : "black",
+                              bodyColor: theme === "dark" ? "white" : "black",
+                            },
+                            datalabels: {
+                              color: (context) =>
+                                theme === "dark" ? "white" : "black",
+                            },
+                          },
+                          scales: {
+                            x: {
+                              grid: {
+                                color: theme === "dark" ? "#555" : "#eee",
+                              },
+
+                              ticks: {
+                                autoSkip: true,
+                                color: theme === "dark" ? "white" : "black", // Dynamic Y-axis tick color
+                              },
+                            },
+                            y: {
+                              grid: {
+                                color: theme === "dark" ? "#555" : "#eee",
+                              },
+
+                              ticks: {
+                                autoSkip: true,
+                                color: theme === "dark" ? "white" : "black", // Dynamic Y-axis tick color
+                              },
+                            },
+                          },
+                        }}
+                      />
+                    ) : (
+                      <p
+                        className={`text-center ${
+                          theme === "dark" ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
+                        Loading chart data...
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  className={`w-1/2 m-6 border rounded-lg shadow-lg ${
+                    theme === "dark"
+                      ? "bg-gray-900 text-white border-gray-600"
+                      : "bg-white text-gray-800 border-gray-300"
+                  }`}
+                >
+                  <h1
+                    className={`text-lg font-semibold p-2 pl-10 ${
+                      theme === "dark" ? "text-white" : "text-gray-800"
+                    }`}
+                  >
+                    Rejections Count by Department
+                  </h1>
+                  <div className="px-10">
+                    {chartData2 ? (
+                      <div style={{ height: "300px", marginBottom: "20px" }}>
+                        <Pie
+                          data={chartData2}
+                          options={{
+                            ...optionschartPie,
+                            ...chartOptions2,
+                            maintainAspectRatio: false,
+                            plugins: {
+                              tooltip: {
+                                backgroundColor:
+                                  theme === "dark" ? "#333" : "white",
+                                titleColor:
+                                  theme === "dark" ? "white" : "black",
+                                bodyColor: theme === "dark" ? "white" : "black",
+                              },
+                              legend: {
+                                labels: {
+                                  color: theme === "dark" ? "white" : "black",
+                                },
+                              },
+                              datalabels: {
+                                color: theme === "dark" ? "white" : "black",
+                                formatter: (value, context) => {
+                                  const total =
+                                    context.chart.data.datasets[0].data.reduce(
+                                      (a, b) => a + b,
+                                      0
+                                    );
+                                  const percentage = (
+                                    (value / total) *
+                                    100
+                                  ).toFixed(2);
+                                  return `${value} (${percentage}%)`;
+                                },
+                              },
+                            },
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <p
+                        className={`text-center ${
+                          theme === "dark" ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
+                        Loading chart data...
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex">
+                <div
+                  className={`w-1/2 m-6 border rounded-lg  shadow-lg ${
+                    theme === "dark"
+                      ? "bg-gray-900 text-white border-gray-600"
+                      : "bg-white text-gray-800 border-gray-300"
+                  }`}
+                >
+                  <h1 className="text-lg font-semibold p-2 pl-10">
+                    Rejections Count by Month
+                  </h1>
+
+                  <div className="chart-container" style={{ height: "310px" }}>
+                    {chartData3 ? (
+                      <Line
+                        data={chartData3}
+                        options={{
+                          responsive: true,
                           maintainAspectRatio: false,
+                          plugins: {
+                            datalabels: {
+                              display: true,
+                              align: "end",
+                              anchor: "end",
+                              formatter: (value, context) => {
+                                const totalDataCount = overAllData.reduce(
+                                  (sum, item) => sum + item.COUNT,
+                                  0
+                                );
+                                const percentage = (
+                                  (value / totalDataCount) *
+                                  100
+                                ).toFixed(2);
+                                return `${value} (${percentage}%)`;
+                              },
+                              color: theme === "dark" ? "white" : "black", // Dynamic text color
+                              font: {
+                                weight: "normal",
+                              },
+                            },
+                            legend: {
+                              display: true,
+                              position: "top",
+                              labels: {
+                                boxWidth: 15,
+                                padding: 10,
+                                color: theme === "dark" ? "white" : "black", // Dynamic legend text color
+                              },
+                            },
+                            tooltip: {
+                              callbacks: {
+                                label: function (context) {
+                                  const totalDataCount = overAllData.reduce(
+                                    (sum, item) => sum + item.COUNT,
+                                    0
+                                  );
+                                  const value = context.raw;
+                                  const percentage =
+                                    ((value / totalDataCount) * 100).toFixed(
+                                      2
+                                    ) + "%";
+                                  return `${value.toFixed(2)} ${percentage}`;
+                                },
+                              },
+                              backgroundColor:
+                                theme === "dark" ? "#333" : "white",
+                              titleColor: theme === "dark" ? "white" : "black",
+                              bodyColor: theme === "dark" ? "white" : "black",
+                            },
+                          },
+                          scales: {
+                            x: {
+                              title: {
+                                display: true,
+                                text: "Months",
+                                color: theme === "dark" ? "white" : "#555",
+                                font: {
+                                  size: 14,
+                                },
+                              },
+                              beginAtZero: true,
+                              grid: {
+                                display: true,
+                                color: theme === "dark" ? "#555" : "#eee", // Dynamic grid line color
+                              },
+                            },
+                            y: {
+                              title: {
+                                display: true,
+                                text: "Count",
+                                color: theme === "dark" ? "white" : "#555", // Y-axis title color
+                                font: {
+                                  size: 14,
+                                },
+                              },
+                              ticks: {
+                                autoSkip: true,
+                                color: theme === "dark" ? "white" : "black", // Dynamic Y-axis tick color
+                              },
+                              grid: {
+                                display: true,
+                                color: theme === "dark" ? "#555" : "#eee", // Dynamic grid line color
+                              },
+                            },
+                          },
+                        }}
+                        plugins={[ChartDataLabels]}
+                      />
+                    ) : (
+                      <p
+                        className={`text-center ${
+                          theme === "dark" ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
+                        Loading chart data...
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div
+                  className={`w-1/2 m-6 px-10 border rounded-lg shadow-lg ${
+                    theme === "dark"
+                      ? "bg-gray-900 text-white border-gray-600"
+                      : "bg-white text-gray-800 border-gray-300"
+                  }`}
+                >
+                  <h1
+                    className={`text-lg font-semibold p-2 ${
+                      theme === "dark" ? "text-white" : "text-gray-800"
+                    }`}
+                  >
+                    {theme === "dark"
+                      ? "Reasons for Rejections (Dark Mode)"
+                      : "Reasons for Rejections"}
+                  </h1>
+
+                  <div className="chart-container">
+                    {chartData4 ? (
+                      <Bar
+                        data={chartData4}
+                        options={{
+                          ...chartOptions4,
+                          maintainAspectRatio: true,
                           plugins: {
                             tooltip: {
                               backgroundColor:
@@ -945,754 +1138,586 @@ function Reject() {
                               titleColor: theme === "dark" ? "white" : "black",
                               bodyColor: theme === "dark" ? "white" : "black",
                             },
-                            legend: {
-                              labels: {
+                          },
+                          scales: {
+                            x: {
+                              ticks: {
                                 color: theme === "dark" ? "white" : "black",
                               },
+                              grid: {
+                                color: theme === "dark" ? "#555" : "#eee",
+                              },
                             },
-                            datalabels: {
-                              color: theme === "dark" ? "white" : "black",
-                              formatter: (value, context) => {
-                                const total =
-                                  context.chart.data.datasets[0].data.reduce(
-                                    (a, b) => a + b,
-                                    0
-                                  );
-                                const percentage = (
-                                  (value / total) *
-                                  100
-                                ).toFixed(2);
-                                return `${value} (${percentage}%)`;
+                            y: {
+                              ticks: {
+                                color: theme === "dark" ? "white" : "black",
+                              },
+                              grid: {
+                                color: theme === "dark" ? "#555" : "#eee",
                               },
                             },
                           },
                         }}
                       />
-                    </div>
-                  ) : (
-                    <p
-                      className={`text-center ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-500"
-                      }`}
-                    >
-                      Loading chart data...
-                    </p>
-                  )}
+                    ) : (
+                      <p
+                        className={`text-center ${
+                          theme === "dark" ? "text-gray-400" : "text-gray-500"
+                        }`}
+                      >
+                        Loading chart data...
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex">
+
               <div
-                className={`w-1/2 m-6 border rounded-lg  shadow-lg ${
+                className={`m-6 px-10 border rounded-lg shadow-lg ${
                   theme === "dark"
                     ? "bg-gray-900 text-white border-gray-600"
                     : "bg-white text-gray-800 border-gray-300"
                 }`}
               >
-                <h1 className="text-lg font-semibold p-2 pl-10">
-                  Rejections Count by Month
+                <h1 className="text-xl font-semibold pt-5">
+                  Detailed Top <span className="text-red-500">Rejections</span>
                 </h1>
 
-                <div className="chart-container" style={{ height: "310px" }}>
-                  {chartData3 ? (
-                    <Line
-                      data={chartData3}
-                      options={{
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                          datalabels: {
-                            display: true,
-                            align: "end",
-                            anchor: "end",
-                            formatter: (value, context) => {
-                              const totalDataCount = overAllData.reduce(
-                                (sum, item) => sum + item.COUNT,
-                                0
-                              );
-                              const percentage = (
-                                (value / totalDataCount) *
-                                100
-                              ).toFixed(2);
-                              return `${value} (${percentage}%)`;
-                            },
-                            color: theme === "dark" ? "white" : "black", // Dynamic text color
-                            font: {
-                              weight: "normal",
-                            },
-                          },
-                          legend: {
-                            display: true,
-                            position: "top",
-                            labels: {
-                              boxWidth: 15,
-                              padding: 10,
-                              color: theme === "dark" ? "white" : "black", // Dynamic legend text color
-                            },
-                          },
-                          tooltip: {
-                            callbacks: {
-                              label: function (context) {
-                                const totalDataCount = overAllData.reduce(
-                                  (sum, item) => sum + item.COUNT,
-                                  0
-                                );
-                                const value = context.raw;
-                                const percentage =
-                                  ((value / totalDataCount) * 100).toFixed(2) +
-                                  "%";
-                                return `${value.toFixed(2)} ${percentage}`;
-                              },
-                            },
-                            backgroundColor:
-                              theme === "dark" ? "#333" : "white",
-                            titleColor: theme === "dark" ? "white" : "black",
-                            bodyColor: theme === "dark" ? "white" : "black",
-                          },
-                        },
-                        scales: {
-                          x: {
-                            title: {
-                              display: true,
-                              text: "Months",
-                              color: theme === "dark" ? "white" : "#555",
-                              font: {
-                                size: 14,
-                              },
-                            },
-                            beginAtZero: true,
-                            grid: {
-                              display: true,
-                              color: theme === "dark" ? "#555" : "#eee", // Dynamic grid line color
-                            },
-                          },
-                          y: {
-                            title: {
-                              display: true,
-                              text: "Count",
-                              color: theme === "dark" ? "white" : "#555", // Y-axis title color
-                              font: {
-                                size: 14,
-                              },
-                            },
-                            ticks: {
-                              autoSkip: true,
-                              color: theme === "dark" ? "white" : "black", // Dynamic Y-axis tick color
-                            },
-                            grid: {
-                              display: true,
-                              color: theme === "dark" ? "#555" : "#eee", // Dynamic grid line color
-                            },
-                          },
-                        },
-                      }}
-                      plugins={[ChartDataLabels]}
-                    />
-                  ) : (
-                    <p
-                      className={`text-center ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-500"
-                      }`}
-                    >
-                      Loading chart data...
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div
-                className={`w-1/2 m-6 px-10 border rounded-lg shadow-lg ${
-                  theme === "dark"
-                    ? "bg-gray-900 text-white border-gray-600"
-                    : "bg-white text-gray-800 border-gray-300"
-                }`}
-              >
-                <h1
-                  className={`text-lg font-semibold p-2 ${
-                    theme === "dark" ? "text-white" : "text-gray-800"
+                <div
+                  className={`border-b  ${
+                    theme === "light" ? "border-slate-200" : "border-slate-600"
                   }`}
                 >
-                  {theme === "dark"
-                    ? "Reasons for Rejections (Dark Mode)"
-                    : "Reasons for Rejections"}
-                </h1>
-
-                <div className="chart-container">
-                  {chartData4 ? (
-                    <Bar
-                      data={chartData4}
-                      options={{
-                        ...chartOptions4,
-                        maintainAspectRatio: true,
-                        plugins: {
-                          tooltip: {
-                            backgroundColor:
-                              theme === "dark" ? "#333" : "white",
-                            titleColor: theme === "dark" ? "white" : "black",
-                            bodyColor: theme === "dark" ? "white" : "black",
-                          },
-                        },
-                        scales: {
-                          x: {
-                            ticks: {
-                              color: theme === "dark" ? "white" : "black",
-                            },
-                            grid: {
-                              color: theme === "dark" ? "#555" : "#eee",
-                            },
-                          },
-                          y: {
-                            ticks: {
-                              color: theme === "dark" ? "white" : "black",
-                            },
-                            grid: {
-                              color: theme === "dark" ? "#555" : "#eee",
-                            },
-                          },
-                        },
-                      }}
-                    />
-                  ) : (
-                    <p
-                      className={`text-center ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-500"
-                      }`}
-                    >
-                      Loading chart data...
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div
-              className={`m-6 px-10 border rounded-lg shadow-lg ${
-                theme === "dark"
-                  ? "bg-gray-900 text-white border-gray-600"
-                  : "bg-white text-gray-800 border-gray-300"
-              }`}
-            >
-              <h1 className="text-xl font-semibold pt-5">
-                Detailed Top <span className="text-red-500">Rejections</span>
-              </h1>
-
-              <div className={`border-b  ${theme==='light'?'border-slate-200':'border-slate-600'}`}>
-                <button
-                  onClick={() => toggleAccordion(1)}
-                  className={`w-full flex justify-between items-center py-5 ${
-                    theme === "dark" ? "text-white" : "text-slate-800"
-                  }`}
-                >
-                  <span className="text-lg font-semibold">
-                    Based on Sketches
-                  </span>
-                  <span
-                    className={`transition-transform duration-300 ${
+                  <button
+                    onClick={() => toggleAccordion(1)}
+                    className={`w-full flex justify-between items-center py-5 ${
                       theme === "dark" ? "text-white" : "text-slate-800"
                     }`}
                   >
-                    {activeIndex === 1 ? (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                        className="w-4 h-4"
-                      >
-                        <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
-                      </svg>
-                    ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                        className="w-4 h-4"
-                      >
-                        <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
-                      </svg>
-                    )}
-                  </span>
-                </button>
-                <div
-                  className={`${
-                    activeIndex === 1 ? "max-h-screen" : "max-h-0"
-                  } overflow-hidden transition-all duration-300 ease-in-out`}
-                >
-                  <div
-                    className={`m-6 border rounded-lg shadow-lg ${
-                      theme === "dark"
-                        ? "bg-gray-800 border-gray-600"
-                        : "bg-white border-gray-300"
-                    }`}
-                  >
-                    <div className="flex justify-between">
-                      <h1 className="text-xl font-semibold p-2 pl-10 py-5">
-                        Top <span className="text-red-500">25</span> Rejected
-                        Sketches
-                      </h1>
-                      <div className="m-4">
-                        <button
-                          className="px-5 py-3 bg-blue-500 text-white rounded-lg font-semibold"
-                          onClick={() => downloadExcel("Top Rejected Sketches")}
+                    <span className="text-lg font-semibold">
+                      Based on Sketches
+                    </span>
+                    <span
+                      className={`transition-transform duration-300 ${
+                        theme === "dark" ? "text-white" : "text-slate-800"
+                      }`}
+                    >
+                      {activeIndex === 1 ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                          className="w-4 h-4"
                         >
-                          Download as Excel
+                          <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
+                        </svg>
+                      )}
+                    </span>
+                  </button>
+                  <div
+                    className={`${
+                      activeIndex === 1 ? "max-h-screen" : "max-h-0"
+                    } overflow-hidden transition-all duration-300 ease-in-out`}
+                  >
+                    <div
+                      className={`m-6 border rounded-lg shadow-lg ${
+                        theme === "dark"
+                          ? "bg-gray-800 border-gray-600"
+                          : "bg-white border-gray-300"
+                      }`}
+                    >
+                      <div className="flex justify-between">
+                        <h1 className="text-xl font-semibold p-2 pl-10 py-5">
+                          Top <span className="text-red-500">25</span> Rejected
+                          Sketches
+                        </h1>
+                        <div className="m-4">
+                          <button
+                            className="px-5 py-3 bg-blue-500 text-white rounded-lg font-semibold"
+                            onClick={() =>
+                              downloadExcel("Top Rejected Sketches")
+                            }
+                          >
+                            Download as Excel
+                          </button>
+                        </div>
+                      </div>
+                      <table
+                        className={`w-full table-auto text-sm ${
+                          theme === "dark"
+                            ? "bg-gray-800 text-white"
+                            : "bg-white text-gray-800"
+                        }`}
+                      >
+                        <thead>
+                          <tr
+                            className={`${
+                              theme === "dark"
+                                ? "bg-gray-700 text-gray-300"
+                                : "bg-gray-300 text-gray-700"
+                            }`}
+                          >
+                            <th className="px-6 py-3 text-center font-semibold text-base">
+                              SI no.
+                            </th>
+                            <th className="px-6 py-3 text-center font-semibold text-base">
+                              Sketch IDs
+                            </th>
+                            <th className="py-3 text-center font-semibold text-base">
+                              Number of Rejections
+                            </th>
+                            <th className="py-3 text-center font-semibold text-base">
+                              Detailed View
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {currentData.map(([skch, count], index) => (
+                            <tr
+                              key={index}
+                              className={`${
+                                theme === "dark"
+                                  ? "bg-gray-900 even:bg-gray-800 hover:bg-gray-700"
+                                  : "bg-white even:bg-gray-50 hover:bg-gray-200"
+                              } transition-colors duration-200`}
+                            >
+                              <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                                {(currentPage1 - 1) * itemsPerPage + index + 1}
+                              </td>
+                              <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                                {skch}
+                              </td>
+                              <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                                {count}
+                              </td>
+                              <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                                <button
+                                  className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
+                                    theme === "dark"
+                                      ? "bg-blue-600 hover:bg-blue-800"
+                                      : "bg-blue-500 hover:bg-blue-700"
+                                  }`}
+                                  onClick={() =>
+                                    handleTableClick(
+                                      skch,
+                                      overAllData,
+                                      "Sketch"
+                                    )
+                                  }
+                                  disabled={!overAllData}
+                                >
+                                  View
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+
+                      <div
+                        className={`flex justify-center mb-10 space-x-2 m-4 ${
+                          theme === "dark" ? "text-white" : "text-gray-800"
+                        }`}
+                      >
+                        <button
+                          className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+                            currentPage1 === 1
+                              ? theme === "dark"
+                                ? "bg-gray-700 cursor-not-allowed"
+                                : "bg-gray-200 cursor-not-allowed"
+                              : theme === "dark"
+                              ? "bg-gray-600 hover:bg-gray-500"
+                              : "bg-gray-300 hover:bg-gray-400"
+                          }`}
+                          onClick={() => handlePageChange(currentPage1 - 1)}
+                          disabled={currentPage1 === 1}
+                        >
+                          Previous
+                        </button>
+                        <button
+                          className={`text-base px-5 py-3 rounded-lg border ${
+                            theme === "dark"
+                              ? "bg-gray-700 text-white"
+                              : "bg-gray-300 text-gray-800"
+                          }`}
+                        >
+                          {currentPage1}
+                        </button>
+                        <button
+                          className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+                            currentPage1 === totalPages
+                              ? theme === "dark"
+                                ? "bg-gray-700 cursor-not-allowed"
+                                : "bg-gray-200 cursor-not-allowed"
+                              : theme === "dark"
+                              ? "bg-gray-600 hover:bg-gray-500"
+                              : "bg-gray-300 hover:bg-gray-400"
+                          }`}
+                          onClick={() => handlePageChange(currentPage1 + 1)}
+                          disabled={currentPage1 === totalPages}
+                        >
+                          Next
                         </button>
                       </div>
                     </div>
-                    <table
-                      className={`w-full table-auto text-sm ${
-                        theme === "dark"
-                          ? "bg-gray-800 text-white"
-                          : "bg-white text-gray-800"
-                      }`}
-                    >
-                      <thead>
-                        <tr
-                          className={`${
-                            theme === "dark"
-                              ? "bg-gray-700 text-gray-300"
-                              : "bg-gray-300 text-gray-700"
-                          }`}
-                        >
-                          <th className="px-6 py-3 text-center font-semibold text-base">
-                            SI no.
-                          </th>
-                          <th className="px-6 py-3 text-center font-semibold text-base">
-                            Sketch IDs
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            Number of Rejections
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            Detailed View
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {currentData.map(([skch, count], index) => (
-                          <tr
-                            key={index}
-                            className={`${
-                              theme === "dark"
-                                ? "bg-gray-900 even:bg-gray-800 hover:bg-gray-700"
-                                : "bg-white even:bg-gray-50 hover:bg-gray-200"
-                            } transition-colors duration-200`}
-                          >
-                            <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              {(currentPage1 - 1) * itemsPerPage + index + 1}
-                            </td>
-                            <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              {skch}
-                            </td>
-                            <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              {count}
-                            </td>
-                            <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              <button
-                                className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
-                                  theme === "dark"
-                                    ? "bg-blue-600 hover:bg-blue-800"
-                                    : "bg-blue-500 hover:bg-blue-700"
-                                }`}
-                                onClick={() =>
-                                  handleTableClick(skch, overAllData, "Sketch")
-                                }
-                                disabled={!overAllData}
-                              >
-                                View
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-
-                    <div
-                      className={`flex justify-center mb-10 space-x-2 m-4 ${
-                        theme === "dark" ? "text-white" : "text-gray-800"
-                      }`}
-                    >
-                      <button
-                        className={`text-base font-semibold px-5 py-3 rounded-lg border ${
-                          currentPage1 === 1
-                            ? theme === "dark"
-                              ? "bg-gray-700 cursor-not-allowed"
-                              : "bg-gray-200 cursor-not-allowed"
-                            : theme === "dark"
-                            ? "bg-gray-600 hover:bg-gray-500"
-                            : "bg-gray-300 hover:bg-gray-400"
-                        }`}
-                        onClick={() => handlePageChange(currentPage1 - 1)}
-                        disabled={currentPage1 === 1}
-                      >
-                        Previous
-                      </button>
-                      <button
-                        className={`text-base px-5 py-3 rounded-lg border ${
-                          theme === "dark"
-                            ? "bg-gray-700 text-white"
-                            : "bg-gray-300 text-gray-800"
-                        }`}
-                      >
-                        {currentPage1}
-                      </button>
-                      <button
-                        className={`text-base font-semibold px-5 py-3 rounded-lg border ${
-                          currentPage1 === totalPages
-                            ? theme === "dark"
-                              ? "bg-gray-700 cursor-not-allowed"
-                              : "bg-gray-200 cursor-not-allowed"
-                            : theme === "dark"
-                            ? "bg-gray-600 hover:bg-gray-500"
-                            : "bg-gray-300 hover:bg-gray-400"
-                        }`}
-                        onClick={() => handlePageChange(currentPage1 + 1)}
-                        disabled={currentPage1 === totalPages}
-                      >
-                        Next
-                      </button>
-                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className={`border-b  ${theme==='light'?'border-slate-200':'border-slate-600'}`}>
-                <button
-                  onClick={() => toggleAccordion(2)}
-                  className={`w-full flex justify-between items-center py-5 ${
-                    theme === "dark" ? "text-white" : "text-slate-800"
+                <div
+                  className={`border-b  ${
+                    theme === "light" ? "border-slate-200" : "border-slate-600"
                   }`}
                 >
-                  <span className="text-lg font-semibold">
-                    Based on Type of Reasons
-                  </span>
-                  <span
-                    className={`transition-transform duration-300 ${
+                  <button
+                    onClick={() => toggleAccordion(2)}
+                    className={`w-full flex justify-between items-center py-5 ${
                       theme === "dark" ? "text-white" : "text-slate-800"
                     }`}
                   >
-                    {activeIndex === 2 ? (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                        className="w-4 h-4"
-                      >
-                        <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
-                      </svg>
-                    ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                        className="w-4 h-4"
-                      >
-                        <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
-                      </svg>
-                    )}
-                  </span>
-                </button>
-                <div
-                  className={`${
-                    activeIndex === 2 ? "max-h-screen" : "max-h-0"
-                  } overflow-hidden transition-all duration-300 ease-in-out`}
-                >
-                  <div
-                    className={`m-6 border rounded-lg shadow-lg ${
-                      theme === "dark"
-                        ? "bg-gray-800 border-gray-600"
-                        : "bg-white border-gray-300"
-                    }`}
-                  >
-                    <div className="flex justify-between">
-                      <h1 className="text-xl font-semibold p-2 pl-10 py-5">
-                        Top{" "}
-                        <span className="text-red-500"> Type of Reasons</span>{" "}
-                        Rejections
-                      </h1>
-                      <div className="m-4">
-                        <button
-                          className="px-5 py-3 bg-blue-500 text-white rounded-lg font-semibold"
-                          onClick={() =>
-                            downloadExcel("Type of Reasons Rejections")
-                          }
+                    <span className="text-lg font-semibold">
+                      Based on Type of Reasons
+                    </span>
+                    <span
+                      className={`transition-transform duration-300 ${
+                        theme === "dark" ? "text-white" : "text-slate-800"
+                      }`}
+                    >
+                      {activeIndex === 2 ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                          className="w-4 h-4"
                         >
-                          Download as Excel
+                          <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
+                        </svg>
+                      )}
+                    </span>
+                  </button>
+                  <div
+                    className={`${
+                      activeIndex === 2 ? "max-h-screen" : "max-h-0"
+                    } overflow-hidden transition-all duration-300 ease-in-out`}
+                  >
+                    <div
+                      className={`m-6 border rounded-lg shadow-lg ${
+                        theme === "dark"
+                          ? "bg-gray-800 border-gray-600"
+                          : "bg-white border-gray-300"
+                      }`}
+                    >
+                      <div className="flex justify-between">
+                        <h1 className="text-xl font-semibold p-2 pl-10 py-5">
+                          Top{" "}
+                          <span className="text-red-500"> Type of Reasons</span>{" "}
+                          Rejections
+                        </h1>
+                        <div className="m-4">
+                          <button
+                            className="px-5 py-3 bg-blue-500 text-white rounded-lg font-semibold"
+                            onClick={() =>
+                              downloadExcel("Type of Reasons Rejections")
+                            }
+                          >
+                            Download as Excel
+                          </button>
+                        </div>
+                      </div>
+                      <table
+                        className={`w-full table-auto text-sm ${
+                          theme === "dark"
+                            ? "bg-gray-800 text-white"
+                            : "bg-white text-gray-800"
+                        }`}
+                      >
+                        <thead>
+                          <tr
+                            className={`${
+                              theme === "dark"
+                                ? "bg-gray-700 text-gray-300"
+                                : "bg-gray-300 text-gray-700"
+                            }`}
+                          >
+                            <th className="px-6 py-3 text-center font-semibold text-base">
+                              SI no.
+                            </th>
+                            <th className="px-6 py-3 text-center font-semibold text-base">
+                              Reasons
+                            </th>
+                            <th className="py-3 text-center font-semibold text-base">
+                              Number of Rejections
+                            </th>
+                            <th className="py-3 text-center font-semibold text-base">
+                              Detailed View
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {currentData2.map(([skch, count], index) => (
+                            <tr
+                              key={index}
+                              className={`${
+                                theme === "dark"
+                                  ? "bg-gray-900 even:bg-gray-800 hover:bg-gray-700"
+                                  : "bg-white even:bg-gray-50 hover:bg-gray-200"
+                              } transition-colors duration-200`}
+                            >
+                              <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                                {(currentPage2 - 1) * itemsPerPage2 + index + 1}
+                              </td>
+                              <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                                {skch.charAt(0).toUpperCase() +
+                                  skch.slice(1).toLowerCase()}
+                              </td>
+                              <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                                {count}
+                              </td>
+                              <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                                <button
+                                  className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
+                                    theme === "dark"
+                                      ? "bg-blue-600 hover:bg-blue-800"
+                                      : "bg-blue-500 hover:bg-blue-700"
+                                  }`}
+                                  onClick={() =>
+                                    handleTableClick(
+                                      skch,
+                                      overAllData,
+                                      "Rejection"
+                                    )
+                                  }
+                                  disabled={!overAllData}
+                                >
+                                  View
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+
+                      <div
+                        className={`flex justify-center space-x-2 m-4 ${
+                          theme === "dark" ? "text-white" : "text-gray-800"
+                        }`}
+                      >
+                        <button
+                          className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+                            currentPage2 === 1
+                              ? theme === "dark"
+                                ? "bg-gray-700 cursor-not-allowed"
+                                : "bg-gray-200 cursor-not-allowed"
+                              : theme === "dark"
+                              ? "bg-gray-600 hover:bg-gray-500"
+                              : "bg-gray-300 hover:bg-gray-400"
+                          }`}
+                          onClick={() => handlePageChange2(currentPage2 - 1)}
+                          disabled={currentPage2 === 1}
+                        >
+                          Previous
+                        </button>
+                        <button
+                          className={`text-base px-5 py-3 rounded-lg border ${
+                            theme === "dark"
+                              ? "bg-gray-700 text-white"
+                              : "bg-gray-300 text-gray-800"
+                          }`}
+                        >
+                          {currentPage2}
+                        </button>
+                        <button
+                          className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+                            currentPage2 === totalPages2
+                              ? theme === "dark"
+                                ? "bg-gray-700 cursor-not-allowed"
+                                : "bg-gray-200 cursor-not-allowed"
+                              : theme === "dark"
+                              ? "bg-gray-600 hover:bg-gray-500"
+                              : "bg-gray-300 hover:bg-gray-400"
+                          }`}
+                          onClick={() => handlePageChange2(currentPage2 + 1)}
+                          disabled={currentPage2 === totalPages2}
+                        >
+                          Next
                         </button>
                       </div>
                     </div>
-                    <table
-                      className={`w-full table-auto text-sm ${
-                        theme === "dark"
-                          ? "bg-gray-800 text-white"
-                          : "bg-white text-gray-800"
-                      }`}
-                    >
-                      <thead>
-                        <tr
-                          className={`${
-                            theme === "dark"
-                              ? "bg-gray-700 text-gray-300"
-                              : "bg-gray-300 text-gray-700"
-                          }`}
-                        >
-                          <th className="px-6 py-3 text-center font-semibold text-base">
-                            SI no.
-                          </th>
-                          <th className="px-6 py-3 text-center font-semibold text-base">
-                            Reasons
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            Number of Rejections
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            Detailed View
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {currentData2.map(([skch, count], index) => (
-                          <tr
-                            key={index}
-                            className={`${
-                              theme === "dark"
-                                ? "bg-gray-900 even:bg-gray-800 hover:bg-gray-700"
-                                : "bg-white even:bg-gray-50 hover:bg-gray-200"
-                            } transition-colors duration-200`}
-                          >
-                            <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              {(currentPage2 - 1) * itemsPerPage2 + index + 1}
-                            </td>
-                            <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              {skch.charAt(0).toUpperCase() +
-                                skch.slice(1).toLowerCase()}
-                            </td>
-                            <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              {count}
-                            </td>
-                            <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              <button
-                                className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
-                                  theme === "dark"
-                                    ? "bg-blue-600 hover:bg-blue-800"
-                                    : "bg-blue-500 hover:bg-blue-700"
-                                }`}
-                                onClick={() =>
-                                  handleTableClick(
-                                    skch,
-                                    overAllData,
-                                    "Rejection"
-                                  )
-                                }
-                                disabled={!overAllData}
-                              >
-                                View
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-
-                    <div
-                      className={`flex justify-center space-x-2 m-4 ${
-                        theme === "dark" ? "text-white" : "text-gray-800"
-                      }`}
-                    >
-                      <button
-                        className={`text-base font-semibold px-5 py-3 rounded-lg border ${
-                          currentPage2 === 1
-                            ? theme === "dark"
-                              ? "bg-gray-700 cursor-not-allowed"
-                              : "bg-gray-200 cursor-not-allowed"
-                            : theme === "dark"
-                            ? "bg-gray-600 hover:bg-gray-500"
-                            : "bg-gray-300 hover:bg-gray-400"
-                        }`}
-                        onClick={() => handlePageChange2(currentPage2 - 1)}
-                        disabled={currentPage2 === 1}
-                      >
-                        Previous
-                      </button>
-                      <button
-                        className={`text-base px-5 py-3 rounded-lg border ${
-                          theme === "dark"
-                            ? "bg-gray-700 text-white"
-                            : "bg-gray-300 text-gray-800"
-                        }`}
-                      >
-                        {currentPage2}
-                      </button>
-                      <button
-                        className={`text-base font-semibold px-5 py-3 rounded-lg border ${
-                          currentPage2 === totalPages2
-                            ? theme === "dark"
-                              ? "bg-gray-700 cursor-not-allowed"
-                              : "bg-gray-200 cursor-not-allowed"
-                            : theme === "dark"
-                            ? "bg-gray-600 hover:bg-gray-500"
-                            : "bg-gray-300 hover:bg-gray-400"
-                        }`}
-                        onClick={() => handlePageChange2(currentPage2 + 1)}
-                        disabled={currentPage2 === totalPages2}
-                      >
-                        Next
-                      </button>
-                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="border-b border-slate-200">
-                <button
-                  onClick={() => toggleAccordion(3)}
-                  className={`w-full flex justify-between items-center py-5 ${
-                    theme === "dark" ? "text-white" : "text-slate-800"
-                  }`}
-                >
-                  <span className="text-lg font-semibold">
-                    Based on Problem Arised
-                  </span>
-                  <span
-                    className={`transition-transform duration-300 ${
+                <div className="border-b border-slate-200">
+                  <button
+                    onClick={() => toggleAccordion(3)}
+                    className={`w-full flex justify-between items-center py-5 ${
                       theme === "dark" ? "text-white" : "text-slate-800"
                     }`}
                   >
-                    {activeIndex === 3 ? (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                        className="w-4 h-4"
-                      >
-                        <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
-                      </svg>
-                    ) : (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 16 16"
-                        fill="currentColor"
-                        className="w-4 h-4"
-                      >
-                        <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
-                      </svg>
-                    )}
-                  </span>
-                </button>
-                <div
-                  className={`${
-                    activeIndex === 3 ? "max-h-screen" : "max-h-0"
-                  } overflow-hidden transition-all duration-300 ease-in-out`}
-                >
-                  <div
-                    className={`m-6 border rounded-lg shadow-lg ${
-                      theme === "dark"
-                        ? "bg-gray-800 border-gray-600"
-                        : "bg-white border-gray-300"
-                    }`}
-                  >
-                    <table
-                      className={`w-full table-auto text-sm ${
-                        theme === "dark"
-                          ? "bg-gray-800 text-white"
-                          : "bg-white text-gray-800"
+                    <span className="text-lg font-semibold">
+                      Based on Problem Arised
+                    </span>
+                    <span
+                      className={`transition-transform duration-300 ${
+                        theme === "dark" ? "text-white" : "text-slate-800"
                       }`}
                     >
-                      <thead>
-                        <tr
-                          className={`${
-                            theme === "dark"
-                              ? "bg-gray-700 text-gray-300"
-                              : "bg-gray-300 text-gray-700"
-                          }`}
+                      {activeIndex === 3 ? (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                          className="w-4 h-4"
                         >
-                          <th className="px-6 py-3 text-center font-semibold text-base">
-                            SI no.
-                          </th>
-                          <th className="px-6 py-3 text-center font-semibold text-base">
-                            Problem Arised
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            Number of Rejections
-                          </th>
-                          <th className="py-3 text-center font-semibold text-base">
-                            Detailed View
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {currentData3.map(([skch, count], index) => (
+                          <path d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
+                        </svg>
+                      ) : (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 16 16"
+                          fill="currentColor"
+                          className="w-4 h-4"
+                        >
+                          <path d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
+                        </svg>
+                      )}
+                    </span>
+                  </button>
+                  <div
+                    className={`${
+                      activeIndex === 3 ? "max-h-screen" : "max-h-0"
+                    } overflow-hidden transition-all duration-300 ease-in-out`}
+                  >
+                    <div
+                      className={`m-6 border rounded-lg shadow-lg ${
+                        theme === "dark"
+                          ? "bg-gray-800 border-gray-600"
+                          : "bg-white border-gray-300"
+                      }`}
+                    >
+                      <table
+                        className={`w-full table-auto text-sm ${
+                          theme === "dark"
+                            ? "bg-gray-800 text-white"
+                            : "bg-white text-gray-800"
+                        }`}
+                      >
+                        <thead>
                           <tr
-                            key={index}
                             className={`${
                               theme === "dark"
-                                ? "bg-gray-900 even:bg-gray-800 hover:bg-gray-700"
-                                : "bg-white even:bg-gray-50 hover:bg-gray-200"
-                            } transition-colors duration-200`}
+                                ? "bg-gray-700 text-gray-300"
+                                : "bg-gray-300 text-gray-700"
+                            }`}
                           >
-                            <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              {(currentPage3 - 1) * itemsPerPage3 + index + 1}
-                            </td>
-                            <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              {skch.charAt(0).toUpperCase() +
-                                skch.slice(1).toLowerCase()}
-                            </td>
-                            <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              {count}
-                            </td>
-                            <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
-                              <button
-                                className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
-                                  theme === "dark"
-                                    ? "bg-blue-600 hover:bg-blue-800"
-                                    : "bg-blue-500 hover:bg-blue-700"
-                                }`}
-                                onClick={() =>
-                                  handleTableClick(skch, overAllData, "Problem")
-                                }
-                                disabled={!overAllData}
-                              >
-                                View
-                              </button>
-                            </td>
+                            <th className="px-6 py-3 text-center font-semibold text-base">
+                              SI no.
+                            </th>
+                            <th className="px-6 py-3 text-center font-semibold text-base">
+                              Problem Arised
+                            </th>
+                            <th className="py-3 text-center font-semibold text-base">
+                              Number of Rejections
+                            </th>
+                            <th className="py-3 text-center font-semibold text-base">
+                              Detailed View
+                            </th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                    <div className="flex justify-center space-x-2 m-4">
-                      <button
-                        className={`text-base font-semibold px-5 py-3 rounded-lg border ${
-                          currentPage3 === 1
-                            ? "bg-gray-600 cursor-not-allowed"
-                            : "bg-gray-700 hover:bg-gray-800 border-gray-500"
-                        }`}
-                        onClick={() => handlePageChange3(currentPage3 - 1)}
-                        disabled={currentPage3 === 1}
-                      >
-                        Previous
-                      </button>
-                      <button
-                        className={`text-base px-5 py-3 rounded-lg border bg-gray-700 text-white`}
-                      >
-                        {currentPage3}
-                      </button>
-                      <button
-                        className={`text-base font-semibold px-5 py-3 rounded-lg border ${
-                          currentPage3 === totalPages3
-                            ? "bg-gray-600 cursor-not-allowed"
-                            : "bg-gray-700 hover:bg-gray-800 border-gray-500"
-                        }`}
-                        onClick={() => handlePageChange3(currentPage3 + 1)}
-                        disabled={currentPage3 === totalPages3}
-                      >
-                        Next
-                      </button>
+                        </thead>
+                        <tbody>
+                          {currentData3.map(([skch, count], index) => (
+                            <tr
+                              key={index}
+                              className={`${
+                                theme === "dark"
+                                  ? "bg-gray-900 even:bg-gray-800 hover:bg-gray-700"
+                                  : "bg-white even:bg-gray-50 hover:bg-gray-200"
+                              } transition-colors duration-200`}
+                            >
+                              <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                                {(currentPage3 - 1) * itemsPerPage3 + index + 1}
+                              </td>
+                              <td className="px-6 py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                                {skch.charAt(0).toUpperCase() +
+                                  skch.slice(1).toLowerCase()}
+                              </td>
+                              <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                                {count}
+                              </td>
+                              <td className="py-4 text-center whitespace-nowrap overflow-hidden text-base">
+                                <button
+                                  className={`mr-5 py-2 px-4 font-bold text-sm text-white rounded-lg ${
+                                    theme === "dark"
+                                      ? "bg-blue-600 hover:bg-blue-800"
+                                      : "bg-blue-500 hover:bg-blue-700"
+                                  }`}
+                                  onClick={() =>
+                                    handleTableClick(
+                                      skch,
+                                      overAllData,
+                                      "Problem"
+                                    )
+                                  }
+                                  disabled={!overAllData}
+                                >
+                                  View
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div className="flex justify-center space-x-2 m-4">
+                        <button
+                          className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+                            currentPage3 === 1
+                              ? "bg-gray-600 cursor-not-allowed"
+                              : "bg-gray-700 hover:bg-gray-800 border-gray-500"
+                          }`}
+                          onClick={() => handlePageChange3(currentPage3 - 1)}
+                          disabled={currentPage3 === 1}
+                        >
+                          Previous
+                        </button>
+                        <button
+                          className={`text-base px-5 py-3 rounded-lg border bg-gray-700 text-white`}
+                        >
+                          {currentPage3}
+                        </button>
+                        <button
+                          className={`text-base font-semibold px-5 py-3 rounded-lg border ${
+                            currentPage3 === totalPages3
+                              ? "bg-gray-600 cursor-not-allowed"
+                              : "bg-gray-700 hover:bg-gray-800 border-gray-500"
+                          }`}
+                          onClick={() => handlePageChange3(currentPage3 + 1)}
+                          disabled={currentPage3 === totalPages3}
+                        >
+                          Next
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
         </main>
       </div>
     </div>

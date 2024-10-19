@@ -124,7 +124,6 @@ router.post("/target/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-
 const groupDataByProject = (data) => {
   const groupedProjects = new Set();
 

@@ -244,7 +244,7 @@ const ProjectDetails = () => {
         const { groupPartyAcc: originalGroupPartyAcc } =
           aggregateData(originalData);
         const { projectAcc: originalProjectAcc } = aggregateData(originalData);
-        const {productAcc: originalProductAcc} = aggregateData(originalData);
+        const { productAcc: originalProductAcc } = aggregateData(originalData);
 
         setSubproductAcc(limitToTop15(originalSubproductAcc));
         setGroupPartyAcc(limittotop15_group(originalGroupPartyAcc));
@@ -843,7 +843,8 @@ const ProjectDetails = () => {
                 }`}
               >
                 <h1 className="col-span-2">
-                  Details for Sub Product: {subproduct} in {formattedTotalWeight}
+                  Details for Sub Product: {subproduct} in{" "}
+                  {formattedTotalWeight}
                 </h1>
               </div>
 
@@ -896,8 +897,10 @@ const ProjectDetails = () => {
               theme === "light" ? "bg-white" : "bg-gray-900"
             } p-4 rounded shadow-lg h-[400px] overflow-auto`}
           >
-            <Pie data={plainstone} options={chartOptions} 
-            plugins={[ChartDataLabels]}
+            <Pie
+              data={plainstone}
+              options={chartOptions}
+              plugins={[ChartDataLabels]}
             />
           </div>
 
@@ -935,7 +938,8 @@ const ProjectDetails = () => {
             <Bar data={zoneChartdata} options={chartOptions} />
           </div>
           {/* Project Chart */}
-          <div ref={grouppartyChartRef}
+          <div
+            ref={grouppartyChartRef}
             className={`order-5 col-span-1 ${
               theme === "light" ? "bg-white" : "bg-gray-900"
             } p-4 rounded shadow-md overflow-auto h-[650px] custom-scrollbar`}
@@ -968,7 +972,6 @@ const ProjectDetails = () => {
 
           {/* Sub Product Chart */}
           <div
-           
             className={`order-7 col-span-1 ${
               theme === "light" ? "bg-white" : "bg-gray-900"
             } p-4 rounded shadow-md overflow-auto h-[790px] custom-scrollbar`}
@@ -982,7 +985,7 @@ const ProjectDetails = () => {
         </main>
 
         {/* Full-Width Line Chart Below */}
-        <div 
+        <div
           className={`w-full ${
             theme === "light" ? "bg-white" : "bg-slate-900"
           } p-4 rounded shadow-md h-[450px] overflow-x-auto overflow-y-auto mb-20`}

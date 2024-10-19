@@ -148,12 +148,10 @@ function ViewTasks() {
       [task.Assign_Name, task.Person, task.OWNER].includes(loggedInEmail) ||
       userRole === "admin";
 
-      const Project_view = task.Project_View;
-      if(Project_view === "No"){
-        return (
-          false
-        );
-      }
+    const Project_view = task.Project_View;
+    if (Project_view === "No") {
+      return false;
+    }
     return (
       emailMatch &&
       (searchRegex.test(task.Ax_Brief.toLowerCase()) ||

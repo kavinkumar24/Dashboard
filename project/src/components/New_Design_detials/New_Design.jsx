@@ -351,11 +351,10 @@ function New_Design() {
     }
   };
 
-
   const handleClick_subprodut_detail = (event, chartElement) => {
     if (chartElement && chartElement.length > 0) {
       try {
-        const chart = chartElement[0].element.$context.chart; 
+        const chart = chartElement[0].element.$context.chart;
         const index = chartElement[0].index;
         const subproduct = chart.data.labels[index];
 
@@ -391,10 +390,6 @@ function New_Design() {
     }
   };
 
-  
-
-  
-
   const handleClick_zone_detail = (event, chartElement) => {
     // Check if chartElement is defined and has at least one item
     if (chartElement && chartElement.length > 0) {
@@ -427,8 +422,6 @@ function New_Design() {
         }
 
         navigate(zonedetailurl);
-
-
       } catch (error) {
         console.error("Error handling chart click:", error);
       }
@@ -478,7 +471,6 @@ function New_Design() {
     }
   };
 
-
   const handleClick_project_detail = (event, chartElement) => {
     // Check if chartElement is defined and has at least one item
     if (chartElement && chartElement.length > 0) {
@@ -519,8 +511,6 @@ function New_Design() {
       console.warn("No chart element clicked or chart element is empty");
     }
   };
-
-
 
   const handle_subproduct_detail = (event, chartElement) => {
     // Check if chartElement is defined and has at least one item
@@ -1310,7 +1300,6 @@ function New_Design() {
     console.log("Filtered Data:", filteredData);
   };
 
-  
   // const getMonthName = (index) => {
   //   const months = [
   //     "January", "February", "March", "April", "May", "June",
@@ -2586,7 +2575,6 @@ function New_Design() {
                     },
                   },
                 },
-                
               }}
               type="bar"
               plugins={[ChartDataLabels]}

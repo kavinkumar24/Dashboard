@@ -9,8 +9,7 @@ function Projects() {
   const [pendingData, setPendingData] = useState([]);
   const [departmentCounts, setDepartmentCounts] = useState({});
   const [popupData, setPopupData] = useState([]);
-const [showPopup, setShowPopup] = useState(false);
-
+  const [showPopup, setShowPopup] = useState(false);
 
   const [activeTab, setActiveTab] = useState("");
   const [spin, setSpin] = useState(false);
@@ -28,14 +27,11 @@ const [showPopup, setShowPopup] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [filter_on, setFilter_on] = useState(false);
 
-
   let clickTimeout = null;
-
 
   const handleDeptDoubleClick = (dept) => {
     // Clear any existing timeout to avoid triggering single click action
     clearTimeout(clickTimeout);
-
 
     // Filter pendingData based on PLTCODE1
     const selectedPendingDetails = pendingData.filter(
@@ -50,7 +46,12 @@ const [showPopup, setShowPopup] = useState(false);
     }, {});
 
     // Set the popup data to show the counts
-    setPopupData(Object.entries(toDeptCounts).map(([key, value]) => ({ toDept: key, count: value })));
+    setPopupData(
+      Object.entries(toDeptCounts).map(([key, value]) => ({
+        toDept: key,
+        count: value,
+      }))
+    );
     setShowPopup(true); // Show the popup
 
     handleTabClick(dept);
@@ -63,25 +64,23 @@ const [showPopup, setShowPopup] = useState(false);
     }, 200); // Delay to determine if it's a double click
   };
 
+  const handleProductCardClick = (product) => {
+    // Filter pendingData based on a relevant property, like ITEMID
+    const selectedPendingDetails = pendingData.filter(
+      (item) => item.PLTCODE1 === product // Use the appropriate property to match
+    );
 
-    const handleProductCardClick = (product) => {
-      // Filter pendingData based on a relevant property, like ITEMID
-      const selectedPendingDetails = pendingData.filter(
-        (item) => item.PLTCODE1 === product // Use the appropriate property to match
-      );
-    
-      // Count occurrences of each unique TODEPT
-      const toDeptCounts = selectedPendingDetails.reduce((acc, item) => {
-        const toDept = item.TODEPT;
-        acc[toDept] = (acc[toDept] || 0) + 1;
-        return acc;
-      }, {});
-    
-      // Set the popup data to show the counts
-      setPopupData(Object.entries(toDeptCounts)); // Converts to [key, value] format
-      setShowPopup(true); // Assuming this opens a modal or popup
-    };
-    
+    // Count occurrences of each unique TODEPT
+    const toDeptCounts = selectedPendingDetails.reduce((acc, item) => {
+      const toDept = item.TODEPT;
+      acc[toDept] = (acc[toDept] || 0) + 1;
+      return acc;
+    }, {});
+
+    // Set the popup data to show the counts
+    setPopupData(Object.entries(toDeptCounts)); // Converts to [key, value] format
+    setShowPopup(true); // Assuming this opens a modal or popup
+  };
 
   const handleProductSearch = (e) => {
     setProductSearch(e.target.value);
@@ -166,7 +165,9 @@ const [showPopup, setShowPopup] = useState(false);
     const fetchPendingData = async () => {
       setLoading(true);
       try {
-        const response = await axios.get("http://localhost:8081/api/pending_data");
+        const response = await axios.get(
+          "http://localhost:8081/api/pending_data"
+        );
         const pendingData = response.data;
         const uniquePLTCodes = [
           ...new Set(pendingData.map((item) => item.PLTCODE1)),
@@ -204,104 +205,110 @@ const [showPopup, setShowPopup] = useState(false);
     console.log("Pending Data:", pendingData);
     console.log("Product Details:", productDetails);
   }, [pendingData, productDetails]);
-  
+
   const handleTabClick = async (dept) => {
     setActiveTab(dept);
     setSelectedProject(dept);
     setSpin(true);
 
     try {
-        // Fetch both pending_data and department mappings
-        const [pendingResponse, departmentMappingResponse, jewelResponse] = await Promise.all([
-            axios.get("http://localhost:8081/api/pending_data"),
-            axios.get("http://localhost:8081/api/department-mappings"),
-            axios.get("http://localhost:8081/api/jewel-master"),
+      // Fetch both pending_data and department mappings
+      const [pendingResponse, departmentMappingResponse, jewelResponse] =
+        await Promise.all([
+          axios.get("http://localhost:8081/api/pending_data"),
+          axios.get("http://localhost:8081/api/department-mappings"),
+          axios.get("http://localhost:8081/api/jewel-master"),
         ]);
 
-        const pendingData = pendingResponse.data;
-        const allJewelData = jewelResponse.data;
+      const pendingData = pendingResponse.data;
+      const allJewelData = jewelResponse.data;
 
-        const filteredPendingData = pendingData.filter((item) => 
-          item.PLTCODE1.toLowerCase() === dept.toLowerCase()
+      const filteredPendingData = pendingData.filter(
+        (item) => item.PLTCODE1.toLowerCase() === dept.toLowerCase()
       );
-      
 
       // Get department mappings
       const departmentMappings = departmentMappingResponse.data;
-      
+
       // Extract all "to" departments across the department mappings
       const allToDepartments = Object.values(departmentMappings)
-      .flatMap(mapping => mapping.to)
-            .map(dept => dept.trim().toLowerCase());
+        .flatMap((mapping) => mapping.to)
+        .map((dept) => dept.trim().toLowerCase());
 
-          console.log("All To Departments:", allToDepartments);
+      console.log("All To Departments:", allToDepartments);
 
-          // Filter pending data based on all "to" departments
-          const filtered_pending_department = filteredPendingData.filter(item =>
-            allToDepartments.includes(item.TODEPT.toLowerCase())
-          );
-          
-          console.log("Filtered Pendkkking dept:", filtered_pending_department);
-        const complexities = filtered_pending_department.map(item => item.COMPLEXITY1.toLowerCase());
+      // Filter pending data based on all "to" departments
+      const filtered_pending_department = filteredPendingData.filter((item) =>
+        allToDepartments.includes(item.TODEPT.toLowerCase())
+      );
 
-        // Filter jewel data based on complexities
-        const filteredJewelData = allJewelData.filter(item =>
-            complexities.includes(item.JewelCode.toLowerCase())
-        );
+      console.log("Filtered Pendkkking dept:", filtered_pending_department);
+      const complexities = filtered_pending_department.map((item) =>
+        item.COMPLEXITY1.toLowerCase()
+      );
 
-     
-        setProductDetails(filteredJewelData);
-  
-        // Group by product and count
-        const groupedProducts = groupByProduct(filteredJewelData, filtered_pending_department);
-        setGroupedProducts(groupedProducts);
+      // Filter jewel data based on complexities
+      const filteredJewelData = allJewelData.filter((item) =>
+        complexities.includes(item.JewelCode.toLowerCase())
+      );
 
-        setJewelData(filteredJewelData);
+      setProductDetails(filteredJewelData);
 
-        // console.log("Filtered Pending Data:", filteredPendingByDept);
-        console.log("Filtered Jewel Data:", filteredJewelData);
+      // Group by product and count
+      const groupedProducts = groupByProduct(
+        filteredJewelData,
+        filtered_pending_department
+      );
+      setGroupedProducts(groupedProducts);
+
+      setJewelData(filteredJewelData);
+
+      // console.log("Filtered Pending Data:", filteredPendingByDept);
+      console.log("Filtered Jewel Data:", filteredJewelData);
     } catch (error) {
-        console.error('Error fetching data:', error);
-        setError('Error fetching data');
+      console.error("Error fetching data:", error);
+      setError("Error fetching data");
     } finally {
-        setSpin(false);
+      setSpin(false);
     }
-};
+  };
 
-
-  
-const groupByProduct = (jewelData = [], pendingData = []) => {
-  if (!jewelData || !pendingData) {
-    console.log("jewelData", jewelData);
-    console.error("jewelData or pendingData is undefined");
-    return {};  
-  }
-
-  return jewelData.reduce((acc, jewelItem) => {
-    const matchingPendingData = pendingData?.filter(pendingItem => pendingItem.COMPLEXITY1 === jewelItem.JewelCode) || [];
-
-    if (!jewelItem.Product || matchingPendingData.length === 0) return acc;
-
-    if (!acc[jewelItem.Product]) {
-      acc[jewelItem.Product] = { count: 0, subProducts: {} };
+  const groupByProduct = (jewelData = [], pendingData = []) => {
+    if (!jewelData || !pendingData) {
+      console.log("jewelData", jewelData);
+      console.error("jewelData or pendingData is undefined");
+      return {};
     }
 
-    // Increment product count based on matched pending data
-    acc[jewelItem.Product].count += matchingPendingData.length;
+    return jewelData.reduce((acc, jewelItem) => {
+      const matchingPendingData =
+        pendingData?.filter(
+          (pendingItem) => pendingItem.COMPLEXITY1 === jewelItem.JewelCode
+        ) || [];
 
-    // Handle sub-products, default to 'Unknown' if not present
-    const subProduct = jewelItem['sub Product'] || 'Unknown';
-    if (subProduct) {
-      if (!acc[jewelItem.Product].subProducts[subProduct]) {
-        acc[jewelItem.Product].subProducts[subProduct] = 0;
+      if (!jewelItem.Product || matchingPendingData.length === 0) return acc;
+
+      if (!acc[jewelItem.Product]) {
+        acc[jewelItem.Product] = { count: 0, subProducts: {} };
       }
-      // Increment sub-product count based on matched pending data
-      acc[jewelItem.Product].subProducts[subProduct] += matchingPendingData.length;
-    }
 
-    return acc;
-  }, {});
-};
+      // Increment product count based on matched pending data
+      acc[jewelItem.Product].count += matchingPendingData.length;
+
+      // Handle sub-products, default to 'Unknown' if not present
+      const subProduct = jewelItem["sub Product"] || "Unknown";
+      if (subProduct) {
+        if (!acc[jewelItem.Product].subProducts[subProduct]) {
+          acc[jewelItem.Product].subProducts[subProduct] = 0;
+        }
+        // Increment sub-product count based on matched pending data
+        acc[jewelItem.Product].subProducts[subProduct] +=
+          matchingPendingData.length;
+      }
+
+      return acc;
+    }, {});
+  };
 
   const filteredGroupedProducts = () => {
     const filteredProducts = Object.keys(groupByProduct(productDetails))
@@ -367,9 +374,11 @@ const groupByProduct = (jewelData = [], pendingData = []) => {
           on_filter={setFilter_on}
           filter={filter_on}
         />
-        <main className={`flex-1 p-6 overflow-y-auto ${
+        <main
+          className={`flex-1 p-6 overflow-y-auto ${
             filter_on === true ? "opacity-10" : "opacity-100"
-          }`}>
+          }`}
+        >
           {loading && (
             <div
               className={`border fixed shadow rounded-md p-4 max-w-full min-h-full inset-0 z-50 w-full md:w-[90%]  ml-0 md:ml-52 mx-auto ${
@@ -565,7 +574,6 @@ const groupByProduct = (jewelData = [], pendingData = []) => {
                           <tr
                             key={dept}
                             onClick={handleDeptDoubleClick(dept)}
-                         
                             className={`cursor-pointer ${
                               activeTab === dept
                                 ? theme === "dark"
@@ -685,68 +693,101 @@ const groupByProduct = (jewelData = [], pendingData = []) => {
                 }`}
               />
 
-
-{showPopup && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-    <div className="bg-white p-6 rounded-lg shadow-lg">
-      <h2 className="text-xl font-bold mb-4">TODEPT Counts</h2>
-      <ul>
-        {popupData.map(([toDept, count]) => (
-          <li key={toDept} className="flex justify-between">
-            <span>{toDept}</span>
-            <span>{count}</span>
-          </li>
-        ))}
-      </ul>
-      <button
-        onClick={() => setShowPopup(false)}
-        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
-      >
-        Close
-      </button>
-    </div>
-  </div>
-)}
+              {showPopup && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                  <div className="bg-white p-6 rounded-lg shadow-lg">
+                    <h2 className="text-xl font-bold mb-4">TODEPT Counts</h2>
+                    <ul>
+                      {popupData.map(([toDept, count]) => (
+                        <li key={toDept} className="flex justify-between">
+                          <span>{toDept}</span>
+                          <span>{count}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      onClick={() => setShowPopup(false)}
+                      className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {activeTab && (
-                <div className="mt-5" 
-                
-                >
+                <div className="mt-5">
                   <h1 className="text-lg mb-3">{selectedProject}</h1>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {Object.keys(groupedProducts).map(product => (
-        <div key={product} className={`p-4 rounded-lg shadow-md border-t-4 border-indigo-300 relative ${theme === 'light' ? 'text-gray-800 bg-white' : 'text-gray-300 bg-slate-600'}`}>
-            {/* <div className="text-xl font-semibold mb-2 flex justify-between flex-col">
+                    {Object.keys(groupedProducts).map((product) => (
+                      <div
+                        key={product}
+                        className={`p-4 rounded-lg shadow-md border-t-4 border-indigo-300 relative ${
+                          theme === "light"
+                            ? "text-gray-800 bg-white"
+                            : "text-gray-300 bg-slate-600"
+                        }`}
+                      >
+                        {/* <div className="text-xl font-semibold mb-2 flex justify-between flex-col">
               <div className={`p-1 rounded-md mb-6 font-normal text-md ${theme==='light'?'bg-blue-200 text-gray-800':'bg-blue-900 text-gray-300'}`}>
                 {product}
               </div>
               <span className="bg-purple-200 text-black p-1 h-10">Count: {groupedProducts[product].count}</span>
             </div> */}
-        
 
+                        <div
+                          className={`p-2 mt-2 rounded-lg ${
+                            theme === "light" ? "bg-slate-100" : "bg-slate-500"
+                          }`}
+                        >
+                          <h3 className="font-bold text-lg">{product}</h3>
+                          <p>
+                            Count :{" "}
+                            <mark
+                              className={` rounded-md  px-1 py-0.5  ${
+                                theme === "light"
+                                  ? "bg-purple-200 text-black"
+                                  : "bg-purple-900 text-slate-50"
+                              }`}
+                            >
+                              {groupedProducts[product].count}
+                            </mark>
+                          </p>
+                        </div>
 
-          <div className={`p-2 mt-2 rounded-lg ${theme === 'light' ? 'bg-slate-100' : 'bg-slate-500'}`}>
-              <h3 className="font-bold text-lg">{product}</h3>
-              <p>Count : <mark className={` rounded-md  px-1 py-0.5  ${theme==='light'?'bg-purple-200 text-black':'bg-purple-900 text-slate-50'}`}>
-              {groupedProducts[product].count}
-                </mark></p>
-
-             
-            </div>
-           
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            {groupedProducts[product]?.subProducts && Object.keys(groupedProducts[product].subProducts).length > 0 ? (
-              Object.keys(groupedProducts[product].subProducts).map(subProduct => (
-                <div key={subProduct} className={`flex items-center justify-between shadow-md p-1 rounded-md border ${theme==='light'?'bg-slate-100 border-slate-300':'bg-slate-700 border-slate-500 '} `}>
-                  <span className="font-medium">{subProduct}:</span> {groupedProducts[product].subProducts[subProduct]}
-                </div>
-              ))
-            ) : (
-              <div className="text-sm text-gray-500">No sub-products available</div>
-            )}
-          </div>
-        </div>
-      ))}
+                        <div className="mt-4 grid grid-cols-2 gap-2">
+                          {groupedProducts[product]?.subProducts &&
+                          Object.keys(groupedProducts[product].subProducts)
+                            .length > 0 ? (
+                            Object.keys(
+                              groupedProducts[product].subProducts
+                            ).map((subProduct) => (
+                              <div
+                                key={subProduct}
+                                className={`flex items-center justify-between shadow-md p-1 rounded-md border ${
+                                  theme === "light"
+                                    ? "bg-slate-100 border-slate-300"
+                                    : "bg-slate-700 border-slate-500 "
+                                } `}
+                              >
+                                <span className="font-medium">
+                                  {subProduct}:
+                                </span>{" "}
+                                {
+                                  groupedProducts[product].subProducts[
+                                    subProduct
+                                  ]
+                                }
+                              </div>
+                            ))
+                          ) : (
+                            <div className="text-sm text-gray-500">
+                              No sub-products available
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}

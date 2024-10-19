@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import login_img from '../assests/Login_img.png'
+import login_img from "../assests/Login_img.png";
 
 function Login() {
   const [empId, setEmpId] = useState("");
@@ -13,7 +13,6 @@ function Login() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
- 
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
@@ -27,7 +26,7 @@ function Login() {
         password,
       });
       localStorage.setItem("token", response.data.token);
-      localStorage.setItem("role", response.data.user.role); 
+      localStorage.setItem("role", response.data.user.role);
 
       setSuccess(response.data.message);
       setError("");
@@ -70,10 +69,18 @@ function Login() {
   };
 
   return (
-    <div className={`font-[sans-serif] ${theme==='light'?'bg-white':'bg-slate-900'}`}>
+    <div
+      className={`font-[sans-serif] ${
+        theme === "light" ? "bg-white" : "bg-slate-900"
+      }`}
+    >
       <div className="min-h-screen flex flex-col items-center justify-center py-6 px-4">
         <div className="grid md:grid-cols-2 items-center gap-4 max-w-6xl w-full">
-          <div className={`border ${theme==='light'?'border-gray-300':'border-gray-600'}  rounded-lg p-6 max-w-md shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] max-md:mx-auto`}>
+          <div
+            className={`border ${
+              theme === "light" ? "border-gray-300" : "border-gray-600"
+            }  rounded-lg p-6 max-w-md shadow-[0_2px_22px_-4px_rgba(93,96,127,0.2)] max-md:mx-auto`}
+          >
             <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
               <div className="mb-8 flex flex-col items-center justify-center">
                 <h1 className="text-xl text-gray-500 mb-5">
@@ -82,7 +89,11 @@ function Login() {
                   </span>
                   <span className="font-mono text-xl">Dashboard</span>
                 </h1>
-                <h3 className={` ${theme==='light' ?'text-gray-800':'text-gray-200'} text-2xl font-extrabold font-sans`}>
+                <h3
+                  className={` ${
+                    theme === "light" ? "text-gray-800" : "text-gray-200"
+                  } text-2xl font-extrabold font-sans`}
+                >
                   Welcome Back
                 </h3>
                 <p className="text-gray-500 text-sm mt-4 leading-relaxed">
@@ -92,7 +103,11 @@ function Login() {
               </div>
 
               <div>
-                <label className={`text-sm mb-2 block ${theme==='light'?'text-gray-800 ':'text-gray-200 '}`}>
+                <label
+                  className={`text-sm mb-2 block ${
+                    theme === "light" ? "text-gray-800 " : "text-gray-200 "
+                  }`}
+                >
                   Employee ID
                 </label>
                 <div className="relative flex items-center">
@@ -100,10 +115,13 @@ function Login() {
                     name="username"
                     type="text"
                     required
-                    className={`w-full text-sm border  px-4 py-3 rounded-lg outline-blue-600 ${theme==='light'?'bg-white border-gray-300 text-gray-800 ':'bg-slate-800 border-gray-900 text-gray-200 '}`}
+                    className={`w-full text-sm border  px-4 py-3 rounded-lg outline-blue-600 ${
+                      theme === "light"
+                        ? "bg-white border-gray-300 text-gray-800 "
+                        : "bg-slate-800 border-gray-900 text-gray-200 "
+                    }`}
                     placeholder="Enter Employee ID or Email"
                     value={empId}
-
                     onChange={(e) => setEmpId(e.target.value)}
                   />
                   <svg
@@ -128,7 +146,11 @@ function Login() {
               </div>
 
               <div>
-                <label className={`text-sm mb-2 block ${theme==='light'?'text-gray-800 ':'text-gray-200 '}`}>
+                <label
+                  className={`text-sm mb-2 block ${
+                    theme === "light" ? "text-gray-800 " : "text-gray-200 "
+                  }`}
+                >
                   Password
                 </label>
                 <div className="relative flex items-center">
@@ -136,7 +158,11 @@ function Login() {
                     name="password"
                     type="password"
                     required
-                    className={`w-full text-sm border  px-4 py-3 rounded-lg outline-blue-600 ${theme==='light'?'bg-white border-gray-300 text-gray-800 ':'bg-slate-800 border-gray-900 text-gray-200 '}`}
+                    className={`w-full text-sm border  px-4 py-3 rounded-lg outline-blue-600 ${
+                      theme === "light"
+                        ? "bg-white border-gray-300 text-gray-800 "
+                        : "bg-slate-800 border-gray-900 text-gray-200 "
+                    }`}
                     placeholder="Enter password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -172,25 +198,25 @@ function Login() {
               </div>
             </form>
           </div>
-          <div className={`lg:h-[400px] md:h-[300px] max-md:mt-8 ${theme==='light'?'bg-white':'bg-slate-900 '}`}>
+          <div
+            className={`lg:h-[400px] md:h-[300px] max-md:mt-8 ${
+              theme === "light" ? "bg-white" : "bg-slate-900 "
+            }`}
+          >
             {theme === "light" ? (
-               <img
-               src="https://readymadeui.com/login-image.webp"
-               className="w-full h-full max-md:w-4/5 mx-auto block object-cover p-3"
-               alt="Dining Experience"
-             />
-            ):(
               <img
-              src={login_img}
-              className="w-full h-full max-md:w-4/5 mx-auto block object-cover p-3"
-              alt="Dining Experience"
-            />
-            )
-            
-            }
- 
-</div>
-
+                src="https://readymadeui.com/login-image.webp"
+                className="w-full h-full max-md:w-4/5 mx-auto block object-cover p-3"
+                alt="Dining Experience"
+              />
+            ) : (
+              <img
+                src={login_img}
+                className="w-full h-full max-md:w-4/5 mx-auto block object-cover p-3"
+                alt="Dining Experience"
+              />
+            )}
+          </div>
         </div>
       </div>
     </div>
