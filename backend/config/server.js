@@ -793,10 +793,11 @@ app.post("/api/send-email/Party-vist", async (req, res) => {
     partyname,
     description,
     status_data,
-    imagelink,
+    image,
   } = req.body;
   console.log("logged to Email:", loggedemail);
   console.log("Person Emails:", assignToPersonEmails);
+  console.log(image)
 
   try {
     const password = await getPasswordForEmail(assignToEmail);
@@ -826,14 +827,14 @@ app.post("/api/send-email/Party-vist", async (req, res) => {
               Party Name: ${partyname}
               Description: ${description}
                Status: ${status_data}
-              imagelink: ${imagelink}`,
+              imagelink: ${image}`,
       html: `<b>Task Details:</b>
               <ul>
                   <li><b>Visit Date:</b> ${visit_date}</li>
                   <li><b>Party Name:</b> ${partyname}</li>
                   <li><b>Description:</b> ${description}</li>
                   <li><b>Status:</b> ${status_data}</li>
-                  <li><b>Image ref link:</b> ${imagelink}</li>
+                  <li><b>Image ref link:</b> ${image}</li>
                  
               </ul>`,
     };
@@ -904,6 +905,33 @@ app.post("/api/send-email/Op-task", async (req, res) => {
   }
 });
 
+
+
+app.post("/clear-weekly-data", async (req, res) => {
+  try {
+    const query = `
+      UPDATE AOP_PLTCODE_Data_Week_wise
+      SET Week1 = 0,
+          Week2 = 0,
+          Week3 = 0,
+          Week4 = 0,
+          CreatedAt = NOW(),
+          Month_data = NULL,
+          Completed = NULL;
+    `;
+
+    db.query(query, (err, result) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res.status(500).send("Database error");
+      }
+      res.json({ message: "Weekly data cleared successfully!" });
+    });
+  } catch (error) {
+    console.error("Error clearing weekly data:", error);
+    res.status(500).send("Error clearing weekly data");
+  }
+});
 
 app.get("/filtered_production_data_with_dates", async (req, res) => {
   try {
