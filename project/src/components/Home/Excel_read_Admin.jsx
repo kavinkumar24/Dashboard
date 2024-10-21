@@ -5,6 +5,7 @@ import Sidebar from "../Sidebar";
 import { FiEdit2 } from "react-icons/fi";
 import axios from "axios";
 import { FaEdit } from "react-icons/fa";
+import * as XLSX from "xlsx";
 function Dashboard() {
   const [productionData, setProductionData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -591,6 +592,8 @@ function Dashboard() {
     return arr;
   };
 
+
+  
   const renderTable = () => (
     <div>
       <div className="flex flex-row gap-4 items-end justify-end">
@@ -631,7 +634,59 @@ function Dashboard() {
         )}
       </div>
       {error && <p className="text-red-500 mt-2 text-right">{error}</p>}
+      <div className="flex flex-col items-center gap-4 p-6">
+      <div className="flex gap-4">
+        <select
+          className="border p-2 rounded"
+          value={month1}
+          onChange={(e) => setMonth1(e.target.value)}
+        >
+          <option value="">Select Month 1</option>
+          {months.map((month) => (
+            <option key={month.value} value={month.value}>
+              {month.label}
+            </option>
+          ))}
+        </select>
 
+        <select
+          className="border p-2 rounded"
+          value={month2}
+          onChange={(e) => setMonth2(e.target.value)}
+        >
+          <option value="">Select Month 2</option>
+          {months.map((month) => (
+            <option key={month.value} value={month.value}>
+              {month.label}
+            </option>
+          ))}
+        </select>
+
+        <input
+          type="number"
+          className="border p-2 rounded"
+          value={year}
+          onChange={(e) => setYear(e.target.value)}
+        />
+      </div>
+
+      <button
+        className="bg-blue-500 text-white py-2 px-4 rounded"
+        onClick={fetchData}
+      >
+        Fetch Data
+      </button>
+
+      <button
+        className="bg-green-500 text-white py-2 px-4 rounded mt-4"
+        onClick={downloadExcel2months}
+        disabled={!data || !pendingData2months} // Disable if no data
+      >
+        Download as Excel
+      </button>
+
+    
+    </div>
       {!IsFilterOn ? (
         <div
           className={`m-4 mt-7 border rounded-lg ${
@@ -694,14 +749,7 @@ function Dashboard() {
                   >
                     Total Pro
                   </th>
-                  <th
-                    rowSpan="2"
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center font-semibold text-base`}
-                  >
-                    Balance Pro
-                  </th>
+                  
                   <th
                     rowSpan="2"
                     className={`border ${
@@ -812,13 +860,7 @@ function Dashboard() {
                     >
                       {row.totalPro}
                     </td>
-                    <td
-                      className={`border ${
-                        theme === "dark" ? "border-gray-600" : "border-gray-300"
-                      } px-2 py-2 text-center text-base`}
-                    >
-                      {row.balancePro}
-                    </td>
+                    
                     <td
                       className={`border ${
                         theme === "dark" ? "border-gray-600" : "border-gray-300"
@@ -969,14 +1011,7 @@ function Dashboard() {
                     >
                       Total Pro
                     </th>
-                    <th
-                      rowSpan="2"
-                      className={`border ${
-                        theme === "dark" ? "border-gray-600" : "border-gray-300"
-                      } px-2 py-2 text-center font-semibold text-base`}
-                    >
-                      Balance Pro
-                    </th>
+                    
                     <th
                       rowSpan="2"
                       className={`border ${
@@ -1081,15 +1116,7 @@ function Dashboard() {
                       >
                         {row.totalPro}
                       </td>
-                      <td
-                        className={`border ${
-                          theme === "dark"
-                            ? "border-gray-600"
-                            : "border-gray-300"
-                        } px-2 py-2 text-center text-base`}
-                      >
-                        {row.balancePro}
-                      </td>
+                     
                       <td
                         className={`border ${
                           theme === "dark"
@@ -1143,13 +1170,15 @@ function Dashboard() {
   );
 
   const [targets, setTargets] = useState({});
-
+  const [deptTarg, setDeptTarg] = useState([]);
   useEffect(() => {
     const fetchTargets = async () => {
       try {
         const response = await axios.get(
           "http://localhost:8081/api/dept_targets"
         );
+        console.log("Targets response:", response.data);
+        setDeptTarg(response.data);
 
         if (typeof response.data === "string") {
           try {
@@ -1306,10 +1335,7 @@ function Dashboard() {
     const departments = Object.keys(productionData)
       .filter((dept) => {
         // If the user is 'user', filter based on userDepartments
-        if (role === "user") {
-          return userDepartments.includes(dept);
-        }
-        return true; // Allow all departments for non-user roles
+        return true // Allow all departments for non-user roles
       })
       .filter((dept) =>
         search.toLowerCase() === ""
@@ -1453,68 +1479,163 @@ function Dashboard() {
       );
     });
   };
-
   const departments = Object.keys(productionData).filter((dept) =>
     search.toLowerCase() === ""
       ? dept
       : dept.toLowerCase().includes(search.toLowerCase())
   );
 
-  const tableData = departments
-    .filter((dept) => {
-      if (role === "user") {
-        console.log("User departments:", userDepartments);
-        return userDepartments.includes(dept);
+  const [total_qty_dep , setTotal_qty_dep] = useState();
+useEffect(() => {
+    const fetchProductionData = async () => {
+      try {
+        const response = await axios.get(
+          "http://localhost:8081/total_qty_dept"
+        );
+        setTotal_qty_dep(response.data);
+      } catch (error) {
+        console.error("Error fetching production data:", error);
       }
-      return true;
-    })
-    .map((dept) => {
-      const productionQty = productionData[dept] || 0; // Default to 0 if not present
-      const pendingQty = pendingDepartmentData[dept] || 0;
-      const avgProduction =
-        productionQty > 0
-          ? (((productionQty + pendingQty) / productionQty) * 1).toFixed(1)
-          : "N/A";
-      const storedTargets =
-        JSON.parse(localStorage.getItem("targetValues")) || {};
-      const Target = targets[dept] || 100;
-      const efficiency = ((productionQty / Target) * 100).toFixed(2);
+    };
 
-      const toDayProduction =
-        (twodays_production &&
-          twodays_production.today &&
-          twodays_production.today[dept]) ||
-        0;
-      const toDayPending =
-        (twodays_pending &&
-          twodays_pending.today &&
-          twodays_pending.today[dept]) ||
-        0;
-      const prevDayProduction =
-        (twodays_production &&
-          twodays_production.previous_day &&
-          twodays_production.previous_day[dept]) ||
-        0;
-      const prevDayPending =
-        (twodays_pending &&
-          twodays_pending.previous_day &&
-          twodays_pending.previous_day[dept]) ||
-        0;
+    fetchProductionData();
+    console.log('hgckjch',total_qty_dep)
+}, []);
 
-      return {
-        dept,
-        align: efficiency,
-        capacity: Target,
-        totalPro: productionQty,
-        balancePro: pendingQty,
-        avgProPerDay: avgProduction,
-        protoday: toDayProduction,
-        pentoday: toDayPending,
-        proprev: prevDayProduction,
-        penprev: prevDayPending,
-        remarks: "N/A",
-      };
+const tableData = departments
+  .filter((dept) => {
+    
+    return true;
+  })
+  .map((dept) => {
+    const productionQty = total_qty_dep && total_qty_dep[dept]?.total_qty || 0; // Check if total_qty_dep exists
+    const pendingQty = pendingDepartmentData?.[dept] || 0;
+    const avgProduction = productionQty > 0 
+      ? (((productionQty + pendingQty) / productionQty) * 1).toFixed(1) 
+      : "N/A";
+    const Target = deptTarg.find(item => item.department_name === dept)?.target || 0;
+    const efficiency = Target > 0 ? ((productionQty / Target) * 100).toFixed(2) : "N/A";
+
+    const toDayProduction = twodays_production?.today?.[dept] || 0;
+    const toDayPending = twodays_pending?.today?.[dept] || 0;
+    const prevDayProduction = twodays_production?.previous_day?.[dept] || 0;
+    const prevDayPending = twodays_pending?.previous_day?.[dept] || 0;
+
+    return {
+      dept,
+      align: efficiency,
+      capacity: Target,
+      totalPro: productionQty,
+      balancePro: pendingQty,
+      avgProPerDay: avgProduction,
+      protoday: toDayProduction,
+      pentoday: toDayPending,
+      proprev: prevDayProduction,
+      penprev: prevDayPending,
+      remarks: "N/A",
+    };
+  });
+
+
+    
+
+
+
+
+  const months = [
+    { value: 1, label: "January" },
+    { value: 2, label: "February" },
+    { value: 3, label: "March" },
+    { value: 4, label: "April" },
+    { value: 5, label: "May" },
+    { value: 6, label: "June" },
+    { value: 7, label: "July" },
+    { value: 8, label: "August" },
+    { value: 9, label: "September" },
+    { value: 10, label: "October" },
+    { value: 11, label: "November" },
+    { value: 12, label: "December" },
+  ];
+
+  const [month1, setMonth1] = useState("");
+  const [month2, setMonth2] = useState("");
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [data, setData] = useState({});
+const [pendingData2months, setPendingData2months] = useState({});
+  const fetchData = async () => {
+    try {
+      const response = await axios.get("http://localhost:8081/filtered_production_data_with_months", {
+        params: { month1, month2, year },
+      });
+      setData(response.data);
+      const response2 = await axios.get("http://localhost:8081/filtered_pending_data_with_months", {
+        params: { month1, month2, year },
+      });
+      setPendingData2months(response2.data);
+
+      console.log("jfyhuduy7",response2.data);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  const [departmentMappings, setDepartmentMappings] = useState(null);
+
+  useEffect(() => {
+    // Fetch department mappings on component mount
+    const fetchDepartmentMappings = async () => {
+      try {
+        const response = await axios.get("http://localhost:8081/api/department-mappings");
+        setDepartmentMappings(response.data);
+      } catch (error) {
+        console.error("Error fetching department mappings:", error);
+      }
+    };
+
+    fetchDepartmentMappings();
+  }, []);
+
+  const downloadExcel2months = () => {
+    const worksheet = XLSX.utils.aoa_to_sheet([]);
+    const headers = ["Department"];
+
+    Object.keys(data).forEach((date) => {
+      headers.push(`${date} Pro`, `${date} Pen`);
     });
+
+    const rows = [];
+
+    // Adding headers
+    rows.push(headers);
+
+    Object.keys(departmentMappings).forEach((group) => {
+      const row = [group];
+
+      Object.keys(data).forEach((date) => {
+        const deptProduction = data[date].find(
+          (deptEntry) => Object.keys(deptEntry)[0] === group
+        );
+        const productionQty = deptProduction ? deptProduction[group] : 0;
+
+        const pendingEntries = pendingData2months[date];
+        const pendingQty = pendingEntries && group in pendingEntries 
+          ? pendingEntries[group] 
+          : 0;
+
+        row.push(productionQty, pendingQty);
+      });
+
+      rows.push(row);
+    });
+
+    // Create a worksheet from the rows
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Production Data");
+
+    // Export to file
+    XLSX.writeFile(wb, "production_data.xlsx");
+  };
 
   return (
     <div

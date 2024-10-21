@@ -10,7 +10,7 @@ const formatDateForMySQL =
 const excelSerialDateToDate =
   require("../../Helpers/Date_Serialize").excelSerialDateToDate;
 
-  router.post("/api/design_center/upload", upload.single("file"), (req, res) => {
+  router.post("/design_center/upload", upload.single("file"), (req, res) => {
     if (!req.file) {
       return res.status(400).send("No file uploaded.");
     }

@@ -10,6 +10,7 @@ import "./Datepicker.css";
 import { light } from "@mui/material/styles/createPalette";
 import axios from "axios";
 
+
 function Party_form() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
@@ -24,6 +25,7 @@ function Party_form() {
   const [visit_date, setVisit_date] = useState("");
   const [partyname, setPartyname] = useState("");
   const [imagelink, setImagelink] = useState("");
+  const [fileName, setFileName] = useState("");
 
   const [ax_brief_data, setAx_brief_data] = useState("");
   const [value, setValue] = useState({
@@ -35,11 +37,32 @@ function Party_form() {
 
   const [assignToCount, setAssignToCount] = useState(1); // Number of assignees
   const [assignToEmails, setAssignToEmails] = useState([""]);
+  const [ref_images, setRef_images] = useState("no");
+  const [image_upload, setImage_upload] = useState(false);
 
+  const handle_images_upload = (selectedOption) => {
+    const value = selectedOption ? selectedOption.value : "";
+    setRef_images(value);
+    if (value === "yes") {
+      setImage_upload(true);
+    } else {
+      setImage_upload(false);
+    }
+  };
   const handleaxbriefselect = (selectedOption) => {
     const value = selectedOption ? selectedOption.value : "";
     setAx_brief_data(value);
   };
+  const images = [
+    {
+      value: "yes",
+      label: "Yes",
+    },
+    {
+      value: "no",
+      label: "No",
+    },
+  ];
 
   const customDatePickerStyles =
     theme === "light"
@@ -155,26 +178,37 @@ function Party_form() {
       setAssignToCount(0);
 
       try {
+        const formData = new FormData();
+        formData.append("loggedemail", loggedemail);
+        formData.append("assignToPersonEmails", assignToEmails);
+        formData.append("visit_date", visit_date);
+        formData.append("partyname", partyname);
+        formData.append("description", description);
+        formData.append("status_data", status_data);
+      
+        if (selectedImage) {
+          formData.append("image", selectedImage); // Make sure selectedImage is the actual file
+        }
+      
         const response = await axios.post(
-          "http://localhost:8081/api/send-email/Party-vist",
+          "http://localhost:8081/api/send-email/Party-visit",
+          formData,
           {
-            loggedemail: loggedemail,
-            assignToPersonEmails: assignToEmails,
-            visit_date: visit_date,
-            partyname: partyname,
-            description: description,
-            status_data: status_data,
-            imagelink: imagelink,
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
           }
         );
+      
         console.log(response);
-
         toast.success("Email sent successfully");
       } catch (error) {
         console.error("Error sending email:", error);
         toast.error("Error sending email");
         setIsloading(false);
       }
+      
+      
       setIsloading(false);
     } catch (error) {
       console.error("Error storing data:", error);
@@ -182,6 +216,8 @@ function Party_form() {
       setIsloading(false);
     }
   };
+
+  const [formData, setFormData] = useState(new FormData());
 
   const handleAssignToCountChange = (selectedOption) => {
     const count = selectedOption.value;
@@ -194,7 +230,37 @@ function Party_form() {
     updatedEmails[index] = value;
     setAssignToEmails(updatedEmails);
   };
+  const [selectedImage, setSelectedImage] = useState(null);
+  const handleImageChange = (event) => {
+    const file = event.target.files[0];
 
+    if (file) {
+      if (file.size <= 30 * 1024) {
+        // 30KB limit
+        setSelectedImage(file);
+        setImagePreviewUrl(URL.createObjectURL(file));
+        setFileName(file.name);
+
+        // Add the image to FormData
+        const newFormData = new FormData();
+        newFormData.append("image", file);
+        setFormData(newFormData);
+      } else {
+        alert("File size must be 30KB or less");
+        event.target.value = null;
+        setSelectedImage(null);
+        setImagePreviewUrl(null);
+        setFileName("");
+      }
+    }
+  };
+
+  const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setFileName("");
+    setImagePreviewUrl(false);
+  };
   return (
     <div
       className={`min-h-screen lg:min-h-screen min-w-screen w-[110%] md:w-[100%] lg:w-[100%] flex ${
@@ -413,23 +479,81 @@ function Party_form() {
                     className={`block text-base font-bold mb-2 ${
                       theme === "light" ? "text-gray-700" : "text-gray-200"
                     } w-full px-6 md:mt-2 @md/modal:mt-2 md:px-8 @md/modal:px-8 md:w-1/5 @md/modal:w-1/5`}
-                    htmlFor="qty"
+                    htmlFor="ref_images"
                   >
-                    Image link (Drive)
+                    Image
                   </label>
-                  <input
-                    type="text"
-                    id="qty"
-                    value={imagelink}
-                    onChange={(e) => setImagelink(e.target.value)}
-                    className={`appearance-none border rounded w-full py-2 px-3 leading-tight focus:outline-none focus:shadow-outline ${
+
+                  <Select
+                    className={`mt-2 lg:mt-0 w-full lg:w-full  ${
                       theme === "light"
-                        ? "bg-gray-100 text-gray-700 border-gray-300"
+                        ? "border-gray-300 text-black "
                         : "bg-gray-700 text-gray-100 border-gray-600"
-                    }`}
-                    placeholder="Enter image link"
+                    } w-full md:w-full`}
+                    isClearable
+                    options={images}
+                    styles={customStyles}
+                    value={images.find((option) => option.value === ref_images)}
+                    onChange={handle_images_upload}
                     required
                   />
+                </div>
+
+                <div className="">
+                  {image_upload && (
+                    <div className="ml-20">
+                      <label
+                        htmlFor="uploadFile1"
+                        className={`${
+                          theme === "light"
+                            ? "bg-white text-gray-500 border-gray-300"
+                            : "bg-gray-800 text-gray-300 border-gray-600"
+                        } font-semibold text-base rounded max-w-[60%] h-32 flex flex-col items-center justify-center cursor-pointer border-2 border-dashed mx-auto`}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="w-11 mb-2 fill-gray-500"
+                          viewBox="0 0 32 32"
+                        >
+                          <path d="M23.75 11.044a7.99 7.99 0 0 0-15.5-.009A8 8 0 0 0 9 27h3a1 1 0 0 0 0-2H9a6 6 0 0 1-.035-12 1.038 1.038 0 0 0 1.1-.854 5.991 5.991 0 0 1 11.862 0A1.08 1.08 0 0 0 23 13a6 6 0 0 1 0 12h-3a1 1 0 0 0 0 2h3a8 8 0 0 0 .75-15.956z" />
+                          <path d="M20.293 19.707a1 1 0 0 0 1.414-1.414l-5-5a1 1 0 0 0-1.414 0l-5 5a1 1 0 0 0 1.414 1.414L15 16.414V29a1 1 0 0 0 2 0V16.414z" />
+                        </svg>
+                        Import Reference Images
+                        <input
+                          type="file"
+                          id="uploadFile1"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                        />
+                        <p className="text-xs font-medium text-gray-400 mt-2">
+                          .image only allowed under 30KB.
+                        </p>
+                      </label>
+
+                      {selectedImage && (
+                        <div className="mt-4 relative flex flex-col items-center w-40 mx-auto">
+                          <img
+                            src={imagePreviewUrl}
+                            alt="Preview"
+                            className="w-24 h-24 object-cover rounded"
+                          />
+                          <button
+                            onClick={handleRemoveImage}
+                            className="absolute top-1 right-1 bg-gray-500 h-5 w-5 text-white rounded-full flex items-center justify-center"
+                            aria-label="Remove image"
+                          >
+                            &times;
+                          </button>
+
+                          <p className="mt-2 text-sm text-gray-500">
+                            {fileName}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <br></br>
                 </div>
 
                 <div className="md:col-span-2 flex justify-center">

@@ -857,11 +857,13 @@ function Reject() {
                   >
                     Rejection Counts Based on Year
                   </h1>
-                  <div className="px-10">
+                  <div className="px-10 h-72">
                     {chartData ? (
                       <Bar
                         data={chartData}
                         options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
                           ...chartOptions,
                           plugins: {
                             legend: {
@@ -1124,13 +1126,14 @@ function Reject() {
                       : "Reasons for Rejections"}
                   </h1>
 
-                  <div className="chart-container">
+                  <div className="chart-container h-72">
                     {chartData4 ? (
                       <Bar
                         data={chartData4}
                         options={{
                           ...chartOptions4,
-                          maintainAspectRatio: true,
+                          responsive: true,
+                          maintainAspectRatio: false,
                           plugins: {
                             tooltip: {
                               backgroundColor:

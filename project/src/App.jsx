@@ -138,9 +138,7 @@ function App() {
           <Route
             path="/uploads"
             element={
-              <PrivateRoute allowedRoles={["admin"]}>
                 <Upload />
-              </PrivateRoute>
             }
           />
           <Route

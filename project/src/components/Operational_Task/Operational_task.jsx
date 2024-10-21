@@ -16,6 +16,7 @@ function Operational_task() {
   // const [phaseData, setPhaseData] = useState([]);
   const [filter_on, setFilter_on] = useState(false);
 
+
   const [tableData, setTableData] = useState([]);
   useEffect(() => {
     fetchData();
@@ -143,7 +144,7 @@ function Operational_task() {
   };
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsAPerPage = 10;
+  const itemsPerPage = 10;
   const totalPages = Math.ceil(tableData.length / itemsPerPage);
 
   const currentData = tableData.slice(

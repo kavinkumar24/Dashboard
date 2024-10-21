@@ -123,94 +123,147 @@ router.get("/filtered_production_data", async (req, res) => {
   });
 });
 
+function getWeekOfMonth(date) {
+  const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+  const firstDayWeekday = firstDayOfMonth.getDay();
+  const currentDate = date.getDate();
+  
+  return Math.ceil((currentDate + firstDayWeekday) / 7);
+}
+
 
 router.get("/filtered_production_data/aop", async (req, res) => {
-  const response = await axios.get(
-    "http://localhost:8081/api/department-mappings"
-  );
-  const departmentMappings = response.data;
-  const { startDate, endDate } = req.query;
+  try {
+    const response = await axios.get("http://localhost:8081/api/department-mappings");
+    const departmentMappings = response.data;
 
-  const deptFromFilter = Object.values(departmentMappings).flatMap(
-    (mapping) => mapping.from
-  );
-  const deptToFilter = Object.values(departmentMappings).flatMap(
-    (mapping) => mapping.to
-  );
+    const deptFromFilter = Object.values(departmentMappings).flatMap(mapping => mapping.from);
+    const deptToFilter = Object.values(departmentMappings).flatMap(mapping => mapping.to);
+    const lowerDeptFromFilter = deptFromFilter.map(dept => dept.toLowerCase());
+    const lowerDeptToFilter = deptToFilter.map(dept => dept.toLowerCase());
 
-  const lowerDeptFromFilter = deptFromFilter.map((dept) => dept.toLowerCase());
-  const lowerDeptToFilter = deptToFilter.map((dept) => dept.toLowerCase());
-
-  const today = new Date();
-  const startOfDay = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate()
-  );
-  const endOfDay = new Date(
-    today.getFullYear(),
-    today.getMonth(),
-    today.getDate() + 1
-  );
-
-  let sql = `
+    let sql = `
       SELECT \`From Dept\`, \`To Dept\`, Project, UploadedDateTime, COUNT(\`CW Qty\`) AS total_qty
-      FROM Production_sample_data
-      WHERE LOWER(\`From Dept\`) IN (?)
-        AND LOWER(\`To Dept\`) IN (?)
+      FROM production_sample_data
+      WHERE LOWER(\`From Dept\`) IN (?) AND LOWER(\`To Dept\`) IN (?)
+      GROUP BY \`From Dept\`, \`To Dept\`, Project, UploadedDateTime
     `;
 
-  const params = [lowerDeptFromFilter, lowerDeptToFilter, startOfDay, endOfDay];
+    const params = [lowerDeptFromFilter, lowerDeptToFilter];
 
-  if (startDate) {
-    sql += ` AND \`In Date\` >= ?`;
-    params.push(new Date(startDate));
-  }
-  if (endDate) {
-    sql += ` AND \`Out Date\` <= ?`;
-    params.push(new Date(endDate));
-  }
+    db.query(sql, params, (err, data) => {
+      if (err) {
+        console.error("Database error:", err);
+        return res.json(err);
+      }
 
-  sql += ` GROUP BY \`From Dept\`, \`To Dept\`, Project`;
+    
 
-  db.query(sql, params, (err, data) => {
-    if (err) return res.json(err);
+      const results = Object.keys(departmentMappings).reduce((acc, group) => {
+        acc[group] = { total_qty: 0, projects: {} };
+        return acc;
+      }, {});
 
-    const results = Object.keys(departmentMappings).reduce((acc, group) => {
-      acc[group] = { total_qty: 0, projects: {} };
-      return acc;
-    }, {});
-
-    data.forEach((row) => {
-      const fromDept = row["From Dept"].toUpperCase();
-      const toDept = row["To Dept"].toUpperCase();
-      const project = row.Project;
-      const qty = row.total_qty;
-      const uploadedDateTime = row.UploadedDateTime;
-
-      for (const [group, { from, to }] of Object.entries(departmentMappings)) {
-        if (from.includes(fromDept) && to.includes(toDept)) {
-          results[group].total_qty += qty;
+      // First group by week
+      const weekData = {};
+      data.forEach((row) => {
+        const uploadedDateTime = new Date(row.UploadedDateTime);
+        const currentWeekCount = getWeekOfMonth(uploadedDateTime);
+        const weekKey = `week${currentWeekCount}`;
+      
+        if (!weekData[weekKey]) {
+          weekData[weekKey] = [];
         }
-        if (from.includes(fromDept) && to.includes(toDept)) {
-          // Initialize the project if it doesn't exist in this group
-          if (!results[group].projects[project]) {
-            results[group].projects[project] = {
-              total_qty: 0,
-              Week_count: getWeekNumber(uploadedDateTime),
-              monthname: getMonthName(uploadedDateTime),
-            };
-          }
-
-          // Add the qty to the project under this group
-          results[group].projects[project].total_qty += qty;
+      
+        weekData[weekKey].push(row);
+      });
+      
+      // Now process each week's data
+      for (const [weekKey, weekRows] of Object.entries(weekData)) {
+        if (weekRows.length > 0) { // Only process if there are rows for this week
+          weekRows.forEach((row) => {
+            const fromDept = row["From Dept"].toUpperCase();
+            const toDept = row["To Dept"].toUpperCase();
+            const project = row.Project;
+            const qty = row.total_qty;
+            const currentMonthName = getMonthName(new Date(row.UploadedDateTime));
+      
+            for (const [group, { from, to }] of Object.entries(departmentMappings)) {
+              if (from.includes(fromDept) && to.includes(toDept)) {
+                results[group].total_qty += qty;
+      
+                if (!results[group].projects[project]) {
+                  results[group].projects[project] = {
+                    total_qty: 0,
+                    weeks: {},
+                    monthname: currentMonthName,
+                  };
+                }
+      
+                results[group].projects[project].total_qty += qty;
+      
+                if (!results[group].projects[project].weeks[weekKey]) {
+                  results[group].projects[project].weeks[weekKey] = {
+                    total_qty: 0,
+                  };
+                }
+      
+                results[group].projects[project].weeks[weekKey].total_qty += qty;
+              }
+            }
+          });
         }
       }
-    });
+      
 
-    return res.json(results);
-  });
+      // Now process each week's data
+      for (const [weekKey, weekRows] of Object.entries(weekData)) {
+        weekRows.forEach((row) => {
+          // console.log("Processing row for week:", row);
+          
+          const fromDept = row["From Dept"].toUpperCase();
+          const toDept = row["To Dept"].toUpperCase();
+          const project = row.Project;
+          const qty = row.total_qty;
+          const currentMonthName = getMonthName(new Date(row.UploadedDateTime));
+
+          for (const [group, { from, to }] of Object.entries(departmentMappings)) {
+            if (from.includes(fromDept) && to.includes(toDept)) {
+              results[group].total_qty += qty;
+
+              if (!results[group].projects[project]) {
+                results[group].projects[project] = {
+                  total_qty: 0,
+                  weeks: {},
+                  monthname: currentMonthName,
+                };
+              }
+
+              results[group].projects[project].total_qty += qty;
+
+              if (!results[group].projects[project].weeks[weekKey]) {
+                results[group].projects[project].weeks[weekKey] = {
+                  total_qty: 0,
+                };
+              }
+
+              results[group].projects[project].weeks[weekKey].total_qty += qty;
+            }
+          }
+        });
+      }
+
+      res.json(results); // Send the final results
+    });
+  } catch (error) {
+    console.error("Error in route:", error);
+    res.status(500).json({ error: "An error occurred" });
+  }
 });
+
+
+
+
 
 
 router.get("/filtered_production_data_with_date", async (req, res) => {

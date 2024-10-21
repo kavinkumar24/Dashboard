@@ -56,6 +56,8 @@ function Department_AOP() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
+
+  const [totalWeeklyPercentage, setTotalWeeklyPercentage] = useState(0);
   const [productionData, setProductionData] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [pendingData, setPendingData] = useState([]);
@@ -63,7 +65,9 @@ function Department_AOP() {
   const [rawFilteredData, setRawFilteredData] = useState([]);
   const [departmentMappings, setDepartmentMappings] = useState({});
   const [selectedDeptName, setSelectedDeptName] = useState("CAD");
-
+  const [userRole, setUserRole] = useState(() => {
+    return localStorage.getItem("role") || "user";
+  });
   const [targets, setTargets] = useState({});
   const [tableData, setTableData] = useState([]);
   const [selectedDepartments, setSelectedDepartments] = useState([]);
@@ -260,6 +264,7 @@ function Department_AOP() {
     targets,
     value.startDate,
     value.endDate,
+    achieved,
   ]);
 
   useEffect(() => {
@@ -363,11 +368,15 @@ function Department_AOP() {
     return aggregatedData;
   };
   const updateTableData = async () => {
-    const getWeekNumber = (uploadDate) => {
-      const date = new Date(uploadDate);
-      const dayOfMonth = date.getDate();
-      return Math.ceil(dayOfMonth / 7); // Dividing by 7 to get the week of the month
+    const getWeekNumberInMonth = (dateInput) => {
+      let date = dateInput.getDate();
+      let day = dateInput.getDay();
+      let currentWeek = Math.ceil((date + 6 - day) / 7);
+      return currentWeek;
     };
+
+    const weekNumber = getWeekNumberInMonth(new Date());
+    console.log("Week Number:", weekNumber); // Output the current week number of the month
 
     // Normalize pending data
     const normalizedData = pendingData.map((item) => ({
@@ -428,7 +437,6 @@ function Department_AOP() {
 
       const achievedCounts = achieved;
 
-      // Fetch existing data for summing with new data
       let existingData = [];
       try {
         const existingResponse = await fetch(
@@ -443,13 +451,11 @@ function Department_AOP() {
         console.error("Error fetching existing data:", error);
       }
 
-      // Ensure existingData is an array
       if (!Array.isArray(existingData)) {
         console.error("existingData is not an array:", existingData);
-        existingData = []; // Set it to an empty array to prevent further errors
+        existingData = [];
       }
 
-      // Fetch weekly data from the new API
       let weeklyData = [];
       try {
         const weeklyResponse = await fetch(
@@ -460,10 +466,10 @@ function Department_AOP() {
         }
         weeklyData = await weeklyResponse.json();
         if (weeklyData[selectedDeptName]) {
-          const departmentData = weeklyData[selectedDeptName]; // Get the data for the selected department
+          const departmentData = weeklyData[selectedDeptName];
 
           departmentData.forEach((item) => {
-            const monthName = item.Month_data; // Access Month_data
+            const monthName = item.Month_data;
             if (monthName != null) {
               setMonth(monthName);
             }
@@ -476,82 +482,166 @@ function Department_AOP() {
       } catch (error) {
         console.error("Error fetching weekly data:", error);
       }
-
       const updatedTableData = AllowedProjects.map((project) => {
         const pltcode = project.toUpperCase();
         const totalJCPDSCWQTY1 = pltcodePendingData[pltcode] || 0;
         const target = Math.round(groupedData[pltcode]) || 0;
         const achieved = achievedCounts[pltcode] || 0;
 
-        const pending = target - achieved;
+        // Add console logs to debug the target and achieved values
+        console.log(
+          "Project:",
+          pltcode,
+          "Target:",
+          target,
+          "Achieved:",
+          achieved
+        );
+
+        if (target === 0) return null;
+
+        const pending = Math.max(0, target - achieved); // Ensure pending isn't negative
         const weekCounts = projectTotals[pltcode] || 0;
-        const percentageAchieved = target > 0 ? (weekCounts / target) * 100 : 0;
 
-        // Determine which week column to update based on current week number
-        const weekNumber = getWeekNumber(new Date());
-
-        // Check if there's weekly data for this pltcode and the selected department
+        // Fetch the weekly data for the selected department and pltcode
         const deptData = weeklyData[selectedDeptName] || [];
         const weeklyDataEntry = deptData.find(
           (entry) => entry.PLTCODE1 === pltcode
         );
 
-        // Ensure the weeklyDataEntry is valid before proceeding
+        // Default weekly data structure, in case no data exists
         const weekData = weeklyDataEntry
           ? {
               Week1: weeklyDataEntry.data[0]?.Week1 || 0,
               Week2: weeklyDataEntry.data[0]?.Week2 || 0,
               Week3: weeklyDataEntry.data[0]?.Week3 || 0,
               Week4: weeklyDataEntry.data[0]?.Week4 || 0,
+              com: weeklyDataEntry.data[0]?.Completed || 0,
             }
           : {
               Week1: 0,
               Week2: 0,
               Week3: 0,
               Week4: 0,
+              com: 0,
             };
 
-        const existingEntry = existingData.find(
-          (item) => item.PLTCODE1 === pltcode
-        );
+        // Summing the total weekly achievements
+        const totalWeeklyAchieved =
+          weekData.Week1 + weekData.Week2 + weekData.Week3 + weekData.Week4;
 
-        const summedAchieved = achieved + (existingEntry?.Achieved || 0);
-        const summedPending = target - summedAchieved;
-        const summedWip =
-          pltcodeCounts[pltcode]?.totalWIP + (existingEntry?.Wip || 0);
+        // Calculate the weekly percentage achieved for the current week
         const currentWeekAchieved = weekData[`Week${weekNumber}`] || 0;
         const weeklyPercentageAchieved =
           target > 0 ? (currentWeekAchieved / target) * 100 : 0;
 
-        // Calculate total percentage for the month (based on all weeks)
-        const totalWeeklyAchieved =
-          weekData.Week1 + weekData.Week2 + weekData.Week3 + weekData.Week4;
-        console.log("Total Weekly Achieved:", totalWeeklyAchieved);
         const monthlyPercentageAchieved =
           target > 0 ? (totalWeeklyAchieved / target) * 100 : 0;
+
+        // Cap percentages at 100%
+        const cappedWeeklyPercentage = Math.min(weeklyPercentageAchieved, 100);
+        const cappedMonthlyPercentage = Math.min(
+          monthlyPercentageAchieved,
+          100
+        );
+
+        // Calculate the completed percentage based on total project counts
+        let completedPercentage = Math.round((weekCounts * 100) / target);
+        if (completedPercentage > 100) {
+          completedPercentage = 100; // Cap at 100%
+        }
+
         return {
           PLTCODE1: pltcode,
           TotalJCPDSCWQTY1: totalJCPDSCWQTY1,
           Target: target,
-          Achieved: summedAchieved,
-          Pending: summedPending,
-          PercentageAchieved: percentageAchieved,
-          MonthlyPercentage: monthlyPercentageAchieved,
-          Wip: summedWip,
-          completed: weekCounts,
+          Achieved: achieved,
+          Pending: pending, // Ensure pending is calculated properly
+          PercentageAchieved: cappedWeeklyPercentage,
+          MonthlyPercentage: cappedMonthlyPercentage,
+          Wip: pltcodeCounts[pltcode]?.totalWIP || 0,
+          completed: weekData.com,
+          CompletedPercentage: completedPercentage,
           Dept: selectedDeptName,
-          ...weekData,
+          weeklyPercentageAchieved: cappedWeeklyPercentage,
+          ...weekData, // Include week data in the return object
         };
       })
-        .filter((data) => data.Target !== 0)
+
+        .filter((data) => data !== null) // Filter out null values (where target was zero)
         .sort((a, b) => a.PLTCODE1.localeCompare(b.PLTCODE1));
 
-      const totalPercentage = updatedTableData.reduce(
-        (acc, item) => acc + (parseFloat(item.PercentageAchieved) || 0),
-        0
+      // // Sum of all percentages and average calculation
+      // const totalWeeklyPercentageAchieved = updatedTableData.reduce(
+      //   (acc, data) => {
+      //     const weeklyAchieved = data.weeklyPercentageAchieved || 0;
+      //     return acc + weeklyAchieved;
+      //   },
+      //   0
+      // );
+
+      // setTotalWeeklyPercentage(totalWeeklyPercentageAchieved);
+
+      // Sum of all percentages and average calculation
+      const { total, count } = updatedTableData.reduce(
+        (acc, data) => {
+          const weeklyAchieved = data.weeklyPercentageAchieved || 0;
+
+          if (weeklyAchieved > 0) {
+            acc.total += weeklyAchieved; // Sum up the total
+            acc.count += 1; // Increment count for non-zero values
+          }
+
+          return acc;
+        },
+        { total: 0, count: 0 } // Initial accumulator
       );
 
-      setTotal(totalPercentage);
+      // Calculate average if count is greater than 0
+      const averageWeeklyPercentageAchieved = count > 0 ? total / count : 0;
+
+      // Set the average in state
+      setTotalWeeklyPercentage(averageWeeklyPercentageAchieved);
+
+   // Calculate weekly and monthly percentages
+const { totalWeekly, countWeekly, totalMonthly, countMonthly } = updatedTableData.reduce(
+  (acc, data) => {
+    const weeklyAchieved = data.weeklyPercentageAchieved || 0;
+    const monthlyAchieved = data.MonthlyPercentage || 0;
+
+    // Sum up for weekly percentages
+    if (weeklyAchieved > 0) {
+      acc.totalWeekly += weeklyAchieved; // Sum up the weekly percentage
+      acc.countWeekly += 1; // Increment count for non-zero weekly values
+    }
+
+    // Sum up for monthly percentages
+    if (monthlyAchieved > 0) {
+      acc.totalMonthly += monthlyAchieved; // Sum up the monthly percentage
+      acc.countMonthly += 1; // Increment count for non-zero monthly values
+    }
+
+    return acc;
+  },
+  {
+    totalWeekly: 0,
+    countWeekly: 0,
+    totalMonthly: 0,
+    countMonthly: 0, // Initial accumulator for monthly data
+  }
+);
+
+
+// Calculate average monthly percentage if count is greater than 0
+const averageMonthlyPercentageAchieved_month = countMonthly > 0 ? totalMonthly / countMonthly : 0;
+
+// Set the averages in state
+setTotalWeeklyPercentage(averageWeeklyPercentageAchieved);
+setTotal(averageMonthlyPercentageAchieved_month)
+
+console.log("Average Weekly Percentage Achieved:", averageWeeklyPercentageAchieved);
+console.log("Average Monthly Percentage Achieved:", averageMonthlyPercentageAchieved_month);
+// Set the average percentage
       setTableData(updatedTableData);
     } else {
       setTableData([]);
@@ -614,17 +704,18 @@ function Department_AOP() {
         "",
         "",
         "",
-        "Department",
+        `"Department": ${selectedDeptName}`,
         "Percentage",
       ],
       ["", "", "", "", "", "Week1", "Week2", "Week3", "Week4", "", ""],
       ["", "", "Achieved", "Pending", "Wip", "", "", "", "", "", "", ""],
     ];
 
+    setIsPopupVisible(false);
     const data = tableData.map((row) => [
       row.PLTCODE1,
       row.Target,
-      row.Achieved || "-",
+      achieved[row.PLTCODE1] || "-",
       row.Pending || "-",
       row.Wip || "nil",
       row.Week1,
@@ -632,7 +723,7 @@ function Department_AOP() {
       row.Week3 || "-",
       row.Week4 || "-",
       row.TotalJCPDSCWQTY1,
-      row.PercentageAchieved || "-",
+      row.weeklyPercentageAchieved.toFixed(1) || "-",
     ]);
 
     const allData = headers.flat().concat(data);
@@ -647,10 +738,76 @@ function Department_AOP() {
     XLSX.writeFile(wb, `${selectedDeptName}_AOP_data.xlsx`);
   };
 
+  useEffect(() => {
+    const checkPopupAndDownload = async () => {
+      const lastDownloadDate = localStorage.getItem("lastDownloadDate");
+      const now = new Date();
+
+      // Check for last shown date
+      const lastShownDate = localStorage.getItem("lastShownDate");
+      const twoMonthsLater = new Date();
+
+      if (lastShownDate) {
+        twoMonthsLater.setMonth(new Date(lastShownDate).getMonth() + 2);
+      } else {
+        localStorage.setItem("lastShownDate", now.toISOString());
+      }
+
+      if (now >= twoMonthsLater) {
+        setIsPopupVisible(true);
+        localStorage.setItem("lastShownDate", now.toISOString()); // Update the last shown date
+      }
+
+      // Check if a month has passed since the last download
+      if (lastDownloadDate) {
+        const lastDownload = new Date(lastDownloadDate);
+        if (
+          lastDownload.getMonth() !== now.getMonth() ||
+          lastDownload.getFullYear() !== now.getFullYear()
+        ) {
+          // Trigger auto-download if the user is an admin
+          if (userRole === "admin") {
+            await fetch("http://localhost:8081/clear-weekly-data", {
+              method: "POST",
+            });
+
+            const monthName = now.toLocaleString("default", { month: "long" });
+            const year = now.getFullYear();
+            handleDownload(monthName, year);
+
+            // Update the last download date
+            localStorage.setItem("lastDownloadDate", now.toISOString());
+          }
+        }
+      } else {
+        if (userRole === "admin") {
+          await fetch("http://localhost:8081/clear-weekly-data", {
+            method: "POST",
+          });
+
+          const monthName = now.toLocaleString("default", { month: "long" });
+          const year = now.getFullYear();
+          handleDownload(monthName, year);
+
+          // Set last download date
+          localStorage.setItem("lastDownloadDate", now.toISOString());
+        }
+      }
+    };
+
+    checkPopupAndDownload();
+  }, []);
+
   const handleRowClick = (pltcode) => {
     navigate(`/product-details/${pltcode}/${selectedDeptName}`);
   };
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
 
+  const handleClosePopup = () => {
+    setIsPopupVisible(false);
+    // Update lastShownDate in localStorage
+    localStorage.setItem("lastShownDate", new Date().toISOString());
+  };
   return (
     <div
       className={`min-h-screen min-w-full flex flex-col md:flex-row ${
@@ -675,6 +832,19 @@ function Department_AOP() {
             filter_on === true ? "opacity-10" : "opacity-100"
           }`}
         >
+          {isPopupVisible && (
+            <div className="fixed top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-black bg-white p-5 z-50">
+              <h2 className="text-lg font-bold text-black">
+                Download content Content
+              </h2>
+              <button
+                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                onClick={handleDownload}
+              >
+                Download
+              </button>
+            </div>
+          )}
           {isloading && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
               <div className="flex gap-2 ml-9">
@@ -770,7 +940,7 @@ function Department_AOP() {
                 </h2>
                 <div className="flex  flex-1 justify-between">
                   <h2 className="text-sm font-normal mb-4 p-1">
-                    Weekly Percentage: {total.toFixed(2)}%
+                    Weekly Percentage: {totalWeeklyPercentage.toFixed(0)}%
                   </h2>
                   <h2 className="text-sm font-normal mb-4 p-1">
                     <span className="text-blue-500 text-lg font-bold">
@@ -1002,7 +1172,7 @@ function Department_AOP() {
                               theme === "dark" ? "border-gray-600" : ""
                             }`}
                           >
-                            {row.PercentageAchieved.toFixed(2)}%
+                            {row.weeklyPercentageAchieved.toFixed(2)}%
                           </td>
                           <td
                             className={`px-6 py-4 border-b ${

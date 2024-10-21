@@ -58,6 +58,7 @@ const authorize = (roles) => {
   };
 };
 
+
 // Login route
 const Post_Login = require("../router/post/Login");
 app.use("/api", Post_Login);
@@ -364,7 +365,7 @@ app.post("/api/depart_targets", (req, res) => {
 
 // Function to group the target data by unique Project (PLTCODE)
 app.get("/aop/WeeklyData", async (req, res) => {
-  const sql = `SELECT dept, PLTCODE1, Week1, Week2, Week3, Week4, Month_data
+  const sql = `SELECT dept, PLTCODE1, Week1, Week2, Week3, Week4, Month_data, Completed
                  FROM AOP_PLTCODE_Data_Week_wise;`;
 
   db.query(sql, (err, data) => {
@@ -402,6 +403,7 @@ app.get("/aop/WeeklyData", async (req, res) => {
         Week3: Week3,
         Week4: Week4,
         Month_data: Month_data,
+        Completed: row.Completed,
       });
       output[dept].push({ Month_data: Month_data });
     });
@@ -785,7 +787,7 @@ app.post("/api/send-email", async (req, res) => {
   }
 });
 
-app.post("/api/send-email/Party-vist", async (req, res) => {
+app.post("/api/send-email/Party-visit", upload.single("image"), async (req, res) => {
   const {
     loggedemail,
     assignToPersonEmails,
@@ -793,50 +795,54 @@ app.post("/api/send-email/Party-vist", async (req, res) => {
     partyname,
     description,
     status_data,
-    image,
   } = req.body;
+
+  const image = req.file; // This will access the uploaded file through Multer
+
+  // Debugging info to make sure we receive the data
   console.log("logged to Email:", loggedemail);
   console.log("Person Emails:", assignToPersonEmails);
-  console.log(image)
+  console.log("Image File:", image); // This will print the file details instead of selectedImage
 
   try {
-    const password = await getPasswordForEmail(assignToEmail);
-    const username = await getUsernameForEmail(assignToEmail);
-    console.log("Password:", password);
-    console.log("Username:", username);
+    const password = await getPasswordForEmail(assignToPersonEmails);
+    const username = await getUsernameForEmail(assignToPersonEmails);
 
     const transporter = nodemailer.createTransport({
       host: "your.zimbra.server",
       port: 587,
       secure: false,
       auth: {
-        user: assignToEmail,
+        user: assignToPersonEmails,
         pass: password,
       },
     });
 
     const toEmails = [assignToPersonEmails];
-    console.log("toEmails", toEmails);
-
     const mailOptions = {
-      from: `"${username}" <${assignToEmail}>`,
+      from: `"${username}" <${assignToPersonEmails}>`,
       to: toEmails.join(","),
       subject: "Task Assignment Notification",
       text: `Task Details:
               Visit Date: ${visit_date}
               Party Name: ${partyname}
               Description: ${description}
-               Status: ${status_data}
-              imagelink: ${image}`,
+              Status: ${status_data}`,
       html: `<b>Task Details:</b>
               <ul>
                   <li><b>Visit Date:</b> ${visit_date}</li>
                   <li><b>Party Name:</b> ${partyname}</li>
                   <li><b>Description:</b> ${description}</li>
                   <li><b>Status:</b> ${status_data}</li>
-                  <li><b>Image ref link:</b> ${image}</li>
-                 
               </ul>`,
+      attachments: image
+        ? [
+            {
+              filename: image.originalname, // The original name of the uploaded file
+              path: image.path, // The file path stored by Multer
+            },
+          ]
+        : [], // If no image is uploaded, skip attachments
     };
 
     await transporter.sendMail(mailOptions);
@@ -848,15 +854,8 @@ app.post("/api/send-email/Party-vist", async (req, res) => {
 });
 
 
-
 app.post("/api/send-email/Op-task", async (req, res) => {
-  const {
-    assignee,
-    currentEmailid,
-    phase,
-    task,
-    phase_id
-  } = req.body;
+  const { assignee, currentEmailid, phase, task, phase_id } = req.body;
   console.log("Assigned to Email:", assignee);
   console.log("Person Emails:", task);
 
@@ -904,8 +903,6 @@ app.post("/api/send-email/Op-task", async (req, res) => {
     res.status(500).send("Failed to send email.");
   }
 });
-
-
 
 app.post("/clear-weekly-data", async (req, res) => {
   try {
@@ -1192,6 +1189,319 @@ app.get("/filtered_pending_data_with_dates", async (req, res) => {
     console.error("Error fetching pending data:", error);
     res.status(500).json({ error: "Internal server error" });
   }
+});
+
+
+
+
+// month -filter
+
+app.get("/filtered_production_data_with_months", async (req, res) => {
+  try {
+    // Get department mappings
+    const response = await axios.get(
+      "http://localhost:8081/api/department-mappings"
+    );
+    const departmentMappings = response.data;
+    if (!departmentMappings) {
+      throw new Error("Department mappings not available");
+    }
+    const { month1, month2, year } = req.query;
+
+    // Validate the provided months
+    if (!month1 || !month2 || !year) {
+      return res
+        .status(400)
+        .json({ error: "Please provide valid months and year" });
+    }
+
+    const m1 = parseInt(month1);
+    const m2 = parseInt(month2);
+
+    // Validate the months (should be between 1 and 12)
+    if (m1 < 1 || m1 > 12 || m2 < 1 || m2 > 12) {
+      return res.status(400).json({ error: "Please provide valid month values between 1 and 12" });
+    }
+
+    const y = parseInt(year);
+
+    const start = new Date(y, m1-1, 2); // Start of the first selected month
+    const end = new Date(y, m2, 2);       // First day of the next month
+    end.setDate(end.getDate() - 1);       // Subtract 1 day to get the last day of the selected second month
+
+    
+
+
+    // Helper function to generate a list of all dates between start and end
+    const getAllDatesInRange = (startDate, endDate) => {
+      const dates = [];
+      let currentDate = new Date(startDate);
+
+      while (currentDate <= endDate) {
+        const formattedDate = currentDate.toISOString().split("T")[0]; // Format YYYY-MM-DD
+        dates.push(formattedDate);
+        currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+      }
+
+      return dates;
+    };
+
+    // Get all dates between the start and end date
+    const allDates = getAllDatesInRange(start, end);
+
+    // SQL query to get daily quantity for each day in the selected months
+    const sql = `
+      SELECT \`From Dept\`, \`To Dept\`, COUNT(\`CW Qty\`) AS total_qty, 
+             DATE(UploadedDateTime) AS production_date
+      FROM Production_sample_data
+      WHERE LOWER(\`From Dept\`) IN (?) 
+        AND LOWER(\`To Dept\`) IN (?)
+        AND (UploadedDateTime >= ? AND UploadedDateTime <= ?)
+      GROUP BY \`From Dept\`, \`To Dept\`, production_date
+      ORDER BY production_date
+    `;
+
+    // Convert department mappings to lowercase filters
+    const lowerDeptFromFilter = Object.values(departmentMappings).flatMap((mapping) => {
+      if (Array.isArray(mapping.from)) {
+        return mapping.from.map((dept) => dept.toLowerCase());
+      } else if (typeof mapping.from === 'string') {
+        return mapping.from.toLowerCase();
+      } else {
+        console.error('Unexpected type for mapping.from:', mapping.from);
+        return [];
+      }
+    });
+    
+    const lowerDeptToFilter = Object.values(departmentMappings).flatMap((mapping) => {
+      if (Array.isArray(mapping.to)) {
+        return mapping.to.map((dept) => dept.toLowerCase());
+      } else if (typeof mapping.to === 'string') {
+        return mapping.to.toLowerCase();
+      } else {
+        console.error('Unexpected type for mapping.to:', mapping.to);
+        return [];
+      }
+    });
+    
+    const params = [lowerDeptFromFilter, lowerDeptToFilter, start, end];
+
+    db.query(sql, params, (err, data) => {
+      if (err) return res.json(err);
+    
+      const results = {};
+    
+      // Initialize results with all dates and empty department quantities
+      allDates.forEach((date) => {
+        results[date] = Object.keys(departmentMappings).map((group) => ({
+          [group]: 0, // Initialize each department's quantity to 0
+        }));
+      });
+    
+      // Update results based on actual query data
+      data.forEach((row) => {
+        const fromDept = row["From Dept"].toUpperCase();
+        const toDept = row["To Dept"].toUpperCase();
+        const productionDate = row.production_date;
+    
+        // Format the productionDate to YYYY-MM-DD
+        const formattedDate = new Date(productionDate).toISOString().split("T")[0];
+    
+        const qty = row.total_qty;
+    
+        // Ensure the formatted date exists in results
+        if (!results[formattedDate]) {
+          results[formattedDate] = Object.keys(departmentMappings).map((group) => ({
+            [group]: 0, // Initialize with 0
+          }));
+        }
+    
+        // Update the quantity for the matching department
+        Object.keys(departmentMappings).forEach((group) => {
+          const { from, to } = departmentMappings[group];
+          if (from.includes(fromDept) && to.includes(toDept)) {
+            results[formattedDate] = results[formattedDate].map((deptData) => {
+              if (deptData[group] !== undefined) {
+                return { [group]: qty }; // Update the department's quantity
+              }
+              return deptData;
+            });
+          }
+        });
+      });
+    
+      return res.json(results);
+    });
+    
+    
+  } catch (error) {
+    console.error("Error fetching production data:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+
+
+
+
+
+app.get("/filtered_pending_data_with_months", async (req, res) => {
+  try {
+    // Get department mappings
+    const response = await axios.get(
+      "http://localhost:8081/api/department-mappings"
+    );
+    const departmentMappings = response.data;
+
+    // Get month1, month2, and year from query params
+    const { month1, month2, year } = req.query;
+
+    // Validate the provided months and year
+    if (!month1 || !month2 || !year) {
+      return res
+        .status(400)
+        .json({ error: "Please provide valid months and year" });
+    }
+
+    const m1 = parseInt(month1);
+    const m2 = parseInt(month2);
+    const y = parseInt(year);
+
+    // Validate the months (should be between 1 and 12)
+    if (m1 < 1 || m1 > 12 || m2 < 1 || m2 > 12) {
+      return res.status(400).json({ error: "Please provide valid month values between 1 and 12" });
+    }
+
+    const start = new Date(y, m1-1, 2); // Start of the first selected month
+    const end = new Date(y, m2, 2);       // First day of the next month
+    end.setDate(end.getDate() - 1);       // Subtract 1 day to get the last day of the selected second month
+
+
+    // Extract department mappings
+    const toDeptFilter = Object.values(departmentMappings).flatMap(
+      (mapping) => mapping.from
+    );
+    const lowerToDeptFilter = toDeptFilter.map((dept) => dept.toLowerCase());
+
+    // SQL query to get total quantity for each day in the selected months
+    const sql = `
+      SELECT todept, COUNT(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty,
+          DATE(UploadedDateTime) AS production_date
+      FROM Pending_sample_data
+      WHERE LOWER(todept) IN (?) 
+        AND (UploadedDateTime >= ? AND UploadedDateTime <= ?)
+      GROUP BY todept, production_date
+      ORDER BY production_date
+    `;
+
+    const params = [lowerToDeptFilter, start, end];
+
+    db.query(sql, params, (err, data) => {
+      if (err) return res.json(err);
+
+      const results = {};
+
+      // Initialize results for each day in the date range
+      const currentDate = new Date(start);
+      while (currentDate <= end) {
+        const formattedDate = currentDate.toISOString().split("T")[0]; // Format YYYY-MM-DD
+        results[formattedDate] = Object.keys(departmentMappings).reduce((acc, group) => {
+          acc[group] = 0; // Initialize each department's quantity to 0
+          return acc;
+        }, {});
+        currentDate.setDate(currentDate.getDate() + 1); // Move to the next day
+      }
+
+      // Update results based on actual query data
+      data.forEach((row) => {
+        const toDept = row.todept ? row.todept.toUpperCase() : null;
+        const qty = row.total_qty;
+        const productionDate = row.production_date;
+
+        // Ensure the formatted date exists in results
+        const formattedDate = new Date(productionDate).toISOString().split("T")[0];
+        if (results[formattedDate]) {
+          // Update the quantity for the matching department
+          Object.keys(departmentMappings).forEach((group) => {
+            const { from } = departmentMappings[group];
+            if (from.includes(toDept)) {
+              results[formattedDate][group] += qty; // Add quantity to the respective group
+            }
+          });
+        }
+      });
+
+      return res.json(results);
+    });
+  } catch (error) {
+    console.error("Error fetching pending data:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+
+app.get("/total_qty_dept", async (req, res) => {
+  const response = await axios.get(
+    "http://localhost:8081/api/department-mappings"
+  );
+  const departmentMappings = response.data;
+  const { startDate, endDate } = req.query;
+
+  const deptFromFilter = Object.values(departmentMappings).flatMap(
+    (mapping) => mapping.from
+  );
+  const deptToFilter = Object.values(departmentMappings).flatMap(
+    (mapping) => mapping.to
+  );
+
+  const lowerDeptFromFilter = deptFromFilter.map((dept) => dept.toLowerCase());
+  const lowerDeptToFilter = deptToFilter.map((dept) => dept.toLowerCase());
+
+  // Initial SQL query to get total_qty without date filtering
+  let sql = `
+      SELECT \`From Dept\`, \`To Dept\`, Project, UploadedDateTime, COUNT(\`CW Qty\`) AS total_qty
+      FROM Production_sample_data
+      WHERE LOWER(\`From Dept\`) IN (?)
+        AND LOWER(\`To Dept\`) IN (?)
+    `;
+
+  const params = [lowerDeptFromFilter, lowerDeptToFilter];
+
+  // Optionally filter by startDate and endDate
+  if (startDate) {
+    sql += ` AND \`In Date\` >= ?`;
+    params.push(new Date(startDate));
+  }
+  if (endDate) {
+    sql += ` AND \`Out Date\` <= ?`;
+    params.push(new Date(endDate));
+  }
+
+  sql += ` GROUP BY \`From Dept\`, \`To Dept\`, Project`;
+
+  db.query(sql, params, (err, data) => {
+    if (err) return res.json(err);
+
+    const results = Object.keys(departmentMappings).reduce((acc, group) => {
+      acc[group] = { total_qty: 0};
+      return acc;
+    }, {});
+
+    data.forEach((row) => {
+      const fromDept = row["From Dept"].toUpperCase();
+      const toDept = row["To Dept"].toUpperCase();
+      const qty = row.total_qty;
+
+      for (const [group, { from, to }] of Object.entries(departmentMappings)) {
+        if (from.includes(fromDept) && to.includes(toDept)) {
+          results[group].total_qty += qty;
+        }
+      }
+    });
+    
+    return res.json(results);
+  });
 });
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
