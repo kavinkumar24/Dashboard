@@ -9,6 +9,8 @@ const db = require("../../config/DB/Db");
 const formatDateForMySQL = require("../../Helpers/Date_Serialize").formatDateForMySQL;
 const excelSerialDateToDate = require("../../Helpers/Date_Serialize").excelSerialDateToDate;
 const isDaysValid = require("../../Helpers/Date_Serialize").isDaysValid;
+
+
 router.post("/production/upload", upload.single("file"), async (req, res) => {
   if (!req.file) {
     return res.status(400).send("No file uploaded.");
@@ -175,22 +177,23 @@ router.post("/production/upload", upload.single("file"), async (req, res) => {
             const response = await axios.get("http://localhost:8081/api/filtered_production_data/aop");
             const filteredData = response.data;
             const allowedDepartments = ["CAD", "CAM", "MFD", "PD-TEXTURING", "PHOTO"];
+            
+            // Filter departments that are in the allowed list
             const filteredDataFromAllowed = Object.entries(filteredData).filter(([dept]) => allowedDepartments.includes(dept));
-          
+            
             for (const [dept, deptData] of filteredDataFromAllowed) {
               const { projects } = deptData;
-          
+              
               for (const [projectName, projectData] of Object.entries(projects)) {
-                const { monthname } = projectData;
+                const { monthname, project_qty } = projectData;
                 const weekData = projectData.weeks || {};
-          
-                // Loop through all week data (week1, week2, week3, week4)
+                
                 for (let i = 1; i <= 4; i++) {
                   const weekKey = `week${i}`;
-                  const total_qty = weekData[weekKey]?.total_qty || 0;
-          
+                  const week_qty = weekData[weekKey]?.week_qty || 0; // Get the week_qty from weekData
+                  
                   // Skip weeks with no data
-                  if (total_qty > 0) {
+                  if (week_qty > 0) {
                     const query = `
                       INSERT INTO AOP_PLTCODE_Data_Week_wise (PLTCODE1, dept, Week${i}, CreatedAt, Month_data, Completed)
                       VALUES (?, ?, ?, NOW(), ?, ?)
@@ -200,9 +203,10 @@ router.post("/production/upload", upload.single("file"), async (req, res) => {
                           Month_data = VALUES(Month_data),
                           Completed = VALUES(Completed);
                     `;
-          
-                    const params = [projectName, dept, total_qty, monthname, total_qty];
-          
+                    
+                    // Insert project_qty as 'Completed' and week_qty for the week's data
+                    const params = [projectName, dept, week_qty, monthname, project_qty];
+                    
                     db.query(query, params, (err, result) => {
                       if (err) {
                         console.error("Database error:", err);
@@ -213,7 +217,7 @@ router.post("/production/upload", upload.single("file"), async (req, res) => {
                 }
               }
             }
-          
+            
             return res.json({
               message: "File uploaded successfully!",
             });

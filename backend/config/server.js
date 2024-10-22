@@ -363,6 +363,134 @@ app.post("/api/depart_targets", (req, res) => {
   });
 });
 
+
+app.delete("/api/deletetoday_pro", (req, res) => {
+  const query = "DELETE FROM Production_sample_data WHERE DATE(uploadedDateTime) = CURDATE()";
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error deleting today's production data:", err);
+      return res.status(500).send("Server error");
+    }
+
+    res.json({ success: true });
+  });
+});
+
+app.delete("/api/deletetoday_pen", (req, res) => {
+  const query = "DELETE FROM Pending_sample_data WHERE DATE(uploadedDateTime) = CURDATE()";
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error deleting today's pending data:", err);
+      return res.status(500).send("Server error");
+    }
+
+    res.json({ success: true });
+  });
+});
+
+app.delete("/api/delete-target", (req, res) => {
+  const query = "TRUNCATE target";
+  db.query(query, [req.body.department_name], (err, results) => {
+    if (err) {
+      console.error("Error deleting target:", err);
+      return res.status(500).send("Server error");
+    }
+
+    res.json({ success: true });
+  }
+  );
+});
+
+app.delete("/api/delete-total-pro", (req, res) => {
+  const query = "TRUNCATE Production_sample_data";
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error deleting total production data:", err);
+      return res.status(500).send("Server error");
+    }
+    
+    res.json({ success: true });
+  });
+});
+
+app.delete("/api/delete-total-pen", (req, res) => {
+  const query = "TRUNCATE Pending_sample_data";
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error deleting total pending data:", err);
+      return res.status(500).send("Server error");
+    }
+
+    res.json({ success: true });
+  });
+});
+
+app.delete("/api/delete-total-rejections", (req, res) => {
+  const query = "TRUNCATE rejection";
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error deleting total rejection data:", err);
+      return res.status(500).send("Server error");
+    }
+
+    res.json({ success: true });
+  });
+});
+
+app.delete("/api/delete-created-task", (req, res) => {
+  const query = "TRUNCATE Created_task";
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error deleting total order receiving data:", err);
+      return res.status(500).send("Server error");
+    }
+
+    res.json({ success: true });
+  });
+});
+
+app.delete("/api/delete-total-design-center", (req, res) => {
+  const query = "TRUNCATE design_center_task_sample";
+  db.query(query, (err, results) => {
+    if (err) {
+      console.error("Error deleting total design center data:", err);
+      return res.status(500).send("Server error");
+    }
+
+    res.json({ success: true });
+  });
+}
+);
+
+app.post("/api/Add_users", (req, res) => {
+  const { emp_id, email, password, role, emp_name, dept } = req.body;
+
+  // Validate the required fields
+  if (!emp_id || !email || !password || !role || !emp_name || !dept) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  // Ensure `dept` is an array and convert it to JSON if necessary
+  const department = JSON.stringify(dept); // Convert array to JSON string
+
+  // Insert into the database
+  const query = `INSERT INTO users (emp_id, Email, password, role, emp_name, dept) VALUES (?, ?, ?, ?, ?, ?)`;
+
+  db.query(query, [emp_id, email, password, role, emp_name, department], (err, result) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).json({ message: "Error adding user" });
+    }
+    res.status(200).json({ message: "User added successfully" });
+  });
+});
+
+
+
+
+
+
+
 // Function to group the target data by unique Project (PLTCODE)
 app.get("/aop/WeeklyData", async (req, res) => {
   const sql = `SELECT dept, PLTCODE1, Week1, Week2, Week3, Week4, Month_data, Completed
@@ -929,7 +1057,6 @@ app.post("/clear-weekly-data", async (req, res) => {
     res.status(500).send("Error clearing weekly data");
   }
 });
-
 app.get("/filtered_production_data_with_dates", async (req, res) => {
   try {
     // Get department mappings
@@ -938,8 +1065,8 @@ app.get("/filtered_production_data_with_dates", async (req, res) => {
     );
     const departmentMappings = response.data;
     const { startDate, endDate } = req.query;
-    // const startDate = '2024-10-12';
-    // const endDate = '2024-10-16';
+    // const startDate = '2024-10-18';
+    // const endDate = '2024-10-22';
 
     // Validate the provided dates
     if (!startDate || !endDate) {
@@ -962,15 +1089,19 @@ app.get("/filtered_production_data_with_dates", async (req, res) => {
 
     // Generate date ranges for each of the 5 days
     const dateRanges = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; dateRanges.length < 5; i++) {
       const dayStart = new Date(start);
       dayStart.setDate(start.getDate() + i);
-
+    
+      // If the day is Sunday, skip this iteration
+      if (dayStart.getDay() === 0) continue;
+    
       const dayEnd = new Date(dayStart);
       dayEnd.setDate(dayStart.getDate() + 1);
-
+    
       dateRanges.push({ dayStart, dayEnd });
     }
+
 
     // Extract department mappings
     const deptFromFilter = Object.values(departmentMappings).flatMap(
@@ -986,26 +1117,25 @@ app.get("/filtered_production_data_with_dates", async (req, res) => {
 
     // SQL query to get total quantity for each day
     const sql = `
-      SELECT \`From Dept\`, \`To Dept\`, COUNT(\`CW Qty\`) AS total_qty, 
-             CASE 
-               ${dateRanges
-                 .map(
-                   (_, i) =>
-                     `WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'day${
-                       i + 1
-                     }'`
-                 )
-                 .join("\n")}
-               ELSE NULL
-             END AS day_type
-      FROM Production_sample_data
-      WHERE LOWER(\`From Dept\`) IN (?) 
-        AND LOWER(\`To Dept\`) IN (?) 
-        AND (${dateRanges
-          .map(() => "(UploadedDateTime >= ? AND UploadedDateTime < ?)")
-          .join(" OR ")})
-      GROUP BY \`From Dept\`, \`To Dept\`, day_type
-    `;
+    SELECT \`From Dept\`, \`To Dept\`, COUNT(\`CW Qty\`) AS total_qty, 
+           CASE 
+             ${dateRanges
+               .map(
+                 (_, i) =>
+                   `WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'day${i + 1}'`
+               )
+               .join("\n")}
+             ELSE NULL
+           END AS day_type
+    FROM Production_sample_data
+    WHERE LOWER(\`From Dept\`) IN (?) 
+      AND LOWER(\`To Dept\`) IN (?) 
+      AND (${dateRanges
+        .map(() => "(UploadedDateTime >= ? AND UploadedDateTime < ?)")
+        .join(" OR ")})
+    GROUP BY \`From Dept\`, \`To Dept\`, day_type
+  `;
+  
 
     // Flatten the params for all days
     const params = [
@@ -1058,6 +1188,7 @@ app.get("/filtered_production_data_with_dates", async (req, res) => {
   }
 });
 
+
 app.get("/aop", async (req, res) => {
   const sql = `SELECT * FROM AOP_PLTCODE_Data_Week_wise`;
   db.query(sql, (err, data) => {
@@ -1102,18 +1233,19 @@ app.get("/filtered_pending_data_with_dates", async (req, res) => {
         .json({ error: "Please provide a range of 5 days" });
     }
 
-    // Generate date ranges for each of the 5 days
     const dateRanges = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; dateRanges.length < 5; i++) {
       const dayStart = new Date(start);
       dayStart.setDate(start.getDate() + i);
-
+    
+      // If the day is Sunday, skip this iteration
+      if (dayStart.getDay() === 0) continue;
+    
       const dayEnd = new Date(dayStart);
       dayEnd.setDate(dayStart.getDate() + 1);
-
+    
       dateRanges.push({ dayStart, dayEnd });
     }
-
     // Extract department mappings
     const toDeptFilter = Object.values(departmentMappings).flatMap(
       (mapping) => mapping.from
@@ -1122,25 +1254,24 @@ app.get("/filtered_pending_data_with_dates", async (req, res) => {
 
     // SQL query to get total quantity for each day
     const sql = `
-  SELECT todept, COUNT(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty,
-          CASE 
-              ${dateRanges
-                .map(
-                  (_, i) =>
-                    `WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'day${
-                      i + 1
-                    }'`
-                )
-                .join("\n")}
-              ELSE NULL
-          END AS day_type
-  FROM Pending_sample_data
-  WHERE LOWER(todept) IN (?) 
+    SELECT todept, 
+           COUNT(CAST(jcpdscwqty1 AS DECIMAL)) AS total_qty,
+           CASE 
+               ${dateRanges
+                 .map(
+                   (_, i) => `WHEN UploadedDateTime >= ? AND UploadedDateTime < ? THEN 'day${i + 1}'`
+                 )
+                 .join("\n")}
+               ELSE NULL
+           END AS day_type
+    FROM Pending_sample_data
+    WHERE LOWER(todept) IN (?)
       AND (${dateRanges
         .map(() => "(UploadedDateTime >= ? AND UploadedDateTime < ?)")
         .join(" OR ")})
-  GROUP BY todept, day_type
+    GROUP BY todept, day_type
   `;
+  
 
     // Flatten the params for all days
     const params = [
@@ -1190,7 +1321,6 @@ app.get("/filtered_pending_data_with_dates", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
 
 
 

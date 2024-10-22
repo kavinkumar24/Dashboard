@@ -40,6 +40,8 @@ import Operational_task from "./components/Operational_Task/Operational_task";
 import Phase_view from "./components/Operational_Task/Phase_view";
 import Party_form from "./components/Partyvisit/Party_form";
 import Party_visit_view from "./components/Partyvisit/Party_visit_view";
+import DB_manage from './components/DB_manage/index'
+import Welcome from "./components/Welcome";
 
 function App() {
   return (
@@ -51,6 +53,24 @@ function App() {
             element={
               <PrivateRoute>
                 <Exceldata />
+              </PrivateRoute>
+            }
+          />
+
+
+<Route
+            path="/welcome"
+            element={
+              <PrivateRoute>
+                <Welcome />
+              </PrivateRoute>
+            }
+          />
+<Route
+            path="/db_manage"
+            element={
+              <PrivateRoute>
+                <DB_manage />
               </PrivateRoute>
             }
           />

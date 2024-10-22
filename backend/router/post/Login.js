@@ -42,7 +42,9 @@ router.post("/login", (req, res) => {
         {
           emp_id: user.emp_id,
           employer_name: user.employer_name,
-          role: user.role, // Include user role in the JWT payload
+          role: user.role,
+          emp_name: user.emp_name,
+
         },
         JWT_SECRET,
         { expiresIn: "1h" }
@@ -56,7 +58,8 @@ router.post("/login", (req, res) => {
           emp_id: user.emp_id,
           employer_name: user.employer_name,
           role: user.role,
-        }, // Include role in user object
+          emp_name: user.emp_name,
+        }, 
       });
     });
   });

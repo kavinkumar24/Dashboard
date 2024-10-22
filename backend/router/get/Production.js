@@ -144,7 +144,7 @@ router.get("/filtered_production_data/aop", async (req, res) => {
 
     let sql = `
       SELECT \`From Dept\`, \`To Dept\`, Project, UploadedDateTime, COUNT(\`CW Qty\`) AS total_qty
-      FROM production_sample_data
+      FROM Production_sample_data
       WHERE LOWER(\`From Dept\`) IN (?) AND LOWER(\`To Dept\`) IN (?)
       GROUP BY \`From Dept\`, \`To Dept\`, Project, UploadedDateTime
     `;
@@ -178,43 +178,48 @@ router.get("/filtered_production_data/aop", async (req, res) => {
         weekData[weekKey].push(row);
       });
       
-      // Now process each week's data
-      for (const [weekKey, weekRows] of Object.entries(weekData)) {
-        if (weekRows.length > 0) { // Only process if there are rows for this week
-          weekRows.forEach((row) => {
-            const fromDept = row["From Dept"].toUpperCase();
-            const toDept = row["To Dept"].toUpperCase();
-            const project = row.Project;
-            const qty = row.total_qty;
-            const currentMonthName = getMonthName(new Date(row.UploadedDateTime));
-      
-            for (const [group, { from, to }] of Object.entries(departmentMappings)) {
-              if (from.includes(fromDept) && to.includes(toDept)) {
-                results[group].total_qty += qty;
-      
-                if (!results[group].projects[project]) {
-                  results[group].projects[project] = {
-                    total_qty: 0,
-                    weeks: {},
-                    monthname: currentMonthName,
-                  };
-                }
-      
-                results[group].projects[project].total_qty += qty;
-      
-                if (!results[group].projects[project].weeks[weekKey]) {
-                  results[group].projects[project].weeks[weekKey] = {
-                    total_qty: 0,
-                  };
-                }
-      
-                results[group].projects[project].weeks[weekKey].total_qty += qty;
-              }
-            }
-          });
+   // Now process each week's data
+for (const [weekKey, weekRows] of Object.entries(weekData)) {
+  if (weekRows.length > 0) { // Only process if there are rows for this week
+    weekRows.forEach((row) => {
+      const fromDept = row["From Dept"].toUpperCase();
+      const toDept = row["To Dept"].toUpperCase();
+      const project = row.Project;
+      const qty = row.total_qty;
+      const currentMonthName = getMonthName(new Date(row.UploadedDateTime));
+
+      for (const [group, { from, to }] of Object.entries(departmentMappings)) {
+        if (from.includes(fromDept) && to.includes(toDept)) {
+          // Change the outer total_qty to sum_qty
+          results[group].sum_qty = (results[group].sum_qty || 0) + qty;
+
+          // Check if the project exists in the results
+          if (!results[group].projects[project]) {
+            results[group].projects[project] = {
+              project_qty: 0,  // Change total_qty to project_qty
+              weeks: {},
+              monthname: currentMonthName,
+            };
+          }
+
+          // Increment the project_qty instead of total_qty
+          results[group].projects[project].project_qty += qty;
+
+          // Check if the week exists within the project
+          if (!results[group].projects[project].weeks[weekKey]) {
+            results[group].projects[project].weeks[weekKey] = {
+              week_qty: 0,  // Change total_qty to week_qty
+            };
+          }
+
+          // Increment the week_qty instead of total_qty
+          results[group].projects[project].weeks[weekKey].week_qty += qty;
         }
       }
-      
+    });
+  }
+}
+
 
       // Now process each week's data
       for (const [weekKey, weekRows] of Object.entries(weekData)) {

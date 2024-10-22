@@ -61,10 +61,15 @@ function Sidebar({ theme }) {
 
   useEffect(() => {
     const path = location.pathname;
+
     if (path === "/") {
       setActive("home");
       setActiveSubTask("");
-    } else if (path === "/projects") {
+    } 
+    else if(path==='/welcome'){
+      setActive("")
+    }
+    else if (path === "/projects") {
       setActive("projects");
       setActiveSubTask("");
     } else if (path === "/settings") {

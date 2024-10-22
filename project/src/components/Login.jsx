@@ -27,28 +27,25 @@ function Login() {
       });
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("role", response.data.user.role);
-
+      localStorage.setItem("name", response.data.user.emp_name); 
+  
       setSuccess(response.data.message);
       setError("");
       console.log("Login successful, token stored:", response.data.token);
-
+  
       const role = response.data.user.role;
-
-      // Redirect to a protected route after successful login
-      // fetchProtectedData();
-
-      // if()
-      // navigate('/');
+  
       if (role === "admin") {
         navigate("/");
       } else if (role === "user") {
-        navigate("/task/view");
+        navigate("/welcome");
       }
     } catch (err) {
       setError(err.response ? err.response.data.message : "Login failed");
       setSuccess("");
     }
   };
+
 
   const fetchProtectedData = async () => {
     const token = localStorage.getItem("token"); // or sessionStorage.getItem('token');

@@ -56,6 +56,7 @@ function Department_AOP() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
+  const [overall_dept_table, setoverall_dept_table] = useState([]);
 
   const [totalWeeklyPercentage, setTotalWeeklyPercentage] = useState(0);
   const [productionData, setProductionData] = useState([]);
@@ -603,45 +604,52 @@ function Department_AOP() {
       // Set the average in state
       setTotalWeeklyPercentage(averageWeeklyPercentageAchieved);
 
-   // Calculate weekly and monthly percentages
-const { totalWeekly, countWeekly, totalMonthly, countMonthly } = updatedTableData.reduce(
-  (acc, data) => {
-    const weeklyAchieved = data.weeklyPercentageAchieved || 0;
-    const monthlyAchieved = data.MonthlyPercentage || 0;
+      // Calculate weekly and monthly percentages
+      const { totalWeekly, countWeekly, totalMonthly, countMonthly } =
+        updatedTableData.reduce(
+          (acc, data) => {
+            const weeklyAchieved = data.weeklyPercentageAchieved || 0;
+            const monthlyAchieved = data.MonthlyPercentage || 0;
 
-    // Sum up for weekly percentages
-    if (weeklyAchieved > 0) {
-      acc.totalWeekly += weeklyAchieved; // Sum up the weekly percentage
-      acc.countWeekly += 1; // Increment count for non-zero weekly values
-    }
+            // Sum up for weekly percentages
+            if (weeklyAchieved > 0) {
+              acc.totalWeekly += weeklyAchieved; // Sum up the weekly percentage
+              acc.countWeekly += 1; // Increment count for non-zero weekly values
+            }
 
-    // Sum up for monthly percentages
-    if (monthlyAchieved > 0) {
-      acc.totalMonthly += monthlyAchieved; // Sum up the monthly percentage
-      acc.countMonthly += 1; // Increment count for non-zero monthly values
-    }
+            // Sum up for monthly percentages
+            if (monthlyAchieved > 0) {
+              acc.totalMonthly += monthlyAchieved; // Sum up the monthly percentage
+              acc.countMonthly += 1; // Increment count for non-zero monthly values
+            }
 
-    return acc;
-  },
-  {
-    totalWeekly: 0,
-    countWeekly: 0,
-    totalMonthly: 0,
-    countMonthly: 0, // Initial accumulator for monthly data
-  }
-);
+            return acc;
+          },
+          {
+            totalWeekly: 0,
+            countWeekly: 0,
+            totalMonthly: 0,
+            countMonthly: 0, // Initial accumulator for monthly data
+          }
+        );
 
+      // Calculate average monthly percentage if count is greater than 0
+      const averageMonthlyPercentageAchieved_month =
+        countMonthly > 0 ? totalMonthly / countMonthly : 0;
 
-// Calculate average monthly percentage if count is greater than 0
-const averageMonthlyPercentageAchieved_month = countMonthly > 0 ? totalMonthly / countMonthly : 0;
+      // Set the averages in state
+      setTotalWeeklyPercentage(averageWeeklyPercentageAchieved);
+      setTotal(averageMonthlyPercentageAchieved_month);
 
-// Set the averages in state
-setTotalWeeklyPercentage(averageWeeklyPercentageAchieved);
-setTotal(averageMonthlyPercentageAchieved_month)
-
-console.log("Average Weekly Percentage Achieved:", averageWeeklyPercentageAchieved);
-console.log("Average Monthly Percentage Achieved:", averageMonthlyPercentageAchieved_month);
-// Set the average percentage
+      console.log(
+        "Average Weekly Percentage Achieved:",
+        averageWeeklyPercentageAchieved
+      );
+      console.log(
+        "Average Monthly Percentage Achieved:",
+        averageMonthlyPercentageAchieved_month
+      );
+      // Set the average percentage
       setTableData(updatedTableData);
     } else {
       setTableData([]);
@@ -684,7 +692,7 @@ console.log("Average Monthly Percentage Achieved:", averageMonthlyPercentageAchi
           }
         });
 
-        console.log("Grouped Data:", targetMap); // Log the final grouped data
+        console.log("Grouped Data:", targetMap);
         setGroupedData(targetMap);
       })
       .catch((error) => {
@@ -692,7 +700,10 @@ console.log("Average Monthly Percentage Achieved:", averageMonthlyPercentageAchi
       });
   }, []);
 
-  const handleDownload = () => {
+  const [count, setCount] = useState(1);
+  const handleDownload = (department) => {
+    setCount(count + 1);
+    const localcount_download = localStorage.setItem("download_count", count);
     const headers = [
       [
         "Project wise",
@@ -704,14 +715,33 @@ console.log("Average Monthly Percentage Achieved:", averageMonthlyPercentageAchi
         "",
         "",
         "",
-        `"Department": ${selectedDeptName}`,
+        `"Department": ${department}`,
         "Percentage",
       ],
       ["", "", "", "", "", "Week1", "Week2", "Week3", "Week4", "", ""],
       ["", "", "Achieved", "Pending", "Wip", "", "", "", "", "", "", ""],
     ];
 
-    setIsPopupVisible(false);
+
+    
+    // Separate row with "Overall AOP Percentage"
+    const overallPercentageRow = [
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      `Overall AOP Percentage: ${total.toFixed(1)}%`,
+      "",
+    ];
+    const departmentData = tableData.filter(
+      (row) => row.department === department
+    );
+
     const data = tableData.map((row) => [
       row.PLTCODE1,
       row.Target,
@@ -726,77 +756,94 @@ console.log("Average Monthly Percentage Achieved:", averageMonthlyPercentageAchi
       row.weeklyPercentageAchieved.toFixed(1) || "-",
     ]);
 
-    const allData = headers.flat().concat(data);
-
-    const ws = XLSX.utils.aoa_to_sheet(headers.concat(data), {
+    const ws = XLSX.utils.aoa_to_sheet(headers.concat([overallPercentageRow], data), {
       header: headers[0],
     });
 
+    
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Table Data");
 
-    XLSX.writeFile(wb, `${selectedDeptName}_AOP_data.xlsx`);
+    XLSX.writeFile(wb, `${department}_AOP_data.xlsx`);
+
+    if (localcount_download === 5) {
+      alert("You have reached the maximum download limit for the day");
+    }
   };
 
-  useEffect(() => {
-    const checkPopupAndDownload = async () => {
-      const lastDownloadDate = localStorage.getItem("lastDownloadDate");
-      const now = new Date();
 
-      // Check for last shown date
-      const lastShownDate = localStorage.getItem("lastShownDate");
-      const twoMonthsLater = new Date();
+  // useEffect(() => {
+  //   const checkPopupAndDownload = async () => {
+  //     const lastDownloadDate = localStorage.getItem("lastDownloadDate");
+  //     const now = new Date();
 
-      if (lastShownDate) {
-        twoMonthsLater.setMonth(new Date(lastShownDate).getMonth() + 2);
-      } else {
-        localStorage.setItem("lastShownDate", now.toISOString());
-      }
+  //     // Check for last shown date
+  //     const lastShownDate = localStorage.getItem("lastShownDate");
+  //     const twoMonthsLater = new Date();
 
-      if (now >= twoMonthsLater) {
-        setIsPopupVisible(true);
-        localStorage.setItem("lastShownDate", now.toISOString()); // Update the last shown date
-      }
+  //     if (lastShownDate) {
+  //       twoMonthsLater.setMonth(new Date(lastShownDate).getMonth() + 2);
+  //     } else {
+  //       localStorage.setItem("lastShownDate", now.toISOString());
+  //     }
 
-      // Check if a month has passed since the last download
-      if (lastDownloadDate) {
-        const lastDownload = new Date(lastDownloadDate);
-        if (
-          lastDownload.getMonth() !== now.getMonth() ||
-          lastDownload.getFullYear() !== now.getFullYear()
-        ) {
-          // Trigger auto-download if the user is an admin
-          if (userRole === "admin") {
-            await fetch("http://localhost:8081/clear-weekly-data", {
-              method: "POST",
-            });
+  //     if (now >= twoMonthsLater) {
+  //       setIsPopupVisible(true);
+  //       localStorage.setItem("lastShownDate", now.toISOString()); // Update the last shown date
+  //     }
 
-            const monthName = now.toLocaleString("default", { month: "long" });
-            const year = now.getFullYear();
-            handleDownload(monthName, year);
+  //     // Check if a month has passed since the last download
+  //     if (lastDownloadDate) {
+  //       const lastDownload = new Date(lastDownloadDate);
+  //       if (
+  //         lastDownload.getMonth() !== now.getMonth() ||
+  //         lastDownload.getFullYear() !== now.getFullYear()
+  //       ) {
+  //         // Trigger auto-download if the user is an admin
+  //         if (userRole === "admin") {
+  //           await fetch("http://localhost:8081/clear-weekly-data", {
+  //             method: "POST",
+  //           });
 
-            // Update the last download date
-            localStorage.setItem("lastDownloadDate", now.toISOString());
-          }
-        }
-      } else {
-        if (userRole === "admin") {
-          await fetch("http://localhost:8081/clear-weekly-data", {
-            method: "POST",
-          });
+  //           const monthName = now.toLocaleString("default", { month: "long" });
+  //           const year = now.getFullYear();
+  //           // handleDownload(monthName, year);
 
-          const monthName = now.toLocaleString("default", { month: "long" });
-          const year = now.getFullYear();
-          handleDownload(monthName, year);
+  //           // Update the last download date
+  //           localStorage.setItem("lastDownloadDate", now.toISOString());
+  //         }
+  //       }
+  //     } else {
+  //       if (userRole === "admin") {
+  //         await fetch("http://localhost:8081/clear-weekly-data", {
+  //           method: "POST",
+  //         });
 
-          // Set last download date
-          localStorage.setItem("lastDownloadDate", now.toISOString());
-        }
-      }
-    };
+  //         const monthName = now.toLocaleString("default", { month: "long" });
+  //         const year = now.getFullYear();
+  //         // handleDownload(monthName, year);
 
-    checkPopupAndDownload();
-  }, []);
+  //         // Set last download date
+  //         localStorage.setItem("lastDownloadDate", now.toISOString());
+  //       }
+  //     }
+  //   };
+
+  //   checkPopupAndDownload();
+  // }, []);
+
+  const handleZero = async () => {
+    localStorage.setItem("download_count", 0);
+    const response = await fetch("http://localhost:8081/clear-weekly-data", {
+      method: "POST",
+    });
+    if (response.ok) {
+      alert("Weekly data cleared successfully");
+      window.location.reload();
+    } else {
+      alert("Failed to clear weekly data");
+    }
+  };
 
   const handleRowClick = (pltcode) => {
     navigate(`/product-details/${pltcode}/${selectedDeptName}`);
@@ -808,6 +855,29 @@ console.log("Average Monthly Percentage Achieved:", averageMonthlyPercentageAchi
     // Update lastShownDate in localStorage
     localStorage.setItem("lastShownDate", new Date().toISOString());
   };
+
+  const [showButton, setShowButton] = useState(false);
+
+  useEffect(() => {
+    // Get current date
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+
+    // Get last download date from localStorage
+    const lastDownloadDate = localStorage.getItem("lastDownloadDate");
+    const lastDownload = lastDownloadDate ? new Date(lastDownloadDate) : null;
+
+    // Show the button if today is the 1st of the month or if no download has been done this month
+    if (
+      today.getDate() === 1 &&
+      (!lastDownload ||
+        lastDownload.getMonth() !== currentMonth ||
+        lastDownload.getFullYear() !== currentYear)
+    ) {
+      setShowButton(true);
+    }
+  }, []);
   return (
     <div
       className={`min-h-screen min-w-full flex flex-col md:flex-row ${
@@ -832,19 +902,6 @@ console.log("Average Monthly Percentage Achieved:", averageMonthlyPercentageAchi
             filter_on === true ? "opacity-10" : "opacity-100"
           }`}
         >
-          {isPopupVisible && (
-            <div className="fixed top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border border-black bg-white p-5 z-50">
-              <h2 className="text-lg font-bold text-black">
-                Download content Content
-              </h2>
-              <button
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                onClick={handleDownload}
-              >
-                Download
-              </button>
-            </div>
-          )}
           {isloading && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-35">
               <div className="flex gap-2 ml-9">
@@ -896,19 +953,21 @@ console.log("Average Monthly Percentage Achieved:", averageMonthlyPercentageAchi
 
           {/* Target Button */}
           <div className="flex flex-1 ml-20 space-x-2 mr-14 justify-start ">
-            <button
-              className="mt-4 relative top-2 px-4 py-2  bg-blue-500 text-white rounded-md"
-              onClick={handleFilter}
-            >
-              Filter
-            </button>
+            {((userRole === 'admin') &&(localStorage.getItem("download_count")>= 5)) && (
+              <button
+                className="mt-4 relative top-2 px-4 py-2  bg-red-500 text-white rounded-md"
+                onClick={handleZero}
+              >
+                Set Zero
+              </button>
+            )}
 
             {selectedDeptName && (
               <button
-                className="mt-4 px-4 py-2 relative top-2  bg-green-500 text-white rounded-md"
-                onClick={handleDownload}
+                className="mt-4 px-4 py-2 relative top-2 bg-green-500 text-white rounded-md"
+                onClick={() => handleDownload(selectedDeptName)}
               >
-                Download Table Data
+                Download {selectedDeptName} Data
               </button>
             )}
             {calender && (
