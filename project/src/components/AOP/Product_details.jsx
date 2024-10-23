@@ -137,28 +137,22 @@ function ProductDetailsPage() {
 
       console.log("filteredProductionData:", filteredProductionData);
 
-      // Create a Set of jewel codes for quick lookup
       const jewelCodes = new Set(getJewelCodesForSubProduct(subProduct));
       console.log("jewelCodes:", Array.from(jewelCodes));
 
-      // Create an object to hold counts for each sub category
+
       const subCategoryCounts = {};
 
-      // For each filtered item, check if its Sub Category exists in jewelMasterData
       filteredProductionData.forEach((item) => {
         const subCategory = item["Sub Category"];
 
-        // Check if the subCategory exists in jewelMasterData
         const jewelMatch = jewelMasterData.find(
           (jewel) => jewel["JewelCode"] === subCategory
         );
         console.log("jewelMatch:", jewelMatch);
 
-        // Check if the jewelMatch exists and if the jewel code is in the set
         if (jewelMatch && jewelCodes.has(jewelMatch["JewelCode"])) {
-          const cwQty = item["CW Qty"] || 0; // Default to 0 if CW Qty is not present
-
-          // Aggregate CW Qty for each sub category
+          const cwQty = item["CW Qty"] || 0; 
           if (subCategoryCounts[subCategory]) {
             subCategoryCounts[subCategory].cwQty += cwQty;
           } else {

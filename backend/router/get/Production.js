@@ -143,7 +143,7 @@ router.get("/filtered_production_data/aop", async (req, res) => {
     const lowerDeptToFilter = deptToFilter.map(dept => dept.toLowerCase());
 
     let sql = `
-      SELECT \`From Dept\`, \`To Dept\`, Project, UploadedDateTime, COUNT(\`CW Qty\`) AS total_qty
+      SELECT \`From Dept\`, \`To Dept\`, Project, UploadedDateTime, SUM(\`CW Qty\`) AS total_qty
       FROM Production_sample_data
       WHERE LOWER(\`From Dept\`) IN (?) AND LOWER(\`To Dept\`) IN (?)
       GROUP BY \`From Dept\`, \`To Dept\`, Project, UploadedDateTime

@@ -104,7 +104,9 @@ function CreateTask() {
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(0, 0, 0, 0);
 
-    return today >= startDate && today <= endDate;
+    // return today >= startDate && today <= endDate;
+    return (startDate >= today && today <= endDate);
+
   };
 
   const groupedTasks = tasks.reduce((acc, task) => {
@@ -326,12 +328,15 @@ function CreateTask() {
           console.log(response);
           if (response.status === 200) {
             toast.success("Emails sent successfully");
+            window.location.reload();
           } else {
             throw new Error("Failed to send emails");
           }
         } catch (error) {
           console.error(error);
           toast.error("An error occurred while send emails");
+          window.location.reload();
+
           setError("An error occurred while send emails");
         }
         setIsloading(false);
@@ -452,6 +457,8 @@ function CreateTask() {
           <th className="px-4 py-2">Email</th>
           <th className="px-4 py-2">Assign Date</th>
           <th className="px-4 py-2">Target Date</th>
+          <th className="px-4 py-2">Brief No</th>
+          <th className="px-4 py-2">Complete Qty</th>
           <th className="px-4 py-2">Efficiency</th>
         </tr>
       </thead>
@@ -488,6 +495,9 @@ function CreateTask() {
                       day: "numeric",
                     })}
                   </td>
+                  <td className="px-4 py-2 border">{task.Ax_Brief}</td>
+
+                  <td className="px-4 py-2 border">{task.Complete_Qty}</td>
                   <td className="px-4 py-2 border">{
                     getEfficiency( task.No_of_Qty,
                       task.Complete_Qty, 

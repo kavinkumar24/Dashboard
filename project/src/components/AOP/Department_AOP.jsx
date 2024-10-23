@@ -214,60 +214,37 @@ function Department_AOP() {
 
   const fetchData = async (selectedDeptName) => {
     try {
-      const response = await fetch(
-        "http://localhost:8081/api/raw_filtered_production_data"
-      );
-      const data = await response.json();
-      console.log("Raw Filtered Production Data:", data);
-
-      const departmentMapping = departmentMappings[selectedDeptName] || {};
-      const photoMapping = departmentMappings["PHOTO"] || {};
-      const fromDepartments = departmentMapping.from || [];
-      const toDepartments = departmentMapping.to || [];
-      const photoFromDepartments = photoMapping.from || [];
-      const photoToDepartments = photoMapping.to || [];
-
+      const response = await fetch("http://localhost:8081/aop/WeeklyData");
+      const weeklyData = await response.json(); // assuming the response is in JSON format
+      
+      const deptData = weeklyData["PHOTO"] || [];
+      
       const achievedCounts = ALLOWED_PROJECTS.reduce((acc, project) => {
         acc[project.toUpperCase()] = 0; // Initialize each project count to 0
         return acc;
       }, {});
-
-      data.forEach((item) => {
-        const fromDept = item["From Dept"]?.toUpperCase() || "";
-        const toDept = item["To Dept"]?.toUpperCase() || "";
-        const project = item["Project"]?.toUpperCase() || ""; // Get the project name
-
-        // Check if the fromDept and toDept match the selected department mappings
-        const isMatchingDept =
-          fromDepartments.includes(fromDept) && toDepartments.includes(toDept);
-
-        // Check if the fromDept and toDept match the PHOTO mappings
-        const isMatchingPhoto =
-          photoFromDepartments.includes(fromDept) &&
-          photoToDepartments.includes(toDept);
-
-        // Calculate the week number based on uploadedDateTime
-        const uploadedDate = new Date(item.uploadedDateTime);
-        const weekNumber = getWeekOfMonth(uploadedDate);
-
-        // If either department mapping matches, check allowed projects
-        if (
-          (isMatchingDept || isMatchingPhoto) &&
-          ALLOWED_PROJECTS.includes(project)
-        ) {
-          achievedCounts[project] += 1;
-          // You can also store the week number if needed for further processing
-          item.weekNumber = weekNumber;
+  
+      // Loop through the PHOTO data
+      deptData.forEach((entry) => {
+        const pltcode = entry.PLTCODE1?.toUpperCase(); // Get the PLTCODE1 and convert to uppercase
+        
+        // If the project is part of allowed projects
+        if (ALLOWED_PROJECTS.includes(pltcode)) {
+          const completed = entry.data?.[0]?.Completed ? parseInt(entry.data[0].Completed, 10) : 0;
+          
+          // Update the achieved counts for the specific project
+          achievedCounts[pltcode] = (achievedCounts[pltcode] || 0) + completed;
         }
       });
-
+  
       console.log("Achieved Counts:", achievedCounts);
       setAchieved(achievedCounts); // Update the achieved state
-      setRawFilteredData(data);
+      setRawFilteredData(deptData);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
+  
 
   const [rawFilteredPendingData, setRawFilteredPendingData] = useState([]);
   const [groupedData, setGroupedData] = useState({});
