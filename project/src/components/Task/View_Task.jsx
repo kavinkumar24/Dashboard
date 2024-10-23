@@ -27,8 +27,7 @@ function ViewTasks() {
   const fetch_task_data = async () => {
     try {
       const response = await fetch("http://localhost:8081/api/create-task");
-      const tasks = await response.json(); // Now tasks is an array
-
+      const tasks = await response.json();
       const tasksWithImages = await Promise.all(
         tasks.map(async (task) => {
           if (task.image_data && Array.isArray(task.image_data.data)) {
@@ -38,7 +37,7 @@ function ViewTasks() {
             console.log("Image URL:", imageUrl);
             return { ...task, imageUrl }; // Add imageUrl to the task object
           }
-          return task; // Return the task without modification
+          return task;
         })
       );
 
@@ -92,7 +91,6 @@ function ViewTasks() {
           throw new Error("Failed to delete task");
         }
 
-        // Optionally, refresh the task list or remove the deleted task from state
         setTasks((prevTasks) =>
           prevTasks.filter((task) => task.Task_ID !== taskId)
         );
@@ -193,19 +191,15 @@ function ViewTasks() {
     XLSX.writeFile(workbook, "tasks.xlsx");
   };
 
-  function getPercentageTracker(assignDate, targetDate) {
-    const start = new Date(assignDate);
-    const end = new Date(targetDate);
-    const now = new Date();
-
-    if (now >= end) {
-      return 100;
+  function getPercentageTracker(no_of_qty, complete_qty, remaining_days) {
+     
+    let res = (complete_qty*100)/no_of_qty;
+    if(remaining_days < 0){
+      res = res-Math.abs(remaining_days);
+      return res.toFixed(0);
     }
-
-    const totalDays = (end - start) / (1000 * 60 * 60 * 24);
-    const daysPassed = (now - start) / (1000 * 60 * 60 * 24);
-
-    return (daysPassed / totalDays) * 100;
+    return res.toFixed(0);
+   
   }
 
   const updateTaskStatus = async (taskId, updatedData) => {
@@ -344,10 +338,11 @@ function ViewTasks() {
           </div>
 
           <div
-            className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-10 my-5 ${
-              theme === "light" ? "bg-white" : "bg-gray-900"
-            } max-w-[90%] md:max-w-lg lg:max-w-5xl xl:max-w-screen-lg 2xl:max-w-screen-6xl`}
-          >
+  className={`flex flex-col p-5 relative shadow-xl rounded-lg w-full mx-5 my-5 ${
+    theme === "light" ? "bg-white" : "bg-gray-900"
+  } max-w-[90%] md:max-w-lg lg:max-w-lg xl:max-w-screen-xl 2xl:max-w-screen-6xl lg:ml-16 xl:ml-16 2xl:ml-16`}
+>
+
             <h1 className="text-xl font-semibold p-2 pl-10 py-5">Task List</h1>
 
             <div className="overflow-x-auto">
@@ -462,9 +457,10 @@ function ViewTasks() {
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">
                         {getPercentageTracker(
-                          task.Assign_Date,
-                          task.Target_Date
-                        ).toFixed(2)}{" "}
+                          task.No_of_Qty,
+                          task.Complete_Qty, 
+                          task.Remaining_Days
+                        )}{" "}
                         %
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap text-base">

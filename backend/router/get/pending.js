@@ -49,6 +49,14 @@ router.get("/pending_data", (req, res) => {
   });
 });
 
+
+router.get("/pending_data_brief",(req,res)=>{
+  const sql = "SELECT * FROM Pending_sample_data";
+  db.query(sql,(err,data)=>{
+    if(err) return res.json(err);
+    return res.json(data);
+  });
+})
 router.get("/raw_filtered_pending_data", async (req, res) => {
   const response = await axios.get(
     "http://localhost:8081/api/department-mappings"

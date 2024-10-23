@@ -8,8 +8,11 @@ import { MdOutlineRemoveRedEye } from "react-icons/md";
 import { IoMdOpen } from "react-icons/io";
 import Datepicker from "react-tailwindcss-datepicker";
 import { CiCalendarDate } from "react-icons/ci";
+import { useToast } from "vue-toast-notification";
+
 
 function Phase_view() {
+  const toast = useToast();
   const [overallPhaseData, setOverallPhaseData] = useState({});
   const location = useLocation();
   const { taskId, project_name, assignee} = location.state || {};
@@ -467,11 +470,19 @@ function Phase_view() {
         });
         console.log(response);
 
+        if(response.ok){
+          toast.success("Email sent successfully");
+        }
+        else{
+          toast.error("Error sending email");
+        }
+
       }
       catch (error) {
         console.error("Error sending email:", error);
-      }
+        toast.error("Error sending email");
 
+      }
 
 
     } catch (error) {

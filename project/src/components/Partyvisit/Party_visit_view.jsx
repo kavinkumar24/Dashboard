@@ -274,11 +274,11 @@ function Party_visit_view() {
             filter_on === true ? "opacity-10" : "opacity-100"
           }`}
         >
-          <div
-            className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-10 my-5 ${
-              theme === "light" ? "bg-white" : "bg-gray-900"
-            } max-w-[90%] md:max-w-lg lg:max-w-4xl xl:max-w-screen-lg 2xl:max-w-screen-6xl`}
-          >
+           <div
+  className={`flex flex-col p-5 relative shadow-xl rounded-lg w-full mx-5 my-5 ${
+    theme === "light" ? "bg-white" : "bg-gray-900"
+  } max-w-[90%] md:max-w-lg lg:max-w-lg xl:max-w-screen-xl 2xl:max-w-screen-6xl lg:ml-16 xl:ml-16 2xl:ml-10`}
+>
             <h2
               className={`text-2xl font-semibold mb-6 ${
                 theme === "light" ? "text-gray-800" : "text-gray-100"

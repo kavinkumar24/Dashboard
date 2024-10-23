@@ -36,7 +36,7 @@ function Detailed_task() {
 
   const fetchData = async () => {
     try {
-      const pendingResponse = await fetch("http://localhost:8081/pending_data");
+      const pendingResponse = await fetch("http://localhost:8081/api/pending_data_brief");
       const pendingData = await pendingResponse.json();
       setoverAllData(pendingData);
 

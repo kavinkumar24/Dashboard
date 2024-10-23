@@ -187,7 +187,7 @@ function Party_form() {
         formData.append("status_data", status_data);
       
         if (selectedImage) {
-          formData.append("image", selectedImage); // Make sure selectedImage is the actual file
+          formData.append("image", selectedImage); 
         }
       
         const response = await axios.post(
@@ -202,10 +202,13 @@ function Party_form() {
       
         console.log(response);
         toast.success("Email sent successfully");
+        setImage_upload(false);
       } catch (error) {
         console.error("Error sending email:", error);
         toast.error("Error sending email");
         setIsloading(false);
+        setImage_upload(false);
+
       }
       
       

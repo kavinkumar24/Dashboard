@@ -3,13 +3,15 @@ import axios from "axios";
 import { ToastContainer } from "react-toastify";
 import { useToast } from "vue-toast-notification";
 import Modal from 'react-modal';
-
+import Select from 'react-select';
 Modal.setAppElement('#root'); // Make sure to bind modal to your appElement
 
 
 function Index() {
   const toast = useToast();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(null);
 
   const [empId, setEmpId] = useState('');
   const [email, setEmail] = useState('');
@@ -20,6 +22,111 @@ function Index() {
   const [newDept, setNewDept] = useState(''); // for handling new dept input
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal state
 
+  const [selectedPendingMonth, setSelectedPendingMonth] = useState(null);
+  const [selectedPendingYear, setSelectedPendingYear] = useState(null);
+
+
+  const handleDelete_pro_month = () =>{
+
+    if (!selectedMonth || !selectedYear) {
+      toast.error("Please select both month and year for production data.");
+      return;
+    }
+
+    // Perform deletion logic for production data
+    axios.delete(`http://localhost:8081/api/delete_pro_month`, {
+      params: { month: selectedMonth.value, year: selectedYear.value },
+    })
+      .then((response) => {
+        if (response.status === 200) {
+          toast.success("Production data deleted successfully.");
+        }
+      })
+      .catch((error) => {
+        toast.error("Failed to delete production data.");
+        console.error(error);
+      });
+  }
+  const handlePendingDelete = () => {
+    if (!selectedPendingMonth || !selectedPendingYear) {
+      toast.error("Please select both month and year for pending data.");
+      return;
+    }
+
+    // Perform deletion logic for pending data
+    axios.delete(`http://localhost:8081/api/deletePending`, {
+      params: { month: selectedPendingMonth.value, year: selectedPendingYear.value },
+    })
+      .then((response) => {
+        if (response.status === 200) {
+          toast.success("Pending data deleted successfully.");
+        }
+      })
+      .catch((error) => {
+        toast.error("Failed to delete pending data.");
+        console.error(error);
+      });
+  };
+
+
+  ["Home", "AOP", "Project", "Pending days", "Task", "Rejection", "order receiving", "New Design"]
+  const departmentOptions = [
+    'AOP - Design center',
+    'Task',
+    'Order receiving',
+    'New design',
+    'Party visit',
+    'Operational task',
+    'Full',
+    'Home',
+    'AOP',
+    'Uploads',
+    'Design center',
+  ];
+
+  const monthOptions = [
+    { value: 'January', label: 'January' },
+    { value: 'February', label: 'February' },
+    { value: 'March', label: 'March' },
+    { value: 'April', label: 'April' },
+    { value: 'May', label: 'May' },
+    { value: 'June', label: 'June' },
+    { value: 'July', label: 'July' },
+    { value: 'August', label: 'August' },
+    { value: 'September', label: 'September' },
+    { value: 'October', label: 'October' },
+    { value: 'November', label: 'November' },
+    { value: 'December', label: 'December' },
+  ];
+
+  const yearOptions = Array.from({ length: 15 }, (_, i) => ({
+    value: 2024 + i,
+    label: (2024 + i).toString(),
+  }));
+
+
+  const handleDelete = () => {
+    if (!selectedMonth || !selectedYear) {
+      toast.error("Please select both month and year.");
+      return;
+    }
+
+    // Perform deletion logic here
+    axios.delete(`http://localhost:8081/api/delete`, {
+      params: { month: selectedMonth.value, year: selectedYear.value },
+    })
+      .then((response) => {
+        if (response.status === 200) {
+          toast.success("Data deleted successfully.");
+        }
+      })
+      .catch((error) => {
+        toast.error("Failed to delete data.");
+        console.error(error);
+      });
+  };
+
+  
   // Function to handle adding a department to the array
   const addDept = () => {
     if (newDept && !dept.includes(newDept)) {
@@ -348,13 +455,18 @@ function Index() {
 
           {/* Input for new department */}
           <div className="flex items-center mb-2">
-            <input
-              type="text"
-              value={newDept}
-              onChange={(e) => setNewDept(e.target.value)}
-              placeholder="Add Department"
-              className="border border-gray-300 p-2 mr-2 w-full"
-            />
+          <select
+    value={newDept}
+    onChange={(e) => setNewDept(e.target.value)}
+    className="border border-gray-300 p-2 mr-2 w-full"
+  >
+    <option value="">Select Department</option>
+    {departmentOptions.map((dept, index) => (
+      <option key={index} value={dept}>
+        {dept}
+      </option>
+    ))}
+  </select>
             <button
               onClick={addDept}
               className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-md"
@@ -408,6 +520,58 @@ function Index() {
               Delete Today Pending
             </button>
           </div>
+          <br></br>
+          <h2 className="text-2xl font-semibold">Production Month and year wise</h2>
+
+          <div className="mt-4">
+          <Select
+            options={monthOptions}
+            value={selectedMonth}
+            onChange={setSelectedMonth}
+            placeholder="Select Month"
+            className="mb-2"
+          />
+          <Select
+            options={yearOptions}
+            value={selectedYear}
+            onChange={setSelectedYear}
+            placeholder="Select Year"
+            className="mb-2"
+          />
+          <button
+            onClick={handleDelete_pro_month}
+            className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md"
+          >
+            Delete Production Data
+          </button>
+        </div>
+
+
+<br></br>
+        <h2 className="text-2xl font-semibold">Pending Month and year wise</h2>
+
+        <div className="mt-4">
+          <Select
+            options={monthOptions}
+            value={selectedPendingMonth}
+            onChange={setSelectedPendingMonth}
+            placeholder="Select Month"
+            className="mb-2"
+          />
+          <Select
+            options={yearOptions}
+            value={selectedPendingYear}
+            onChange={setSelectedPendingYear}
+            placeholder="Select Year"
+            className="mb-2"
+          />
+          <button
+            onClick={handlePendingDelete}
+            className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md"
+          >
+            Delete Pending Data
+          </button>
+        </div>
         </div>
 
         {/* Divider */}

@@ -3,7 +3,14 @@ import Sidebar from "../Sidebar";
 import Header from "../Header";
 import Select from "react-select";
 import axios from "axios";
+import Modal from "react-modal";
+import { useToast } from "vue-toast-notification";
+
+Modal.setAppElement("#root");
+
 function CreateTask() {
+  const toast = useToast();
+
   const [axBriefMapping, setAxBriefMapping] = useState({});
   const [briefOptions, setBriefOptions] = useState([]);
   useEffect(() => {
@@ -69,7 +76,53 @@ function CreateTask() {
   // const [sketchOptions, setSketchOptions] = useState([]);
   const [image_upload, setImage_upload] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tasks, setTasks] = useState([]);
 
+  const fetchDesignTasks = async () => {
+    try {
+      const response = await axios.get("http://localhost:8081/api/create-task");
+      const filteredTasks = response.data.filter(
+        (task) => task.Dept === "design"
+      );
+      setTasks(filteredTasks);
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+    }
+  };
+  const handleButtonClick = async (e) => {
+    e.preventDefault();
+    await fetchDesignTasks();
+    setIsModalOpen(true);
+  };
+
+  const isTodayBetweenDates = (assignDate, targetDate) => {
+    const today = new Date();
+    const startDate = new Date(assignDate);
+    const endDate = new Date(targetDate);
+    today.setHours(0, 0, 0, 0);
+    startDate.setHours(0, 0, 0, 0);
+    endDate.setHours(0, 0, 0, 0);
+
+    return today >= startDate && today <= endDate;
+  };
+
+  const groupedTasks = tasks.reduce((acc, task) => {
+    const persons = task.Person.split(",").map((person) => person.trim());
+
+    persons.forEach((person) => {
+      if (!acc[person]) {
+        acc[person] = [];
+      }
+      acc[person].push(task);
+    });
+
+    return acc;
+  }, {});
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
   const handleCheckboxChange = (event) => {
     if (!event.target.checked) {
       alert("You have unchecked the box!");
@@ -100,6 +153,15 @@ function CreateTask() {
       }
     }
   };
+
+  const getEfficiency = (totalQty, completeQty, remainingDays) => {
+    let efficiency = (completeQty / totalQty) * 100;
+    if(remainingDays < 0) {
+      return (efficiency - Math.abs(remainingDays)).toFixed(0);
+    }
+    return efficiency.toFixed(0);
+  };
+
 
   const handleRemoveImage = () => {
     setSelectedImage(null);
@@ -220,7 +282,7 @@ function CreateTask() {
 
         const result = await response.json();
         console.log(result);
-        alert("Task created successfully");
+        toast.success("Task created successfully");
         setAx_brief("");
         setCollection_name("");
         setProject("");
@@ -262,8 +324,14 @@ function CreateTask() {
             }
           );
           console.log(response);
+          if (response.status === 200) {
+            toast.success("Emails sent successfully");
+          } else {
+            throw new Error("Failed to send emails");
+          }
         } catch (error) {
           console.error(error);
+          toast.error("An error occurred while send emails");
           setError("An error occurred while send emails");
         }
         setIsloading(false);
@@ -275,6 +343,7 @@ function CreateTask() {
     };
   };
 
+  
   const [assignToCount, setAssignToCount] = useState(1);
   const [assignToPersonEmails, setAssignToPersonEmails] = useState(
     Array(assignToCount).fill("")
@@ -369,6 +438,70 @@ function CreateTask() {
             filter_on === true ? "opacity-10" : "opacity-100"
           }`}
         >
+      <Modal
+  isOpen={isModalOpen}
+  onRequestClose={() => setIsModalOpen(false)}
+  contentLabel="Add User Modal"
+  className={` rounded-lg shadow-lg p-6 w-1/2 mx-auto mt-20 border ${theme==="light" ? "bg-white border-gray-300 " : "bg-gray-800 border-gray-900 "}`}
+>
+  <h2 className="text-xl font-semibold mb-4">Design Dept Members Details</h2>
+  <div className="overflow-x-auto">
+    <table className="min-w-full">
+      <thead>
+        <tr className={` ${theme==='light'?'bg-gray-200 text-black':'bg-gray-700'}`}>
+          <th className="px-4 py-2">Email</th>
+          <th className="px-4 py-2">Assign Date</th>
+          <th className="px-4 py-2">Target Date</th>
+          <th className="px-4 py-2">Efficiency</th>
+        </tr>
+      </thead>
+      <tbody>
+        {Object.entries(groupedTasks).map(([email, taskList]) => {
+          const filteredTasks = taskList.filter(task => 
+            isTodayBetweenDates(task.Assign_Date, task.Target_Date)
+          );
+
+          
+          if (filteredTasks.length === 0) return null; 
+
+          
+          return (
+            <React.Fragment key={email}>
+              {filteredTasks.map((task, index) => (
+                <tr key={index}>
+                  {index === 0 && ( 
+                    <td rowSpan={filteredTasks.length} className="px-4 py-2 border">
+                      {email}
+                    </td>
+                  )}
+                  <td className="px-4 py-2 border">
+                    {new Date(task.Assign_Date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </td>
+                  <td className="px-4 py-2 border">
+                    {new Date(task.Target_Date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </td>
+                  <td className="px-4 py-2 border">{
+                    getEfficiency( task.No_of_Qty,
+                      task.Complete_Qty, 
+                      task.Remaining_Days)
+                    }%</td>
+                </tr>
+              ))}
+            </React.Fragment>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+</Modal>
           <div
             className={`p-5 relative shadow-xl rounded-lg mx-5 lg:mx-10 mb-10 lg:mb-20 ${
               theme === "light" ? "bg-white" : "bg-gray-900"
@@ -535,6 +668,14 @@ function CreateTask() {
                   required
                 />
               </div>
+              {depart === "design" && (
+                <button
+                  className="mt-4 bg-blue-500 text-white py-2 px-4 rounded-md mx-auto items-center justify-end"
+                  onClick={handleButtonClick}
+                >
+                  Check Availability
+                </button>
+              )}
 
               <div className="flex flex-col lg:flex-row lg:space-x-4 py-4">
                 <label
@@ -594,11 +735,11 @@ function CreateTask() {
                       theme === "light" ? "text-gray-700" : "text-gray-200"
                     } w-full lg:w-1/5 px-2`}
                   >
-                    Assign Person {index + 1} Email
+                    Assign Person {index + 1} Email or name
                   </label>
 
                   <input
-                    type="email"
+                    type="text"
                     value={assignToPersonEmails[index] || ""}
                     onChange={(e) => handleEmailChange(index, e.target.value)}
                     className={`mt-2 lg:mt-0 w-full lg:w-4/5 border rounded py-2 px-3 leading-tight focus:outline-none ${
@@ -606,7 +747,7 @@ function CreateTask() {
                         ? "bg-gray-100 text-gray-700 border-gray-300"
                         : "bg-gray-700 text-gray-100 border-gray-600"
                     }`}
-                    placeholder="Enter valid email ID"
+                    placeholder="Enter valid email ID or name"
                     required
                   />
                 </div>

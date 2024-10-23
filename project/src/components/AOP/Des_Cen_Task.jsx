@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
-import Sidebar from "../Sidebar";
-import Header from "../Header";
 import axios from "axios";
+import React, { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
+import Header from "../Header";
+import Sidebar from "../Sidebar";
 function Des_Cen_Task() {
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
@@ -39,6 +39,7 @@ function Des_Cen_Task() {
             assignedQty: 0,
             pendingQty: 0,
             waitingSelectionBrief: 0,
+            waitingSelectionBriefPending: 0,
           };
         }
 
@@ -54,9 +55,22 @@ function Des_Cen_Task() {
           result[designCenter].pendingQty += item["No Of Design"];
         }
 
-        if (item.Confirmed === "Yes" || item.Confirmed === "yes") {
+        if (
+          (item.Received === "Yes" || item.Received === "yes") &&
+          item.Completed === null &&
+          (item.Confirmed === "Yes" || item.Confirmed === "yes")
+        ) {
           result[designCenter].waitingSelectionBrief += 1;
         }
+        if (
+          (item.Received === "Yes" || item.Received === "yes") &&
+          item.Completed !== null &&
+          (item.Confirmed === "Yes" || item.Confirmed === "yes")
+        ) {
+          result[designCenter].waitingSelectionBriefPending += 1;
+        }
+
+        // console.log("result", result);
       });
 
       const totalresult = Object.values(result).reduce(
@@ -66,6 +80,8 @@ function Des_Cen_Task() {
           totals.assignedQty += item.assignedQty;
           totals.pendingQty += item.pendingQty;
           totals.waitingSelectionBrief += item.waitingSelectionBrief;
+          totals.waitingSelectionBriefPending +=
+            item.waitingSelectionBriefPending;
           return totals;
         },
         {
@@ -74,6 +90,7 @@ function Des_Cen_Task() {
           assignedQty: 0,
           pendingQty: 0,
           waitingSelectionBrief: 0,
+          waitingSelectionBriefPending: 0,
         }
       );
 
@@ -86,29 +103,6 @@ function Des_Cen_Task() {
   };
 
   const [modal_total_data, setModal_total_data] = useState([]);
-  // const openModal_overall = async (center) => {
-  //   setCurrentCenter(center);
-  //   let table_data = [];
-  //   const response = await axios.get("http://localhost:8081/api/desCenTask");
-  //       table_data = response.data.filter(
-  //         (item) => item["Design center"].toUpperCase()
-  //       ).map(item => {
-  //         const completedDate = new Date(item.Completed);
-  //         const documentDate = new Date(item["Document date"]);
-  //         const deadlineDate = new Date(item["Deadline date"]);
-
-  //         let percentage = 0;
-
-  //         return {
-  //           ...item,
-  //           percentage: percentage.toFixed(2), // Keep two decimal points
-  //         };
-  //       });
-  //       console.log("table_data", table_data);
-  //       setModal_total_data(table_data);
-  //       setIsModalOpen_total(true);
-
-  // }
   const [currentItems_total, setCurrentItems_total] = useState([]);
 
   const openModal_overall = async (center) => {
@@ -158,6 +152,7 @@ function Des_Cen_Task() {
               pendingProjects: 0,
               pendingQty: 0,
               waitingSelectionBrief: 0,
+              waitingSelectionBriefPending: 0,
             };
           }
 
@@ -169,8 +164,19 @@ function Des_Cen_Task() {
           if (item.Received === "No" || item.Received === "no") {
             result[designCenter].pendingQty += item["No Of Design"];
           }
-          if (item.Confirmed === "Yes" || item.Confirmed === "yes") {
+          if (
+            (item.Received === "Yes" || item.Received === "yes") &&
+            item.Completed === null &&
+            (item.Confirmed === "Yes" || item.Confirmed === "yes")
+          ) {
             result[designCenter].waitingSelectionBrief += 1;
+          }
+          if (
+            (item.Received === "Yes" || item.Received === "yes") &&
+            item.Completed !== null &&
+            (item.Confirmed === "Yes" || item.Confirmed === "yes")
+          ) {
+            result[designCenter].waitingSelectionBriefPending += 1;
           }
         });
 
@@ -188,19 +194,19 @@ function Des_Cen_Task() {
               item["Design center"].toUpperCase() === center.toUpperCase()
           )
           .map((item) => {
-            const completedDate = new Date(item.Completed);
+            const completedDate =
+              item.Completed !== null ? new Date(item.Completed) : undefined;
             const documentDate = new Date(item["Document date"]);
             const deadlineDate = new Date(item["Deadline date"]);
             console.log("completedDate", completedDate);
             let percentage = 0;
-            if (
-              typeof completedDate === "undefined" ||
-              typeof documentDate === "undefined" ||
-              typeof deadlineDate === "undefined"
-            ) {
+
+            if (!completedDate || isNaN(documentDate) || isNaN(deadlineDate)) {
               percentage = 0;
             } else {
-              if (
+              if (completedDate) {
+                percentage = 100;
+              } else if (
                 completedDate > documentDate &&
                 completedDate < deadlineDate
               ) {
@@ -213,16 +219,18 @@ function Des_Cen_Task() {
                 );
                 console.log("totalDays", totalDays);
 
-                const remainingDays = Math.ceil(
-                  (deadlineDate - completedDate) / (1000 * 60 * 60 * 24)
-                );
-                percentage = ((totalDays - remainingDays) / totalDays) * 100;
-                percentage = ((totalDays - remainingDays) / totalDays) * 100;
                 if (totalDays === 0) {
-                  percentage = 0;
+                  percentage = 0; // Prevent division by zero
+                } else {
+                  const remainingDays = Math.ceil(
+                    (deadlineDate - completedDate) / (1000 * 60 * 60 * 24)
+                  );
+                  percentage = ((totalDays - remainingDays) / totalDays) * 100;
                 }
               }
             }
+
+            console.log("percentage", percentage);
 
             return {
               ...item,
@@ -232,6 +240,7 @@ function Des_Cen_Task() {
       }
 
       setModalData(table_data);
+      console.log("table_data", table_data);
       setCurrentPage(1); // Reset to first page when opening modal
     } catch (error) {
       console.error("Error fetching modal data:", error);
@@ -373,7 +382,7 @@ function Des_Cen_Task() {
                           Waiting for Selection Brief
                         </td>
                         <td>{center.waitingSelectionBrief}</td>
-                        <td>-</td>
+                        <td>{center.waitingSelectionBriefPending}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -443,7 +452,7 @@ function Des_Cen_Task() {
                           Waiting for Selection Brief
                         </td>
                         <td>{center.waitingSelectionBrief}</td>
-                        <td>-</td>
+                        <td>{center.waitingSelectionBriefPending}</td>
                       </tr>
                     </tbody>
                   </table>
@@ -562,9 +571,17 @@ function Des_Cen_Task() {
                                 Deadline date
                               </th>
                               <th className="py-3 px-4 text-center font-semibold text-base">
+                                Confirmed
+                              </th>
+                              <th className="py-3 px-4 text-center font-semibold text-base">
+                                Recevied
+                              </th>
+                              <th className="py-3 px-4 text-center font-semibold text-base">
+                                Completed
+                              </th>
+                              <th className="py-3 px-4 text-center font-semibold text-base">
                                 Percentage
                               </th>{" "}
-                              {/* New Column */}
                             </tr>
                           </thead>
                           <tbody>
@@ -616,6 +633,30 @@ function Des_Cen_Task() {
                                     day: "numeric",
                                   })}
                                 </td>
+
+                                <td className="py-4 text-center">
+                                  {item["Confirmed"]}
+                                </td>
+                                <td className="py-4 text-center">
+                                  {item["Received"]}
+                                </td>
+
+                                <td
+                                  className={`py-4 text-center ${
+                                    item["Completed"] ? "font-extrabold" : ""
+                                  }`}
+                                >
+                                  {item["Completed"]
+                                    ? new Date(
+                                        item["Completed"]
+                                      ).toLocaleDateString("en-US", {
+                                        year: "numeric",
+                                        month: "numeric",
+                                        day: "numeric",
+                                      })
+                                    : "Not Completed"}
+                                </td>
+
                                 <td className="py-4 text-center">
                                   {item.percentage}%
                                 </td>

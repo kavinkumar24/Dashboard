@@ -110,8 +110,8 @@ router.post("/create-task", async (req, res) => {
     0,
     assign_date,
     target_date,
-    null, // Placeholder for Remaining_Days, will set later
-    isChecked ? "Yes" : "No", // Project_View
+    null, 
+    isChecked ? "Yes" : "No", 
     "In Progress", // Completed_Status
     "-", // Remarks
     imageBuf || null, // image_data

@@ -455,6 +455,10 @@ function Dashboard() {
     fetchRemarks();
   }, []);
 
+  const monthNames = ["January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [error, setError] = useState("");
@@ -555,7 +559,9 @@ function Dashboard() {
       // Retrieve target values from local storage or use default
       const storedTargets =
         JSON.parse(localStorage.getItem("targetValues")) || {};
-      const Target = storedTargets[dept] || 100;
+
+      const Target =
+      deptTarg.find((item) => item.department_name === dept)?.target || 0;
       const efficiency = ((totalPro / Target) * 100).toFixed(2);
 
       return {
@@ -763,22 +769,7 @@ function Dashboard() {
                   >
                     Avg Pro QTY/Day
                   </th>
-                  <th
-                    colSpan="2"
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center font-semibold text-base text-red-600`}
-                  >
-                    {yesterdayFormatted}
-                  </th>
-                  <th
-                    colSpan="2"
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center font-semibold text-base text-red-600`}
-                  >
-                    {dayBeforeYesterdayFormatted}
-                  </th>
+                 
                   <th
                     rowSpan="2"
                     className={`border ${
@@ -793,34 +784,8 @@ function Dashboard() {
                     theme === "dark" ? "bg-gray-600" : "bg-gray-200"
                   }`}
                 >
-                  <th
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center font-semibold text-base`}
-                  >
-                    Pro
-                  </th>
-                  <th
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center font-semibold text-base`}
-                  >
-                    Pen
-                  </th>
-                  <th
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center font-semibold text-base`}
-                  >
-                    Pro
-                  </th>
-                  <th
-                    className={`border ${
-                      theme === "dark" ? "border-gray-600" : "border-gray-300"
-                    } px-2 py-2 text-center font-semibold text-base`}
-                  >
-                    Pen
-                  </th>
+                
+               
                 </tr>
               </thead>
               <tbody>
@@ -877,42 +842,10 @@ function Dashboard() {
                     ).toFixed(0)) ||
                     0}
                     </td>
-                    <td
-                      className={`border  ${
-                        theme === "dark"
-                          ? "border-gray-600 bg-green-700 text-gray-200"
-                          : "border-gray-300 bg-green-200"
-                      } px-2 py-2 text-center text-base font-medium`}
-                    >
-                      {row.protoday}
-                    </td>
-                    <td
-                      className={`border  ${
-                        theme === "dark"
-                          ? "border-gray-600 text-gray-200 bg-yellow-600"
-                          : "border-gray-300 bg-yellow-100"
-                      } px-2 py-2 text-center text-base font-medium`}
-                    >
-                      {row.pentoday}
-                    </td>
-                    <td
-                      className={`border  ${
-                        theme === "dark"
-                          ? "border-gray-600 bg-green-700 text-gray-200"
-                          : "border-gray-300 bg-green-200"
-                      } px-2 py-2 text-center text-base font-medium`}
-                    >
-                      {row.proprev}
-                    </td>
-                    <td
-                      className={`border  ${
-                        theme === "dark"
-                          ? "border-gray-600 text-gray-200 bg-yellow-600"
-                          : "border-gray-300 bg-yellow-100"
-                      } px-2 py-2 text-center text-base font-medium`}
-                    >
-                      {row.penprev}
-                    </td>
+
+                   
+                    
+                   
                     <td
                       className={`border ${
                         theme === "dark" ? "border-gray-600" : "border-gray-300"
@@ -1702,6 +1635,20 @@ function Dashboard() {
                     Production
                   </h3>
                   <p className="text-sm font-bold">{uploadTimeProduction}</p>
+                </div>
+              </div>
+              <div
+                className={`rounded-lg float-right shadow px-2 py-2 text-center w-sm ${
+                  theme === "light" ? "bg-white" : "bg-gray-600"
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  {" "}
+                  {/* Flex and gap for same line */}
+                  <h3 className={`font-semibold text-base whitespace-nowrap  ${theme==='light'?'text-blue-500':'text-blue-200'}`}>
+                  {monthNames[new Date().getMonth()]} <span className={` ${theme==='light'?'text-gray-500':'text-gray-200' }`}>Month</span>
+                  </h3>
+                  
                 </div>
               </div>
             </div>

@@ -40,7 +40,7 @@ import Operational_task from "./components/Operational_Task/Operational_task";
 import Phase_view from "./components/Operational_Task/Phase_view";
 import Party_form from "./components/Partyvisit/Party_form";
 import Party_visit_view from "./components/Partyvisit/Party_visit_view";
-import DB_manage from './components/DB_manage/index'
+import DB_manage from "./components/DB_manage/index";
 import Welcome from "./components/Welcome";
 
 function App() {
@@ -57,8 +57,7 @@ function App() {
             }
           />
 
-
-<Route
+          <Route
             path="/welcome"
             element={
               <PrivateRoute>
@@ -66,7 +65,7 @@ function App() {
               </PrivateRoute>
             }
           />
-<Route
+          <Route
             path="/db_manage"
             element={
               <PrivateRoute>
@@ -126,7 +125,7 @@ function App() {
           <Route
             path="/rejections"
             element={
-              <PrivateRoute allowedRoles={["admin"]}>
+              <PrivateRoute>
                 <Reject />
               </PrivateRoute>
             }
@@ -150,17 +149,14 @@ function App() {
           <Route
             path="/rejections/dept_rejections"
             element={
-              <PrivateRoute allowedRoles={["admin"]}>
+              // <PrivateRoute allowedRoles={["admin"]}>
+
+              <PrivateRoute>
                 <Department_reject />
               </PrivateRoute>
             }
           />
-          <Route
-            path="/uploads"
-            element={
-                <Upload />
-            }
-          />
+          <Route path="/uploads" element={<Upload />} />
           <Route
             path="/new_design"
             element={
@@ -305,7 +301,7 @@ function App() {
           <Route
             path="/rejections/problem_arised"
             element={
-              <PrivateRoute allowedRoles={["admin"]}>
+              <PrivateRoute>
                 <Problem_Arised />
               </PrivateRoute>
             }
@@ -352,10 +348,21 @@ function App() {
               </PrivateRoute>
             }
           />
-          <Route path="/task/operational_task" element={<Operational_task />} />
+          <Route
+            path="/task/operational_task"
+            element={
+              <PrivateRoute>
+                <Operational_task />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/task/operational_task/phase_view"
-            element={<Phase_view />}
+            element={
+              <PrivateRoute>
+                <Phase_view />
+              </PrivateRoute>
+            }
           />
           <Route
             path="/party_visit/new"

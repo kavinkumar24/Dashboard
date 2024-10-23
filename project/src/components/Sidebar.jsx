@@ -794,7 +794,7 @@ function Sidebar({ theme }) {
                 </div>
               </a> */}
 
-                  {departments.includes("Full") && (
+                  {(departments.includes("Full")&& role==='admin')&& (
                     <a
                       href="#"
                       className={`block py-2 px-6 rounded transition duration-200 ${getSubTaskActiveClass(

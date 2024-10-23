@@ -8,50 +8,73 @@ import { useNavigate } from "react-router-dom";
 import Datepicker from "react-tailwindcss-datepicker";
 
 const DEFAULT_DEPARTMENTS = ["CAD", "CAM", "MFD", "PD-TEXTURING", "PHOTO"];
-const ALLOWED_PROJECTS = [
-  "CASTING",
-  "DIRECT CASTING",
-  "THIN CASTING",
-  "ISHTAA",
-  "EKTARA",
-  "MANGALSUTRA",
-  "IMPREZ",
-  "LASER CUT",
-  "STAMPING",
-  "NXT",
-  "INDIANIA",
-  "ELECTRO FORMING",
-  "FUSION",
-  "RUMI",
-  "KALAKRITI",
-  "UNIKRAFT",
-  "TURKISH",
-  "MARIYA",
-  "ILA BANGLES",
-  "MMD",
-  "EMERALD GEMSTONE JEW",
-  "HAND MADE",
-  "DIAMOND",
-  "PLATINUM",
-  "AVANA",
-  "CHAIN",
-  "CHAIN MIX",
-  "COP UTENSIL",
-  "EF IDOL",
-  "EFSJ",
-  "EXPORT-FO",
-  "SIL CASTING",
-  "SIL CHAIN",
-  "SIL HOME DECOR",
-  "SIL INDIANIA",
-  "SIL MMD",
-  "SIL PAYAL",
-  "SIL SOLID IDOL",
-  "SIL UTENSIL",
-  "SJ-RUMI",
-];
+
 
 function Department_AOP() {
+
+  const [ALLOWED_PROJECTS, setAllowedProjects_] = useState([
+    "CASTING",
+    "DIRECT CASTING",
+    "THIN CASTING",
+    "ISHTAA",
+    "EKTARA",
+    "MANGALSUTRA",
+    "IMPREZ",
+    "LASER CUT",
+    "STAMPING",
+    "NXT",
+    "INDIANIA",
+    "ELECTRO FORMING",
+    "FUSION",
+    "RUMI",
+    "KALAKRITI",
+    "UNIKRAFT",
+    "TURKISH",
+    "MARIYA",
+    "ILA BANGLES",
+    "MMD",
+    "EMERALD GEMSTONE JEW",
+    "HAND MADE",
+    "DIAMOND",
+    "PLATINUM",
+    "AVANA",
+    "CHAIN",
+    "CHAIN MIX",
+    "COP UTENSIL",
+    "EF IDOL",
+    "EFSJ",
+    "EXPORT-FO",
+    "SIL CASTING",
+    "SIL CHAIN",
+    "SIL HOME DECOR",
+    "SIL INDIANIA",
+    "SIL MMD",
+    "SIL PAYAL",
+    "SIL SOLID IDOL",
+    "SIL UTENSIL",
+    "SJ-RUMI"
+  ]);
+
+  async function fetchAllowedProjects() {
+    try {
+      const response = await fetch('http://localhost:8081/api/targets');
+      const data = await response.json();
+
+
+      const uniqueProjects = [...new Set(data
+        .map(item => item.Project)
+        .filter(project => project && project !== "Grand Total") 
+      )];
+
+      setAllowedProjects_(uniqueProjects);
+    } catch (error) {
+      console.error('Error fetching allowed projects:', error);
+    }
+  }
+
+  useEffect(() => {
+    fetchAllowedProjects();
+  }, []);
   const navigate = useNavigate();
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
@@ -962,6 +985,8 @@ function Department_AOP() {
               </button>
             )}
 
+
+            
             {selectedDeptName && (
               <button
                 className="mt-4 px-4 py-2 relative top-2 bg-green-500 text-white rounded-md"
@@ -988,10 +1013,10 @@ function Department_AOP() {
           {/* Display Table */}
           {/* Display Table */}
           <div
-            className={`flex flex-col p-5 relative shadow-xl rounded-lg mx-10 my-5 ${
-              theme === "light" ? "bg-white" : "bg-gray-900"
-            } max-w-[90%] md:max-w-lg lg:max-w-4xl xl:max-w-screen-lg 2xl:max-w-screen-8xl`}
-          >
+  className={`flex flex-col p-5 relative shadow-xl rounded-lg w-full mx-5 my-5 ${
+    theme === "light" ? "bg-white" : "bg-gray-900"
+  } max-w-[90%] md:max-w-lg lg:max-w-lg xl:max-w-screen-xl 2xl:max-w-screen-6xl lg:ml-16 xl:ml-16 2xl:ml-16`}
+>
             {selectedDeptName && (
               <>
                 <h2 className="text-xl font-bold mb-4">
