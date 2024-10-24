@@ -137,22 +137,21 @@ function ProductDetailsPage() {
 
       console.log("filteredProductionData:", filteredProductionData);
 
-      const jewelCodes = new Set(getJewelCodesForSubProduct(subProduct));
+      const jewelCodes = new Set(getJewelCodesForSubProduct(subProduct).map((code) => code.toLowerCase()));
       console.log("jewelCodes:", Array.from(jewelCodes));
-
-
+      
       const subCategoryCounts = {};
-
+      
       filteredProductionData.forEach((item) => {
-        const subCategory = item["Sub Category"];
-
+        const subCategory = item["Sub Category"].toLowerCase();
+      
         const jewelMatch = jewelMasterData.find(
-          (jewel) => jewel["JewelCode"] === subCategory
+          (jewel) => jewel["JewelCode"].toLowerCase() === subCategory
         );
         console.log("jewelMatch:", jewelMatch);
-
-        if (jewelMatch && jewelCodes.has(jewelMatch["JewelCode"])) {
-          const cwQty = item["CW Qty"] || 0; 
+      
+        if (jewelMatch && jewelCodes.has(jewelMatch["JewelCode"].toLowerCase())) {
+          const cwQty = 1;
           if (subCategoryCounts[subCategory]) {
             subCategoryCounts[subCategory].cwQty += cwQty;
           } else {
@@ -164,8 +163,8 @@ function ProductDetailsPage() {
           }
         }
       });
+      
 
-      // Log the counts for each sub category along with their products and sub products
       console.log("Sub Category Counts:");
       for (const [subCategory, details] of Object.entries(subCategoryCounts)) {
         console.log(

@@ -3,10 +3,10 @@ const mysql = require("mysql");
 // ip - > 172.16.5.233
 //db -> emerald_db_cmp
 const db = mysql.createConnection({
-  host:'172.16.5.233',
-  user: "emerald",
-  password:"emerald",
-  database: "Emerald",
+  host:'localhost',
+  user: "root",
+  password:"",
+  database: "emerald_db_cmp",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
